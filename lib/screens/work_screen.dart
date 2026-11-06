@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
+import '../anthologies/anthologies.dart';
 import '../library/models.dart';
 import '../library/work_order.dart';
 import 'library_widgets.dart';
@@ -22,6 +23,7 @@ class WorkScreen extends StatefulWidget {
     required this.picker,
     this.share = shareThroughSheet,
     this.shareImage = shareImageThroughSheet,
+    this.anthologies,
   });
 
   final LibraryStore store;
@@ -29,6 +31,7 @@ class WorkScreen extends StatefulWidget {
   final BackupPicker picker;
   final ShareText share;
   final ShareImage shareImage;
+  final AnthologyService? anthologies;
 
   @override
   State<WorkScreen> createState() => _WorkScreenState();
@@ -105,6 +108,7 @@ class _WorkScreenState extends State<WorkScreen> {
           picker: widget.picker,
           share: widget.share,
           shareImage: widget.shareImage,
+          anthologies: widget.anthologies,
         ),
       ),
     );

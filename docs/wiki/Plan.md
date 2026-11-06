@@ -235,6 +235,10 @@ synced account's theme preferences are ignored here.
       one, Tesseract on the phone reads it (English, Hindi, both; data bundled), the text is tidied and corrected on screen, then the quote form
       saves it with `source: ocr`. **Not yet:** selecting lines on the photo, proposing page and chapter, straightening and cropping, other
       languages (Bengali `ben`), and an unverified run on a real phone.
+- [x] **Anthologies, first slice** (done 7 November 2026): kept on the server, not copied to the phone (management screens need a paired
+      server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
+      its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
+      Checked against a real server in `test/live`. **Not yet:** reordering, per-passage commentary, sections, grouping, the cover, boards.
 - [x] **Work details and reading mode** (done 7 November 2026): counts, chapter groups in reading order, favourites filter, a Read document
       with text size, translations and notes toggles, and Share all.
 - [x] **Read aloud** (done 7 November 2026; the owner asked why the app lacked it: it was never planned). Android's own text-to-speech through

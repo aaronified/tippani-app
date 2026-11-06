@@ -6,6 +6,12 @@ version. Write each entry for the person using the app, in plain words.
 
 ## [Unreleased]
 
+### Added
+
+- Anthologies (needs your server): Settings > Anthologies lists the collections you keep on the server. Open one to read its passages and your
+  commentary, share it as text, rename it, or take a passage out. Make a new one from there. From any quote that is on the server, Add to
+  anthology puts it at the end of one you choose, or of a new one.
+
 ## [0.2.0] - 2026-11-06
 
 ### Added

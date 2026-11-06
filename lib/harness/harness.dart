@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../anthologies/anthologies.dart';
 import '../app_controller.dart';
 import '../library/library_backup.dart';
 import '../library/library_store.dart';
@@ -78,6 +79,7 @@ class Harness {
     this.library,
     this.sync,
     this.pull,
+    this.anthologies,
     Future<List<ChangelogEntry>> Function()? changelogLoader,
     this.showWhatsNew = true,
   }) : _changelogLoader = changelogLoader ?? loadChangelog;
@@ -100,6 +102,9 @@ class Harness {
   /// Brings the server's library down and sends the phone's edits up. One for the whole app, for the same
   /// reason as [sync].
   final PullSync? pull;
+
+  /// The paired server's anthologies. Null in a test that is about something else.
+  final AnthologyService? anthologies;
 
   /// Whether the first start of a new version shows what changed. Tests that are about something else
   /// turn it off so a dialog does not cover the screen under test.
@@ -138,6 +143,7 @@ class Harness {
       library: library,
       sync: library == null ? null : PushSync(library, controller, log: appLog),
       pull: library == null ? null : PullSync(library, controller, log: appLog),
+      anthologies: ServerAnthologies(controller),
     );
   }
 
@@ -152,6 +158,7 @@ class Harness {
     ApkInstaller? installer,
     BackupPicker? picker,
     LibraryStore? library,
+    AnthologyService? anthologies,
     List<ChangelogEntry>? changelog,
     bool showWhatsNew = false,
   }) {
@@ -181,6 +188,7 @@ class Harness {
       pull: library == null || controller == null
           ? null
           : PullSync(library, controller, log: l),
+      anthologies: anthologies,
       changelogLoader: () async => changelog ?? const [],
       showWhatsNew: showWhatsNew,
     );
