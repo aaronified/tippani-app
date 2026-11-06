@@ -19,6 +19,7 @@ import 'package:tippani/settings/settings_store.dart';
 import 'package:tippani/sync/pull_sync.dart';
 import 'package:tippani/sync/push_sync.dart';
 import 'package:tippani/tools/server_tools.dart';
+import 'package:tippani/tools/work_lookup.dart';
 
 import '../support/memory_library.dart';
 
@@ -399,4 +400,16 @@ void main() {
     await tools.emptyBin();
     expect((await tools.bin()).entries, isEmpty);
   }, skip: skip);
+
+  test(
+    'lookup: a book title comes back as matches through the server',
+    () async {
+      final found = await PairedWorkLookup(controller)
+          .find(WorkKind.book, 'Walden', creator: 'Thoreau');
+      expect(found, isNotEmpty);
+      expect(found.first.title, contains('Walden'));
+      expect(found.first.creator, contains('Thoreau'));
+    },
+    skip: skip,
+  );
 }

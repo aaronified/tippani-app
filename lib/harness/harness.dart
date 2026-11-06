@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../anthologies/anthologies.dart';
 import '../tools/server_tools.dart';
+import '../tools/work_lookup.dart';
 import '../app_controller.dart';
 import '../library/library_backup.dart';
 import '../library/library_store.dart';
@@ -82,6 +83,7 @@ class Harness {
     this.pull,
     this.anthologies,
     this.tools,
+    this.lookup,
     Future<List<ChangelogEntry>> Function()? changelogLoader,
     this.showWhatsNew = true,
   }) : _changelogLoader = changelogLoader ?? loadChangelog;
@@ -110,6 +112,9 @@ class Harness {
 
   /// The paired server's bin and statistics. Null in a test that is about something else.
   final ServerTools? tools;
+
+  /// Finds a work's details through the paired server. Null in a test that is about something else.
+  final WorkLookup? lookup;
 
   /// Whether the first start of a new version shows what changed. Tests that are about something else
   /// turn it off so a dialog does not cover the screen under test.
@@ -150,6 +155,7 @@ class Harness {
       pull: library == null ? null : PullSync(library, controller, log: appLog),
       anthologies: ServerAnthologies(controller),
       tools: PairedServerTools(controller),
+      lookup: PairedWorkLookup(controller),
     );
   }
 
@@ -166,6 +172,7 @@ class Harness {
     LibraryStore? library,
     AnthologyService? anthologies,
     ServerTools? tools,
+    WorkLookup? lookup,
     List<ChangelogEntry>? changelog,
     bool showWhatsNew = false,
   }) {
@@ -197,6 +204,7 @@ class Harness {
           : PullSync(library, controller, log: l),
       anthologies: anthologies,
       tools: tools,
+      lookup: lookup,
       changelogLoader: () async => changelog ?? const [],
       showWhatsNew: showWhatsNew,
     );
