@@ -6,6 +6,8 @@ version. Write each entry for the person using the app, in plain words.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-06
+
 ### Added
 
 - Open a quote to read it in full, as a card with your note, its tags and the work it is from. From there you can favourite it, edit it,
