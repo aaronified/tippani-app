@@ -222,6 +222,14 @@ synced account's theme preferences are ignored here.
       backup contributor (restore replaces, checked before it writes); the Library tab, which the app now opens on (quotes and works,
       search, favourites, tag filter, add, edit, delete, a work's own page); and export as Tippani Markdown, shared or saved.
       Left for later phases: sorting choices, bulk selection, the quote's colour board.
+- [x] **Push sync** (done 6 November 2026): works and quotes only on the phone go up once when paired, ids kept in `server_id`
+      ([ADR-0015](ADR-0015-Sync-Starts-As-A-Push-That-Only-Adds.md)).
+- [ ] **Pull sync:** bring down what the server has. **Decided by the owner (6 November 2026): a conflict is chosen per quote and per work,
+      with both "keep the phone's" and "keep the server's" always on offer** ([ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md)).
+      Needs the server's `updated_at` kept at the last sync (a schema upgrade) and a conflict screen.
+- [ ] **Metadata lookups through the server** (owner, 6 November 2026): the app uses the server's own routes for TMDB, TVDB and the other
+      suppliers (`/books/lookup`, `/movies/lookup`, the cast and people routes), so the provider keys live only on the server and are set
+      up there. The app holds no supplier key. These need a paired server and are part of phase 3 (metadata and people).
 - [ ] **All functions, phases 1 to 4 of feature 5, before any new feature** (owner's order, 6 November 2026): core, reading side,
       management, settings and admin. The core works alone; the management and admin screens need a paired server.
 - [ ] **New features, after the functions:** capture (camera, Tesseract OCR, selection on the photo, page and chapter proposal,

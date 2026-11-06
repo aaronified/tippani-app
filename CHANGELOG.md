@@ -14,6 +14,9 @@ version. Write each entry for the person using the app, in plain words.
 - The app opens on your Library: every quote and work, searchable by words, people, works and tags, with a Favourites filter and a tag
   filter. Add a quote or a work, open one to change or delete it, and give a quote its own colour. Deleting a work says how many
   quotes go with it first.
+- Send your library to your server: in Settings, once the phone is paired, "Send library to server" adds the works and quotes that are only
+  on the phone. It only adds: nothing on the server is changed or deleted, what is already there is not sent again, and if the connection
+  drops the rest waits for the next try.
 - Export your quotes as Markdown, all of them or one work's, to share or to save as a file. It is the same format Tippani's server
   imports, so a library made on the phone can be moved to a server later.
 - Backups now carry that library. Restoring replaces the library and the settings with the file's, after saying so. A damaged

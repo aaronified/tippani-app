@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -47,6 +48,103 @@ class FakeServer {
 
   final requests = <http.Request>[];
 
+  // ---- the library routes (POST /books, /movies, /annotations, /dialogues, /quotes) --------------------
+
+  /// What each create route has been given, in order, by route: `/books`, `/movies`, `/annotations`,
+  /// `/dialogues`, `/quotes`. Each entry is the JSON body plus the id the fake gave it.
+  final created = <String, List<Map<String, Object?>>>{};
+
+  var _nextId = 100;
+
+  /// A title the server refuses with a 400, as it does for a field it cannot take.
+  String? refuseTitle;
+
+  /// After this many successful creates the network drops (the next request throws), as when a phone
+  /// leaves wifi half way. Null never drops.
+  int? dropAfter;
+
+  /// A create that answers 201 but with no id in it, as a proxy or a changed server might.
+  bool omitId = false;
+
+  /// Every create answers with this status instead (429, 500...), when set.
+  int? failCreatesWith;
+
+  static const _createRoutes = {
+    '/books',
+    '/movies',
+    '/annotations',
+    '/dialogues',
+    '/quotes',
+  };
+
+  static const _colors = [
+    'yellow',
+    'blue',
+    'pink',
+    'orange',
+    'green',
+    'purple',
+  ];
+
+  http.Response _create(String path, Map body) {
+    final all = created.values.fold<int>(0, (n, l) => n + l.length);
+    if (dropAfter != null && all >= dropAfter!) {
+      throw const SocketException('the network went away');
+    }
+    if (failCreatesWith != null) {
+      return _json({'error': 'try later'}, failCreatesWith!);
+    }
+    final rows = created.putIfAbsent(path, () => []);
+    String? bad;
+    if (path == '/books' || path == '/movies') {
+      if ((body['title'] as String? ?? '').trim().isEmpty) {
+        bad = 'title is required';
+      }
+      if (refuseTitle != null && body['title'] == refuseTitle) {
+        bad = 'title is not acceptable';
+      }
+      if (path == '/movies' &&
+          !const ['movie', 'show', 'game'].contains(body['media_type'])) {
+        bad = "media_type must be 'movie', 'show' or 'game'";
+      }
+    } else {
+      if (!_colors.contains(body['color'])) bad = 'color must be one of them';
+      if (!const ['manual', 'ocr'].contains(body['source'])) {
+        bad = 'source must be manual or ocr';
+      }
+      if ((body['quote'] as String? ?? '').isEmpty) {
+        bad = 'quote or note is required';
+      }
+      final parent = path == '/annotations'
+          ? 'book_id'
+          : path == '/dialogues'
+          ? 'movie_id'
+          : null;
+      if (parent != null) {
+        final owner = path == '/annotations' ? '/books' : '/movies';
+        final known = (created[owner] ?? []).any(
+          (b) => b['id'] == body[parent],
+        );
+        if (!known) {
+          return _json({'error': 'work not found'}, 404);
+        }
+      }
+    }
+    if (bad != null) return _json({'error': bad}, 400);
+    if (path != '/books' && path != '/movies') {
+      final parent = body['book_id'] ?? body['movie_id'];
+      for (final r in rows) {
+        if (r['quote'] == body['quote'] &&
+            (r['book_id'] ?? r['movie_id']) == parent) {
+          return _json({'error': 'duplicate', 'existing': r}, 409);
+        }
+      }
+    }
+    final row = <String, Object?>{...body, 'id': _nextId++};
+    rows.add(row);
+    return omitId ? _json({'ok': true}, 201) : _json(row, 201);
+  }
+
   http.Response _json(Object body, [int status = 200]) => http.Response(
     jsonEncode(body),
     status,
@@ -86,6 +184,9 @@ class FakeServer {
       return _json({'token': claimedToken, 'username': username}, 201);
     }
     if (!_authed(r)) return _json({'error': 'not logged in'}, 401);
+    if (r.method == 'POST' && _createRoutes.contains(path)) {
+      return _create(path, jsonDecode(r.body) as Map);
+    }
     if (r.method == 'GET' && path == '/auth/me') {
       return _json({'id': 1, 'username': username, 'is_admin': admin});
     }

@@ -206,6 +206,30 @@ class MemoryLibrary implements LibraryStore {
   );
 
   @override
+  Future<List<Work>> unsyncedWorks() async => [
+    for (final w in _works.values)
+      if (w.serverId == null) w,
+  ]..sort((a, b) => a.id.compareTo(b.id));
+
+  @override
+  Future<List<Quote>> unsyncedQuotes() async => [
+    for (final q in _quotes.values)
+      if (q.serverId == null) q,
+  ]..sort((a, b) => a.id.compareTo(b.id));
+
+  @override
+  Future<void> setWorkServerId(int id, int serverId) async {
+    final w = _works[id];
+    if (w != null) _works[id] = w.withServerId(serverId);
+  }
+
+  @override
+  Future<void> setQuoteServerId(int id, int serverId) async {
+    final q = _quotes[id];
+    if (q != null) _quotes[id] = q.withServerId(serverId);
+  }
+
+  @override
   Future<Map<String, Object?>> exportAll() async => {
     'version': SqliteLibraryStore.schemaVersion,
     'works': [for (final w in _works.values) w.toJson()],

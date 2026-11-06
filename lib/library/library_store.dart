@@ -36,6 +36,15 @@ abstract interface class LibraryStore {
   Future<List<String>> tags();
   Future<LibraryCounts> counts();
 
+  /// What the paired server has never been given: works and quotes whose `server_id` is empty, oldest first.
+  Future<List<Work>> unsyncedWorks();
+  Future<List<Quote>> unsyncedQuotes();
+
+  /// Records the server's id for a work or quote it now holds. Changes nothing else, not even `updated_at`:
+  /// being on the server is not an edit.
+  Future<void> setWorkServerId(int id, int serverId);
+  Future<void> setQuoteServerId(int id, int serverId);
+
   /// Everything, as JSON-encodable data, for a backup or an export.
   Future<Map<String, Object?>> exportAll();
 
@@ -438,6 +447,44 @@ class SqliteLibraryStore implements LibraryStore {
       quotes: await n('SELECT COUNT(*) FROM quotes'),
       favourites: await n('SELECT COUNT(*) FROM quotes WHERE favorite = 1'),
       tags: await n('SELECT COUNT(*) FROM tags'),
+    );
+  }
+
+  @override
+  Future<List<Work>> unsyncedWorks() async {
+    final rows = await _db.query(
+      'works',
+      where: 'server_id IS NULL',
+      orderBy: 'id',
+    );
+    return [for (final r in rows) _work(r)];
+  }
+
+  @override
+  Future<List<Quote>> unsyncedQuotes() async {
+    final rows = await _db.rawQuery(
+      '$_quoteSelect WHERE q.server_id IS NULL ORDER BY q.id',
+    );
+    return [for (final r in rows) _quote(r)];
+  }
+
+  @override
+  Future<void> setWorkServerId(int id, int serverId) async {
+    await _db.update(
+      'works',
+      {'server_id': serverId},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
+  Future<void> setQuoteServerId(int id, int serverId) async {
+    await _db.update(
+      'quotes',
+      {'server_id': serverId},
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 

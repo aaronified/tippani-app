@@ -8,6 +8,7 @@ import '../harness/log_screen.dart';
 import '../harness/server_log_screen.dart';
 import 'devices_screen.dart';
 import 'pair_screen.dart';
+import 'sync_screen.dart';
 import '../harness/update_controller.dart';
 import '../harness/update_ui.dart';
 import '../harness/version.dart';
@@ -111,6 +112,17 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              if (harness.sync != null)
+                ListTile(
+                  leading: const Icon(Icons.cloud_upload_outlined),
+                  title: const Text('Send library to server'),
+                  subtitle: const Text('Adds what is only on this phone'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => SyncScreen(sync: harness.sync!),
+                    ),
+                  ),
+                ),
               ListTile(
                 leading: const Icon(Icons.phonelink_erase_outlined),
                 title: const Text('Unpair this phone'),
