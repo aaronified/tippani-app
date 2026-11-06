@@ -36,6 +36,14 @@ gh secret set KEY_ALIAS -R aaronified/tippani-app
 gh secret set KEY_PASSWORD -R aaronified/tippani-app
 ```
 
+The same in PowerShell (the Git Bash line above does not run there, because `<(...)` is Bash only). Put the real path to the keystore in:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("$env:USERPROFILE\Downloads\android-release.jks")) | gh secret set KEYSTORE_BASE64 -R aaronified/tippani-app
+```
+
+`gh secret set` with no value asks for it, so the three passwords and the alias are typed at its prompt and never appear in a command line.
+
 **Back the keystore up somewhere you trust, apart from this repository.** Losing it means no installed copy of the app can ever be upgraded, and
 Android offers no way to recover from that.
 
@@ -50,11 +58,26 @@ gh repo deploy-key add release_key.pub -R aaronified/tippani-app --allow-write -
 gh secret set RELEASE_DEPLOY_KEY -R aaronified/tippani-app < release_key
 ```
 
+In PowerShell (`<` and `rm` are not available there; run it from a folder you do not mind holding the key for a moment, and press Enter at any
+passphrase prompt):
+
+```powershell
+ssh-keygen -t ed25519 -N '""' -C "tippani-app release" -f release_key
+gh repo deploy-key add release_key.pub -R aaronified/tippani-app --allow-write --title "release workflow"
+Get-Content -Raw release_key | gh secret set RELEASE_DEPLOY_KEY -R aaronified/tippani-app
+Remove-Item release_key, release_key.pub
+```
+
 Then add **Deploy keys** to the ruleset's bypass list (Settings > Rules). Delete `release_key` and `release_key.pub` from your machine afterwards.
 The workflow rebuilds the key from whatever the secret holds, so a paste that lost its BEGIN and END lines still works; `ssh-keygen` checks it is
 a private key before anything is committed.
 
 If `main` is not protected, the deploy key is still used, and still needs write access.
+
+### Checking what is set
+
+`gh secret list -R aaronified/tippani-app` shows the names that exist (never the values), and `gh repo deploy-key list -R aaronified/tippani-app`
+shows the deploy key. As of 6 November 2026 the four keystore secrets are set; `RELEASE_DEPLOY_KEY`, the ruleset bypass and `WIKI_TOKEN` are not.
 
 ## Cutting a release
 
