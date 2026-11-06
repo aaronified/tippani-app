@@ -25,7 +25,7 @@ flutter build apk --debug
 | `lib/api/api_client.dart` | The one way the app speaks to a server: Bearer token, timeouts, and typed failures (network, timeout, unauthorised, server, bad response). |
 | `lib/settings/server_url.dart` | Turns what a reader types into the address the app keeps, and says when plain `http` would send a credential across the internet. |
 | `lib/settings/settings_store.dart` | The server address in preferences; the device token in secure storage and nowhere else. |
-| `lib/library/` | The phone's own library: `models.dart`, the SQLite `library_store.dart`, and its backup contributor. See [The local library](#the-local-library). |
+| `lib/library/` | The phone's own library: `models.dart`, the SQLite `library_store.dart`, its backup contributor, and `markdown_export.dart`. See [The local library](#the-local-library). |
 | `lib/pairing/` | The pairing code, the claim, and the device list. |
 | `lib/screens/` | Home, Settings, the connect, pair and devices screens. |
 | `lib/harness/` | The base every feature stands on: version, update check and installer, the log, backup and restore, the changelog. See [The harness](#the-harness). |
@@ -86,6 +86,23 @@ reads and writes; `SqliteLibraryStore` is SQLite through `sqflite`, with the dat
   test are two databases). Widget tests cannot drive real SQLite I/O (their fake clock never completes it), so screen tests use an
   in-memory `LibraryStore` and the store has its own file.
 
+### The library screens
+
+`lib/screens/library_screen.dart` is the first tab (the app opens on it; the server screens are the second tab, called Server). It
+reads only a `LibraryStore`, so it works with no server. `quote_form_screen.dart` and `work_form_screen.dart` add and change a quote
+or a work; `work_screen.dart` is one work with its quotes; `library_widgets.dart` holds the quote tile and the export plumbing.
+
+- **A search that finishes late must not win.** `_load` numbers its requests and only the newest fills the list; a test makes an old
+  search finish after a newer one.
+- **Errors sit at the top of a form**, not under the last field, where a phone's keyboard would hide them.
+- **Export is Tippani's own Markdown** (`markdown_export.dart`, modelled on the server's `export_handlers.go` and `export_quotes.go`):
+  a book is `type: book` with quotes under `## chapter` headings, a film, show or game says `type: movie|show|game`, quotes with no
+  work are one `type: quotes` block, a work with no quotes is left out, and yellow (the default colour) is never written. The server
+  imports these files, so a library made on the phone can be moved to a server. Share goes through the share sheet; Save uses the
+  file picker (no storage permission).
+- **Tests.** The screens are tested against `test/support/memory_library.dart`, a `LibraryStore` with no I/O, because a widget test's
+  fake clock cannot drive real SQLite. The store itself is tested against real SQLite in `library_store_test.dart`.
+
 ## Pairing and the account
 
 - **Pairing is a typed code.** Tippani's web Settings > Devices > Pair a device shows an 8-character code, good for five minutes
@@ -122,5 +139,5 @@ in Copy or in Share, and the server's lines are redacted on the way out like the
 
 ## Not built
 
-The library screens, the daily quiz and the rest of phases 1 to 4, then capture, the offline queue, donation, bug reports and the first
+The daily quiz and the rest of phases 1 to 4, then capture, the offline queue, donation, bug reports and the first
 signed release (the workflow exists; the keys do not), are the rest of the [plan](Plan.md)'s task list, in that order.

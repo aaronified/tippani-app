@@ -55,6 +55,24 @@ class _MemoryLibrary implements LibraryStore {
     data = d;
   }
 
+  // What the library tab reads when it opens: it is not what these tests are about, so it shows nothing.
+  @override
+  Future<List<Work>> works({WorkKind? kind, String query = ''}) async => [];
+
+  @override
+  Future<List<Quote>> quotes({
+    int? workId,
+    String query = '',
+    bool favouritesOnly = false,
+    String? tag,
+    int limit = 200,
+    int offset = 0,
+  }) async => [];
+
+  @override
+  Future<LibraryCounts> counts() async =>
+      const LibraryCounts(works: 0, quotes: 0, favourites: 0, tags: 0);
+
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName}');

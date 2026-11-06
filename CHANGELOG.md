@@ -11,6 +11,11 @@ version. Write each entry for the person using the app, in plain words.
 - The app keeps a library of its own on the phone, so it works with no server. Works and quotes, with tags, colours, favourites,
   your notes, translations and where in the book each came from, are stored in the app, and searched by their words, the work's
   title and author, who said them, and their tags. A server is something you can add later, not a way in.
+- The app opens on your Library: every quote and work, searchable by words, people, works and tags, with a Favourites filter and a tag
+  filter. Add a quote or a work, open one to change or delete it, and give a quote its own colour. Deleting a work says how many
+  quotes go with it first.
+- Export your quotes as Markdown, all of them or one work's, to share or to save as a file. It is the same format Tippani's server
+  imports, so a library made on the phone can be moved to a server later.
 - Backups now carry that library. Restoring replaces the library and the settings with the file's, after saying so. A damaged
   backup is refused whole: nothing is restored from it, not even the settings.
 - Pair this phone with your server: make a code in Tippani's Settings on a computer, type it in the app, and the phone gets a key it

@@ -218,9 +218,10 @@ synced account's theme preferences are ignored here.
       offers to revoke the phone in the hand.
 - [x] **Server log** (done 6 November 2026; asked for by the owner): an admin's view of `GET /admin/logs` with its filters and paging,
       separate from the app's own log.
-- [ ] **Local library** (first; see section 0). Done 6 November 2026: the SQLite store of works, quotes and tags with search, and its
-      backup contributor (restore replaces, checked before it writes). Left: the screens (browse, search, add, edit), export as
-      Tippani Markdown, and Home opening on the library.
+- [x] **Local library** (done 6 November 2026; first, see section 0): the SQLite store of works, quotes and tags with search and its
+      backup contributor (restore replaces, checked before it writes); the Library tab, which the app now opens on (quotes and works,
+      search, favourites, tag filter, add, edit, delete, a work's own page); and export as Tippani Markdown, shared or saved.
+      Left for later phases: sorting choices, bulk selection, the quote's colour board.
 - [ ] **All functions, phases 1 to 4 of feature 5, before any new feature** (owner's order, 6 November 2026): core, reading side,
       management, settings and admin. The core works alone; the management and admin screens need a paired server.
 - [ ] **New features, after the functions:** capture (camera, Tesseract OCR, selection on the photo, page and chapter proposal,
