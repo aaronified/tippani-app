@@ -84,6 +84,7 @@ class _ShellState extends State<Shell> {
             store: library,
             picker: widget.harness.picker,
             anthologies: widget.harness.anthologies,
+            lookup: widget.harness.lookup,
           ),
           destination: const NavigationDestination(
             icon: Icon(Icons.menu_book_outlined),

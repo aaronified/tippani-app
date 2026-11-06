@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../library/library_store.dart';
+import '../api/server_call.dart';
 import '../library/models.dart';
+import '../tools/work_lookup.dart';
 
 String workKindLabel(WorkKind k) => switch (k) {
   WorkKind.book => 'Book',
@@ -22,10 +24,18 @@ String creatorLabel(WorkKind k) => switch (k) {
 
 /// Adds a work, or changes one. Pops the saved [Work].
 class WorkFormScreen extends StatefulWidget {
-  const WorkFormScreen({super.key, required this.store, this.work});
+  const WorkFormScreen({
+    super.key,
+    required this.store,
+    this.work,
+    this.lookup,
+  });
 
   final LibraryStore store;
   final Work? work;
+
+  /// Finds details through the paired server; null (or not available) hides Look up details.
+  final WorkLookup? lookup;
 
   @override
   State<WorkFormScreen> createState() => _WorkFormScreenState();
@@ -41,6 +51,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
   late WorkKind _kind = widget.work?.kind ?? WorkKind.book;
   String? _error;
   bool _saving = false;
+  bool _looking = false;
 
   @override
   void dispose() {
@@ -49,6 +60,55 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
     _year.dispose();
     _language.dispose();
     super.dispose();
+  }
+
+  Future<void> _lookUp() async {
+    final title = _title.text.trim();
+    if (title.isEmpty) {
+      setState(() => _error = 'Type a title to look up.');
+      return;
+    }
+    setState(() {
+      _looking = true;
+      _error = null;
+    });
+    List<WorkMatch> found = const [];
+    try {
+      found = await widget.lookup!.find(_kind, title, creator: _creator.text);
+    } on ServerException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    }
+    if (!mounted) return;
+    setState(() => _looking = false);
+    if (found.isEmpty) {
+      if (_error == null) {
+        setState(() => _error = 'Nothing matched that title.');
+      }
+      return;
+    }
+    final chosen = await showDialog<WorkMatch>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Which one?'),
+        children: [
+          for (final m in found.take(8))
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(m),
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(m.title),
+                subtitle: m.summary.isEmpty ? null : Text(m.summary),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (chosen == null || !mounted) return;
+    setState(() {
+      _title.text = chosen.title;
+      if (chosen.creator.isNotEmpty) _creator.text = chosen.creator;
+      if (chosen.year != null) _year.text = '${chosen.year}';
+    });
   }
 
   Future<void> _save() async {
@@ -121,6 +181,23 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(labelText: 'Title'),
           ),
+          if (widget.lookup?.available == true) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _looking ? null : _lookUp,
+                icon: _looking
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.travel_explore),
+                label: const Text('Look up details'),
+              ),
+            ),
+          ],
           const SizedBox(height: 12),
           TextField(
             controller: _creator,

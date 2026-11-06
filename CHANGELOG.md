@@ -8,6 +8,11 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Added
 
+- Look up details (needs your server): when you add or edit a work, Look up details asks your server what the title most likely is and
+  offers the matches; pick one to fill in the title, the author and the year. The app holds no keys of its own: the server does the lookup.
+- Bin (needs your server): Settings > Bin lists what you deleted lately on the server, with how many quotes went with a book, and lets you
+  restore it, delete it for good, or empty the bin. Statistics shows the server's own numbers: quotes, books, films, shows, favourites, tags,
+  your busiest month and top tags.
 - Anthologies (needs your server): Settings > Anthologies lists the collections you keep on the server. Open one to read its passages and your
   commentary, share it as text, rename it, or take a passage out. Make a new one from there. From any quote that is on the server, Add to
   anthology puts it at the end of one you choose, or of a new one.

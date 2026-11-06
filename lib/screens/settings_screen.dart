@@ -1,4 +1,5 @@
 import 'anthologies_screen.dart';
+import 'tools_screens.dart';
 
 import 'package:flutter/material.dart';
 
@@ -129,6 +130,32 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (harness.tools != null) ...[
+                ListTile(
+                  leading: const Icon(Icons.bar_chart_outlined),
+                  title: const Text('Statistics'),
+                  subtitle: const Text(
+                    'The numbers the server keeps about your library',
+                  ),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => StatsScreen(tools: harness.tools!),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_outline),
+                  title: const Text('Bin'),
+                  subtitle: const Text(
+                    'What you deleted lately, to bring back',
+                  ),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => BinScreen(tools: harness.tools!),
+                    ),
+                  ),
+                ),
+              ],
               if (harness.pull != null)
                 ListTile(
                   leading: const Icon(Icons.sync),

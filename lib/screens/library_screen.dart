@@ -5,6 +5,7 @@ import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../anthologies/anthologies.dart';
 import '../library/models.dart';
+import '../tools/work_lookup.dart';
 import 'library_widgets.dart';
 import 'capture_screen.dart';
 import 'quote_form_screen.dart';
@@ -25,6 +26,7 @@ class LibraryScreen extends StatefulWidget {
     this.share = shareThroughSheet,
     this.shareImage = shareImageThroughSheet,
     this.anthologies,
+    this.lookup,
   });
 
   final LibraryStore store;
@@ -32,6 +34,7 @@ class LibraryScreen extends StatefulWidget {
   final ShareText share;
   final ShareImage shareImage;
   final AnthologyService? anthologies;
+  final WorkLookup? lookup;
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -110,7 +113,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _addWork() async {
     await Navigator.of(context).push<Work>(
-      MaterialPageRoute(builder: (_) => WorkFormScreen(store: widget.store)),
+      MaterialPageRoute(
+        builder: (_) =>
+            WorkFormScreen(store: widget.store, lookup: widget.lookup),
+      ),
     );
     await _load();
   }
@@ -141,6 +147,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           share: widget.share,
           shareImage: widget.shareImage,
           anthologies: widget.anthologies,
+          lookup: widget.lookup,
         ),
       ),
     );

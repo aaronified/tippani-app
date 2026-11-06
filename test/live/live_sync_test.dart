@@ -18,6 +18,8 @@ import 'package:tippani/library/models.dart';
 import 'package:tippani/settings/settings_store.dart';
 import 'package:tippani/sync/pull_sync.dart';
 import 'package:tippani/sync/push_sync.dart';
+import 'package:tippani/tools/server_tools.dart';
+import 'package:tippani/tools/work_lookup.dart';
 
 import '../support/memory_library.dart';
 
@@ -354,4 +356,60 @@ void main() {
     await svc.delete(made.id);
     expect((await svc.list()).any((a) => a.id == made.id), isFalse);
   }, skip: skip);
+
+  test('bin and statistics: a deleted quote is in the bin, restores, and the numbers read', () async {
+    final lib = MemoryLibrary();
+    final push = PushSync(lib, controller, log: AppLog());
+    final w = await lib.addWork(const WorkDraft(title: 'Bin book'));
+    final q = await lib.addQuote(
+      QuoteDraft(text: 'Into the bin (live).', workId: w.id),
+    );
+    await push.push();
+    final serverId = (await lib.quote(q.id))!.serverId!;
+
+    final tools = PairedServerTools(controller);
+    final stats = await tools.stats();
+    expect(stats.quotes, greaterThan(0));
+    expect(stats.books, greaterThan(0));
+
+    await raw('DELETE', '/annotations/$serverId');
+    var bin = await tools.bin();
+    final entry = bin.entries.firstWhere(
+      (e) => e.label == 'Into the bin (live).',
+    );
+    expect(entry.kind, 'annotation');
+    expect(bin.keptDays, greaterThan(0));
+
+    await tools.restore(entry.id);
+    bin = await tools.bin();
+    expect(bin.entries.any((e) => e.label == 'Into the bin (live).'), isFalse);
+    final back =
+        ((await raw('GET', '/annotations')) as Map)['annotations'] as List;
+    expect(
+      back.any((a) => (a as Map)['quote'] == 'Into the bin (live).'),
+      isTrue,
+    );
+
+    await raw('DELETE', '/annotations/$serverId');
+    await tools.deleteForever(
+      (await tools.bin()).entries
+          .firstWhere((e) => e.label == 'Into the bin (live).')
+          .id,
+    );
+    await raw('DELETE', '/annotations/9999').then((_) {}, onError: (_) {});
+    await tools.emptyBin();
+    expect((await tools.bin()).entries, isEmpty);
+  }, skip: skip);
+
+  test(
+    'lookup: a book title comes back as matches through the server',
+    () async {
+      final found = await PairedWorkLookup(controller)
+          .find(WorkKind.book, 'Walden', creator: 'Thoreau');
+      expect(found, isNotEmpty);
+      expect(found.first.title, contains('Walden'));
+      expect(found.first.creator, contains('Thoreau'));
+    },
+    skip: skip,
+  );
 }

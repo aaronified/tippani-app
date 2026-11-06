@@ -235,6 +235,13 @@ synced account's theme preferences are ignored here.
       one, Tesseract on the phone reads it (English, Hindi, both; data bundled), the text is tidied and corrected on screen, then the quote form
       saves it with `source: ocr`. **Not yet:** selecting lines on the photo, proposing page and chapter, straightening and cropping, other
       languages (Bengali `ben`), and an unverified run on a real phone.
+- [x] **Metadata lookup, first slice** (done 7 November 2026): Look up details on the work form, through the server's `/books/lookup` and
+      `/movies/lookup` (so no provider key is in the app). Books checked against a real server (Open Library); films, shows and games are
+      built from the Go handler's shape but **not verified**, because the local server had no TMDB or TheTVDB key. Fills title, author,
+      year. **Not yet:** covers, genres, description, ISBN lookup, choosing a source.
+- [x] **Bin and statistics** (done 7 November 2026): from the paired server's `/trash` and `/stats`: list, restore, delete for good, empty;
+      totals, busiest month, most quoted, top tags. Checked against a real server in `test/live`. **Not yet:** the bin's per-entry detail,
+      statistics breakdowns (authors, actors), checks, metadata lookups, boards.
 - [x] **Anthologies, first slice** (done 7 November 2026): kept on the server, not copied to the phone (management screens need a paired
       server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
       its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
