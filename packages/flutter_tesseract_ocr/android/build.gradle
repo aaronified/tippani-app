@@ -1,0 +1,30 @@
+group 'io.paratoner.flutter_tesseract_ocr'
+version '1.0'
+
+// Changed from the published 0.4.31: its buildscript block named jcenter() (shut down, and removed from current
+// Gradle) and an old Android Gradle plugin, so the app could not build. The app's own build supplies both.
+rootProject.allprojects {
+    repositories {
+        flatDir {
+            dirs project(':flutter_tesseract_ocr').file('libs')
+        }
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace "io.paratoner.flutter_tesseract_ocr"
+    compileSdkVersion 34
+
+    defaultConfig {
+        minSdkVersion 21
+    }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+}
+
+dependencies {
+    api(name: 'tesseract4android-release', ext: 'aar')
+}

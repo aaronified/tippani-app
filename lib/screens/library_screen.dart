@@ -5,6 +5,7 @@ import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../library/models.dart';
 import 'library_widgets.dart';
+import 'capture_screen.dart';
 import 'quote_form_screen.dart';
 import 'quote_screen.dart';
 import 'work_form_screen.dart';
@@ -89,6 +90,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
     await _load();
   }
 
+  Future<void> _scan() async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => CaptureScreen(store: widget.store)),
+    );
+    await _load();
+  }
+
   Future<void> _addWork() async {
     await Navigator.of(context).push<Work>(
       MaterialPageRoute(builder: (_) => WorkFormScreen(store: widget.store)),
@@ -168,6 +176,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
       appBar: AppBar(
         title: const Text('Library'),
         actions: [
+          IconButton(
+            tooltip: 'Scan a page',
+            icon: const Icon(Icons.document_scanner_outlined),
+            onPressed: _scan,
+          ),
           PopupMenuButton<ExportKind>(
             tooltip: 'Export',
             icon: const Icon(Icons.ios_share),

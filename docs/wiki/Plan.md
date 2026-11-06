@@ -231,6 +231,10 @@ synced account's theme preferences are ignored here.
 - [x] **Quote screen, share and save** (done 6 November 2026): tapping a quote opens it as a card with its note, tags and work; favourite,
       edit, delete, share as text, share as a picture (a PNG drawn from the same card the reader sees), and save that picture to a file.
       Works with no server.
+- [x] **Capture, first slice** (done 7 November 2026): Scan a page from the library and from a work: take a photo (the system camera) or choose
+      one, Tesseract on the phone reads it (English, Hindi, both; data bundled), the text is tidied and corrected on screen, then the quote form
+      saves it with `source: ocr`. **Not yet:** selecting lines on the photo, proposing page and chapter, straightening and cropping, other
+      languages (Bengali `ben`), and an unverified run on a real phone.
 - [x] **Work details and reading mode** (done 7 November 2026): counts, chapter groups in reading order, favourites filter, a Read document
       with text size, translations and notes toggles, and Share all.
 - [x] **Read aloud** (done 7 November 2026; the owner asked why the app lacked it: it was never planned). Android's own text-to-speech through
