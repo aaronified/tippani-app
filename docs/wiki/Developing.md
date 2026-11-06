@@ -118,6 +118,20 @@ the sync that reads the server back is [ADR-0016](ADR-0016-Conflicts-Are-Chosen-
 - **`setWorkServerId` and `setQuoteServerId` do not touch `updated_at`.** Being on the server is not an edit; if it were, every push would
   make every item look changed to the pull.
 
+## The quote screen, sharing and saving
+
+`lib/screens/quote_screen.dart` (`QuoteScreen`), `lib/screens/quote_card.dart` (`QuoteCard`, `captureCard`) and `lib/library/quote_text.dart`
+(`quoteAttribution`, `quoteShareText`). A quote in the library or on a work's page opens here, not in the editor; Edit is in its app bar.
+
+- **The picture is the screen.** `QuoteCard` is what the reader sees and what `captureCard` draws into a PNG (a `RepaintBoundary`, scaled to
+  about 1080 pixels wide). Sit it on a solid ground, as `QuoteScreen` does, or the rounded corners come out transparent and a chat app paints
+  them black.
+- **Sharing and saving go through functions the screen is given** (`ShareText`, `ShareImage`, `BackupPicker.save`), so a test stands in for the
+  share sheet and the file picker. Nothing here reaches a server.
+- **Testing a picture needs real time.** Drawing an image is not driven by the widget test's clock: run the tap inside `tester.runAsync` and
+  wait for the result (see `waitFor` in `test/library/quote_screen_test.dart`). One message per test: a snackbar made while a picture is
+  drawing gets a real timer, and two of them in one test fire after it ends.
+
 ## Syncing with the server (the pull)
 
 `lib/sync/pull_sync.dart` (`PullSync`, held by the harness as `harness.pull`), `lib/sync/fingerprint.dart` and `lib/screens/pull_screen.dart`

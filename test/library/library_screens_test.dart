@@ -281,6 +281,8 @@ void main() {
       await open(tester);
       await addQuote(tester, 'before');
       await tapText(tester, 'before');
+      await tester.tap(find.byTooltip('Edit'));
+      await tester.pumpAndSettle();
       expect(find.text('Edit quote'), findsOneWidget);
       await tester.enterText(field('The words'), 'after');
       await tester.tap(find.byKey(const ValueKey('colour-blue')));
@@ -289,7 +291,8 @@ void main() {
       final q = (await lib.quotes()).single;
       expect(q.text, 'after');
       expect(q.color, 'blue');
-      expect(find.text('after'), findsOneWidget);
+      // saving returns to the quote's own screen, which shows it in quotation marks
+      expect(find.text('“after”'), findsOneWidget);
     });
 
     testWidgets(

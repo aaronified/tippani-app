@@ -224,6 +224,17 @@ synced account's theme preferences are ignored here.
       Left for later phases: sorting choices, bulk selection, the quote's colour board.
 - [x] **Push sync** (done 6 November 2026): works and quotes only on the phone go up once when paired, ids kept in `server_id`
       ([ADR-0015](ADR-0015-Sync-Starts-As-A-Push-That-Only-Adds.md)).
+- **Order changed by the owner (6 November 2026): the daily quiz comes later.** The reading, sharing and saving sides come first and fast;
+      **capture (camera and Tesseract OCR) is needed**, and so is **recording sound and saving from there** (voice capture). Until the owner
+      says otherwise, the order is: quote screen and sharing; work details and a reading mode; capture; voice capture; boards and anthologies
+      on the phone; management and admin; then the quiz.
+- [x] **Quote screen, share and save** (done 6 November 2026): tapping a quote opens it as a card with its note, tags and work; favourite,
+      edit, delete, share as text, share as a picture (a PNG drawn from the same card the reader sees), and save that picture to a file.
+      Works with no server.
+- [ ] **Voice capture** (owner, 6 November 2026: "a way to record sound and save from there"). **Assumed, to be confirmed before it is
+      built:** record on the phone, turn the speech into text on the phone (no audio leaves it, and nothing proprietary: the app is GPL-3.0),
+      correct the text on the same screen as camera capture, save it as a quote, and keep the recording beside the quote only if the reader
+      asks. Open: which on-device speech engine, and whether the server may hold the audio (it has no place for it today).
 - [x] **Pull sync** (done 6 November 2026): brings down what is new or changed on the server, sends up the phone's own edits, and leaves what
       changed on both sides to the reader. **Decided by the owner: a conflict is chosen per quote and per work, with both "keep the phone's"
       and "keep the server's" always on offer** ([ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md)). Built on a stored
