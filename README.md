@@ -20,7 +20,8 @@ still undecided, and [docs/wiki/Developing.md](docs/wiki/Developing.md) to build
 
 - **Android only.** No `ios/` directory will ship ([ADR-0001](docs/wiki/ADR-0001-Android-Only.md)).
 - **Flutter**, with the Dart kept platform-neutral.
-- **Nothing proprietary.** Text recognition will use Tesseract (Apache-2.0), not Google's ML Kit.
+- **Nothing proprietary.** Text recognition uses Tesseract (Apache-2.0), not Google's ML Kit. The English and Hindi language data in
+  `assets/tessdata` is Tesseract's `tessdata_fast` (Apache-2.0).
 - **Server work the app needs** is filed as issues on [Tippani](https://github.com/aaronified/tippani/issues); this repository's
   issues are the app's.
 

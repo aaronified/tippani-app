@@ -21,6 +21,8 @@ class QuoteFormScreen extends StatefulWidget {
     required this.store,
     this.quote,
     this.workId,
+    this.initialText = '',
+    this.source = 'manual',
   });
 
   final LibraryStore store;
@@ -31,12 +33,20 @@ class QuoteFormScreen extends StatefulWidget {
   /// The work a new quote starts in (opened from a work's page).
   final int? workId;
 
+  /// The words a new quote starts with (read from a photographed page).
+  final String initialText;
+
+  /// How a new quote was captured: "manual" or "ocr". A quote being changed keeps its own.
+  final String source;
+
   @override
   State<QuoteFormScreen> createState() => _QuoteFormScreenState();
 }
 
 class _QuoteFormScreenState extends State<QuoteFormScreen> {
-  late final _text = TextEditingController(text: widget.quote?.text);
+  late final _text = TextEditingController(
+    text: widget.quote?.text ?? widget.initialText,
+  );
   late final _translation = TextEditingController(
     text: widget.quote?.translation,
   );
@@ -102,7 +112,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     color: _color,
     favorite: _favourite,
     notedAt: widget.quote?.notedAt,
-    source: widget.quote?.source ?? 'manual',
+    source: widget.quote?.source ?? widget.source,
     tags: _tags.text.split(','),
   );
 
