@@ -6,6 +6,8 @@ version. Write each entry for the person using the app, in plain words.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-06
+
 ### Added
 
 - Look up details (needs your server): when you add or edit a work, Look up details asks your server what the title most likely is and

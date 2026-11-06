@@ -1,6 +1,6 @@
 /// The version of this build. Kept in step with `version:` in pubspec.yaml: `test/version_test.dart`
 /// fails when they differ, and the release workflow refuses a tag that does not match the pubspec.
-const appVersion = '0.2.0';
+const appVersion = '0.3.0';
 
 /// The repository the releases come from.
 const releaseRepo = 'aaronified/tippani-app';
