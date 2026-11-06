@@ -192,9 +192,9 @@ synced account's theme preferences are ignored here.
   verifies the APK's certificate against the keystore's and fails on a mismatch. **It fails if a secret is missing**
   (Fluenough's rule), because a debug-signed APK cannot be upgraded by a release-signed one. The signing material is
   removed at the end of the job.
-- **Workflows.** `mobile.yml` on pull requests and pushes touching `mobile/`: `flutter pub get`, `flutter analyze`,
-  `flutter test`, a format check, and a debug build. `app-release.yml` on tags `app-v*`: the same, then the signed APK
-  named `tippani-app-vX.Y.Z.apk` attached to a GitHub release, with notes from the log since the previous `app-v` tag.
+- **Workflows.** `ci.yml` on pull requests and pushes to `main`: the release tools' tests, the wiki check, `flutter pub get`, a format check,
+  `flutter analyze`, `flutter test` and a debug build. `release.yml` on a run by hand (it bumps and tags) or a tag `app-v*`: the same
+  checks, then the signed APK named `tippani-app-vX.Y.Z.apk` attached to a GitHub release, with notes from the log since the previous `app-v` tag.
 - **Version.** The tag is the version; the build number is the run number. A check fails the release if the tag and
   `pubspec.yaml` disagree.
 - **Layout.** `mobile/` holds a committed `android/` (Lexodle's way; Fluenough generates it in CI). The wiki, the
@@ -210,7 +210,7 @@ synced account's theme preferences are ignored here.
       revision range, the connect screen, tests, and `ci.yml`. Not in it: pairing (the client can carry a token; nothing yet gets one).
 - [x] **Harness** (done 6 November 2026; asked for by the owner, ahead of the feature screens): the update check on open with a toast and
       an in-app download, the changelog after an update and a What's new screen, the log, and backup and restore, built so a later
-      feature registers its data for backup instead of changing the backup code. See [DEVELOPING.md](DEVELOPING.md#the-harness).
+      feature registers its data for backup instead of changing the backup code. See [Developing](Developing.md#the-harness).
 - [x] **Pairing** (done 6 November 2026): claim, store the token in secure storage, list and revoke devices, unpair, and know when the
       server has unpaired this phone. **Corrected from the plan:** Tippani's web Settings shows an 8-character code, not a QR, so the
       app takes the typed code. A QR needs a web change (and a QR drawing library, against Tippani's dependency budget); it is a
@@ -225,11 +225,12 @@ synced account's theme preferences are ignored here.
       management, settings and admin. The core works alone; the management and admin screens need a paired server.
 - [ ] **New features, after the functions:** capture (camera, Tesseract OCR, selection on the photo, page and chapter proposal,
       correction screen, saving to the local library, and the sync push when paired), donation, bug report, signed release.
-- [x] **Update:** the check and installer, the `app-v*` release lookup and the manifest pieces (done with the harness). Not yet done: the
-      release workflow that publishes what the check looks for.
+- [x] **Update:** the check and installer, the `app-v*` release lookup and the manifest pieces (done with the harness), and the release
+      workflow that publishes what the check looks for (scaffolded; needs the owner's keys, see [Releasing](Releasing.md)).
 - [ ] **Donation:** port the section, regenerate the QR, the disclaimer.
 - [ ] **Bug report:** the form, `app-feedback-mail.yml`, `scripts/mail_to_issues.py` and its tests.
-- [ ] **Release:** `app-release.yml` with signing and verification; first signed APK.
+- [x] **Release workflow:** `release.yml` with signing and verification, and the decision pages (scaffolded, not yet run).
+- [ ] **First signed APK:** needs the five secrets from the owner, then a run of the workflow as `0.1.0`.
 - [ ] Phases 2 to 4 of feature 5.
 - [ ] Docs: user page for the app, Developing's file map and CI table, the Roadmap, the changelog.
 

@@ -1,0 +1,75 @@
+name: wiki
+
+# Publish docs/wiki/ to this repository's GitHub wiki. The repository is the source: an edit made in the wiki is
+# overwritten by the next run, and a page deleted from docs/wiki/ is deleted from the wiki. This is where the
+# decisions (ADR-NNNN pages), the plan and the developer notes are read.
+#
+# The wiki's git repository only exists once its first page has been created (enabling Wikis in Settings is not
+# enough). If the clone below fails, save one page at https://github.com/<owner>/<repo>/wiki and run this again.
+# If GITHUB_TOKEN is refused, create a fine-grained token with "Contents: write" on this repository and save it as
+# the secret WIKI_TOKEN, which is then used instead.
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/wiki/**", ".github/workflows/wiki.yml"]
+  workflow_dispatch:
+
+# One sync at a time; a second waits rather than cancelling the first, which may be half way through pushing.
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check there is something to publish
+        run: |
+          shopt -s nullglob
+          pages=(docs/wiki/*.md)
+          if [ ${#pages[@]} -eq 0 ]; then
+            echo "::error::docs/wiki/ has no .md pages; refusing to empty the wiki."
+            exit 1
+          fi
+          if [ ! -f docs/wiki/Home.md ]; then
+            echo "::error::docs/wiki/Home.md is missing; the wiki would have no front page."
+            exit 1
+          fi
+
+      - name: Clone the wiki
+        env:
+          TOKEN: ${{ secrets.WIKI_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if ! git clone --quiet "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki; then
+            echo "::error::Could not clone the wiki. Either it does not exist yet (save its first page in the web UI) or the token has no access to it (set the WIKI_TOKEN secret)."
+            exit 1
+          fi
+
+      # Copy, then let git work out what changed; removing the old pages first is what makes a deleted page
+      # disappear from the wiki too.
+      - name: Copy the pages across
+        run: |
+          set -euo pipefail
+          rm -f wiki/*.md
+          cp docs/wiki/*.md wiki/
+
+      - name: Commit and push, if anything changed
+        working-directory: wiki
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "wiki already matches docs/wiki"
+            exit 0
+          fi
+          git commit -m "docs: mirror docs/wiki from ${GITHUB_SHA::7}"
+          git push origin
