@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'api/api_client.dart';
 import 'api/capabilities.dart';
 import 'harness/app_log.dart';
+import 'pairing/devices.dart';
+import 'pairing/pairing_service.dart';
 import 'settings/server_url.dart';
 import 'settings/settings_store.dart';
 
@@ -40,6 +42,15 @@ class AppController extends ChangeNotifier {
 
   final SettingsStore _settings;
   final AppLog? _log;
+  late final PairingService _pairing = PairingService(
+    _settings,
+    clientFactory: _clientFactory,
+    log: _log,
+  );
+
+  // The device token, held in memory once read so a screen can build a client without waiting on storage.
+  String? _token;
+  bool _revoked = false;
   final ClientFactory _clientFactory;
 
   ServerCheck? _check;
@@ -49,6 +60,118 @@ class AppController extends ChangeNotifier {
 
   /// The last answer for the stored server, or null before the first ask.
   ServerCheck? get check => _check;
+
+  /// Whether this phone holds a device token for the stored server.
+  bool get paired => _token != null && _token!.isNotEmpty;
+
+  /// Who this phone is paired as, for display.
+  String? get username => paired ? _settings.username : null;
+
+  /// True after the server refused the token (the device was unpaired from the web Settings). The home
+  /// screen says so and offers to pair again.
+  bool get revoked => _revoked;
+
+  bool _isAdmin = false;
+
+  /// Whether the paired account is an admin, as the server last said. Asked again each time the app opens
+  /// and after pairing, and never kept on the phone: an admin who is demoted should lose the admin screens
+  /// the next time the app opens, not whenever a stored flag is cleared.
+  bool get isAdmin => paired && _isAdmin;
+
+  /// Reads the stored token once at start.
+  Future<void> load() async {
+    _token = await _settings.token();
+    notifyListeners();
+    await loadAccount();
+  }
+
+  /// Asks the server who this phone is paired as and whether that account is an admin (`GET /auth/me`). A
+  /// failure leaves the last answer alone: not being able to ask is not a demotion.
+  Future<void> loadAccount() async {
+    if (!paired) {
+      _isAdmin = false;
+      return;
+    }
+    try {
+      final me = await withClient((c) => c.getJson('/auth/me'));
+      if (me is Map) {
+        _isAdmin = me['is_admin'] == true;
+        notifyListeners();
+      }
+    } on ApiException {
+      // unreachable, or the token was refused (withClient has already unpaired the phone)
+    }
+  }
+
+  /// A client for the stored server carrying the device token, or null when not connected and paired. The
+  /// caller closes it.
+  ApiClient? authedClient() {
+    final url = serverUrl;
+    if (url == null || !paired) return null;
+    return _clientFactory(apiBaseOf(url), _token);
+  }
+
+  /// Calls [run] with an authenticated client, and treats a refused token as the end of this pairing: the
+  /// phone forgets it and the home screen says it was unpaired. Returns null when not paired.
+  Future<T?> withClient<T>(Future<T> Function(ApiClient client) run) async {
+    final client = authedClient();
+    if (client == null) return null;
+    try {
+      return await run(client);
+    } on ApiException catch (e) {
+      if (e.failure == ApiFailure.unauthorised) {
+        _log?.warn(
+          'the server refused the token this phone holds; unpairing it here',
+        );
+        await _settings.forgetToken();
+        _token = null;
+        _revoked = true;
+        notifyListeners();
+      }
+      rethrow;
+    } finally {
+      client.close();
+    }
+  }
+
+  /// Pairs this phone with the stored server using [code] from the web Settings.
+  Future<PairResult> pair(String code, String deviceName) async {
+    final url = serverUrl;
+    if (url == null) return const PairResult.failed(PairFailure.unexpected);
+    final result = await _pairing.claim(url, code, deviceName);
+    if (result.ok) {
+      _token = await _settings.token();
+      _revoked = false;
+      notifyListeners();
+      await loadAccount();
+    }
+    return result;
+  }
+
+  /// The devices on this account.
+  Future<List<DeviceInfo>?> devices() => withClient(listDevices);
+
+  /// Unpairs [id] from the account.
+  Future<void> revoke(int id) async {
+    await withClient((c) => revokeDevice(c, id));
+  }
+
+  /// Unpairs this phone: asks the server to forget it (best effort; a server that cannot be reached is not
+  /// a reason to keep the token), then forgets the token here. The server address stays.
+  Future<void> unpair() async {
+    try {
+      final all = await devices();
+      final me = all?.where((d) => d.current).firstOrNull;
+      if (me != null) await revoke(me.id);
+    } on ApiException {
+      // unreachable or already unpaired: the local half still happens
+    }
+    await _settings.forgetToken();
+    _token = null;
+    _isAdmin = false;
+    _log?.info('unpaired');
+    notifyListeners();
+  }
 
   bool get checking => _checking;
 
@@ -101,6 +224,8 @@ class AppController extends ChangeNotifier {
   Future<void> forget() async {
     await _settings.forgetServer();
     _log?.info('server forgotten');
+    _token = null;
+    _revoked = false;
     _check = null;
     notifyListeners();
   }

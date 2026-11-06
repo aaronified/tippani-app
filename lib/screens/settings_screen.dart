@@ -5,6 +5,9 @@ import '../harness/backup_screen.dart';
 import '../harness/changelog_screen.dart';
 import '../harness/harness.dart';
 import '../harness/log_screen.dart';
+import '../harness/server_log_screen.dart';
+import 'devices_screen.dart';
+import 'pair_screen.dart';
 import '../harness/update_controller.dart';
 import '../harness/update_ui.dart';
 import '../harness/version.dart';
@@ -45,6 +48,29 @@ class SettingsScreen extends StatelessWidget {
     if (yes == true) await controller.forget();
   }
 
+  Future<void> _unpair(BuildContext context) async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Unpair this phone?'),
+        content: const Text(
+          'The server is told to forget this phone, and the app forgets its key. The server address stays, so you can pair again with a new code.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Unpair'),
+          ),
+        ],
+      ),
+    );
+    if (yes == true) await controller.unpair();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -63,6 +89,34 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
+            if (url != null && !controller.paired)
+              ListTile(
+                leading: const Icon(Icons.phonelink_lock_outlined),
+                title: const Text('Pair this phone'),
+                subtitle: const Text('Needed to use your library'),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => PairScreen(controller: controller),
+                  ),
+                ),
+              ),
+            if (controller.paired) ...[
+              ListTile(
+                leading: const Icon(Icons.devices_outlined),
+                title: const Text('Paired devices'),
+                subtitle: Text('Paired as ${controller.username ?? ''}'),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => DevicesScreen(controller: controller),
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.phonelink_erase_outlined),
+                title: const Text('Unpair this phone'),
+                onTap: () => _unpair(context),
+              ),
+            ],
             if (url != null)
               ListTile(
                 leading: const Icon(Icons.link_off),
@@ -114,15 +168,32 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
+            // TWO LOGS, KEPT APART. The app's log is this phone's own record of what the app did; the
+            // server's log is the server's, kept there, and only an admin can read it. They never share a
+            // screen, a copy or a file.
             ListTile(
               leading: const Icon(Icons.receipt_long_outlined),
-              title: const Text('Log'),
+              title: const Text('App log'),
+              subtitle: const Text("What this app did on this phone"),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => LogScreen(log: harness.log),
                 ),
               ),
             ),
+            if (controller.isAdmin)
+              ListTile(
+                leading: const Icon(Icons.dns_outlined),
+                title: const Text('Server log'),
+                subtitle: const Text(
+                  "The Tippani server's own log. Admins only",
+                ),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ServerLogScreen(controller: controller),
+                  ),
+                ),
+              ),
             const Divider(),
             const ListTile(
               leading: Icon(Icons.info_outline),

@@ -8,6 +8,11 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Added
 
+- Pair this phone with your server: make a code in Tippani's Settings on a computer, type it in the app, and the phone gets a key it
+  can use and you can take away. No password is typed on the phone. Settings lists your paired devices, marks this phone, and
+  unpairs any other; the app tells you if the server unpaired it.
+- A server log, for an admin, in Settings, with a search, a time window and the levels to show, and Copy and Share. It is the
+  server's own log and is kept apart from the app's log (now called App log): the two never share a screen or a file.
 - The app opens, asks your Tippani server what it is, and tells you whether this app and that server can talk. It remembers the
   server's address, and warns you before it keeps a plain http address outside your own network.
 - It checks for a newer version of itself when it opens. When there is one, a message offers to download it, and Android's installer

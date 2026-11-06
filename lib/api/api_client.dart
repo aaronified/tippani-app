@@ -13,8 +13,15 @@ enum ApiFailure {
   /// Something answered too slowly.
   timeout,
 
-  /// The server refused the credential (401 or 403). A revoked device token looks like this.
+  /// The server does not accept the credential (401). A revoked device token looks like this.
   unauthorised,
+
+  /// The credential is good but not allowed to do this (403): an admin-only route asked by someone who is
+  /// not an admin. It is NOT a reason to unpair the phone.
+  forbidden,
+
+  /// The server is limiting how often this can be asked (429). The pairing claim is limited on purpose.
+  rateLimited,
 
   /// The server answered with an error of its own.
   server,
@@ -56,10 +63,18 @@ class ApiClient {
   final Duration timeout;
   final http.Client _client;
 
+  /// The address for [path], which may carry a query (`/admin/logs?level=error`). The query is kept as a
+  /// query: handing the whole string to Uri as a path would percent-encode the `?` and ask for a route
+  /// that does not exist.
   Uri _uri(String path) {
-    final clean = path.startsWith('/') ? path.substring(1) : path;
+    final parsed = Uri.parse(path);
+    final clean = parsed.path.startsWith('/')
+        ? parsed.path.substring(1)
+        : parsed.path;
+    final prefix = base.path.endsWith('/') ? base.path : '${base.path}/';
     return base.replace(
-      path: '${base.path.endsWith('/') ? base.path : '${base.path}/'}$clean',
+      path: '$prefix$clean',
+      query: parsed.hasQuery ? parsed.query : null,
     );
   }
 
@@ -80,6 +95,19 @@ class ApiClient {
     }
     return caps;
   }
+
+  /// POST [body] as JSON to [path] and decode the JSON answer (null for an empty one).
+  Future<Object?> postJson(String path, Map<String, Object?> body) => _send(
+    () => _client.post(
+      _uri(path),
+      headers: {..._headers, 'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    ),
+  );
+
+  /// DELETE [path]. A 204 is an empty answer, so this returns null on success.
+  Future<Object?> delete(String path) =>
+      _send(() => _client.delete(_uri(path), headers: _headers));
 
   /// GET [path] and decode the JSON answer.
   Future<Object?> getJson(String path) =>
@@ -102,8 +130,14 @@ class ApiClient {
       throw ApiException(ApiFailure.network, e.message);
     }
     final status = response.statusCode;
-    if (status == 401 || status == 403) {
+    if (status == 403) {
+      throw ApiException(ApiFailure.forbidden, _errorText(response), status);
+    }
+    if (status == 401) {
       throw ApiException(ApiFailure.unauthorised, _errorText(response), status);
+    }
+    if (status == 429) {
+      throw ApiException(ApiFailure.rateLimited, _errorText(response), status);
     }
     if (status < 200 || status >= 300) {
       throw ApiException(ApiFailure.server, _errorText(response), status);

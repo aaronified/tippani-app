@@ -183,7 +183,7 @@ void main() {
       final r = await rig();
       r.log.warn('something went a bit wrong');
       await open(tester, r);
-      await goSettings(tester, 'Log');
+      await goSettings(tester, 'App log');
       expect(find.textContaining('something went a bit wrong'), findsOneWidget);
     });
 

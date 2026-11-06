@@ -176,7 +176,13 @@ Lexodle nor Fluenough has dynamic colour yet. Textures and the web app's materia
 - [x] **Harness** (done 6 November 2026; asked for by the owner, ahead of the feature screens): the update check on open with a toast and
       an in-app download, the changelog after an update and a What's new screen, the log, and backup and restore, built so a later
       feature registers its data for backup instead of changing the backup code. See [DEVELOPING.md](DEVELOPING.md#the-harness).
-- [ ] **Pairing:** scan the QR, claim, store the token (platform secure storage), show and revoke devices.
+- [x] **Pairing** (done 6 November 2026): claim, store the token in secure storage, list and revoke devices, unpair, and know when the
+      server has unpaired this phone. **Corrected from the plan:** Tippani's web Settings shows an 8-character code, not a QR, so the
+      app takes the typed code. A QR needs a web change (and a QR drawing library, against Tippani's dependency budget); it is a
+      later nicety, not a blocker. The server marks the caller's own device `current` (Tippani API revision 9) so the app never
+      offers to revoke the phone in the hand.
+- [x] **Server log** (done 6 November 2026; asked for by the owner): an admin's view of `GET /admin/logs` with its filters and paging,
+      separate from the app's own log.
 - [ ] **Capture:** camera, OCR, selection on the photo, page and chapter proposal, correction screen, offline queue.
 - [x] **Update:** the check and installer, the `app-v*` release lookup and the manifest pieces (done with the harness). Not yet done: the
       release workflow that publishes what the check looks for.

@@ -67,7 +67,8 @@ class _ShellState extends State<Shell> {
   @override
   void initState() {
     super.initState();
-    widget.controller.refresh();
+    // The token is read first (a screen builds its client from it), then the server is asked.
+    widget.controller.load().then((_) => widget.controller.refresh());
   }
 
   @override

@@ -143,7 +143,10 @@ String describeCheck(ServerCheck check) {
       return 'Could not reach that address. Check it, and that your phone can see the server (the same Wi-Fi, or your VPN).';
     case ApiFailure.badResponse:
       return 'Something answered, but it is not a Tippani server. Check the address and the port.';
+    case ApiFailure.rateLimited:
+      return 'The server is asking you to slow down. Wait a moment and try again.';
     case ApiFailure.unauthorised:
+    case ApiFailure.forbidden:
     case ApiFailure.server:
       return 'The server refused the question${check.detail.isEmpty ? '' : ': ${check.detail}'}.';
     case null:
