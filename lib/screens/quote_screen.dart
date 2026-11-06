@@ -8,6 +8,7 @@ import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../library/models.dart';
 import '../library/quote_text.dart';
+import '../speech/speaker.dart';
 import 'quote_card.dart';
 import 'quote_form_screen.dart';
 import 'work_screen.dart';
@@ -44,6 +45,7 @@ class QuoteScreen extends StatefulWidget {
     required this.picker,
     this.share = shareThroughSheet,
     this.shareImage = shareImageThroughSheet,
+    this.speaker,
   });
 
   final LibraryStore store;
@@ -51,6 +53,7 @@ class QuoteScreen extends StatefulWidget {
   final BackupPicker picker;
   final ShareText share;
   final ShareImage shareImage;
+  final Speaker? speaker;
 
   @override
   State<QuoteScreen> createState() => _QuoteScreenState();
@@ -61,6 +64,35 @@ class _QuoteScreenState extends State<QuoteScreen> {
   Quote? _quote;
   Work? _work;
   bool _loaded = false;
+  bool _speaking = false;
+  late final Speaker _speaker = widget.speaker ?? PlatformSpeaker();
+
+  @override
+  void dispose() {
+    _speaker.stop();
+    super.dispose();
+  }
+
+  Future<void> _speak() async {
+    final q = _quote;
+    if (q == null) return;
+    if (_speaking) {
+      await _speaker.stop();
+      return;
+    }
+    final language = q.language.isNotEmpty
+        ? q.language
+        : (_work?.language ?? '');
+    setState(() => _speaking = true);
+    try {
+      final ok = await _speaker.speak(q.text, language);
+      if (!ok && mounted) _say('This phone has no voice for "$language".');
+    } on Object {
+      if (mounted) _say('The quote could not be read aloud.');
+    } finally {
+      if (mounted) setState(() => _speaking = false);
+    }
+  }
 
   @override
   void initState() {
@@ -252,6 +284,11 @@ class _QuoteScreenState extends State<QuoteScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
+              FilledButton.tonalIcon(
+                onPressed: _speak,
+                icon: Icon(_speaking ? Icons.stop : Icons.volume_up_outlined),
+                label: Text(_speaking ? 'Stop' : 'Read aloud'),
+              ),
               FilledButton.tonalIcon(
                 onPressed: _shareText,
                 icon: const Icon(Icons.share_outlined),

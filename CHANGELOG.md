@@ -14,6 +14,8 @@ version. Write each entry for the person using the app, in plain words.
   newest first), and can show only the favourites.
 - Read: a work's quotes as one document to read straight through, with a text-size slider, translations and your notes switched on or off,
   and Share all.
+- Read aloud: a quote is spoken in its own language (or its work's) with the phone's own voices, and the Read screen reads a whole work
+  quote by quote. Nothing is recorded or sent. If the phone has no voice for the language, it says so.
 - The app keeps a library of its own on the phone, so it works with no server. Works and quotes, with tags, colours, favourites,
   your notes, translations and where in the book each came from, are stored in the app, and searched by their words, the work's
   title and author, who said them, and their tags. A server is something you can add later, not a way in.
