@@ -31,11 +31,15 @@ enum ApiFailure {
 }
 
 class ApiException implements Exception {
-  const ApiException(this.failure, [this.detail = '', this.status]);
+  const ApiException(this.failure, [this.detail = '', this.status, this.body]);
 
   final ApiFailure failure;
   final String detail;
   final int? status;
+
+  /// The server's JSON answer to a refused request, where it sent one. A duplicate (409) carries the row it
+  /// clashed with here (`{"error": ..., "existing": {...}}`), which a retrying client needs.
+  final Object? body;
 
   @override
   String toString() =>
@@ -140,7 +144,12 @@ class ApiClient {
       throw ApiException(ApiFailure.rateLimited, _errorText(response), status);
     }
     if (status < 200 || status >= 300) {
-      throw ApiException(ApiFailure.server, _errorText(response), status);
+      throw ApiException(
+        ApiFailure.server,
+        _errorText(response),
+        status,
+        _bodyOf(response),
+      );
     }
     if (response.body.isEmpty) return null;
     try {
@@ -151,6 +160,14 @@ class ApiClient {
         'the answer was not JSON',
         status,
       );
+    }
+  }
+
+  Object? _bodyOf(http.Response response) {
+    try {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } on FormatException {
+      return null;
     }
   }
 

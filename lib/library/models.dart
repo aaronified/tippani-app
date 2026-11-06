@@ -40,6 +40,18 @@ class Work {
   /// This work's id on the paired Tippani server, once it has been pushed there.
   final int? serverId;
 
+  Work withServerId(int? id) => Work(
+    id: this.id,
+    kind: kind,
+    title: title,
+    creator: creator,
+    year: year,
+    language: language,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    serverId: id,
+  );
+
   Map<String, Object?> toJson() => {
     'id': id,
     'kind': kind.name,
@@ -123,6 +135,26 @@ class Quote {
 
   /// This quote's id on the paired server, once pushed.
   final int? serverId;
+
+  Quote withServerId(int? id) => Quote(
+    id: this.id,
+    workId: workId,
+    text: text,
+    translation: translation,
+    language: language,
+    speaker: speaker,
+    chapter: chapter,
+    location: location,
+    note: note,
+    color: color,
+    favorite: favorite,
+    notedAt: notedAt,
+    source: source,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    tags: tags,
+    serverId: id,
+  );
 
   Map<String, Object?> toJson() => {
     'id': id,

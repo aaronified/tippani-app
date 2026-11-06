@@ -103,6 +103,21 @@ or a work; `work_screen.dart` is one work with its quotes; `library_widgets.dart
 - **Tests.** The screens are tested against `test/support/memory_library.dart`, a `LibraryStore` with no I/O, because a widget test's
   fake clock cannot drive real SQLite. The store itself is tested against real SQLite in `library_store_test.dart`.
 
+## Sending the library to the server
+
+`lib/sync/push_sync.dart` (`PushSync`, one per app, held by the harness) and `lib/screens/sync_screen.dart` (Settings > Send library to
+server, shown when paired). The design and what it deliberately does not do are [ADR-0015](ADR-0015-Sync-Starts-As-A-Push-That-Only-Adds.md);
+the rule for the pull that comes next is [ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md).
+
+- **The log gets counts and item numbers**, never a title or the words of a quote, like every other line the app logs.
+- **`ApiException.body`** keeps the server's JSON for a refused request: a 409 on a quote carries `{"existing": {...}}`, and the push links
+  to that row instead of creating a copy.
+- **The fake server** (`test/support/fake_server.dart`) answers the five create routes with the validation that matters here (colour,
+  source, media type, a title it can refuse, duplicate quotes with the existing row, a network that drops after N creates), so the push is
+  tested over the wire shape and not against its own assumptions. If the server's create routes change, change the fake with them.
+- **`setWorkServerId` and `setQuoteServerId` do not touch `updated_at`.** Being on the server is not an edit; if it were, every push would
+  make every item look changed to the pull.
+
 ## Pairing and the account
 
 - **Pairing is a typed code.** Tippani's web Settings > Devices > Pair a device shows an 8-character code, good for five minutes
@@ -139,5 +154,5 @@ in Copy or in Share, and the server's lines are redacted on the way out like the
 
 ## Not built
 
-The daily quiz and the rest of phases 1 to 4, then capture, the offline queue, donation, bug reports and the first
+The pull (once the conflict screen exists), the daily quiz and the rest of phases 1 to 4, then capture, the offline queue, donation, bug reports and the first
 signed release (the workflow exists; the keys do not), are the rest of the [plan](Plan.md)'s task list, in that order.

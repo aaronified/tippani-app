@@ -468,4 +468,56 @@ void main() {
       expect(q.tags, ['a']);
     });
   });
+  group('what the server has not been given', () {
+    test('only items with no server id are unsynced, oldest first', () async {
+      final a = await walden();
+      final b = await store.addWork(const WorkDraft(title: 'B'));
+      final q1 = await store.addQuote(QuoteDraft(text: 'one', workId: a.id));
+      final q2 = await store.addQuote(const QuoteDraft(text: 'two'));
+      await store.setWorkServerId(a.id, 41);
+      await store.setQuoteServerId(q1.id, 77);
+      expect((await store.unsyncedWorks()).map((w) => w.id), [b.id]);
+      expect((await store.unsyncedQuotes()).map((q) => q.id), [q2.id]);
+      expect((await store.work(a.id))!.serverId, 41);
+      expect((await store.quote(q1.id))!.serverId, 77);
+    });
+
+    test('being on the server is not an edit: updated_at does not move, and nothing else changes', () async {
+      final w = await walden();
+      final q = await store.addQuote(
+        QuoteDraft(
+          text: 'kept',
+          workId: w.id,
+          tags: const ['t'],
+          favorite: true,
+        ),
+      );
+      await store.setWorkServerId(w.id, 5);
+      await store.setQuoteServerId(q.id, 6);
+      final w2 = (await store.work(w.id))!;
+      final q2 = (await store.quote(q.id))!;
+      expect(w2.updatedAt, w.updatedAt);
+      expect(q2.updatedAt, q.updatedAt);
+      expect(q2.text, 'kept');
+      expect(q2.tags, ['t']);
+      expect(q2.favorite, isTrue);
+    });
+
+    test(
+      'an unsynced quote comes back with its tags, as any other quote does',
+      () async {
+        await store.addQuote(const QuoteDraft(text: 'x', tags: ['b', 'a']));
+        expect((await store.unsyncedQuotes()).single.tags, ['a', 'b']);
+      },
+    );
+
+    test('a server id survives a backup and restore', () async {
+      final w = await walden();
+      await store.setWorkServerId(w.id, 9);
+      final data = await store.exportAll();
+      await store.replaceAll(data);
+      expect((await store.work(w.id))!.serverId, 9);
+      expect(await store.unsyncedWorks(), isEmpty);
+    });
+  });
 }
