@@ -45,6 +45,7 @@ dependencies:
   flutter_tesseract_ocr:
     path: packages/flutter_tesseract_ocr
   image_picker: ^1.2.4
+  speech_to_text: ^7.5.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

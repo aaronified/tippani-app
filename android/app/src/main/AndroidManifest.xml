@@ -2,6 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools">
     <!-- The app talks to the reader's own server and to nothing else. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Only to say a quote (Say a quote): the phone's speech service listens; the app keeps no recording. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- No storage permission: backups and the log live in the app's own storage, the Downloads copy goes
          through MediaStore, and an update downloads into the app's own storage. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove" />
@@ -65,6 +67,10 @@
         <!-- Android 11 and later hide other apps unless asked for: this lets read aloud find the phone's speech engine. -->
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE"/>
+        </intent>
+        <!-- Likewise for the phone's speech recogniser, used by Say a quote. -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
         </intent>
     </queries>
 </manifest>
