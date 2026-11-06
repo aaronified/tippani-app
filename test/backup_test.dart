@@ -22,6 +22,9 @@ class _Part implements BackupContributor {
   Future<Object?> export() async => value;
 
   @override
+  Future<void> check(Object? data) async {}
+
+  @override
   Future<void> restore(Object? data) async => restoredWith = data;
 }
 

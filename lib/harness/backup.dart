@@ -26,6 +26,11 @@ abstract class BackupContributor {
   /// What to keep, as JSON-encodable data.
   Future<Object?> export();
 
+  /// Checks [data] WITHOUT changing anything and throws a [BackupException] (usually `damaged`) when it
+  /// could not be restored. The service checks every section before it restores any, so a backup with one
+  /// bad section changes nothing at all, not a half of it.
+  Future<void> check(Object? data) async {}
+
   /// Puts back what [export] gave. Receives null-safe, already-validated JSON of the right top-level
   /// shape for this key only; a contributor still checks its own fields.
   Future<void> restore(Object? data);
@@ -53,7 +58,7 @@ class BackupDocument {
 }
 
 /// Why a file could not be restored.
-enum BackupProblem { tooBig, notJson, notOurs, tooNew, noSections }
+enum BackupProblem { tooBig, notJson, notOurs, tooNew, noSections, damaged }
 
 class BackupException implements Exception {
   const BackupException(this.problem);
@@ -157,6 +162,12 @@ class BackupService {
   Future<({List<String> restored, List<String> ignored})> restore(
     BackupDocument doc,
   ) async {
+    // CHECK EVERY SECTION FIRST. A backup with a damaged library and good settings must not restore the
+    // settings and then fail: the reader would be told it failed and be left with half of it.
+    for (final e in doc.sections.entries) {
+      final owner = contributors.where((c) => c.key == e.key).firstOrNull;
+      if (owner != null) await owner.check(e.value);
+    }
     final restored = <String>[];
     final ignored = <String>[];
     for (final e in doc.sections.entries) {

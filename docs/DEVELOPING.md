@@ -25,6 +25,7 @@ flutter build apk --debug
 | `lib/api/api_client.dart` | The one way the app speaks to a server: Bearer token, timeouts, and typed failures (network, timeout, unauthorised, server, bad response). |
 | `lib/settings/server_url.dart` | Turns what a reader types into the address the app keeps, and says when plain `http` would send a credential across the internet. |
 | `lib/settings/settings_store.dart` | The server address in preferences; the device token in secure storage and nowhere else. |
+| `lib/library/` | The phone's own library: `models.dart`, the SQLite `library_store.dart`, and its backup contributor. See [The local library](#the-local-library). |
 | `lib/pairing/` | The pairing code, the claim, and the device list. |
 | `lib/screens/` | Home, Settings, the connect, pair and devices screens. |
 | `lib/harness/` | The base every feature stands on: version, update check and installer, the log, backup and restore, the changelog. See [The harness](#the-harness). |
@@ -52,6 +53,24 @@ a changelog line adds one to `CHANGELOG.md` under Unreleased.
 **Releasing, once the release workflow exists.** Raise `version:` in `pubspec.yaml` and `appVersion` together, move the Unreleased
 entries under the new version in `CHANGELOG.md`, tag `app-vX.Y.Z`, and attach `tippani-app-vX.Y.Z.apk`. The update check reads exactly
 those names.
+
+## The local library
+
+The app works with no server, so the quotes live on the phone (`lib/library/`). `LibraryStore` is the one interface every screen
+reads and writes; `SqliteLibraryStore` is SQLite through `sqflite`, with the database in the app's own storage.
+
+- **Works and quotes.** A work is a book, film, show, game or other, with a title, a creator and a year. A quote has its words, a
+  translation, language, who said it, chapter, location, a note, a colour, a favourite flag, when it was met, and where it came from
+  (`manual`, `capture`, `import`). A quote with no work is a standalone one. Deleting a work deletes its quotes (foreign keys are on).
+- **Tags** are case-insensitive and shared; a tag nothing uses is dropped.
+- **Search** is `LIKE`, not full text: Android's SQLite does not promise FTS5, and a personal library is small. A `%` or `_` typed in
+  a search is the character, not a wildcard. It matches the words, translation, note, speaker, the work's title and creator, and tags.
+- **Every id also has a `server_id`**, empty until a paired server has the row. That is where sync will hang.
+- **Backup.** `LibraryBackup` is a `BackupContributor`. Restoring REPLACES the library. Every section of a backup is checked before
+  any is written (`BackupContributor.check`), so a backup with a damaged library changes nothing, settings included.
+- **Testing.** The store is tested against real SQLite (`sqflite_common_ffi`, in memory, `singleInstance: false` so two stores in a
+  test are two databases). Widget tests cannot drive real SQLite I/O (their fake clock never completes it), so screen tests use an
+  in-memory `LibraryStore` and the store has its own file.
 
 ## Pairing and the account
 

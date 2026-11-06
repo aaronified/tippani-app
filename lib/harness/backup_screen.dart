@@ -14,6 +14,7 @@ String backupProblemText(BackupProblem p) => switch (p) {
   BackupProblem.notOurs => 'That file is not a Tippani backup.',
   BackupProblem.tooNew => 'That backup was made by a newer version of the app. Update the app, then restore it.',
   BackupProblem.noSections => 'That backup holds nothing to restore.',
+  BackupProblem.damaged => 'Part of that backup is damaged, so none of it was restored. Nothing on this phone has changed.',
 };
 
 /// Back up what the app keeps, and restore it. A backup is written to the app's own storage and to the
@@ -112,7 +113,7 @@ class _BackupScreenState extends State<BackupScreen> {
         content: Text(
           'Made ${doc.createdAt.toLocal().toString().split('.').first}'
           '${doc.appVersion.isEmpty ? '' : ' by version ${doc.appVersion}'}.\n\n'
-          'It replaces the settings on this phone with the ones in the file. You will need to pair this phone again.',
+          'It replaces the settings and the library on this phone with the ones in the file, whatever is there now. You will need to pair this phone again.',
         ),
         actions: [
           TextButton(
@@ -127,7 +128,15 @@ class _BackupScreenState extends State<BackupScreen> {
       ),
     );
     if (yes != true) return;
-    final r = await _service.restore(doc);
+    final ({List<String> restored, List<String> ignored}) r;
+    try {
+      r = await _service.restore(doc);
+    } on BackupException catch (e) {
+      // Every section is checked before any is written, so nothing on the phone has changed.
+      widget.harness.log.warn('restore refused: ${e.problem.name}');
+      if (mounted) setState(() => _message = backupProblemText(e.problem));
+      return;
+    }
     widget.harness.log.info(
       'restored: ${r.restored.join(', ')}${r.ignored.isEmpty ? '' : ' (ignored: ${r.ignored.join(', ')})'}',
     );

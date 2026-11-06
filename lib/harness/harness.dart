@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
 import '../app_controller.dart';
+import '../library/library_backup.dart';
+import '../library/library_store.dart';
 import '../settings/settings_backup.dart';
 import '../settings/settings_store.dart';
 import 'apk_install.dart';
@@ -71,6 +73,7 @@ class Harness {
     required this.backup,
     required this.picker,
     required this.settings,
+    this.library,
     Future<List<ChangelogEntry>> Function()? changelogLoader,
     this.showWhatsNew = true,
   }) : _changelogLoader = changelogLoader ?? loadChangelog;
@@ -81,6 +84,10 @@ class Harness {
   final BackupService backup;
   final BackupPicker picker;
   final SettingsStore settings;
+
+  /// The phone's own library of works and quotes, which is what lets the app work with no server. Null
+  /// only in a test that is about something else.
+  final LibraryStore? library;
 
   /// Whether the first start of a new version shows what changed. Tests that are about something else
   /// turn it off so a dialog does not cover the screen under test.
@@ -93,7 +100,11 @@ class Harness {
       _changelog ??= await _changelogLoader();
 
   /// The real harness, for the app.
-  static Harness open(SettingsStore settings, AppController controller) {
+  static Harness open(
+    SettingsStore settings,
+    AppController controller, {
+    LibraryStore? library,
+  }) {
     const files = ChannelAppFiles();
     return Harness(
       files: files,
@@ -107,10 +118,12 @@ class Harness {
         files,
         contributors: [
           SettingsBackup(settings, onRestored: controller.refresh),
+          if (library != null) LibraryBackup(library),
         ],
       ),
       picker: const SystemBackupPicker(),
       settings: settings,
+      library: library,
     );
   }
 
@@ -124,6 +137,7 @@ class Harness {
     ReleaseCheck? check,
     ApkInstaller? installer,
     BackupPicker? picker,
+    LibraryStore? library,
     List<ChangelogEntry>? changelog,
     bool showWhatsNew = false,
   }) {
@@ -141,10 +155,12 @@ class Harness {
         f,
         contributors: [
           SettingsBackup(settings, onRestored: controller?.refresh),
+          if (library != null) LibraryBackup(library),
         ],
       ),
       picker: picker ?? const _NoPicker(),
       settings: settings,
+      library: library,
       changelogLoader: () async => changelog ?? const [],
       showWhatsNew: showWhatsNew,
     );

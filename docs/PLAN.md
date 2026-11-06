@@ -180,7 +180,9 @@ have); phase 3 and 4 screens are built natively. Say if a web-view bridge is acc
 
 First version: Material 3 with **Android's dynamic colour** (the `dynamic_color` package, `DynamicColorBuilder`),
 falling back to a seed palette from Tippani's accent on older phones, with the system light and dark setting. Neither
-Lexodle nor Fluenough has dynamic colour yet. Textures and the web app's material sets are a later phase.
+Lexodle nor Fluenough has dynamic colour yet. **Material You only (the owner, 6 November 2026): the web app's themes, material
+sets and textures are not carried over, and are not a later phase.** The app is never asked to reproduce the server's look, and a
+synced account's theme preferences are ignored here.
 
 ## Release and signing
 
@@ -216,8 +218,9 @@ Lexodle nor Fluenough has dynamic colour yet. Textures and the web app's materia
       offers to revoke the phone in the hand.
 - [x] **Server log** (done 6 November 2026; asked for by the owner): an admin's view of `GET /admin/logs` with its filters and paging,
       separate from the app's own log.
-- [ ] **Local library** (first; see section 0): a SQLite store of works and quotes, browse and search, edit, export as Tippani
-      Markdown, a backup contributor, and Home opening on it.
+- [ ] **Local library** (first; see section 0). Done 6 November 2026: the SQLite store of works, quotes and tags with search, and its
+      backup contributor (restore replaces, checked before it writes). Left: the screens (browse, search, add, edit), export as
+      Tippani Markdown, and Home opening on the library.
 - [ ] **All functions, phases 1 to 4 of feature 5, before any new feature** (owner's order, 6 November 2026): core, reading side,
       management, settings and admin. The core works alone; the management and admin screens need a paired server.
 - [ ] **New features, after the functions:** capture (camera, Tesseract OCR, selection on the photo, page and chapter proposal,
