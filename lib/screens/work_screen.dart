@@ -6,6 +6,7 @@ import '../library/library_store.dart';
 import '../library/models.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart';
+import 'quote_screen.dart';
 import 'work_form_screen.dart';
 
 /// One work: its details, the quotes taken from it, and what can be done with it (edit, export, delete).
@@ -16,12 +17,14 @@ class WorkScreen extends StatefulWidget {
     required this.workId,
     required this.picker,
     this.share = shareThroughSheet,
+    this.shareImage = shareImageThroughSheet,
   });
 
   final LibraryStore store;
   final int workId;
   final BackupPicker picker;
   final ShareText share;
+  final ShareImage shareImage;
 
   @override
   State<WorkScreen> createState() => _WorkScreenState();
@@ -71,7 +74,13 @@ class _WorkScreenState extends State<WorkScreen> {
   Future<void> _open(Quote q) async {
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => QuoteFormScreen(store: widget.store, quote: q),
+        builder: (_) => QuoteScreen(
+          store: widget.store,
+          quoteId: q.id,
+          picker: widget.picker,
+          share: widget.share,
+          shareImage: widget.shareImage,
+        ),
       ),
     );
     await _load();

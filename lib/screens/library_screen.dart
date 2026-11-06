@@ -6,6 +6,7 @@ import '../library/library_store.dart';
 import '../library/models.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart';
+import 'quote_screen.dart';
 import 'work_form_screen.dart';
 import 'work_screen.dart';
 
@@ -19,11 +20,13 @@ class LibraryScreen extends StatefulWidget {
     required this.store,
     required this.picker,
     this.share = shareThroughSheet,
+    this.shareImage = shareImageThroughSheet,
   });
 
   final LibraryStore store;
   final BackupPicker picker;
   final ShareText share;
+  final ShareImage shareImage;
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -96,7 +99,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _openQuote(Quote q) async {
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => QuoteFormScreen(store: widget.store, quote: q),
+        builder: (_) => QuoteScreen(
+          store: widget.store,
+          quoteId: q.id,
+          picker: widget.picker,
+          share: widget.share,
+          shareImage: widget.shareImage,
+        ),
       ),
     );
     await _load();
@@ -110,6 +119,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           workId: w.id,
           picker: widget.picker,
           share: widget.share,
+          shareImage: widget.shareImage,
         ),
       ),
     );
