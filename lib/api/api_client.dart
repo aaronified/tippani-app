@@ -124,8 +124,9 @@ class ApiClient {
   String _errorText(http.Response response) {
     try {
       final body = jsonDecode(utf8.decode(response.bodyBytes));
-      if (body is Map && body['error'] is String)
+      if (body is Map && body['error'] is String) {
         return body['error'] as String;
+      }
     } on FormatException {
       // not JSON; fall through to the status line
     }
