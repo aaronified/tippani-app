@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:tippani/library/library_store.dart';
@@ -519,5 +521,123 @@ void main() {
       expect((await store.work(w.id))!.serverId, 9);
       expect(await store.unsyncedWorks(), isEmpty);
     });
+  });
+
+  group('what the server and the phone last agreed', () {
+    test(
+      'it is kept, is not an edit, and survives a real edit and a backup',
+      () async {
+        final w = await walden();
+        final q = await store.addQuote(QuoteDraft(text: 'kept', workId: w.id));
+        expect(w.syncedHash, isNull);
+        await store.markWorkSynced(w.id, 'aaaa');
+        await store.markQuoteSynced(q.id, 'bbbb');
+        expect((await store.work(w.id))!.syncedHash, 'aaaa');
+        expect((await store.work(w.id))!.updatedAt, w.updatedAt);
+        expect((await store.quote(q.id))!.syncedHash, 'bbbb');
+        expect((await store.quote(q.id))!.updatedAt, q.updatedAt);
+
+        await store.updateQuote(q.id, QuoteDraft(text: 'edited', workId: w.id));
+        await store.updateWork(w.id, const WorkDraft(title: 'Walden 2'));
+        expect((await store.quote(q.id))!.syncedHash, 'bbbb');
+        expect((await store.work(w.id))!.syncedHash, 'aaaa');
+
+        await store.replaceAll(await store.exportAll());
+        expect((await store.quote(q.id))!.syncedHash, 'bbbb');
+        expect((await store.work(w.id))!.syncedHash, 'aaaa');
+      },
+    );
+
+    test('adopting a work and a quote from the server links and agrees them in one write, with tags', () async {
+      final w = await store.adoptWork(
+        const WorkDraft(title: 'Dune', creator: 'Herbert'),
+        12,
+        'h1',
+      );
+      final q = await store.adoptQuote(
+        QuoteDraft(
+          text: 'Fear.',
+          workId: w.id,
+          tags: const ['b', 'a'],
+          source: 'import',
+        ),
+        34,
+        'h2',
+      );
+      expect(w.serverId, 12);
+      expect(w.syncedHash, 'h1');
+      expect(q.serverId, 34);
+      expect(q.syncedHash, 'h2');
+      expect(q.tags, ['a', 'b']);
+      expect(await store.unsyncedWorks(), isEmpty);
+      expect(await store.unsyncedQuotes(), isEmpty);
+    });
+
+    test(
+      'adopting a quote for a work that is not here changes nothing',
+      () async {
+        await expectLater(
+          store.adoptQuote(const QuoteDraft(text: 'x', workId: 999), 1, 'h'),
+          throwsA(isA<LibraryException>()),
+        );
+        expect((await store.counts()).quotes, 0);
+      },
+    );
+
+    test(
+      'a library made before this existed is upgraded and keeps everything',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('tippani_upgrade');
+        addTearDown(() => dir.delete(recursive: true));
+        final path = '${dir.path}/library.db';
+        final old = await openDatabase(
+          path,
+          version: 1,
+          singleInstance: false,
+          onCreate: (db, v) async {
+            await db.execute(
+              'CREATE TABLE works (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, title TEXT NOT NULL, creator TEXT NOT NULL DEFAULT \'\', year INTEGER, language TEXT NOT NULL DEFAULT \'\', created_at TEXT NOT NULL, updated_at TEXT NOT NULL, server_id INTEGER)',
+            );
+            await db.execute(
+              'CREATE TABLE quotes (id INTEGER PRIMARY KEY AUTOINCREMENT, work_id INTEGER REFERENCES works(id) ON DELETE CASCADE, text TEXT NOT NULL, translation TEXT NOT NULL DEFAULT \'\', language TEXT NOT NULL DEFAULT \'\', speaker TEXT NOT NULL DEFAULT \'\', chapter TEXT NOT NULL DEFAULT \'\', location TEXT NOT NULL DEFAULT \'\', note TEXT NOT NULL DEFAULT \'\', color TEXT NOT NULL DEFAULT \'yellow\', favorite INTEGER NOT NULL DEFAULT 0, noted_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT \'manual\', created_at TEXT NOT NULL, updated_at TEXT NOT NULL, server_id INTEGER)',
+            );
+            await db.execute(
+              'CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE COLLATE NOCASE)',
+            );
+            await db.execute(
+              'CREATE TABLE quote_tags (quote_id INTEGER NOT NULL, tag_id INTEGER NOT NULL, PRIMARY KEY (quote_id, tag_id))',
+            );
+            await db.insert('works', {
+              'kind': 'book',
+              'title': 'Old',
+              'created_at': '2026-01-01T00:00:00.000Z',
+              'updated_at': '2026-01-01T00:00:00.000Z',
+              'server_id': 3,
+            });
+            await db.insert('quotes', {
+              'work_id': 1,
+              'text': 'still here',
+              'noted_at': '2026-01-01T00:00:00.000Z',
+              'created_at': '2026-01-01T00:00:00.000Z',
+              'updated_at': '2026-01-01T00:00:00.000Z',
+            });
+          },
+        );
+        await old.close();
+
+        final upgraded = await SqliteLibraryStore.open(
+          path,
+          singleInstance: false,
+        );
+        addTearDown(upgraded.close);
+        final w = (await upgraded.works()).single;
+        expect(w.title, 'Old');
+        expect(w.serverId, 3);
+        expect(w.syncedHash, isNull);
+        expect((await upgraded.quotes()).single.text, 'still here');
+        await upgraded.markWorkSynced(w.id, 'now works');
+        expect((await upgraded.work(w.id))!.syncedHash, 'now works');
+      },
+    );
   });
 }

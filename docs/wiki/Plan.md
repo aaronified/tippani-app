@@ -224,9 +224,10 @@ synced account's theme preferences are ignored here.
       Left for later phases: sorting choices, bulk selection, the quote's colour board.
 - [x] **Push sync** (done 6 November 2026): works and quotes only on the phone go up once when paired, ids kept in `server_id`
       ([ADR-0015](ADR-0015-Sync-Starts-As-A-Push-That-Only-Adds.md)).
-- [ ] **Pull sync:** bring down what the server has. **Decided by the owner (6 November 2026): a conflict is chosen per quote and per work,
-      with both "keep the phone's" and "keep the server's" always on offer** ([ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md)).
-      Needs the server's `updated_at` kept at the last sync (a schema upgrade) and a conflict screen.
+- [x] **Pull sync** (done 6 November 2026): brings down what is new or changed on the server, sends up the phone's own edits, and leaves what
+      changed on both sides to the reader. **Decided by the owner: a conflict is chosen per quote and per work, with both "keep the phone's"
+      and "keep the server's" always on offer** ([ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md)). Built on a stored
+      fingerprint of what both sides last agreed, not on timestamps. Not yet tried against a real server or a phone.
 - [ ] **Metadata lookups through the server** (owner, 6 November 2026): the app uses the server's own routes for TMDB, TVDB and the other
       suppliers (`/books/lookup`, `/movies/lookup`, the cast and people routes), so the provider keys live only on the server and are set
       up there. The app holds no supplier key. These need a paired server and are part of phase 3 (metadata and people).

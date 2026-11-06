@@ -8,6 +8,7 @@ import '../harness/log_screen.dart';
 import '../harness/server_log_screen.dart';
 import 'devices_screen.dart';
 import 'pair_screen.dart';
+import 'pull_screen.dart';
 import 'sync_screen.dart';
 import '../harness/update_controller.dart';
 import '../harness/update_ui.dart';
@@ -112,6 +113,19 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              if (harness.pull != null)
+                ListTile(
+                  leading: const Icon(Icons.sync),
+                  title: const Text('Sync with server'),
+                  subtitle: const Text(
+                    'Brings down changes, sends yours up, and lets you settle clashes',
+                  ),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => PullScreen(sync: harness.pull!),
+                    ),
+                  ),
+                ),
               if (harness.sync != null)
                 ListTile(
                   leading: const Icon(Icons.cloud_upload_outlined),

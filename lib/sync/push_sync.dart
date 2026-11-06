@@ -3,6 +3,7 @@ import '../app_controller.dart';
 import '../harness/app_log.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
+import 'fingerprint.dart';
 
 /// What one push did.
 class PushResult {
@@ -104,6 +105,8 @@ class PushSync {
       }
       if (outcome.id != null) {
         await _store.setWorkServerId(w.id, outcome.id!);
+        // What went up is what both sides now agree on.
+        await _store.markWorkSynced(w.id, fingerprint(workFields(w)));
         worksSent++;
       } else {
         refused.add(PushRefusal('work ${w.id}', outcome.reason));
@@ -137,7 +140,16 @@ class PushSync {
         handled++;
         if (outcome.id != null) {
           await _store.setQuoteServerId(q.id, outcome.id!);
-          outcome.duplicate ? already++ : quotesSent++;
+          if (outcome.duplicate) {
+            // The server's copy may read differently: no agreement is recorded, so the first pull compares.
+            already++;
+          } else {
+            await _store.markQuoteSynced(
+              q.id,
+              fingerprint(quoteFields(q, realmOfQuote(work))),
+            );
+            quotesSent++;
+          }
         } else {
           refused.add(PushRefusal('quote ${q.id}', outcome.reason));
         }

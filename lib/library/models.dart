@@ -24,6 +24,7 @@ class Work {
     required this.createdAt,
     required this.updatedAt,
     this.serverId,
+    this.syncedHash,
   });
 
   final int id;
@@ -40,6 +41,10 @@ class Work {
   /// This work's id on the paired Tippani server, once it has been pushed there.
   final int? serverId;
 
+  /// A fingerprint of what the phone and the server last agreed this work said (see `sync/fingerprint.dart`).
+  /// Null until they have agreed once.
+  final String? syncedHash;
+
   Work withServerId(int? id) => Work(
     id: this.id,
     kind: kind,
@@ -50,6 +55,20 @@ class Work {
     createdAt: createdAt,
     updatedAt: updatedAt,
     serverId: id,
+    syncedHash: syncedHash,
+  );
+
+  Work withSyncedHash(String? hash) => Work(
+    id: id,
+    kind: kind,
+    title: title,
+    creator: creator,
+    year: year,
+    language: language,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    serverId: serverId,
+    syncedHash: hash,
   );
 
   Map<String, Object?> toJson() => {
@@ -62,6 +81,7 @@ class Work {
     'created_at': createdAt.toUtc().toIso8601String(),
     'updated_at': updatedAt.toUtc().toIso8601String(),
     'server_id': serverId,
+    'synced_hash': syncedHash,
   };
 }
 
@@ -102,6 +122,7 @@ class Quote {
     required this.updatedAt,
     required this.tags,
     this.serverId,
+    this.syncedHash,
   });
 
   final int id;
@@ -136,6 +157,9 @@ class Quote {
   /// This quote's id on the paired server, once pushed.
   final int? serverId;
 
+  /// What the phone and the server last agreed this quote said; null until they have agreed once.
+  final String? syncedHash;
+
   Quote withServerId(int? id) => Quote(
     id: this.id,
     workId: workId,
@@ -154,6 +178,28 @@ class Quote {
     updatedAt: updatedAt,
     tags: tags,
     serverId: id,
+    syncedHash: syncedHash,
+  );
+
+  Quote withSyncedHash(String? hash) => Quote(
+    id: id,
+    workId: workId,
+    text: text,
+    translation: translation,
+    language: language,
+    speaker: speaker,
+    chapter: chapter,
+    location: location,
+    note: note,
+    color: color,
+    favorite: favorite,
+    notedAt: notedAt,
+    source: source,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    tags: tags,
+    serverId: serverId,
+    syncedHash: hash,
   );
 
   Map<String, Object?> toJson() => {
@@ -174,6 +220,7 @@ class Quote {
     'updated_at': updatedAt.toUtc().toIso8601String(),
     'tags': tags,
     'server_id': serverId,
+    'synced_hash': syncedHash,
   };
 }
 

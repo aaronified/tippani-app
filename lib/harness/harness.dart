@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../app_controller.dart';
 import '../library/library_backup.dart';
 import '../library/library_store.dart';
+import '../sync/pull_sync.dart';
 import '../sync/push_sync.dart';
 import '../settings/settings_backup.dart';
 import '../settings/settings_store.dart';
@@ -76,6 +77,7 @@ class Harness {
     required this.settings,
     this.library,
     this.sync,
+    this.pull,
     Future<List<ChangelogEntry>> Function()? changelogLoader,
     this.showWhatsNew = true,
   }) : _changelogLoader = changelogLoader ?? loadChangelog;
@@ -94,6 +96,10 @@ class Harness {
   /// Sends the library to the paired server. One for the whole app, so leaving its screen mid-push and
   /// coming back cannot start a second push that sends the same items again.
   final PushSync? sync;
+
+  /// Brings the server's library down and sends the phone's edits up. One for the whole app, for the same
+  /// reason as [sync].
+  final PullSync? pull;
 
   /// Whether the first start of a new version shows what changed. Tests that are about something else
   /// turn it off so a dialog does not cover the screen under test.
@@ -131,6 +137,7 @@ class Harness {
       settings: settings,
       library: library,
       sync: library == null ? null : PushSync(library, controller, log: appLog),
+      pull: library == null ? null : PullSync(library, controller, log: appLog),
     );
   }
 
@@ -171,6 +178,9 @@ class Harness {
       sync: library == null || controller == null
           ? null
           : PushSync(library, controller, log: l),
+      pull: library == null || controller == null
+          ? null
+          : PullSync(library, controller, log: l),
       changelogLoader: () async => changelog ?? const [],
       showWhatsNew: showWhatsNew,
     );

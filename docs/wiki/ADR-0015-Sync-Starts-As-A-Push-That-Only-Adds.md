@@ -18,7 +18,7 @@ and the rest goes on. A 409 carries the row it clashed with: the quote is linked
 
 **Why.** The one thing a first sync must not do is damage a library. Adding is safe to repeat and safe to abandon. Edits made after an item
 was pushed are conflicts, and which side wins is for the owner to choose ([ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md)),
-so they wait for the pull.
+so they wait for the sync that reads the server, which now exists; the push itself stays an add-only step.
 
 **Consequences.** If the response to a create is lost after the server made the row, the retry creates a second copy of a work (quotes are
 safe: the server deduplicates them). A work with the same title already on the server is created again, because the push does not ask the

@@ -35,3 +35,7 @@ Thumbs.db
 
 # Kotlin compiler crash logs (they hold local paths)
 android/.kotlin/
+
+# Python bytecode
+__pycache__/
+*.pyc

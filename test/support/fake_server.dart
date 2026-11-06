@@ -69,6 +69,77 @@ class FakeServer {
   /// Every create answers with this status instead (429, 500...), when set.
   int? failCreatesWith;
 
+  // ---- reading and editing the library (GET lists, GET /books/{id}, PUT /{route}/{id}) -------------------
+
+  /// Every PUT the fake accepted, in order: the route (`/annotations/101`) and the body it was given.
+  final updated = <({String path, Map<String, Object?> body})>[];
+
+  /// Every list read answers with this status instead (500...), when set.
+  int? failReadsWith;
+
+  /// Every PUT answers with this status instead (400, 404...), when set.
+  int? failUpdatesWith;
+
+  /// Puts a row on the server as if it had been made on the web, and returns its id. [path] is a create
+  /// route (`/books`, `/annotations`...). The row is what the server's list would give back.
+  int seed(String path, Map<String, Object?> fields, {int? id}) {
+    id ??= _nextId++;
+    created.putIfAbsent(path, () => []).add({...fields, 'id': id});
+    return id;
+  }
+
+  /// Changes a row on the server directly, as an edit made on the web would.
+  void edit(String path, int id, Map<String, Object?> fields) {
+    final row = created[path]!.firstWhere((r) => r['id'] == id);
+    row.addAll(fields);
+  }
+
+  /// Removes a row, as a delete on the web would.
+  void remove(String path, int id) =>
+      created[path]!.removeWhere((r) => r['id'] == id);
+
+  /// The row now held for [id] on [path].
+  Map<String, Object?> row(String path, int id) =>
+      created[path]!.firstWhere((r) => r['id'] == id);
+
+  static const _listKeys = {
+    '/books': 'books',
+    '/movies': 'movies',
+    '/annotations': 'annotations',
+    '/dialogues': 'dialogues',
+    '/quotes': 'utterances',
+  };
+
+  http.Response _read(String path) {
+    if (failReadsWith != null) {
+      return _json({'error': 'try later'}, failReadsWith!);
+    }
+    return _json({
+      _listKeys[path]!: [
+        for (final r in created[path] ?? const <Map<String, Object?>>[]) r,
+      ],
+    });
+  }
+
+  http.Response _update(String route, int id, Map body) {
+    if (failUpdatesWith != null) {
+      return _json({'error': 'refused'}, failUpdatesWith!);
+    }
+    final rows = created[route] ?? [];
+    final i = rows.indexWhere((r) => r['id'] == id);
+    if (i < 0) return _json({'error': 'not found'}, 404);
+    final isWork = route == '/books' || route == '/movies';
+    if (isWork && (body['title'] as String? ?? '').trim().isEmpty) {
+      return _json({'error': 'title is required'}, 400);
+    }
+    if (!isWork && (body['quote'] as String? ?? '').isEmpty) {
+      return _json({'error': 'quote or note is required'}, 400);
+    }
+    updated.add((path: '$route/$id', body: Map<String, Object?>.from(body)));
+    rows[i] = {...Map<String, Object?>.from(body), 'id': id};
+    return _json(rows[i]);
+  }
+
   static const _createRoutes = {
     '/books',
     '/movies',
@@ -186,6 +257,24 @@ class FakeServer {
     if (!_authed(r)) return _json({'error': 'not logged in'}, 401);
     if (r.method == 'POST' && _createRoutes.contains(path)) {
       return _create(path, jsonDecode(r.body) as Map);
+    }
+    if (r.method == 'GET' && _listKeys.containsKey(path)) return _read(path);
+    final one = RegExp(
+      r'^(/books|/movies|/annotations|/dialogues|/quotes)/(\d+)$',
+    ).firstMatch(path);
+    if (one != null) {
+      final route = one[1]!;
+      final id = int.parse(one[2]!);
+      if (r.method == 'GET') {
+        final rows = created[route] ?? [];
+        final hit = rows.where((x) => x['id'] == id);
+        return hit.isEmpty
+            ? _json({'error': 'not found'}, 404)
+            : _json(hit.first);
+      }
+      if (r.method == 'PUT') {
+        return _update(route, id, jsonDecode(r.body) as Map);
+      }
     }
     if (r.method == 'GET' && path == '/auth/me') {
       return _json({'id': 1, 'username': username, 'is_admin': admin});
