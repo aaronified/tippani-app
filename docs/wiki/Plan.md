@@ -231,6 +231,11 @@ synced account's theme preferences are ignored here.
 - [x] **Quote screen, share and save** (done 6 November 2026): tapping a quote opens it as a card with its note, tags and work; favourite,
       edit, delete, share as text, share as a picture (a PNG drawn from the same card the reader sees), and save that picture to a file.
       Works with no server.
+- [x] **Work details and reading mode** (done 7 November 2026): counts, chapter groups in reading order, favourites filter, a Read document
+      with text size, translations and notes toggles, and Share all.
+- [ ] **Read aloud** (owner asked 7 November 2026, why the app lacks it: it was never planned). Android's own text-to-speech through
+      `flutter_tts`, no audio stored, no server. Play and stop on the quote screen; read a whole work from the Read screen; hidden when
+      the phone has no voice for the language.
 - [ ] **Voice capture** (owner, 6 November 2026: "a way to record sound and save from there"). **Assumed, to be confirmed before it is
       built:** record on the phone, turn the speech into text on the phone (no audio leaves it, and nothing proprietary: the app is GPL-3.0),
       correct the text on the same screen as camera capture, save it as a quote, and keep the recording beside the quote only if the reader

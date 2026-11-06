@@ -24,3 +24,32 @@ String quoteShareText(Quote q, Work? w) {
     if (from.isNotEmpty) '— $from',
   ].join('\n');
 }
+
+/// A whole work as plain text to read or send: its title line, then each chapter's quotes in reading order.
+/// [quotes] must already be in reading order. The translation and the reader's note are added only when asked for.
+String workShareText(
+  Work w,
+  List<Quote> quotes, {
+  bool translations = true,
+  bool notes = false,
+}) {
+  final head = w.creator.trim().isEmpty ? w.title : '${w.title} — ${w.creator}';
+  final out = StringBuffer(head);
+  String? chapter;
+  for (final q in quotes) {
+    final c = q.chapter.trim();
+    if (chapter != c) {
+      chapter = c;
+      if (c.isNotEmpty) out.write('\n\n$c');
+    }
+    out.write('\n\n“${q.text.trim()}”');
+    if (q.location.trim().isNotEmpty) out.write(' (${q.location.trim()})');
+    if (translations && q.translation.trim().isNotEmpty) {
+      out.write('\n${q.translation.trim()}');
+    }
+    if (notes && q.note.trim().isNotEmpty) {
+      out.write('\nNote: ${q.note.trim()}');
+    }
+  }
+  return out.toString();
+}

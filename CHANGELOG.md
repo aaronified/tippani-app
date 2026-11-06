@@ -10,6 +10,10 @@ version. Write each entry for the person using the app, in plain words.
 
 - Open a quote to read it in full, as a card with your note, its tags and the work it is from. From there you can favourite it, edit it,
   delete it, share it as text, share it as a picture, or save the picture to a file. The picture is the card you see.
+- A work's page shows how many quotes, chapters and favourites it holds, lists its quotes under chapter headings in reading order (or
+  newest first), and can show only the favourites.
+- Read: a work's quotes as one document to read straight through, with a text-size slider, translations and your notes switched on or off,
+  and Share all.
 - The app keeps a library of its own on the phone, so it works with no server. Works and quotes, with tags, colours, favourites,
   your notes, translations and where in the book each came from, are stored in the app, and searched by their words, the work's
   title and author, who said them, and their tags. A server is something you can add later, not a way in.
