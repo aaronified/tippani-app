@@ -4,10 +4,12 @@ import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../library/models.dart';
+import '../library/work_order.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart';
 import 'quote_screen.dart';
 import 'work_form_screen.dart';
+import 'work_read_screen.dart';
 
 /// One work: its details, the quotes taken from it, and what can be done with it (edit, export, delete).
 class WorkScreen extends StatefulWidget {
@@ -34,6 +36,8 @@ class _WorkScreenState extends State<WorkScreen> {
   Work? _work;
   List<Quote> _quotes = const [];
   bool _loaded = false;
+  bool _onlyFavourites = false;
+  bool _byChapter = true;
 
   @override
   void initState() {
@@ -86,6 +90,28 @@ class _WorkScreenState extends State<WorkScreen> {
     await _load();
   }
 
+  void _read() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => WorkReadScreen(
+          work: _work!,
+          quotes: readingOrder(_quotes),
+          share: widget.share,
+        ),
+      ),
+    );
+  }
+
+  Widget _tile(Quote q) => QuoteTile(
+    quote: q,
+    work: null,
+    onTap: () => _open(q),
+    onFavourite: () async {
+      await widget.store.setFavorite(q.id, !q.favorite);
+      await _load();
+    },
+  );
+
   Future<void> _delete() async {
     final n = _quotes.length;
     final sure = await showDialog<bool>(
@@ -126,6 +152,15 @@ class _WorkScreenState extends State<WorkScreen> {
       );
     }
     final text = Theme.of(context).textTheme;
+    final favourites = _quotes.where((q) => q.favorite).length;
+    final chapters = {
+      for (final q in _quotes)
+        if (q.chapter.trim().isNotEmpty) q.chapter.trim(),
+    }.length;
+    final shown = _onlyFavourites
+        ? _quotes.where((q) => q.favorite).toList()
+        : _quotes;
+    final ordered = _byChapter ? readingOrder(shown) : shown;
     return Scaffold(
       appBar: AppBar(
         title: Text(w?.title ?? ''),
@@ -193,6 +228,37 @@ class _WorkScreenState extends State<WorkScreen> {
                         ].join(' · '),
                         style: text.bodyMedium,
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_quotes.length} ${_quotes.length == 1 ? 'quote' : 'quotes'}'
+                        '${chapters > 0 ? ' · $chapters ${chapters == 1 ? 'chapter' : 'chapters'}' : ''}'
+                        ' · $favourites ${favourites == 1 ? 'favourite' : 'favourites'}',
+                        style: text.bodySmall,
+                      ),
+                      if (_quotes.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            FilledButton.tonalIcon(
+                              onPressed: _read,
+                              icon: const Icon(Icons.menu_book_outlined),
+                              label: const Text('Read'),
+                            ),
+                            FilterChip(
+                              label: const Text('Favourites'),
+                              selected: _onlyFavourites,
+                              onSelected: (v) =>
+                                  setState(() => _onlyFavourites = v),
+                            ),
+                            FilterChip(
+                              label: const Text('In reading order'),
+                              selected: _byChapter,
+                              onSelected: (v) => setState(() => _byChapter = v),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -201,16 +267,22 @@ class _WorkScreenState extends State<WorkScreen> {
                     padding: EdgeInsets.all(16),
                     child: Text('No quotes from this work yet.'),
                   ),
-                for (final q in _quotes)
-                  QuoteTile(
-                    quote: q,
-                    work: null,
-                    onTap: () => _open(q),
-                    onFavourite: () async {
-                      await widget.store.setFavorite(q.id, !q.favorite);
-                      await _load();
-                    },
+                if (_quotes.isNotEmpty && ordered.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('No favourites in this work yet.'),
                   ),
+                if (_byChapter)
+                  for (final g in groupByChapter(ordered)) ...[
+                    if (g.name.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                        child: Text(g.name, style: text.titleMedium),
+                      ),
+                    for (final q in g.quotes) _tile(q),
+                  ]
+                else
+                  for (final q in ordered) _tile(q),
               ],
             ),
     );
