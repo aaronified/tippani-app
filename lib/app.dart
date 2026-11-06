@@ -5,6 +5,7 @@ import 'app_controller.dart';
 import 'harness/harness.dart';
 import 'harness/update_ui.dart';
 import 'screens/home_screen.dart';
+import 'screens/library_screen.dart';
 import 'screens/settings_screen.dart';
 
 /// Tippani's own red, used as the seed where the phone gives no wallpaper colours (before Android 12,
@@ -73,29 +74,52 @@ class _ShellState extends State<Shell> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      HomeScreen(controller: widget.controller),
-      SettingsScreen(controller: widget.controller, harness: widget.harness),
+    // The library comes first: the app works with no server, so what it opens on is the reader's own
+    // quotes. A harness with no library (a test of the server screens alone) has no such tab.
+    final library = widget.harness.library;
+    final tabs = <({Widget screen, NavigationDestination destination})>[
+      if (library != null)
+        (
+          screen: LibraryScreen(store: library, picker: widget.harness.picker),
+          destination: const NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
+            label: 'Library',
+          ),
+        ),
+      (
+        screen: HomeScreen(controller: widget.controller),
+        destination: NavigationDestination(
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home),
+          label: library == null ? 'Home' : 'Server',
+        ),
+      ),
+      (
+        screen: SettingsScreen(
+          controller: widget.controller,
+          harness: widget.harness,
+        ),
+        destination: const NavigationDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings),
+          label: 'Settings',
+        ),
+      ),
     ];
     return UpdateHost(
       harness: widget.harness,
       child: Scaffold(
-        body: SafeArea(child: screens[_index]),
+        body: SafeArea(
+          child: IndexedStack(
+            index: _index,
+            children: [for (final t in tabs) t.screen],
+          ),
+        ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _index,
           onDestinationSelected: (i) => setState(() => _index = i),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings),
-              label: 'Settings',
-            ),
-          ],
+          destinations: [for (final t in tabs) t.destination],
         ),
       ),
     );

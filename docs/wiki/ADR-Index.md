@@ -42,5 +42,6 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0011](ADR-0011-The-Server-Log-Is-Kept-Apart-From-The-App-Log.md): The server log is kept apart from the app log
 - [ADR-0012](ADR-0012-Functions-Before-New-Features.md): All the functions come before the new features
 - [ADR-0013](ADR-0013-The-Release-Is-Cut-By-A-Workflow.md): A release is cut by a workflow, signed with a key that is never in the repository
+- [ADR-0014](ADR-0014-Export-Is-Tippani-s-Own-Markdown.md): Export is Tippani's own Markdown, written to the server's format
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)
