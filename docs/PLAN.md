@@ -170,8 +170,9 @@ Lexodle nor Fluenough has dynamic colour yet. Textures and the web app's materia
 - [ ] Re-verify this plan against the code before starting; correct what moved.
 - [ ] **Server:** shared text-cleanup step for captured text (roadmap §7); a nullable photo on a quote; confirm the
       `apiRevision` covers what the app needs and bump it.
-- [ ] **Scaffold:** `mobile/` with package id, dynamic-colour theme, navigation, settings storage, the HTTP client with
-      the device token, `GET /capabilities` check, tests, `mobile.yml`.
+- [x] **Scaffold** (done 6 November 2026): package id `io.github.aaronified.tippani`, dynamic-colour theme, a bottom bar, server address
+      in preferences, the HTTP client (Bearer token, timeouts, typed failures), the `GET /capabilities` check with the app's own
+      revision range, the connect screen, tests, and `ci.yml`. Not in it: pairing (the client can carry a token; nothing yet gets one).
 - [ ] **Pairing:** scan the QR, claim, store the token (platform secure storage), show and revoke devices.
 - [ ] **Capture:** camera, OCR, selection on the photo, page and chapter proposal, correction screen, offline queue.
 - [ ] **Update:** port the check and installer; `app-v*` release lookup; the manifest pieces.

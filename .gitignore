@@ -32,3 +32,6 @@ keystore*.base64
 .DS_Store
 Thumbs.db
 *.swp
+
+# Kotlin compiler crash logs (they hold local paths)
+android/.kotlin/
