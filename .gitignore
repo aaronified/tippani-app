@@ -1,0 +1,34 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+*.iml
+.idea/
+.vscode/
+
+# Android
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/release/
+**/*.keystore
+**/*.jks
+*.apk
+*.aab
+
+# Secrets and signing material, never committed. The release workflow reads these from repository secrets.
+.env
+.env.*
+*.pem
+*.p12
+keystore*.base64
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
