@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
+import '../anthologies/anthologies.dart';
 import '../library/models.dart';
 import 'library_widgets.dart';
 import 'capture_screen.dart';
@@ -23,12 +24,14 @@ class LibraryScreen extends StatefulWidget {
     required this.picker,
     this.share = shareThroughSheet,
     this.shareImage = shareImageThroughSheet,
+    this.anthologies,
   });
 
   final LibraryStore store;
   final BackupPicker picker;
   final ShareText share;
   final ShareImage shareImage;
+  final AnthologyService? anthologies;
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -121,6 +124,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           picker: widget.picker,
           share: widget.share,
           shareImage: widget.shareImage,
+          anthologies: widget.anthologies,
         ),
       ),
     );
@@ -136,6 +140,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           picker: widget.picker,
           share: widget.share,
           shareImage: widget.shareImage,
+          anthologies: widget.anthologies,
         ),
       ),
     );

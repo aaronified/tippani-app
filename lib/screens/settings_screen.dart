@@ -1,3 +1,5 @@
+import 'anthologies_screen.dart';
+
 import 'package:flutter/material.dart';
 
 import '../app_controller.dart';
@@ -113,6 +115,20 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              if (harness.anthologies != null)
+                ListTile(
+                  leading: const Icon(Icons.collections_bookmark_outlined),
+                  title: const Text('Anthologies'),
+                  subtitle: const Text(
+                    'Collections of quotes you have gathered, kept on the server',
+                  ),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                          AnthologiesScreen(service: harness.anthologies!),
+                    ),
+                  ),
+                ),
               if (harness.pull != null)
                 ListTile(
                   leading: const Icon(Icons.sync),

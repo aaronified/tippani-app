@@ -80,7 +80,11 @@ class _ShellState extends State<Shell> {
     final tabs = <({Widget screen, NavigationDestination destination})>[
       if (library != null)
         (
-          screen: LibraryScreen(store: library, picker: widget.harness.picker),
+          screen: LibraryScreen(
+            store: library,
+            picker: widget.harness.picker,
+            anthologies: widget.harness.anthologies,
+          ),
           destination: const NavigationDestination(
             icon: Icon(Icons.menu_book_outlined),
             selectedIcon: Icon(Icons.menu_book),

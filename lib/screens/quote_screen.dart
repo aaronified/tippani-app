@@ -3,12 +3,15 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../anthologies/anthologies.dart';
 import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../library/models.dart';
 import '../library/quote_text.dart';
 import '../speech/speaker.dart';
+import '../sync/fingerprint.dart' show realmOfQuote;
+import 'anthologies_screen.dart' show addToAnthologyDialog;
 import 'quote_card.dart';
 import 'quote_form_screen.dart';
 import 'work_screen.dart';
@@ -46,6 +49,7 @@ class QuoteScreen extends StatefulWidget {
     this.share = shareThroughSheet,
     this.shareImage = shareImageThroughSheet,
     this.speaker,
+    this.anthologies,
   });
 
   final LibraryStore store;
@@ -54,6 +58,9 @@ class QuoteScreen extends StatefulWidget {
   final ShareText share;
   final ShareImage shareImage;
   final Speaker? speaker;
+
+  /// The server's anthologies; null (or not available) hides Add to anthology.
+  final AnthologyService? anthologies;
 
   @override
   State<QuoteScreen> createState() => _QuoteScreenState();
@@ -284,6 +291,17 @@ class _QuoteScreenState extends State<QuoteScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
+              if (widget.anthologies?.available == true && q.serverId != null)
+                FilledButton.tonalIcon(
+                  onPressed: () => addToAnthologyDialog(
+                    context,
+                    widget.anthologies!,
+                    kind: entryKindOf(realmOfQuote(_work)),
+                    itemId: q.serverId!,
+                  ),
+                  icon: const Icon(Icons.collections_bookmark_outlined),
+                  label: const Text('Add to anthology'),
+                ),
               FilledButton.tonalIcon(
                 onPressed: _speak,
                 icon: Icon(_speaking ? Icons.stop : Icons.volume_up_outlined),

@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tippani/anthologies/anthologies.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/harness/app_log.dart';
 import 'package:tippani/library/models.dart';
@@ -305,4 +306,52 @@ void main() {
     },
     skip: skip,
   );
+
+  test('anthologies: make, add a synced quote, edit without losing the switches, remove, delete', () async {
+    final lib = MemoryLibrary();
+    final push = PushSync(lib, controller, log: AppLog());
+    final w = await lib.addWork(const WorkDraft(title: 'Anthology book'));
+    final q = await lib.addQuote(
+      QuoteDraft(text: 'For the anthology.', workId: w.id),
+    );
+    await push.push();
+    final serverId = (await lib.quote(q.id))!.serverId!;
+
+    final svc = ServerAnthologies(controller);
+    expect(svc.available, isTrue);
+    final made = await svc.create('Live anthology', 'an introduction');
+    expect(made.title, 'Live anthology');
+
+    expect(await svc.add(made.id, 'book', serverId), isTrue);
+    expect(await svc.add(made.id, 'book', serverId), isFalse);
+
+    // a switch this app does not show is set on the server, then the app edits the title
+    final before = ((await raw('GET', '/anthologies/${made.id}')) as Map);
+    final row = Map<String, Object?>.from(before['anthology'] as Map);
+    row['hide_credit'] = true;
+    await raw('PUT', '/anthologies/${made.id}', row);
+
+    var detail = await svc.get(made.id);
+    expect(detail.entries.single.quote, 'For the anthology.');
+    expect(detail.entries.single.kind, 'book');
+    await svc.edit(detail.anthology, title: 'Renamed', intro: 'new intro');
+    detail = await svc.get(made.id);
+    expect(detail.anthology.title, 'Renamed');
+    expect(detail.anthology.intro, 'new intro');
+    expect(
+      detail.anthology.raw['hide_credit'],
+      isTrue,
+      reason: 'the edit kept the switch it does not show',
+    );
+
+    expect(
+      (await svc.list()).any((a) => a.id == made.id && a.entries == 1),
+      isTrue,
+    );
+
+    await svc.removeEntry(made.id, 'book', serverId);
+    expect((await svc.get(made.id)).entries, isEmpty);
+    await svc.delete(made.id);
+    expect((await svc.list()).any((a) => a.id == made.id), isFalse);
+  }, skip: skip);
 }
