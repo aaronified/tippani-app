@@ -72,7 +72,7 @@ class _PairScreenState extends State<PairScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
-            'On a computer, open Tippani, go to Settings, then Devices, and choose Pair a device. It shows a code. Type it here.',
+            'On a computer, open Tippani, go to Settings, then Server, then Devices, and choose Pair a device. It shows a code. Type it here.',
           ),
           const SizedBox(height: 16),
           TextField(
