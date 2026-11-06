@@ -19,6 +19,8 @@ version. Write each entry for the person using the app, in plain words.
 - Scan a page: photograph a page (or choose a picture) and Tesseract reads the text on the phone, in English, Hindi or both. Hyphenated
   line ends are mended and a paragraph's lines are joined. You correct the text, then the quote form opens to say where it is from.
   The quote is marked as scanned. Nothing leaves the phone. The button is on the library and on each work's page.
+- Say a quote: press the microphone and speak, in English, Hindi or Bengali; the words appear as you speak and you correct them before
+  saving. The app keeps no recording. Your phone's speech service does the listening, and on some phones it sends the audio to Google.
 - The app keeps a library of its own on the phone, so it works with no server. Works and quotes, with tags, colours, favourites,
   your notes, translations and where in the book each came from, are stored in the app, and searched by their words, the work's
   title and author, who said them, and their tags. A server is something you can add later, not a way in.

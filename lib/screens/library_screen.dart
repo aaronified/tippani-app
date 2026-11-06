@@ -8,6 +8,7 @@ import 'library_widgets.dart';
 import 'capture_screen.dart';
 import 'quote_form_screen.dart';
 import 'quote_screen.dart';
+import 'voice_screen.dart';
 import 'work_form_screen.dart';
 import 'work_screen.dart';
 
@@ -97,6 +98,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
     await _load();
   }
 
+  Future<void> _say() async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => VoiceScreen(store: widget.store)),
+    );
+    await _load();
+  }
+
   Future<void> _addWork() async {
     await Navigator.of(context).push<Work>(
       MaterialPageRoute(builder: (_) => WorkFormScreen(store: widget.store)),
@@ -176,6 +184,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
       appBar: AppBar(
         title: const Text('Library'),
         actions: [
+          IconButton(
+            tooltip: 'Say a quote',
+            icon: const Icon(Icons.mic_none),
+            onPressed: _say,
+          ),
           IconButton(
             tooltip: 'Scan a page',
             icon: const Icon(Icons.document_scanner_outlined),

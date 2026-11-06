@@ -240,7 +240,11 @@ synced account's theme preferences are ignored here.
 - [x] **Read aloud** (done 7 November 2026; the owner asked why the app lacked it: it was never planned). Android's own text-to-speech through
       `flutter_tts` (MIT), no audio stored, no server. Read aloud and Stop on the quote screen; read a whole work from the Read screen. With no
       voice for the language it says so in a message (it is not hidden). `lib/speech/speaker.dart` is the interface tests replace.
-- [ ] **Voice capture** (owner, 6 November 2026: "a way to record sound and save from there"). **Assumed, to be confirmed before it is
+- [x] **Voice capture, first slice** (done 7 November 2026): Say a quote on the library and on a work: the phone's speech recogniser
+      (`speech_to_text`, BSD-3) turns speech into text you correct, then the quote form saves it. No audio is kept by the app. The recogniser is
+      the phone's, which may be Google's and online; the screen says so. The server only accepts `manual` and `ocr` as a quote's source, so
+      spoken quotes save as `manual` until the server gains `voice` (a server change, not made). Not yet: keeping the recording beside the quote.
+- [ ] **Voice capture, original note** (owner, 6 November 2026: "a way to record sound and save from there"). **Assumed, to be confirmed before it is
       built:** record on the phone, turn the speech into text on the phone (no audio leaves it, and nothing proprietary: the app is GPL-3.0),
       correct the text on the same screen as camera capture, save it as a quote, and keep the recording beside the quote only if the reader
       asks. Open: which on-device speech engine, and whether the server may hold the audio (it has no place for it today).
