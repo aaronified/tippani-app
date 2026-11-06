@@ -18,6 +18,10 @@ class SettingsBackup implements BackupContributor {
   @override
   Future<Object?> export() async => {'server_url': _settings.serverUrl};
 
+  // Nothing in the settings section can be damaged badly enough to refuse: a bad address is skipped.
+  @override
+  Future<void> check(Object? data) async {}
+
   @override
   Future<void> restore(Object? data) async {
     if (data is! Map) return;

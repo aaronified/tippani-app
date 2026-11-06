@@ -8,6 +8,11 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Added
 
+- The app keeps a library of its own on the phone, so it works with no server. Works and quotes, with tags, colours, favourites,
+  your notes, translations and where in the book each came from, are stored in the app, and searched by their words, the work's
+  title and author, who said them, and their tags. A server is something you can add later, not a way in.
+- Backups now carry that library. Restoring replaces the library and the settings with the file's, after saying so. A damaged
+  backup is refused whole: nothing is restored from it, not even the settings.
 - Pair this phone with your server: make a code in Tippani's Settings on a computer, type it in the app, and the phone gets a key it
   can use and you can take away. No password is typed on the phone. Settings lists your paired devices, marks this phone, and
   unpairs any other; the app tells you if the server unpaired it.
