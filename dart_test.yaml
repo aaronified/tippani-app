@@ -1,0 +1,3 @@
+tags:
+  live:
+    # Needs a real server; skipped unless TIPPANI_LIVE_URL and TIPPANI_LIVE_CODE are set.

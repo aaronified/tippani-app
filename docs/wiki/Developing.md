@@ -190,3 +190,19 @@ in Copy or in Share, and the server's lines are redacted on the way out like the
 
 The pull (once the conflict screen exists), the daily quiz and the rest of phases 1 to 4, then capture, the offline queue, donation, bug reports and the first
 signed release (the workflow exists; the keys do not), are the rest of the [plan](Plan.md)'s task list, in that order.
+
+## Testing against a real server
+
+`test/live/live_sync_test.dart` runs the real push and pull code against a real Tippani server (it checks what the server really holds
+after each step: a book and its quote, a loose quote, a film and its dialogue, an edit each way, and a conflict resolved). It is skipped
+unless two variables are set, so `flutter test` stays offline.
+
+1. Build and start a server on an empty data folder (from the Tippani repository; `go build -o tippani-local ./cmd/tippani`), for example
+   `TIPPANI_BIND=127.0.0.1:18080 TIPPANI_DATA=./livedata ./tippani-local`.
+2. Make the first account: `POST /api/auth/signup` with `{"username":"tester","password":"correct-horse-9"}` (the password may be at most
+   20 characters), keeping the session cookie. Then `POST /api/auth/devices/pair` with that cookie answers with a pairing code.
+3. `TIPPANI_LIVE_URL=http://127.0.0.1:18080 TIPPANI_LIVE_CODE=<code> flutter test test/live/live_sync_test.dart`.
+
+Start from an empty data folder each time: the two tests share the server, and anything left from an earlier run comes down on the next.
+The first run of this test (7 November 2026) found that the server's own names differ from the guesses the fake server was built on in only
+small ways (`quote` for a quote's words; case in tags is kept), and that the bodies the sync sends are accepted.
