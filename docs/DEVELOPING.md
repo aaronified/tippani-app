@@ -25,7 +25,8 @@ flutter build apk --debug
 | `lib/api/api_client.dart` | The one way the app speaks to a server: Bearer token, timeouts, and typed failures (network, timeout, unauthorised, server, bad response). |
 | `lib/settings/server_url.dart` | Turns what a reader types into the address the app keeps, and says when plain `http` would send a credential across the internet. |
 | `lib/settings/settings_store.dart` | The server address in preferences; the device token in secure storage and nowhere else. |
-| `lib/screens/` | Home, Settings, and the connect screen. |
+| `lib/pairing/` | The pairing code, the claim, and the device list. |
+| `lib/screens/` | Home, Settings, the connect, pair and devices screens. |
 | `lib/harness/` | The base every feature stands on: version, update check and installer, the log, backup and restore, the changelog. See [The harness](#the-harness). |
 | `test/` | One file per unit above, and `connect_flow_test.dart` for the screens. |
 
@@ -51,6 +52,27 @@ a changelog line adds one to `CHANGELOG.md` under Unreleased.
 **Releasing, once the release workflow exists.** Raise `version:` in `pubspec.yaml` and `appVersion` together, move the Unreleased
 entries under the new version in `CHANGELOG.md`, tag `app-vX.Y.Z`, and attach `tippani-app-vX.Y.Z.apk`. The update check reads exactly
 those names.
+
+## Pairing and the account
+
+- **Pairing is a typed code.** Tippani's web Settings > Devices > Pair a device shows an 8-character code, good for five minutes
+  and once. `normalisePairingCode` ignores case, spaces and dashes and reads `O`, `I` and `L` as the server's alphabet does. The
+  claim (`POST /auth/devices/claim`) carries no credential; the token it returns goes to secure storage and never to the log.
+- **401 and 403 are different.** 401 means the server no longer accepts the token (the phone was unpaired on the web): the app
+  forgets it and Home says so. 403 means the token is good but not allowed (an admin-only route asked by a non-admin): it never
+  unpairs the phone.
+- **`isAdmin` is asked, not stored.** `GET /auth/me` on open and after pairing; a demoted admin loses the admin screens the next
+  time the app opens.
+- **Unpairing** asks the server to forget this phone (the row `GET /auth/devices` marks `current`, server API revision 9) and then
+  forgets the token here whether or not the server could be reached. On an older server the device list says it cannot tell which
+  row is this phone.
+
+## The two logs
+
+**App log** is this phone's own record (`lib/harness/app_log.dart`). **Server log** is the Tippani server's, read from
+`GET /admin/logs` by an admin (`server_log.dart`, `server_log_screen.dart`): levels, a window set by the server's clock, a keyword,
+paging with the first answer's window sent back so lines logged meanwhile are in neither page. They are never mixed on a screen,
+in Copy or in Share, and the server's lines are redacted on the way out like the app's.
 
 ## Decisions made in the scaffold
 

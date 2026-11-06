@@ -61,14 +61,29 @@ class SettingsStore {
   Future<void> setLastSeenVersion(String version) =>
       _prefs.setString(_seenKey, version);
 
+  static const _userKey = 'paired_user';
+
+  /// Who this phone is paired as, for display. The server's answer at pairing; never a credential.
+  String? get username => _prefs.getString(_userKey);
+
+  Future<void> setUsername(String name) => _prefs.setString(_userKey, name);
+
   Future<String?> token() => _vault.read();
 
   Future<void> setToken(String token) => _vault.write(token);
+
+  /// Forgets who this phone is paired as and the credential, and keeps the server: the reader unpairs but
+  /// can pair again with a new code without typing the address.
+  Future<void> forgetToken() async {
+    await _prefs.remove(_userKey);
+    await _vault.clear();
+  }
 
   /// Forgets the server and its credential together: a token is only good for the server that issued
   /// it, so keeping one without the other leaves a stranded secret.
   Future<void> forgetServer() async {
     await _prefs.remove(_serverKey);
+    await _prefs.remove(_userKey);
     await _vault.clear();
   }
 }

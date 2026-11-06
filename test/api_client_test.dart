@@ -61,6 +61,23 @@ void main() {
     expect(seen.toString(), 'https://example.org/tippani/api/capabilities');
   });
 
+  test('keeps a query string a query, and not part of the path', () async {
+    late Uri seen;
+    final c = clientFor((r) async {
+      seen = r.url;
+      return json('{}');
+    });
+    await c.getJson('/admin/logs?level=error%2Cwarn&q=50%25+errors&limit=200');
+    expect(seen.path, '/api/admin/logs');
+    expect(seen.queryParameters, {
+      'level': 'error,warn',
+      'q': '50% errors',
+      'limit': '200',
+    });
+    await c.getJson('/quotes');
+    expect(seen.hasQuery, isFalse);
+  });
+
   test('sends the device token as a Bearer header, and none when there is no token', () async {
     final seen = <Map<String, String>>[];
     Future<http.Response> handler(http.Request r) async {
@@ -76,21 +93,63 @@ void main() {
     expect(seen[2].containsKey('Authorization'), isFalse);
   });
 
-  test('401 and 403 are unauthorised, with the server\'s own words', () async {
-    for (final status in [401, 403]) {
-      final c = clientFor(
-        (r) async => json('{"error":"token revoked"}', status),
-      );
-      try {
-        await c.getJson('/quotes');
-        fail('should have thrown');
-      } on ApiException catch (e) {
-        expect(e.failure, ApiFailure.unauthorised);
-        expect(e.detail, 'token revoked');
-        expect(e.status, status);
-      }
+  test('401 is unauthorised, with the server\'s own words', () async {
+    final c = clientFor((r) async => json('{"error":"token revoked"}', 401));
+    try {
+      await c.getJson('/quotes');
+      fail('should have thrown');
+    } on ApiException catch (e) {
+      expect(e.failure, ApiFailure.unauthorised);
+      expect(e.detail, 'token revoked');
+      expect(e.status, 401);
     }
   });
+
+  test(
+    '403 is forbidden, NOT unauthorised: a good token asked for an admin route',
+    () async {
+      final c = clientFor((r) async => json('{"error":"admin only"}', 403));
+      try {
+        await c.getJson('/admin/logs');
+        fail('should have thrown');
+      } on ApiException catch (e) {
+        expect(
+          e.failure,
+          ApiFailure.forbidden,
+          reason: 'unauthorised would unpair the phone',
+        );
+        expect(e.status, 403);
+      }
+    },
+  );
+
+  test(
+    '429 is rate limited, and POST and DELETE carry the token and a JSON body',
+    () async {
+      final seen = <http.Request>[];
+      final c = clientFor((r) async {
+        seen.add(r);
+        return r.method == 'POST'
+            ? json('{"ok":true}', 201)
+            : http.Response('', 204);
+      }, token: 'tok');
+      expect(await c.postJson('/x', {'a': 1}), {'ok': true});
+      expect(await c.delete('/x/1'), isNull);
+      expect(seen[0].headers['Authorization'], 'Bearer tok');
+      expect(seen[0].headers['Content-Type'], startsWith('application/json'));
+      expect(seen[0].body, '{"a":1}');
+      expect(seen[1].method, 'DELETE');
+      expect(seen[1].headers['Authorization'], 'Bearer tok');
+
+      final limited = clientFor(
+        (r) async => json('{"error":"slow down"}', 429),
+      );
+      expect(
+        await failureOf(() => limited.postJson('/x', {})),
+        ApiFailure.rateLimited,
+      );
+    },
+  );
 
   test('other error statuses are the server\'s failure', () async {
     expect(

@@ -51,12 +51,45 @@ photo kept with a quote, and an app-release feed that does not mix with the serv
 
 ## Features
 
+### 0. The app works on its own
+
+**The owner's requirement (6 November 2026): the app must be able to work independently of a server.** A server is optional.
+
+- **A local library on the phone** (SQLite, in the app's own storage) holds books and quotes: capture, browse, search, edit, tag and
+  the daily quiz all work with no server and no network. This is the app's own data; pairing is something added to it, not a way
+  in.
+- **Pairing adds sync, it does not replace the local library.** When the phone is paired, what was made locally is pushed to the
+  server (the offline queue of feature 1 is this push, generalised) and what the server has can be pulled down. `409` on a
+  duplicate still makes a retry safe. Who wins on a conflict, and whether a pull is automatic, are decided when sync is built and
+  are the owner's call; until then it is push only.
+- **Leaving no door shut.** An unpaired phone can export its library as Tippani's own Markdown format, which the server already
+  imports, so a reader who starts alone and later installs a server loses nothing.
+- **Backup and restore carry the local library** (the harness's `BackupContributor` is where it registers), so a phone that is
+  the only copy of someone's quotes can be backed up and restored.
+- **What needs a server stays labelled as needing one:** the server log, the device list, the server's metadata lookups, shared
+  anthologies and boards. Home no longer opens on "not connected"; it opens on the library.
+- **What works alone, decided by the owner (6 November 2026): the core.** The library, quotes, search, add/edit/tag, the daily quiz,
+  boards and anthologies, and export/import run on the local database. **Management and admin screens need a paired server and say
+  so:** metadata sources, Checks, jobs, library folders, source files and context, the server log, the device list. They are
+  built (phases 3 and 4) but are only reachable when paired; an unpaired phone shows them as "needs your Tippani server".
+- **Order of work, decided by the owner the same day: all the functions first, then new features.** (1) the local library; (2) phase 1
+  core; (3) phase 2 reading side; (4) phase 3 management; (5) phase 4 settings and admin; and only then the new features: capture
+  with Tesseract, donation, bug report, and the signed release. Pairing and the harness (both done) are unaffected.
+
 ### 1. Capture a page and highlight the passage
 
 The flow: photograph a page, the app recognises the text on the device, the reader selects the passage on the photo,
 the app proposes a book, the page and the chapter, the reader corrects anything, and it saves as a quote.
 
-- **On-device OCR** with ML Kit text recognition (`google_mlkit_text_recognition`). No upload and no server cost.
+- **On-device OCR with Tesseract, not ML Kit** (the owner's decision, 6 November 2026: nothing proprietary). Tesseract is Apache-2.0,
+  runs on the phone with no upload and no server cost, and returns each word's and line's bounding box, which the line selection and the
+  page-number and chapter proposals below depend on. Its language data (`tessdata_fast`, also Apache-2.0) is per language, so English
+  ships with the app and others (Bengali `ben`, Hindi `hin`, the languages Tippani's readers use) are downloaded when the reader asks.
+  Accuracy on a photographed page is lower than ML Kit's, so the correction screen is not optional and the app straightens and
+  sharpens the photo before recognising it. Because nothing proprietary is linked, **no GPL additional permission is needed**: the
+  earlier note that one would be required before the OCR phase no longer applies. The package to use is chosen when the capture
+  phase starts, and must be free software with a native Tesseract inside it; if none is well enough kept, the app wraps Tesseract
+  itself through a small native channel, as the harness does for files.
   Neither Lexodle nor Fluenough uses a camera or OCR package; this is new work.
 - **Capture:** `camera` or `image_picker`, then crop and straighten.
 - **Highlight on the photo:** draw the recognised lines over the photo; the reader drags across them or taps lines to
@@ -176,8 +209,19 @@ Lexodle nor Fluenough has dynamic colour yet. Textures and the web app's materia
 - [x] **Harness** (done 6 November 2026; asked for by the owner, ahead of the feature screens): the update check on open with a toast and
       an in-app download, the changelog after an update and a What's new screen, the log, and backup and restore, built so a later
       feature registers its data for backup instead of changing the backup code. See [DEVELOPING.md](DEVELOPING.md#the-harness).
-- [ ] **Pairing:** scan the QR, claim, store the token (platform secure storage), show and revoke devices.
-- [ ] **Capture:** camera, OCR, selection on the photo, page and chapter proposal, correction screen, offline queue.
+- [x] **Pairing** (done 6 November 2026): claim, store the token in secure storage, list and revoke devices, unpair, and know when the
+      server has unpaired this phone. **Corrected from the plan:** Tippani's web Settings shows an 8-character code, not a QR, so the
+      app takes the typed code. A QR needs a web change (and a QR drawing library, against Tippani's dependency budget); it is a
+      later nicety, not a blocker. The server marks the caller's own device `current` (Tippani API revision 9) so the app never
+      offers to revoke the phone in the hand.
+- [x] **Server log** (done 6 November 2026; asked for by the owner): an admin's view of `GET /admin/logs` with its filters and paging,
+      separate from the app's own log.
+- [ ] **Local library** (first; see section 0): a SQLite store of works and quotes, browse and search, edit, export as Tippani
+      Markdown, a backup contributor, and Home opening on it.
+- [ ] **All functions, phases 1 to 4 of feature 5, before any new feature** (owner's order, 6 November 2026): core, reading side,
+      management, settings and admin. The core works alone; the management and admin screens need a paired server.
+- [ ] **New features, after the functions:** capture (camera, Tesseract OCR, selection on the photo, page and chapter proposal,
+      correction screen, saving to the local library, and the sync push when paired), donation, bug report, signed release.
 - [x] **Update:** the check and installer, the `app-v*` release lookup and the manifest pieces (done with the harness). Not yet done: the
       release workflow that publishes what the check looks for.
 - [ ] **Donation:** port the section, regenerate the QR, the disclaimer.
