@@ -47,8 +47,9 @@ String workShareText(
     if (translations && q.translation.trim().isNotEmpty) {
       out.write('\n${q.translation.trim()}');
     }
-    if (notes && q.note.trim().isNotEmpty)
+    if (notes && q.note.trim().isNotEmpty) {
       out.write('\nNote: ${q.note.trim()}');
+    }
   }
   return out.toString();
 }
