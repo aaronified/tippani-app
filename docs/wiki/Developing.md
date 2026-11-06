@@ -2,7 +2,7 @@
 
 ## Build and test
 
-You need Flutter (the version in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml); CI pins it) and the Android SDK.
+You need Flutter (the version in [`.github/workflows/ci.yml`](https://github.com/aaronified/tippani-app/blob/main/.github/workflows/ci.yml); CI pins it) and the Android SDK.
 
 ```sh
 flutter pub get
@@ -50,9 +50,23 @@ gets a log line, a backup section and an update toast without writing any of the
 adds itself to the list in `Harness.open`; it is then backed up and restored with no change to the backup code. A feature that wants
 a changelog line adds one to `CHANGELOG.md` under Unreleased.
 
-**Releasing, once the release workflow exists.** Raise `version:` in `pubspec.yaml` and `appVersion` together, move the Unreleased
-entries under the new version in `CHANGELOG.md`, tag `app-vX.Y.Z`, and attach `tippani-app-vX.Y.Z.apk`. The update check reads exactly
-those names.
+**Releasing.** You do not edit the version by hand: run the Release workflow with the version, and it bumps `pubspec.yaml` and
+`appVersion`, dates the Unreleased entries, tags `app-vX.Y.Z` and attaches `tippani-app-vX.Y.Z.apk`. The update check reads exactly
+those names. [Releasing](Releasing.md) has the secrets it needs and the steps; it is scaffolded and has not been run yet.
+
+## Decisions and the wiki
+
+Every decision that a later change could undo is a page, `ADR-NNNN-Title.md`, in `docs/wiki/`, listed in
+[ADR-Index](ADR-Index.md) with the template to copy. `.github/workflows/wiki.yml` mirrors the folder to the GitHub wiki when it changes
+on `main`. `tools/check_wiki.py` runs in CI and fails on a dead link, a page nothing links to, an ADR missing from the index, a gap
+or repeat in the numbers, or an ADR with no `Status`. The wiki is published flat, so link to another page by its file name, never to a
+repository path.
+
+## The release tools
+
+`tools/` is Python with only the standard library, tested by `python3 -m unittest discover -s tools -p 'test_*.py'` (also in CI):
+`check_release_version.py` (tag against `pubspec.yaml` and `appVersion`), `prepare_release.py` (the version bump and the dated
+changelog) and `check_wiki.py`.
 
 ## The local library
 
@@ -108,5 +122,5 @@ in Copy or in Share, and the server's lines are redacted on the way out like the
 
 ## Not built
 
-Pairing, capture, the offline queue, donation, bug reports and the signed release, with the workflow that publishes what the update
-check looks for, are the rest of the [plan](PLAN.md)'s task list, in that order.
+The library screens, the daily quiz and the rest of phases 1 to 4, then capture, the offline queue, donation, bug reports and the first
+signed release (the workflow exists; the keys do not), are the rest of the [plan](Plan.md)'s task list, in that order.
