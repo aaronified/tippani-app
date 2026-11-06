@@ -173,9 +173,13 @@ Lexodle nor Fluenough has dynamic colour yet. Textures and the web app's materia
 - [x] **Scaffold** (done 6 November 2026): package id `io.github.aaronified.tippani`, dynamic-colour theme, a bottom bar, server address
       in preferences, the HTTP client (Bearer token, timeouts, typed failures), the `GET /capabilities` check with the app's own
       revision range, the connect screen, tests, and `ci.yml`. Not in it: pairing (the client can carry a token; nothing yet gets one).
+- [x] **Harness** (done 6 November 2026; asked for by the owner, ahead of the feature screens): the update check on open with a toast and
+      an in-app download, the changelog after an update and a What's new screen, the log, and backup and restore, built so a later
+      feature registers its data for backup instead of changing the backup code. See [DEVELOPING.md](DEVELOPING.md#the-harness).
 - [ ] **Pairing:** scan the QR, claim, store the token (platform secure storage), show and revoke devices.
 - [ ] **Capture:** camera, OCR, selection on the photo, page and chapter proposal, correction screen, offline queue.
-- [ ] **Update:** port the check and installer; `app-v*` release lookup; the manifest pieces.
+- [x] **Update:** the check and installer, the `app-v*` release lookup and the manifest pieces (done with the harness). Not yet done: the
+      release workflow that publishes what the check looks for.
 - [ ] **Donation:** port the section, regenerate the QR, the disclaimer.
 - [ ] **Bug report:** the form, `app-feedback-mail.yml`, `scripts/mail_to_issues.py` and its tests.
 - [ ] **Release:** `app-release.yml` with signing and verification; first signed APK.

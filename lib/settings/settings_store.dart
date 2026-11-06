@@ -53,6 +53,14 @@ class SettingsStore {
 
   Future<void> setServerUrl(String url) => _prefs.setString(_serverKey, url);
 
+  static const _seenKey = 'last_seen_version';
+
+  /// The app version this phone last showed "what is new" for, or null on a first install.
+  String? get lastSeenVersion => _prefs.getString(_seenKey);
+
+  Future<void> setLastSeenVersion(String version) =>
+      _prefs.setString(_seenKey, version);
+
   Future<String?> token() => _vault.read();
 
   Future<void> setToken(String token) => _vault.write(token);
