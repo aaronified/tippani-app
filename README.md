@@ -4,9 +4,10 @@ A native Android client for [Tippani](https://github.com/aaronified/tippani), a 
 dialogue, and quotes from anywhere. This app talks to **your own** Tippani server; it has no server of its own and no account with
 anyone else.
 
-**Status: not built.** This repository holds the plan and nothing else yet. There is no app code, no `android/` directory and no
-release. See [docs/PLAN.md](docs/PLAN.md) for what the app will do, what it reuses, how it will be signed and released, and what is
-still undecided.
+**Status: scaffold only.** The app opens, lets you enter your server's address, asks it what it is (`GET /capabilities`) and says
+whether this app and that server can talk. It cannot pair, capture or show quotes yet, and there is no release. See
+[docs/PLAN.md](docs/PLAN.md) for what comes next, what it reuses, how it will be signed and released, and what is still undecided, and
+[docs/DEVELOPING.md](docs/DEVELOPING.md) to build it.
 
 - **Android only.** No `ios/` directory will ship ([ADR-0001](docs/ADR-0001-android-only.md)).
 - **Flutter**, with the Dart kept platform-neutral.

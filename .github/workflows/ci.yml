@@ -1,0 +1,50 @@
+name: ci
+
+# Every pull request and push to main: dependencies, format, analysis, tests, and a debug build.
+# Release signing is a separate workflow (app-release.yml, not written yet) and reads its keystore from
+# repository secrets; nothing here touches them.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # The Flutter version is pinned: an unpinned "stable" moves under the repository, and a green run
+      # last week is not evidence about this week's SDK. Raise it on purpose.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Debug build
+        run: flutter build apk --debug
