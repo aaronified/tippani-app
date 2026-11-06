@@ -17,6 +17,10 @@ version. Write each entry for the person using the app, in plain words.
 - Send your library to your server: in Settings, once the phone is paired, "Send library to server" adds the works and quotes that are only
   on the phone. It only adds: nothing on the server is changed or deleted, what is already there is not sent again, and if the connection
   drops the rest waits for the next try.
+- Sync with your server: in Settings, once the phone is paired, "Sync with server" brings down what is new or changed on the server,
+  sends up the changes you made on the phone, and never deletes anything on either side. If the same quote or work was changed in both
+  places, nothing is changed for it: you see both versions side by side and choose, for that quote or that work, to keep the phone's or
+  the server's. When there are several, you can keep the phone's or the server's for all of them, after a confirmation.
 - Export your quotes as Markdown, all of them or one work's, to share or to save as a file. It is the same format Tippani's server
   imports, so a library made on the phone can be moved to a server later.
 - Backups now carry that library. Restoring replaces the library and the settings with the file's, after saying so. A damaged

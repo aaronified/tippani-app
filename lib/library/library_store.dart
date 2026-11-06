@@ -45,6 +45,16 @@ abstract interface class LibraryStore {
   Future<void> setWorkServerId(int id, int serverId);
   Future<void> setQuoteServerId(int id, int serverId);
 
+  /// Records what the phone and the server last agreed a work or quote said. Like the server id, it is not
+  /// an edit and leaves `updated_at` alone.
+  Future<void> markWorkSynced(int id, String hash);
+  Future<void> markQuoteSynced(int id, String hash);
+
+  /// Adds a work or quote that came from the server, already linked to it and already agreed. One write,
+  /// so a crash cannot leave it without its server id (which would send it back up as a duplicate).
+  Future<Work> adoptWork(WorkDraft draft, int serverId, String hash);
+  Future<Quote> adoptQuote(QuoteDraft draft, int serverId, String hash);
+
   /// Everything, as JSON-encodable data, for a backup or an export.
   Future<Map<String, Object?>> exportAll();
 
@@ -69,7 +79,7 @@ class SqliteLibraryStore implements LibraryStore {
   final Database _db;
   final DateTime Function() _clock;
 
-  static const schemaVersion = 1;
+  static const schemaVersion = 2;
 
   /// The longest a quote's text or a title may be. A pasted book is not a quote.
   static const maxText = 20000;
@@ -90,6 +100,12 @@ class SqliteLibraryStore implements LibraryStore {
       singleInstance: singleInstance,
       onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
       onCreate: (db, v) async => _create(db),
+      onUpgrade: (db, from, to) async {
+        if (from < 2) {
+          await db.execute('ALTER TABLE works ADD COLUMN synced_hash TEXT');
+          await db.execute('ALTER TABLE quotes ADD COLUMN synced_hash TEXT');
+        }
+      },
     );
     return SqliteLibraryStore(db, clock: clock);
   }
@@ -105,7 +121,8 @@ class SqliteLibraryStore implements LibraryStore {
         language TEXT NOT NULL DEFAULT '',
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        server_id INTEGER
+        server_id INTEGER,
+        synced_hash TEXT
       )''');
     await db.execute('''
       CREATE TABLE quotes (
@@ -124,7 +141,8 @@ class SqliteLibraryStore implements LibraryStore {
         source TEXT NOT NULL DEFAULT 'manual',
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        server_id INTEGER
+        server_id INTEGER,
+        synced_hash TEXT
       )''');
     await db.execute('CREATE INDEX quotes_work ON quotes(work_id)');
     await db.execute('CREATE INDEX quotes_noted ON quotes(noted_at)');
@@ -153,6 +171,7 @@ class SqliteLibraryStore implements LibraryStore {
     createdAt: DateTime.parse(r['created_at']! as String),
     updatedAt: DateTime.parse(r['updated_at']! as String),
     serverId: r['server_id'] as int?,
+    syncedHash: r['synced_hash'] as String?,
   );
 
   String _title(String raw) {
@@ -266,6 +285,7 @@ class SqliteLibraryStore implements LibraryStore {
       updatedAt: DateTime.parse(r['updated_at']! as String),
       tags: tags,
       serverId: r['server_id'] as int?,
+      syncedHash: r['synced_hash'] as String?,
     );
   }
 
@@ -488,6 +508,62 @@ class SqliteLibraryStore implements LibraryStore {
     );
   }
 
+  @override
+  Future<void> markWorkSynced(int id, String hash) async {
+    await _db.update(
+      'works',
+      {'synced_hash': hash},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
+  Future<void> markQuoteSynced(int id, String hash) async {
+    await _db.update(
+      'quotes',
+      {'synced_hash': hash},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
+  Future<Work> adoptWork(WorkDraft d, int serverId, String hash) async {
+    final now = _now();
+    final id = await _db.insert('works', {
+      'kind': d.kind.name,
+      'title': _title(d.title),
+      'creator': d.creator.trim(),
+      'year': d.year,
+      'language': d.language.trim(),
+      'created_at': now,
+      'updated_at': now,
+      'server_id': serverId,
+      'synced_hash': hash,
+    });
+    return (await work(id))!;
+  }
+
+  @override
+  Future<Quote> adoptQuote(QuoteDraft d, int serverId, String hash) async {
+    final now = _now();
+    final row = _quoteRow(d);
+    final id = await _db.transaction((tx) async {
+      await _checkWork(tx, d.workId);
+      final id = await tx.insert('quotes', {
+        ...row,
+        'created_at': now,
+        'updated_at': now,
+        'server_id': serverId,
+        'synced_hash': hash,
+      });
+      await _writeTags(tx, id, d.tags);
+      return id;
+    });
+    return (await quote(id))!;
+  }
+
   // ---- everything, for backup and export -------------------------------------------------------------
 
   @override
@@ -561,6 +637,7 @@ class SqliteLibraryStore implements LibraryStore {
           'created_at': _time(m['created_at']),
           'updated_at': _time(m['updated_at']),
           'server_id': m['server_id'] is int ? m['server_id'] : null,
+          'synced_hash': m['synced_hash'] is String ? m['synced_hash'] : null,
         });
       }
       for (final q in quotes) {
@@ -582,6 +659,7 @@ class SqliteLibraryStore implements LibraryStore {
           'created_at': _time(m['created_at']),
           'updated_at': _time(m['updated_at']),
           'server_id': m['server_id'] is int ? m['server_id'] : null,
+          'synced_hash': m['synced_hash'] is String ? m['synced_hash'] : null,
         });
         final tags = m['tags'];
         await _writeTags(

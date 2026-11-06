@@ -107,7 +107,7 @@ or a work; `work_screen.dart` is one work with its quotes; `library_widgets.dart
 
 `lib/sync/push_sync.dart` (`PushSync`, one per app, held by the harness) and `lib/screens/sync_screen.dart` (Settings > Send library to
 server, shown when paired). The design and what it deliberately does not do are [ADR-0015](ADR-0015-Sync-Starts-As-A-Push-That-Only-Adds.md);
-the rule for the pull that comes next is [ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md).
+the sync that reads the server back is [ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md), below.
 
 - **The log gets counts and item numbers**, never a title or the words of a quote, like every other line the app logs.
 - **`ApiException.body`** keeps the server's JSON for a refused request: a 409 on a quote carries `{"existing": {...}}`, and the push links
@@ -117,6 +117,26 @@ the rule for the pull that comes next is [ADR-0016](ADR-0016-Conflicts-Are-Chose
   tested over the wire shape and not against its own assumptions. If the server's create routes change, change the fake with them.
 - **`setWorkServerId` and `setQuoteServerId` do not touch `updated_at`.** Being on the server is not an edit; if it were, every push would
   make every item look changed to the pull.
+
+## Syncing with the server (the pull)
+
+`lib/sync/pull_sync.dart` (`PullSync`, held by the harness as `harness.pull`), `lib/sync/fingerprint.dart` and `lib/screens/pull_screen.dart`
+(Settings > Sync with server, shown when paired). The design is [ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md); read it first.
+
+- **Who moved is read from `synced_hash`, never from `updated_at`.** The server does not give a work's `updated_at`. `fingerprint.dart` turns
+  the fields that sync into a canonical form on both sides (`quoteFields` and `serverQuoteFields`, `workFields` and `serverWorkFields`) and
+  hashes it. If you add a synced field, add it to **both** forms, or the two sides will never compare equal, and add a test in
+  `test/sync/fingerprint_test.dart`. A field the server cannot keep must be left out of the compared form (a film quote's chapter is).
+- **Ids mean nothing without the table.** Book 5 and film 5 both exist, and so do annotation 5, dialogue 5 and quote 5. Every lookup is by
+  `(Realm, id)`; `test/sync/pull_sync_test.dart` has a test with colliding ids.
+- **Everything is read before anything changes**, so a connection that fails half way changes nothing. Writes then go one item at a time; a
+  refused write (400, 409) is reported and the sync goes on, a 404 counts the item as gone on the server, anything else stops it.
+- **A write to the server is the server's own row with the phone's fields over it** (`_putQuote`, `_putWork`). The server's update replaces
+  the whole record, and the phone holds only some of it, so building a body from the phone alone would wipe a sticker or a description.
+- **Conflicts are never stored.** `PullScreen` holds them in memory; closing it forgets them, and the next sync finds them again.
+- **`setWorkServerId` and `markWorkSynced` do not touch `updated_at`.** Being linked or agreed is not an edit.
+- **The fake server** answers the list routes (`/books`, `/movies`, `/annotations`, `/dialogues`, `/quotes`, whose key is `utterances`),
+  `GET /books/{id}` and `PUT /{route}/{id}`, and has `seed`, `edit` and `remove` so a test can do what the web would.
 
 ## Pairing and the account
 

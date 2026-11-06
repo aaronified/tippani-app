@@ -41,6 +41,32 @@ Future<Rig> rig({bool paired = true}) async {
 }
 
 void main() {
+  test('what goes up is recorded as agreed, so the first pull has nothing to argue about; an adopted duplicate is not', () async {
+    final r = await rig();
+    final w = await r.lib.addWork(const WorkDraft(title: 'Walden'));
+    final q1 = await r.lib.addQuote(QuoteDraft(text: 'One.', workId: w.id));
+    final q2 = await r.lib.addQuote(QuoteDraft(text: 'Two.', workId: w.id));
+    // the server already has "Two." under this book once the book exists
+    await r.sync.push();
+    expect((await r.lib.work(w.id))!.syncedHash, isNotNull);
+    expect((await r.lib.quote(q1.id))!.syncedHash, isNotNull);
+    expect((await r.lib.quote(q2.id))!.syncedHash, isNotNull);
+
+    final w2 = await r.lib.addWork(const WorkDraft(title: 'Other'));
+    final a = await r.lib.addQuote(
+      QuoteDraft(text: 'Same words', workId: w2.id),
+    );
+    await r.sync.push();
+    // a copy made by hand on the server, then the phone's twin is pushed again as a new, unlinked quote
+    final twin = await r.lib.addQuote(
+      QuoteDraft(text: 'Same words', workId: w2.id),
+    );
+    await r.sync.push();
+    expect((await r.lib.quote(a.id))!.syncedHash, isNotNull);
+    expect((await r.lib.quote(twin.id))!.serverId, isNotNull);
+    expect((await r.lib.quote(twin.id))!.syncedHash, isNull);
+  });
+
   test('a book and its quote go to /books and /annotations, in the server\'s names, and the ids are kept', () async {
     final r = await rig();
     final w = await r.lib.addWork(

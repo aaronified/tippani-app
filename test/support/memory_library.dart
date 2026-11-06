@@ -51,6 +51,8 @@ class MemoryLibrary implements LibraryStore {
       language: d.language.trim(),
       createdAt: old.createdAt,
       updatedAt: _clock(),
+      serverId: old.serverId,
+      syncedHash: old.syncedHash,
     );
   }
 
@@ -81,7 +83,7 @@ class MemoryLibrary implements LibraryStore {
     ];
   }
 
-  Quote _make(int id, QuoteDraft d, DateTime created) {
+  Quote _make(int id, QuoteDraft d, DateTime created, [Quote? old]) {
     final text = d.text.trim();
     if (text.isEmpty) throw const LibraryException('a quote needs its words');
     if (d.workId != null && !_works.containsKey(d.workId)) {
@@ -105,6 +107,8 @@ class MemoryLibrary implements LibraryStore {
       updatedAt: _clock(),
       tags: _cleanTags(d.tags)
         ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
+      serverId: old?.serverId,
+      syncedHash: old?.syncedHash,
     );
   }
 
@@ -121,7 +125,7 @@ class MemoryLibrary implements LibraryStore {
   Future<Quote> updateQuote(int id, QuoteDraft d) async {
     final old = _quotes[id];
     if (old == null) throw const LibraryException('no such quote');
-    return _quotes[id] = _make(id, d, old.createdAt);
+    return _quotes[id] = _make(id, d, old.createdAt, old);
   }
 
   @override
@@ -149,6 +153,7 @@ class MemoryLibrary implements LibraryStore {
         tags: q.tags,
       ),
       q.createdAt,
+      q,
     );
   }
 
@@ -227,6 +232,30 @@ class MemoryLibrary implements LibraryStore {
   Future<void> setQuoteServerId(int id, int serverId) async {
     final q = _quotes[id];
     if (q != null) _quotes[id] = q.withServerId(serverId);
+  }
+
+  @override
+  Future<void> markWorkSynced(int id, String hash) async {
+    final w = _works[id];
+    if (w != null) _works[id] = w.withSyncedHash(hash);
+  }
+
+  @override
+  Future<void> markQuoteSynced(int id, String hash) async {
+    final q = _quotes[id];
+    if (q != null) _quotes[id] = q.withSyncedHash(hash);
+  }
+
+  @override
+  Future<Work> adoptWork(WorkDraft d, int serverId, String hash) async {
+    final w = (await addWork(d)).withServerId(serverId).withSyncedHash(hash);
+    return _works[w.id] = w;
+  }
+
+  @override
+  Future<Quote> adoptQuote(QuoteDraft d, int serverId, String hash) async {
+    final q = (await addQuote(d)).withServerId(serverId).withSyncedHash(hash);
+    return _quotes[q.id] = q;
   }
 
   @override
