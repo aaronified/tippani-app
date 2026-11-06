@@ -4,8 +4,10 @@ A native Android client for [Tippani](https://github.com/aaronified/tippani), a 
 dialogue, and quotes from anywhere. This app talks to **your own** Tippani server; it has no server of its own and no account with
 anyone else.
 
-**Status: scaffold only.** The app opens, lets you enter your server's address, asks it what it is (`GET /capabilities`) and says
-whether this app and that server can talk. It cannot pair, capture or show quotes yet, and there is no release. See
+**Status: scaffold and base only.** The app opens, lets you enter your server's address, asks it what it is (`GET /capabilities`) and
+says whether this app and that server can talk. It also has what every later screen stands on: a check for a newer version of itself
+on open (a message offers the download), what changed after an update, a log, and backup and restore of its settings. It cannot pair,
+capture or show quotes yet, and there is no release. See
 [docs/PLAN.md](docs/PLAN.md) for what comes next, what it reuses, how it will be signed and released, and what is still undecided, and
 [docs/DEVELOPING.md](docs/DEVELOPING.md) to build it.
 

@@ -1,6 +1,11 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- The app talks to the reader's own server and to nothing else. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- No storage permission: backups and the log live in the app's own storage, the Downloads copy goes
+         through MediaStore, and an update downloads into the app's own storage. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove" />
     <!-- CLEARTEXT IS ALLOWED, ON PURPOSE: a self-hosted server on the home network is usually plain http
          (http://192.168.1.20:8124), and Android blocks that by default. The app warns before it keeps an
          http address that is not on a private network (lib/settings/server_url.dart, isRiskyCleartext). -->
@@ -36,6 +41,16 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Lets Android's installer read the update ota_update downloaded (res/xml/ota_update_paths.xml). -->
+        <provider
+            android:name="sk.fourq.otaupdate.OtaUpdateFileProvider"
+            android:authorities="${applicationId}.ota_update_provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/ota_update_paths" />
+        </provider>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

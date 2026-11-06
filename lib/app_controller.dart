@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'api/api_client.dart';
 import 'api/capabilities.dart';
+import 'harness/app_log.dart';
 import 'settings/server_url.dart';
 import 'settings/settings_store.dart';
 
@@ -34,10 +35,11 @@ class ServerCheck {
 /// The app's state that more than one screen needs: which server it is pointed at and whether that
 /// server is reachable and compatible. Screens listen to it; nothing else holds this state.
 class AppController extends ChangeNotifier {
-  AppController(this._settings, {ClientFactory? clientFactory})
+  AppController(this._settings, {ClientFactory? clientFactory, this._log})
     : _clientFactory = clientFactory ?? _defaultClient;
 
   final SettingsStore _settings;
+  final AppLog? _log;
   final ClientFactory _clientFactory;
 
   ServerCheck? _check;
@@ -70,8 +72,16 @@ class AppController extends ChangeNotifier {
   Future<ServerCheck> probe(String serverUrl) async {
     final client = _clientFactory(apiBaseOf(serverUrl), null);
     try {
-      return ServerCheck.answered(await client.capabilities());
+      final caps = await client.capabilities();
+      // The address is not logged (it is the reader's own), only what came of asking.
+      _log?.info(
+        'server answered: revision ${caps.apiRevision}, version ${caps.version}',
+      );
+      return ServerCheck.answered(caps);
     } on ApiException catch (e) {
+      _log?.warn(
+        'server check failed: ${e.failure.name}${e.status == null ? '' : ' ${e.status}'}',
+      );
       return ServerCheck.failed(e.failure, e.detail);
     } finally {
       client.close();
@@ -82,6 +92,7 @@ class AppController extends ChangeNotifier {
   Future<void> connect(String serverUrl, ServerCheck check) async {
     assert(check.usable, 'only a usable server is kept');
     await _settings.setServerUrl(serverUrl);
+    _log?.info('server kept');
     _check = check;
     notifyListeners();
   }
@@ -89,6 +100,7 @@ class AppController extends ChangeNotifier {
   /// Forgets the server and its credential together.
   Future<void> forget() async {
     await _settings.forgetServer();
+    _log?.info('server forgotten');
     _check = null;
     notifyListeners();
   }

@@ -6,14 +6,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/api/api_client.dart';
 import 'package:tippani/app.dart';
 import 'package:tippani/app_controller.dart';
+import 'package:tippani/harness/harness.dart';
 import 'package:tippani/settings/settings_store.dart';
+
+late SettingsStore _store;
 
 Future<AppController> controllerAnswering(
   MockClientHandler handler, {
   Map<String, Object> saved = const {},
 }) async {
   SharedPreferences.setMockInitialValues(saved);
-  final store = SettingsStore(
+  final store = _store = SettingsStore(
     await SharedPreferences.getInstance(),
     MemoryTokenVault(),
   );
@@ -31,7 +34,12 @@ http.Response caps({int revision = 8, int minClient = 1}) => http.Response(
 );
 
 Future<void> start(WidgetTester tester, AppController c) async {
-  await tester.pumpWidget(TippaniApp(controller: c));
+  await tester.pumpWidget(
+    TippaniApp(
+      controller: c,
+      harness: Harness.fake(_store, controller: c),
+    ),
+  );
   await tester.pumpAndSettle();
 }
 
