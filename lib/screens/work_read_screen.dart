@@ -4,6 +4,7 @@ import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/models.dart';
 import '../library/quote_text.dart';
 import '../library/work_order.dart';
+import '../speech/speaker.dart';
 
 /// A work's quotes as one document to read straight through, by chapter, in reading order. The reader sets
 /// the text size and whether translations and their own notes show, and can send the whole thing as text.
@@ -13,6 +14,7 @@ class WorkReadScreen extends StatefulWidget {
     required this.work,
     required this.quotes,
     this.share = shareThroughSheet,
+    this.speaker,
   });
 
   final Work work;
@@ -20,6 +22,7 @@ class WorkReadScreen extends StatefulWidget {
   /// In reading order.
   final List<Quote> quotes;
   final ShareText share;
+  final Speaker? speaker;
 
   @override
   State<WorkReadScreen> createState() => _WorkReadScreenState();
@@ -29,6 +32,46 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
   double _size = 18;
   bool _translations = true;
   bool _notes = false;
+  bool _reading = false;
+  late final Speaker _speaker = widget.speaker ?? PlatformSpeaker();
+
+  @override
+  void dispose() {
+    _reading = false;
+    _speaker.stop();
+    super.dispose();
+  }
+
+  /// Reads every quote in turn, in reading order, until the end or until stopped.
+  Future<void> _toggleReading() async {
+    if (_reading) {
+      setState(() => _reading = false);
+      await _speaker.stop();
+      return;
+    }
+    setState(() => _reading = true);
+    String? problem;
+    try {
+      for (final q in widget.quotes) {
+        if (!_reading) break;
+        final language = q.language.isNotEmpty
+            ? q.language
+            : widget.work.language;
+        if (!await _speaker.speak(q.text, language)) {
+          problem = 'This phone has no voice for "$language".';
+          break;
+        }
+      }
+    } on Object {
+      problem = 'The work could not be read aloud.';
+    }
+    if (!mounted) return;
+    setState(() => _reading = false);
+    if (problem != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(problem)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +82,13 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
       appBar: AppBar(
         title: Text(widget.work.title),
         actions: [
+          IconButton(
+            tooltip: _reading ? 'Stop reading' : 'Read aloud',
+            icon: Icon(
+              _reading ? Icons.stop_circle_outlined : Icons.volume_up_outlined,
+            ),
+            onPressed: widget.quotes.isEmpty ? null : _toggleReading,
+          ),
           IconButton(
             tooltip: 'Share all',
             icon: const Icon(Icons.ios_share),

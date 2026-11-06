@@ -233,9 +233,9 @@ synced account's theme preferences are ignored here.
       Works with no server.
 - [x] **Work details and reading mode** (done 7 November 2026): counts, chapter groups in reading order, favourites filter, a Read document
       with text size, translations and notes toggles, and Share all.
-- [ ] **Read aloud** (owner asked 7 November 2026, why the app lacks it: it was never planned). Android's own text-to-speech through
-      `flutter_tts`, no audio stored, no server. Play and stop on the quote screen; read a whole work from the Read screen; hidden when
-      the phone has no voice for the language.
+- [x] **Read aloud** (done 7 November 2026; the owner asked why the app lacked it: it was never planned). Android's own text-to-speech through
+      `flutter_tts` (MIT), no audio stored, no server. Read aloud and Stop on the quote screen; read a whole work from the Read screen. With no
+      voice for the language it says so in a message (it is not hidden). `lib/speech/speaker.dart` is the interface tests replace.
 - [ ] **Voice capture** (owner, 6 November 2026: "a way to record sound and save from there"). **Assumed, to be confirmed before it is
       built:** record on the phone, turn the speech into text on the phone (no audio leaves it, and nothing proprietary: the app is GPL-3.0),
       correct the text on the same screen as camera capture, save it as a quote, and keep the recording beside the quote only if the reader
