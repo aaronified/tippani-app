@@ -1,4 +1,5 @@
 import '../library/quote_chips.dart';
+import '../people/face_stack.dart';
 import 'quote_chips_row.dart';
 
 import 'dart:convert';
@@ -26,6 +27,8 @@ class QuoteTile extends StatelessWidget {
     required this.onTap,
     required this.onFavourite,
     this.onChip,
+    this.chipWork,
+    this.omitAuthor = false,
   });
 
   final Quote quote;
@@ -36,12 +39,19 @@ class QuoteTile extends StatelessWidget {
   /// What pressing a person chip does. Null draws no chips, and the speaker stays in the line of text.
   final ValueChanged<ChipFilter>? onChip;
 
+  /// The work to draw the pills from when [work] is left out of the line of text (on the work's own page); the
+  /// author's pill is dropped there ([omitAuthor]) since the header names them.
+  final Work? chipWork;
+  final bool omitAuthor;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final text = theme.textTheme;
     final scheme = theme.colorScheme;
-    final chips = onChip != null && chipsFor(quote, work).isNotEmpty;
+    final chips =
+        onChip != null &&
+        chipsFor(quote, chipWork ?? work, omitAuthor: omitAuthor).isNotEmpty;
     final from = [
       if (quote.speaker.isNotEmpty && !chips) quote.speaker,
       if (work != null) work!.title,
@@ -93,8 +103,9 @@ class QuoteTile extends StatelessWidget {
                         const SizedBox(height: 8),
                         QuoteChipsRow(
                           quote: quote,
-                          work: work,
+                          work: chipWork ?? work,
                           dense: true,
+                          omitAuthor: omitAuthor,
                           onTap: onChip!,
                         ),
                       ],
@@ -188,12 +199,24 @@ class WorkTile extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 8),
-                      Text(
-                        workKindLabel(work.kind).toUpperCase(),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: scheme.primary,
-                          letterSpacing: 1.2,
-                        ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              workKindLabel(work.kind).toUpperCase(),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: scheme.primary,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                          FaceStack(
+                            names: creditNames(work.creator),
+                            ringColor:
+                                theme.cardTheme.color ??
+                                scheme.surfaceContainerLow,
+                          ),
+                        ],
                       ),
                     ],
                   ),

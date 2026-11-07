@@ -9,6 +9,17 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- A page for every person and character: press a pill on a quote, a work's author in its header, or a row of a film's cast, and their page opens
+  with the portrait (press it to see it big), dates, bio, links by provider (IMDb, Wikipedia and the rest), signature, other spellings, the
+  works they are credited on, the parts they played and the quotes that name them. A character's page names who played them in each adaptation
+  (press an actor to open theirs). "Show their quotes" filters the library by that name, as a press on a pill used to. Where your server allows
+  it you can edit a person from the page: their details, the portrait (from the gallery or looked up by the server) and the signature.
+- Faces on work cards and the work page: a work's card shows round portraits of its author or director, the work's page shows them as pills
+  in its header, and each row of the cast has the character's picture (or the actor's). On a work's own page the author is not named again on
+  every quote.
+
+### Added
+
 - Portraits on the people pills: the round pill on a quote (the author of a book, the speaker, the character with the actor under their name) now
   shows the photo your server holds for them, as on the web, in the library, on the quote and on every card. A character shows its own picture,
   or the actor's if it has none. The photos are kept on the phone, so they are there without the server.

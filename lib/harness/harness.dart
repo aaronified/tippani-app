@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
 import '../people/people_directory.dart';
+import '../people/people_service.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
 import '../library/cover_cache.dart';
@@ -92,6 +93,7 @@ class Harness {
     this.covers,
     this.people,
     this.directory,
+    this.peopleService,
     this.details,
     this.contexts,
     this.anthologies,
@@ -135,6 +137,9 @@ class Harness {
 
   /// Everyone with a face on the server, kept on the phone, for the round portraits on a quote's chips.
   final PeopleDirectory? directory;
+
+  /// The pages of people and characters (and edits to a person) from the paired server.
+  final PeopleService? peopleService;
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
@@ -208,6 +213,7 @@ class Harness {
       covers: covers,
       people: PairedSharePeople(controller, directory),
       directory: directory,
+      peopleService: PairedPeopleService(controller),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
       anthologies: ServerAnthologies(controller),
@@ -230,6 +236,7 @@ class Harness {
     CoverSource? covers,
     SharePeopleSource? people,
     PeopleDirectory? directory,
+    PeopleService? peopleService,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
     AnthologyService? anthologies,
@@ -272,6 +279,7 @@ class Harness {
       covers: covers,
       people: people,
       directory: directory,
+      peopleService: peopleService,
       details: details,
       contexts: contexts,
       anthologies: anthologies,
