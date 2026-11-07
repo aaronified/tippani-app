@@ -861,4 +861,125 @@ void main() {
     expect(() => r.pull.sync(), throwsStateError);
     await first;
   });
+
+  group('a work or quote on both sides that was never linked is one item, not two', () {
+    test(
+      'a phone work with the server\'s title and author is linked, not copied',
+      () async {
+        final r = await rig();
+        final w = await r.lib.addWork(
+          const WorkDraft(title: 'Walden', creator: 'Thoreau', year: 1854),
+        );
+        final id = r.server.seed('/books', {
+          'title': 'Walden ',
+          'author': 'Thoreau',
+          'published_year': 1854,
+        });
+
+        final res = await r.pull.sync();
+
+        expect(res.linked, 1);
+        expect(res.worksAdded, 0);
+        expect(await r.lib.works(), hasLength(1));
+        final linked = (await r.lib.work(w.id))!;
+        expect(linked.serverId, id);
+        expect(linked.syncedHash, isNotNull);
+        expect(res.conflicts, isEmpty);
+      },
+    );
+
+    test(
+      'a difference between the two is offered as a conflict, not overwritten',
+      () async {
+        final r = await rig();
+        await r.lib.addWork(
+          const WorkDraft(title: 'Walden', creator: 'Thoreau', year: 1854),
+        );
+        r.server.seed('/books', {
+          'title': 'Walden',
+          'author': 'Thoreau',
+          'published_year': 1999,
+        });
+
+        final res = await r.pull.sync();
+
+        expect(res.linked, 1);
+        expect(res.conflicts, hasLength(1));
+        expect((await r.lib.works()).single.year, 1854);
+      },
+    );
+
+    test('a phone work typed with only a title still matches', () async {
+      final r = await rig();
+      await r.lib.addWork(const WorkDraft(title: 'Dune'));
+      r.server.seed('/books', {'title': 'Dune', 'author': 'Herbert'});
+
+      final res = await r.pull.sync();
+
+      expect(res.linked, 1);
+      expect(await r.lib.works(), hasLength(1));
+    });
+
+    test('a film is never matched to a book of the same name', () async {
+      final r = await rig();
+      await r.lib.addWork(const WorkDraft(title: 'Dune', kind: WorkKind.film));
+      r.server.seed('/books', {'title': 'Dune', 'author': 'Herbert'});
+
+      final res = await r.pull.sync();
+
+      expect(res.linked, 0);
+      expect(await r.lib.works(), hasLength(2));
+    });
+
+    test('two authors with the same title are two works', () async {
+      final r = await rig();
+      await r.lib.addWork(const WorkDraft(title: 'Selected', creator: 'Frost'));
+      r.server.seed('/books', {'title': 'Selected', 'author': 'Eliot'});
+
+      final res = await r.pull.sync();
+
+      expect(res.linked, 0);
+      expect(await r.lib.works(), hasLength(2));
+    });
+
+    test('one server work is taken by only one phone work', () async {
+      final r = await rig();
+      await r.lib.addWork(const WorkDraft(title: 'Dune'));
+      await r.lib.addWork(const WorkDraft(title: 'Dune'));
+      r.server.seed('/books', {'title': 'Dune', 'author': 'Herbert'});
+
+      final res = await r.pull.sync();
+
+      expect(res.linked, 1);
+      expect(
+        (await r.lib.works()).where((w) => w.serverId == null),
+        hasLength(1),
+      );
+    });
+
+    test('a phone quote with the server\'s words in the same work is linked, not copied', () async {
+      final r = await rig();
+      final w = await r.lib.addWork(
+        const WorkDraft(title: 'Walden', creator: 'Thoreau'),
+      );
+      final q = await r.lib.addQuote(
+        QuoteDraft(text: 'Simplify,   simplify.', workId: w.id),
+      );
+      final bookId = r.server.seed('/books', {
+        'title': 'Walden',
+        'author': 'Thoreau',
+      });
+      final noteId = r.server.seed(
+        '/annotations',
+        annotation(bookId, 'simplify, simplify.'),
+      );
+
+      final res = await r.pull.sync();
+
+      expect(res.linked, 2);
+      expect(res.quotesAdded, 0);
+      expect(await r.lib.quotes(), hasLength(1));
+      expect((await r.lib.quote(q.id))!.serverId, noteId);
+    });
+  });
 }

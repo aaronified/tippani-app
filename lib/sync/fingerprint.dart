@@ -118,3 +118,21 @@ String fingerprint(Fields fields) {
   }
   return h.toRadixString(16).padLeft(16, '0');
 }
+
+String _squash(String s) =>
+    s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+
+/// Two works (in the same realm) are taken for one when their titles read alike, case and spacing aside, and
+/// their creators agree or one side has none. Used to link a phone work that was never sent to the server's copy
+/// instead of bringing that copy down as a second one.
+bool sameWork(String titleA, String creatorA, String titleB, String creatorB) {
+  if (_squash(titleA).isEmpty || _squash(titleA) != _squash(titleB)) {
+    return false;
+  }
+  final a = _squash(creatorA), b = _squash(creatorB);
+  return a.isEmpty || b.isEmpty || a == b;
+}
+
+/// Two quotes' words are the same, case and spacing aside.
+bool sameWords(String a, String b) =>
+    _squash(a).isNotEmpty && _squash(a) == _squash(b);
