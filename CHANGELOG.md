@@ -7,6 +7,12 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Context from your server: a quote that is on the server has a Context section on its screen. Show where it comes from asks the server for what it stored
+  around the quote in its source file (the paragraphs before and after, or a film's subtitle lines), with Show more before and after up to what is stored,
+  and a note where the chapter or scene ends. It is asked for when you press it and is not kept on the phone.
+
 ### Changed
 
 - What's new shows each change by a short header, not its details, and ends with a link to the full changelog on GitHub. It is in Settings, and the
