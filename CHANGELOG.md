@@ -9,6 +9,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Quote screen: a Copy button puts the quote and its credit on the clipboard, and after you delete a quote an Undo button brings it back, with
+  its note, tags, colour and place.
+- The quote form suggests as you write: the characters of the work you chose (and who else was already quoted from it) under "Who said it", the
+  chapters you already used, and the tags your library already has. Press one to fill it in.
 - Your settings, the same on the phone and the web: Settings now has the account's own preferences, kept on your server so a change on one
   reaches the other. Text and quotes sets the size of the app's text and of a quote, the line height and length of a quote, a typeface for each
   language, and which separators split "Pratchett & Gaiman" into two people (a book with two authors now shows a pill for each). Colours names
