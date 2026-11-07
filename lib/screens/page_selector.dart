@@ -54,13 +54,23 @@ class _PageSelectorState extends State<PageSelector> {
             builder: (context, c) {
               final scale = c.maxWidth / page.width;
               Offset toPage(Offset o) => Offset(o.dx / scale, o.dy / scale);
-              // One drag recogniser that wins at once does the lot: a finger that lands and lifts without moving is a
-              // tap (take or leave out the word), and one that moves draws a box. An ordinary pan would lose to the
-              // page's scroll on any drag that goes mostly up or down.
+              // A tap takes a word or leaves it out. A finger that moves draws a box, through a drag recogniser that
+              // starts after a few pixels of movement and is checked before the page's own scroll, so a drag that goes
+              // mostly up or down draws a box and does not scroll the page (an ordinary pan would lose to the scroll).
               return RawGestureDetector(
                 key: const Key('page-stage'),
                 behavior: HitTestBehavior.opaque,
                 gestures: {
+                  TapGestureRecognizer:
+                      GestureRecognizerFactoryWithHandlers<
+                        TapGestureRecognizer
+                      >(
+                        () => TapGestureRecognizer(),
+                        (t) => t.onTapUp = (d) {
+                          final p = toPage(d.localPosition);
+                          _changed(() => _sel.toggleAt(p));
+                        },
+                      ),
                   ImmediateMultiDragGestureRecognizer:
                       GestureRecognizerFactoryWithHandlers<
                         ImmediateMultiDragGestureRecognizer
@@ -73,7 +83,6 @@ class _PageSelectorState extends State<PageSelector> {
                             start: start,
                             scale: scale,
                             onBox: (b) => setState(() => _box = b),
-                            onTap: () => _changed(() => _sel.toggleAt(start)),
                             onBoxDone: (b) {
                               setState(() => _box = null);
                               _changed(() => _sel.addInRect(b));
@@ -188,24 +197,19 @@ class _WordsPainter extends CustomPainter {
   bool shouldRepaint(_WordsPainter old) => true;
 }
 
-/// A finger on the picture: a tap if it never moves far, otherwise a box from where it landed to where it is.
+/// A finger moving on the picture: a box from where it landed to where it is.
 class _StageDrag implements Drag {
   _StageDrag({
     required this.start,
     required this.scale,
     required this.onBox,
-    required this.onTap,
     required this.onBoxDone,
   });
 
   final Offset start;
   final double scale;
   final void Function(Rect box) onBox;
-  final VoidCallback onTap;
   final void Function(Rect box) onBoxDone;
-
-  /// How far (in screen pixels) a finger may move and still be a tap.
-  static const _slop = 8.0;
 
   var _moved = Offset.zero;
   Rect? _box;
@@ -213,7 +217,6 @@ class _StageDrag implements Drag {
   @override
   void update(DragUpdateDetails details) {
     _moved += details.delta;
-    if (_moved.distance <= _slop && _box == null) return;
     _box = Rect.fromPoints(start, start + _moved / scale);
     onBox(_box!);
   }
@@ -221,11 +224,7 @@ class _StageDrag implements Drag {
   @override
   void end(DragEndDetails details) {
     final b = _box;
-    if (b == null) {
-      onTap();
-    } else {
-      onBoxDone(b);
-    }
+    if (b != null) onBoxDone(b);
   }
 
   @override

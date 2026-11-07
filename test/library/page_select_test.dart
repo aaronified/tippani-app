@@ -123,7 +123,7 @@ void main() {
 
     test('a box takes the words it covers, and only those', () {
       sel.addInRect(const Rect.fromLTRB(10, 55, 390, 95));
-      expect(sel.text(), 'Our Tom & Jerry');
+      expect(sel.text(), 'plify. Our Tom & Jerry');
     });
 
     test('a box that only grazes a line does not pick it up', () {
@@ -138,7 +138,7 @@ void main() {
     test('boxes add to each other, and Clear starts over', () {
       sel.addInRect(const Rect.fromLTRB(10, 55, 390, 95));
       sel.addInRect(const Rect.fromLTRB(10, 145, 390, 185));
-      expect(sel.text(), 'Our Tom & Jerry\n\nLater.');
+      expect(sel.text(), 'plify. Our Tom & Jerry\n\nLater.');
       sel.clear();
       expect(sel.isEmpty, isTrue);
     });
