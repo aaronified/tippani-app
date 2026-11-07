@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-07
+
 ### Added
 
 - Boards stay the same on the phone and on the server: the boards you make here go up, the ones on your server (the Proverbs, Speeches
