@@ -4,7 +4,9 @@ import '../anthologies/anthologies.dart';
 import '../capture/photo_source.dart';
 import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
+import '../quiz/quiz.dart' show QuizService;
 import 'anthology_tools.dart';
+import 'quiz_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 
@@ -85,6 +87,7 @@ class AnthologiesScreen extends StatefulWidget {
     this.picker,
     this.shareFile = shareFileThroughSheet,
     this.photos,
+    this.quiz,
   });
 
   final AnthologyService service;
@@ -92,6 +95,9 @@ class AnthologiesScreen extends StatefulWidget {
   final BackupPicker? picker;
   final ShareFile shareFile;
   final PhotoSource? photos;
+
+  /// Where Practise comes from. Null: the anthology has no Practise.
+  final QuizService? quiz;
 
   @override
   State<AnthologiesScreen> createState() => _AnthologiesScreenState();
@@ -142,6 +148,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
           picker: widget.picker,
           shareFile: widget.shareFile,
           photos: widget.photos,
+          quiz: widget.quiz,
         ),
       ),
     );
@@ -235,11 +242,13 @@ class AnthologyScreen extends StatefulWidget {
     this.picker,
     this.shareFile = shareFileThroughSheet,
     this.photos,
+    this.quiz,
   });
 
   final AnthologyService service;
   final int id;
   final ShareText share;
+  final QuizService? quiz;
 
   /// Where an exported file is saved. Null: only sending is offered.
   final BackupPicker? picker;
@@ -250,7 +259,7 @@ class AnthologyScreen extends StatefulWidget {
   State<AnthologyScreen> createState() => _AnthologyScreenState();
 }
 
-enum _Menu { heading, group, display, front, fill, removed, export }
+enum _Menu { practise, heading, group, display, front, fill, removed, export }
 
 class _AnthologyScreenState extends State<AnthologyScreen> {
   AnthologyDetail? _detail;
@@ -397,6 +406,16 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     final d = _detail!;
     final a = d.anthology;
     switch (m) {
+      case _Menu.practise:
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute(
+            builder: (_) => QuizScreen(
+              service: widget.quiz!,
+              mode: QuizMode.practice,
+              anthology: widget.id,
+            ),
+          ),
+        );
       case _Menu.heading:
         await _addHeading();
       case _Menu.group:
@@ -706,8 +725,16 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
             PopupMenuButton<_Menu>(
               tooltip: 'More',
               onSelected: _menu,
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: _Menu.fill, child: Text('Fill from…')),
+              itemBuilder: (_) => [
+                if (widget.quiz?.available == true && d.entries.isNotEmpty)
+                  const PopupMenuItem(
+                    value: _Menu.practise,
+                    child: Text('Practise'),
+                  ),
+                const PopupMenuItem(
+                  value: _Menu.fill,
+                  child: Text('Fill from…'),
+                ),
                 PopupMenuItem(
                   value: _Menu.heading,
                   child: Text('Add a heading'),

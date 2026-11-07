@@ -9,6 +9,7 @@ import 'package:tippani/screens/library_widgets.dart';
 import 'package:tippani/screens/anthologies_screen.dart';
 
 import '../support/fake_anthologies.dart';
+import '../support/fake_quiz.dart';
 
 AnthologyEntry entry(
   int id,
@@ -322,6 +323,50 @@ void main() {
     await tester.longPress(find.text('Simplify.'));
     expect(added, 2, reason: 'the button and a long press both do it');
   });
+
+  testWidgets('Practise runs the quiz on this anthology only', (tester) async {
+    final quiz = FakeQuiz();
+    tester.view.physicalSize = const Size(900, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnthologyScreen(service: service, id: a.id, quiz: quiz),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await choose(tester, 'Practise');
+    await tester.pump();
+    expect(quiz.practiceAnthologies, [a.id]);
+  });
+
+  testWidgets(
+    'there is no Practise without the quiz, or with nothing to practise',
+    (tester) async {
+      await open(tester);
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Practise'), findsNothing);
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+
+      final empty = service.seed('Empty');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AnthologyScreen(
+            key: const ValueKey('another'),
+            service: service,
+            id: empty.id,
+            quiz: FakeQuiz(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      expect(find.text('Practise'), findsNothing);
+    },
+  );
 
   testWidgets('the epigraph and dedication are kept', (tester) async {
     await open(tester);

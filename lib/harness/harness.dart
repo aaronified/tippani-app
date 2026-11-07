@@ -16,6 +16,7 @@ import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
+import '../boards/board_service.dart';
 import '../library/cover_cache.dart';
 import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
@@ -121,6 +122,7 @@ class Harness {
     this.tools,
     this.tags,
     this.lookup,
+    this.boards,
     Future<List<ChangelogEntry>> Function()? changelogLoader,
     this.showWhatsNew = true,
   }) : _changelogLoader = changelogLoader ?? loadChangelog;
@@ -217,6 +219,10 @@ class Harness {
   /// Finds a work's details through the paired server. Null in a test that is about something else.
   final WorkLookup? lookup;
 
+  /// What the server holds for a board beyond its name and colour (picture, kind, order, hidden). Null in a test
+  /// about something else.
+  final BoardService? boards;
+
   /// Whether the first start of a new version shows what changed. Tests that are about something else
   /// turn it off so a dialog does not cover the screen under test.
   final bool showWhatsNew;
@@ -294,6 +300,7 @@ class Harness {
       tools: PairedServerTools(controller),
       tags: PairedTagService(controller),
       lookup: PairedWorkLookup(controller),
+      boards: library == null ? null : ServerBoards(controller, library),
     );
   }
 
@@ -328,6 +335,7 @@ class Harness {
     ServerTools? tools,
     TagService? tags,
     WorkLookup? lookup,
+    BoardService? boards,
     List<ChangelogEntry>? changelog,
     bool showWhatsNew = false,
   }) {
@@ -382,6 +390,7 @@ class Harness {
       tools: tools,
       tags: tags,
       lookup: lookup,
+      boards: boards,
       changelogLoader: () async => changelog ?? const [],
       showWhatsNew: showWhatsNew,
     );

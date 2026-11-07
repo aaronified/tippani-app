@@ -16,6 +16,7 @@ import 'screens/nav_icons.dart';
 import 'screens/home_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/settings_screen.dart';
+import 'boards/board_service.dart';
 import 'people/people_directory.dart';
 import 'people/people_service.dart';
 import 'tags/tag_service.dart';
@@ -83,11 +84,14 @@ class TippaniApp extends StatelessWidget {
                               source: harness.people,
                               child: PeopleDirectoryScope(
                                 directory: harness.directory,
-                                child: PeopleServiceScope(
-                                  service: harness.peopleService,
-                                  child: TagServiceScope(
-                                    service: harness.tags,
-                                    child: child!,
+                                child: BoardScope(
+                                  service: harness.boards,
+                                  child: PeopleServiceScope(
+                                    service: harness.peopleService,
+                                    child: TagServiceScope(
+                                      service: harness.tags,
+                                      child: child!,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -221,6 +225,7 @@ class _ShellState extends State<Shell> {
           screen: AnthologiesScreen(
             service: widget.harness.anthologies!,
             picker: widget.harness.picker,
+            quiz: widget.harness.quiz,
           ),
           destination: NavigationDestination(
             icon: NavSectionIcon(NavSection.anthologies),

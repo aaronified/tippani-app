@@ -199,13 +199,15 @@ void main() {
       expect(find.textContaining('already exists'), findsOneWidget);
     });
 
-    testWidgets('a board is renamed by tapping it', (tester) async {
+    testWidgets('a board is renamed from its menu', (tester) async {
       await open(tester);
       await lib.addBoard('Old');
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(MaterialApp(home: BoardsScreen(store: lib)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Old'));
+      await tester.tap(find.byTooltip('More for Old'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'New');
       await tester.pump();
@@ -221,15 +223,19 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(MaterialApp(home: BoardsScreen(store: lib)));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Delete board'));
+      await tester.tap(find.byTooltip('More for A'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
       expect(find.textContaining('1 quote stays'), findsOneWidget);
       await tester.tap(find.text('Keep it'));
       await tester.pumpAndSettle();
       expect(await lib.boards(), hasLength(1));
-      await tester.tap(find.byTooltip('Delete board'));
+      await tester.tap(find.byTooltip('More for A'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete').last);
       await tester.pumpAndSettle();
       expect(await lib.boards(), isEmpty);
       expect((await lib.quotes()).single.boardId, isNull);
@@ -360,9 +366,11 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Boards'));
         await tester.pumpAndSettle();
-        await tester.tap(find.byTooltip('Delete board').first);
+        await tester.tap(find.byTooltip('More for Proverbs'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Delete').last);
         await tester.pumpAndSettle();
         await tester.pageBack();
         await tester.pumpAndSettle();

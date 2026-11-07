@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../harness/files.dart' show ChannelAppFiles;
 import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText;
 import '../library/models.dart';
@@ -18,6 +19,25 @@ typedef CopyText = Future<void> Function(String text);
 Future<void> copyToClipboard(String text) =>
     Clipboard.setData(ClipboardData(text: text));
 
+/// Puts a picture on the clipboard (true when it did). A function so a test can stand in for the clipboard.
+typedef CopyImage = Future<bool> Function(Uint8List png, String fileName);
+
+/// Flutter's own clipboard holds text only, so the picture goes through the app's Android channel
+/// (`MainActivity.copyImage`), which puts a link to the file on the clipboard.
+Future<bool> copyImageToClipboard(Uint8List png, String fileName) async {
+  try {
+    final ok = await ChannelAppFiles.channel.invokeMethod<bool>('copyImage', {
+      'name': fileName,
+      'bytes': png,
+    });
+    return ok == true;
+  } on PlatformException {
+    return false;
+  } on MissingPluginException {
+    return false;
+  }
+}
+
 /// One place to send a quote from, in any form: a picture, plain text, Markdown, WhatsApp or Reddit. The
 /// reader switches parts on and off (the same parts, with the same defaults, as the web app's share dialog),
 /// sees what will be sent, and shares, copies or saves it. Nothing here reaches a server.
@@ -30,6 +50,7 @@ class ShareScreen extends StatefulWidget {
     required this.shareImage,
     required this.picker,
     this.copy = copyToClipboard,
+    this.copyImage = copyImageToClipboard,
   });
 
   final Quote quote;
@@ -38,6 +59,7 @@ class ShareScreen extends StatefulWidget {
   final ShareImage shareImage;
   final BackupPicker picker;
   final CopyText copy;
+  final CopyImage copyImage;
 
   @override
   State<ShareScreen> createState() => _ShareScreenState();
@@ -190,6 +212,23 @@ class _ShareScreenState extends State<ShareScreen> {
       );
     } on Object {
       if (mounted) _say('The picture could not be shared.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _copyPicture() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final png = await _picture();
+      if (png == null) return;
+      final ok = await widget.copyImage(png, _fileName);
+      if (mounted) {
+        _say(ok ? 'Picture copied.' : 'The picture could not be copied.');
+      }
+    } on Object {
+      if (mounted) _say('The picture could not be copied.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -441,6 +480,11 @@ class _ShareScreenState extends State<ShareScreen> {
                   onPressed: _busy ? null : _sharePicture,
                   icon: const Icon(Icons.ios_share),
                   label: Text(context.tr('Share')),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: _busy ? null : _copyPicture,
+                  icon: const Icon(Icons.copy_rounded),
+                  label: const Text('Copy picture'),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _busy ? null : _savePicture,
