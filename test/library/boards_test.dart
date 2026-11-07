@@ -157,6 +157,7 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       lib = MemoryLibrary();
+      await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(MaterialApp(home: BoardsScreen(store: lib)));
       await tester.pumpAndSettle();
     }
@@ -201,6 +202,7 @@ void main() {
     testWidgets('a board is renamed by tapping it', (tester) async {
       await open(tester);
       await lib.addBoard('Old');
+      await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(MaterialApp(home: BoardsScreen(store: lib)));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Old'));
@@ -216,6 +218,7 @@ void main() {
       await open(tester);
       final b = await lib.addBoard('A');
       await lib.addQuote(QuoteDraft(text: 'one', boardId: b.id));
+      await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(MaterialApp(home: BoardsScreen(store: lib)));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Delete board'));
@@ -311,7 +314,12 @@ void main() {
         expect(find.text('A stitch in time.'), findsOneWidget);
         expect(find.text('I have a dream.'), findsNothing);
         expect(find.text('Unfiled thought.'), findsNothing);
-        await tester.tap(find.byIcon(Icons.cancel));
+        await tester.tap(
+          find.descendant(
+            of: find.widgetWithText(InputChip, 'Proverbs'),
+            matching: find.byType(Icon),
+          ),
+        );
         await tester.pumpAndSettle();
         expect(find.text('I have a dream.'), findsOneWidget);
       },
