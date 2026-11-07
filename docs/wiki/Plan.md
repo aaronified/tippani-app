@@ -246,6 +246,10 @@ synced account's theme preferences are ignored here.
       server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
       its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
       Checked against a real server in `test/live`. **Not yet:** reordering, per-passage commentary, sections, grouping, the cover, boards.
+- [x] **Boards, on the phone** (done 7 November 2026): `boards` table and `quotes.board_id` (schema 6); make, rename, recolour, delete (quotes kept,
+      unfiled); file a standalone quote on a board; filter by a board or by none; group by board; boards are in backups. A quote from a work is never on
+      a board, as on the server. **Not done: syncing boards.** The server has `/boards` and a `board_id` on each standalone quote; pulling and pushing
+      those needs the quote fingerprint to carry the board's server id and boards to get server ids of their own.
 - [x] **Work details** (done 7 November 2026): a work's page shows the server's description, genres, publisher, pages, ISBN, series and cast (a
       film's cast, a book's characters). Fetched from `GET /books|movies/{id}` and `/{id}/cast` when the page opens if never fetched or over a day
       old (`lib/tools/work_details_source.dart`), kept on the work (`works.details`, schema 5) as read-only metadata outside the sync fingerprint.

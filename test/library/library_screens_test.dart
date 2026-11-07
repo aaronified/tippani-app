@@ -25,6 +25,8 @@ class SlowLibrary extends MemoryLibrary {
     String query = '',
     bool favouritesOnly = false,
     String? tag,
+    int? boardId,
+    bool unfiled = false,
     int limit = 200,
     int offset = 0,
   }) async {
@@ -34,6 +36,8 @@ class SlowLibrary extends MemoryLibrary {
       query: query,
       favouritesOnly: favouritesOnly,
       tag: tag,
+      boardId: boardId,
+      unfiled: unfiled,
       limit: limit,
       offset: offset,
     );

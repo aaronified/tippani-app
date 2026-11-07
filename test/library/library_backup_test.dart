@@ -65,6 +65,8 @@ class _MemoryLibrary implements LibraryStore {
     String query = '',
     bool favouritesOnly = false,
     String? tag,
+    int? boardId,
+    bool unfiled = false,
     int limit = 200,
     int offset = 0,
   }) async => [];

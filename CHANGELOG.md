@@ -8,6 +8,10 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Added
 
+- Boards, on the phone: shelves for standalone quotes. Make, rename, colour and delete them from the Boards button in the Library (deleting a
+  board keeps its quotes). File a standalone quote on a board from its form (a quote from a work stays with its work). In the Library, filter
+  by a board, or by quotes on none, and turn on Group by board to see a heading over each board's quotes. Boards are in your backups. They do
+  not sync with the server yet.
 - A work's page now shows what your server knows about it: the description, genres, publisher, page count, ISBN and series, and the cast of a
   film or show or the characters of a book. It is fetched when you open the page (and again after a day), and kept, so it is still there
   without the server.

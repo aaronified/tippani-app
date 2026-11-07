@@ -33,6 +33,8 @@ abstract interface class LibraryStore {
     String query = '',
     bool favouritesOnly = false,
     String? tag,
+    int? boardId,
+    bool unfiled = false,
     int limit = 200,
     int offset = 0,
   });
@@ -83,6 +85,17 @@ abstract interface class LibraryStore {
   /// Keeps what the server knows about a work (see [WorkDetails]). Changes nothing else, not even `updated_at`.
   Future<void> setWorkDetails(int id, WorkDetails details);
 
+  /// The boards, by name, each with how many quotes are on it.
+  Future<List<Board>> boards();
+
+  /// Makes a board. A name already in use (any letter case) is an error.
+  Future<Board> addBoard(String name, {String color = ''});
+  Future<void> renameBoard(int id, String name);
+  Future<void> recolourBoard(int id, String color);
+
+  /// Deletes a board. Its quotes are kept, and are no longer on any board.
+  Future<void> deleteBoard(int id);
+
   /// Fires after the reader changes the library (add, edit, delete, favourite). Not for what a sync writes.
   Stream<void> get changes;
 
@@ -115,7 +128,7 @@ class SqliteLibraryStore implements LibraryStore {
   final Database _db;
   final DateTime Function() _clock;
 
-  static const schemaVersion = 5;
+  static const schemaVersion = 6;
 
   /// The longest a quote's text or a title may be. A pasted book is not a quote.
   static const maxText = 20000;
@@ -142,6 +155,12 @@ class SqliteLibraryStore implements LibraryStore {
           await db.execute('ALTER TABLE quotes ADD COLUMN synced_hash TEXT');
         }
         if (from < 3) await _createDeletions(db);
+        if (from < 6) {
+          await _createBoards(db);
+          await db.execute(
+            'ALTER TABLE quotes ADD COLUMN board_id INTEGER REFERENCES boards(id) ON DELETE SET NULL',
+          );
+        }
         if (from < 5) {
           await db.execute(
             "ALTER TABLE works ADD COLUMN details TEXT NOT NULL DEFAULT ''",
@@ -161,6 +180,14 @@ class SqliteLibraryStore implements LibraryStore {
 
   @override
   Stream<void> get changes => _changes.stream;
+
+  static Future<void> _createBoards(Database db) => db.execute('''
+      CREATE TABLE boards (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+        color TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL
+      )''');
 
   static Future<void> _createDeletions(Database db) => db.execute('''
       CREATE TABLE deletions (
@@ -204,11 +231,13 @@ class SqliteLibraryStore implements LibraryStore {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         server_id INTEGER,
-        synced_hash TEXT
+        synced_hash TEXT,
+        board_id INTEGER REFERENCES boards(id) ON DELETE SET NULL
       )''');
     await db.execute('CREATE INDEX quotes_work ON quotes(work_id)');
     await db.execute('CREATE INDEX quotes_noted ON quotes(noted_at)');
     await _createDeletions(db);
+    await _createBoards(db);
     await db.execute(
       'CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE COLLATE NOCASE)',
     );
@@ -435,6 +464,7 @@ class SqliteLibraryStore implements LibraryStore {
       tags: tags,
       serverId: r['server_id'] as int?,
       syncedHash: r['synced_hash'] as String?,
+      boardId: r['board_id'] as int?,
     );
   }
 
@@ -471,6 +501,8 @@ class SqliteLibraryStore implements LibraryStore {
     'favorite': d.favorite ? 1 : 0,
     'noted_at': (d.notedAt ?? _clock()).toUtc().toIso8601String(),
     'source': d.source.trim().isEmpty ? 'manual' : d.source.trim(),
+    // a quote from a work is never on a board
+    'board_id': d.workId == null ? d.boardId : null,
   };
 
   Future<void> _writeTags(
@@ -584,6 +616,8 @@ class SqliteLibraryStore implements LibraryStore {
     String query = '',
     bool favouritesOnly = false,
     String? tag,
+    int? boardId,
+    bool unfiled = false,
     int limit = 200,
     int offset = 0,
   }) async {
@@ -594,6 +628,11 @@ class SqliteLibraryStore implements LibraryStore {
       args.add(workId);
     }
     if (favouritesOnly) where.add('q.favorite = 1');
+    if (boardId != null) {
+      where.add('q.board_id = ?');
+      args.add(boardId);
+    }
+    if (unfiled) where.add('q.board_id IS NULL');
     if (tag != null && tag.trim().isNotEmpty) {
       where.add(
         'q.id IN (SELECT qt.quote_id FROM quote_tags qt JOIN tags t ON t.id = qt.tag_id WHERE t.name = ? COLLATE NOCASE)',
@@ -672,6 +711,79 @@ class SqliteLibraryStore implements LibraryStore {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  @override
+  Future<List<Board>> boards() async => [
+    for (final r in await _db.rawQuery(
+      'SELECT b.id, b.name, b.color, (SELECT COUNT(*) FROM quotes q WHERE q.board_id = b.id) AS n FROM boards b ORDER BY b.name COLLATE NOCASE',
+    ))
+      Board(
+        id: r['id']! as int,
+        name: r['name']! as String,
+        color: r['color']! as String,
+        quotes: r['n']! as int,
+      ),
+  ];
+
+  String _boardName(String raw) {
+    final n = raw.trim();
+    if (n.isEmpty) throw const LibraryException('a board needs a name');
+    if (n.length > 80) throw const LibraryException('that name is too long');
+    return n;
+  }
+
+  @override
+  Future<Board> addBoard(String name, {String color = ''}) async {
+    final n = _boardName(name);
+    try {
+      final id = await _db.insert('boards', {
+        'name': n,
+        'color': quoteColors.contains(color) ? color : '',
+        'created_at': _now(),
+      });
+      _changes.add(null);
+      return Board(
+        id: id,
+        name: n,
+        color: quoteColors.contains(color) ? color : '',
+      );
+    } on DatabaseException {
+      throw const LibraryException('a board with that name already exists');
+    }
+  }
+
+  @override
+  Future<void> renameBoard(int id, String name) async {
+    try {
+      final n = await _db.update(
+        'boards',
+        {'name': _boardName(name)},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      if (n == 0) throw const LibraryException('no such board');
+      _changes.add(null);
+    } on DatabaseException {
+      throw const LibraryException('a board with that name already exists');
+    }
+  }
+
+  @override
+  Future<void> recolourBoard(int id, String color) async {
+    await _db.update(
+      'boards',
+      {'color': quoteColors.contains(color) ? color : ''},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> deleteBoard(int id) async {
+    await _db.delete('boards', where: 'id = ?', whereArgs: [id]);
+    _changes.add(null);
   }
 
   @override
@@ -759,6 +871,7 @@ class SqliteLibraryStore implements LibraryStore {
     return {
       'version': schemaVersion,
       'works': [for (final w in ws) w.toJson()],
+      'boards': [for (final b in await boards()) b.toJson()],
       'quotes': [for (final q in qs.reversed) q.toJson()],
     };
   }
@@ -810,7 +923,25 @@ class SqliteLibraryStore implements LibraryStore {
       await tx.delete('quote_tags');
       await tx.delete('quotes');
       await tx.delete('works');
+      await tx.delete('boards');
       await tx.delete('tags');
+      final boardIds = <int>{};
+      for (final b
+          in data['boards'] is List ? data['boards']! as List : const []) {
+        if (b is! Map || b['id'] is! int || b['name'] is! String) continue;
+        if ((b['name'] as String).trim().isEmpty) continue;
+        try {
+          await tx.insert('boards', {
+            'id': b['id'],
+            'name': (b['name'] as String).trim(),
+            'color': quoteColors.contains(b['color']) ? b['color'] : '',
+            'created_at': _now(),
+          });
+          boardIds.add(b['id'] as int);
+        } on DatabaseException {
+          // a second board of the same name in the file is left out
+        }
+      }
       for (final w in works) {
         final m = w as Map;
         await tx.insert('works', {
@@ -850,6 +981,9 @@ class SqliteLibraryStore implements LibraryStore {
           'updated_at': _time(m['updated_at']),
           'server_id': m['server_id'] is int ? m['server_id'] : null,
           'synced_hash': m['synced_hash'] is String ? m['synced_hash'] : null,
+          'board_id': m['work_id'] == null && boardIds.contains(m['board_id'])
+              ? m['board_id']
+              : null,
         });
         final tags = m['tags'];
         await _writeTags(

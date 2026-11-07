@@ -279,6 +279,7 @@ class Quote {
     required this.tags,
     this.serverId,
     this.syncedHash,
+    this.boardId,
   });
 
   final int id;
@@ -316,6 +317,9 @@ class Quote {
   /// What the phone and the server last agreed this quote said; null until they have agreed once.
   final String? syncedHash;
 
+  /// The board a standalone quote is filed on (null: none). A quote from a work is never on a board.
+  final int? boardId;
+
   Quote withServerId(int? id) => Quote(
     id: this.id,
     workId: workId,
@@ -335,6 +339,7 @@ class Quote {
     tags: tags,
     serverId: id,
     syncedHash: syncedHash,
+    boardId: boardId,
   );
 
   Quote withSyncedHash(String? hash) => Quote(
@@ -356,6 +361,7 @@ class Quote {
     tags: tags,
     serverId: serverId,
     syncedHash: hash,
+    boardId: boardId,
   );
 
   Map<String, Object?> toJson() => {
@@ -377,7 +383,29 @@ class Quote {
     'tags': tags,
     'server_id': serverId,
     'synced_hash': syncedHash,
+    'board_id': boardId,
   };
+}
+
+/// A shelf for standalone quotes, to group and filter them by.
+class Board {
+  const Board({
+    required this.id,
+    required this.name,
+    this.color = '',
+    this.quotes = 0,
+  });
+
+  final int id;
+  final String name;
+
+  /// One of [quoteColors], or '' for none.
+  final String color;
+
+  /// How many quotes are filed on it.
+  final int quotes;
+
+  Map<String, Object?> toJson() => {'id': id, 'name': name, 'color': color};
 }
 
 /// What a reader fills in to make or change a quote.
@@ -396,6 +424,7 @@ class QuoteDraft {
     this.notedAt,
     this.source = 'manual',
     this.tags = const [],
+    this.boardId,
   });
 
   final String text;
@@ -413,6 +442,9 @@ class QuoteDraft {
   final DateTime? notedAt;
   final String source;
   final List<String> tags;
+
+  /// The board to file a standalone quote on. Ignored when [workId] is set.
+  final int? boardId;
 }
 
 /// How many of each thing the library holds.

@@ -212,6 +212,13 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## Boards
+
+A board (`Board` in `models.dart`, table `boards`, `quotes.board_id` with `ON DELETE SET NULL`) is a shelf for standalone quotes, mirroring the server's.
+The store forces `board_id` to null for a quote that has a work. Names are unique in any letter case. `quotes()` takes `boardId` and `unfiled`;
+the Library filters with them and groups client-side (`_groupedQuotes`). They are not synced yet: when they are, the quote fingerprint must
+carry the board by its server id, and a board needs a `server_id` and a pending-deletion route like works and quotes have.
+
 ## Work details
 
 `PairedWorkDetails` (`lib/tools/work_details_source.dart`) reads a work's own record and its cast when a work's page opens, and the page keeps
