@@ -30,6 +30,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Fixed
 
+- The bottom bar no longer cuts words off: "Anthologies" was clipped on narrower phones or with large text. The labels are a little smaller, and
+  when the bar is crowded only the open tab keeps its label.
 - Signatures on the share picture: a signature your server keeps as a drawn (vector) picture, which is how most are stored, was left off the
   picture. It is drawn now. The share picture also takes the portraits and signature from the phone's own copy, so it can be made without the
   server, and a book's character can show its picture too.
