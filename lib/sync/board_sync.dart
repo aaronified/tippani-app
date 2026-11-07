@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../api/api_client.dart';
 import '../app_controller.dart';
 import '../harness/app_log.dart';
@@ -205,7 +207,11 @@ class BoardSync {
       final sf = serverBoardFields(row);
       final sfp = fingerprint(sf);
       if (lfp == sfp) {
-        if (b.syncedHash != lfp || b.serverRow.isEmpty) {
+        // the server's own row is kept current too (hidden, order, picture, kind), so the phone shows what the web
+        // set; the quote count changes with every filing and is not a reason to write
+        if (b.syncedHash != lfp ||
+            b.serverRow.isEmpty ||
+            _rowKey(b.serverRow) != _rowKey(row)) {
           await _store.linkBoard(b.id, b.serverId!, lfp, row);
         }
       } else if (b.syncedHash == sfp) {
@@ -277,6 +283,12 @@ class BoardSync {
     );
     return result;
   }
+
+  /// The server's board row as text, without the quote count.
+  static String _rowKey(Map row) => jsonEncode({
+    for (final e in row.entries)
+      if (e.key != 'quotes') '${e.key}': e.value,
+  });
 
   Future<_Wrote> _create(Board b, Fields lf) async {
     try {

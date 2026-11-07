@@ -13,10 +13,18 @@ enum QuizMode { daily, practice }
 /// A round of questions, one at a time: today's Daily Quiz (its answers move the schedule) or Practice (as many as
 /// you like, skippable, leaving the schedule alone unless the server is set to count it).
 class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key, required this.service, required this.mode});
+  const QuizScreen({
+    super.key,
+    required this.service,
+    required this.mode,
+    this.anthology,
+  });
 
   final QuizService service;
   final QuizMode mode;
+
+  /// Practice only the passages of this anthology (its server id). Null: the whole library.
+  final int? anthology;
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -73,7 +81,9 @@ class _QuizScreenState extends State<QuizScreen> {
           _loading = false;
         });
       } else {
-        final cards = await widget.service.practice();
+        final cards = await widget.service.practice(
+          anthology: widget.anthology,
+        );
         if (!mounted) return;
         setState(() {
           _cards = cards;

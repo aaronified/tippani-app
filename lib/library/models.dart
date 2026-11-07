@@ -441,6 +441,32 @@ class Board {
   final int quotes;
 
   Map<String, Object?> toJson() => {'id': id, 'name': name, 'color': color};
+
+  /// What the server holds for the board beyond its name and colour, read from [serverRow]. A board that is not on
+  /// the server (yet) has none of it.
+  String get description => (serverRow['description'] as String?) ?? '';
+
+  /// The name of the board's picture file on the server, or ''.
+  String get imagePath => (serverRow['image_path'] as String?) ?? '';
+
+  /// A hidden board is left out of the lists the reader files and filters by.
+  bool get hidden => serverRow['hidden'] == true;
+
+  /// Where the reader put it in the order of boards (smaller first), or null when the server has not said.
+  int? get pos => (serverRow['pos'] as num?)?.toInt();
+
+  /// What the board is for: plain, proverb, speech, letter or essay.
+  String get kind {
+    final k = serverRow['kind'];
+    return k is String && k.isNotEmpty ? k : 'plain';
+  }
+
+  /// The languages of a proverb board.
+  List<String> get languages => [
+    if (serverRow['languages'] is List)
+      for (final l in serverRow['languages'] as List)
+        if (l is String && l.isNotEmpty) l,
+  ];
 }
 
 /// What a reader fills in to make or change a quote.

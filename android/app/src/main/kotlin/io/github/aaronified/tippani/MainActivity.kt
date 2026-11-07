@@ -1,6 +1,9 @@
 package io.github.aaronified.tippani
 
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Intent
@@ -66,6 +69,12 @@ class MainActivity : FlutterActivity() {
                         val f = File(logsDir(), safe(call.argument<String>("name")!!))
                         result.success(if (f.isFile) f.readBytes() else null)
                     }
+                    "copyImage" -> result.success(
+                        copyImage(
+                            call.argument<String>("name") ?: "quote.png",
+                            call.argument<ByteArray>("bytes")!!,
+                        ),
+                    )
                     "keptApk" -> result.success(keptApk(call.argument<String>("name")!!))
                     "installApk" -> result.success(installApk(call.argument<String>("name")!!))
                     else -> result.notImplemented()
@@ -120,6 +129,25 @@ class MainActivity : FlutterActivity() {
         } catch (e: SecurityException) {
             false
         }
+    }
+
+    /// Puts a picture on the clipboard, so it can be pasted into a chat or a note. The clipboard holds a link to
+    /// a file, not the picture itself, so the PNG is written to the app's cache (clip/) and handed out through
+    /// ClipFileProvider, which lets whatever app pastes it read that one file. True when it was copied.
+    private fun copyImage(name: String, bytes: ByteArray): Boolean {
+        val dir = File(cacheDir, "clip").also { it.mkdirs() }
+        // one picture at a time: an earlier copy is of no use once this one is on the clipboard
+        dir.listFiles()?.forEach { it.delete() }
+        val f = File(dir, safe(name))
+        f.writeBytes(bytes)
+        val uri: Uri = try {
+            FileProvider.getUriForFile(this, "$packageName.clip_provider", f)
+        } catch (e: IllegalArgumentException) {
+            return false
+        }
+        val clip = ClipData.newUri(contentResolver, "Quote", uri)
+        (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(clip)
+        return true
     }
 
     private fun backupsDir(): File = File(filesDir, "backups").also { it.mkdirs() }
