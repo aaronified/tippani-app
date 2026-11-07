@@ -178,10 +178,16 @@ class WorksView extends StatefulWidget {
     required this.onOpen,
     required this.sectionKey,
     this.prefs,
+    this.selected = const {},
+    this.onLongPress,
   });
 
   final List<Work> works;
   final ValueChanged<Work> onOpen;
+
+  /// The ids picked while selecting many, shown marked; [onLongPress] starts or extends that.
+  final Set<int> selected;
+  final ValueChanged<Work>? onLongPress;
 
   /// Names this section's saved choices ('books', 'catalogue').
   final String sectionKey;
@@ -441,10 +447,23 @@ class _WorksViewState extends State<WorksView> {
               ),
             ),
           if (_grid)
-            _CoverGrid(works: g.works, columns: _columns, onOpen: widget.onOpen)
+            _CoverGrid(
+              works: g.works,
+              columns: _columns,
+              onOpen: widget.onOpen,
+              selected: widget.selected,
+              onLongPress: widget.onLongPress,
+            )
           else
             for (final w in g.works)
-              WorkTile(work: w, onTap: () => widget.onOpen(w)),
+              WorkTile(
+                work: w,
+                selected: widget.selected.contains(w.id),
+                onLongPress: widget.onLongPress == null
+                    ? null
+                    : () => widget.onLongPress!(w),
+                onTap: () => widget.onOpen(w),
+              ),
         ],
       ],
     );
@@ -457,11 +476,15 @@ class _CoverGrid extends StatelessWidget {
     required this.works,
     required this.columns,
     required this.onOpen,
+    required this.selected,
+    required this.onLongPress,
   });
 
   final List<Work> works;
   final int columns;
   final ValueChanged<Work> onOpen;
+  final Set<int> selected;
+  final ValueChanged<Work>? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -485,6 +508,9 @@ class _CoverGrid extends StatelessWidget {
                     key: ValueKey('cover-${work.id}'),
                     borderRadius: BorderRadius.circular(12),
                     onTap: () => onOpen(work),
+                    onLongPress: onLongPress == null
+                        ? null
+                        : () => onLongPress!(work),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -503,6 +529,31 @@ class _CoverGrid extends StatelessWidget {
                                 ),
                               ),
                             ),
+                            if (selected.contains(work.id))
+                              Positioned.fill(
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: scheme.primary.withValues(
+                                      alpha: 0.28,
+                                    ),
+                                    border: Border.all(
+                                      color: scheme.primary,
+                                      width: 3,
+                                    ),
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment.topRight,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(6),
+                                      child: Icon(
+                                        Icons.check_circle_rounded,
+                                        color: scheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             if (work.details.status.isNotEmpty)
                               Positioned(
                                 left: 6,

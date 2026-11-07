@@ -272,6 +272,56 @@ void main() {
       expect(opened.single.title, 'Dune');
     });
 
+    testWidgets(
+      'selecting many: a long press picks, and the pick is marked in both views',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 2400);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final longPressed = <Work>[];
+        var picked = <int>{};
+        Future<void> pump() async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: WorksView(
+                  works: all,
+                  onOpen: (_) {},
+                  onLongPress: longPressed.add,
+                  selected: picked,
+                  sectionKey: 'books',
+                  prefs: prefs,
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+
+        await pump();
+        await tester.longPress(find.byType(WorkTile).first);
+        expect(longPressed.single.title, 'aeneid');
+        picked = {aeneid.id};
+        await pump();
+        expect(
+          tester
+              .widgetList<WorkTile>(find.byType(WorkTile))
+              .where((t) => t.selected)
+              .single
+              .work
+              .title,
+          'aeneid',
+        );
+        await tester.tap(find.byKey(const ValueKey('works-view')));
+        await tester.pumpAndSettle();
+        expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+        await tester.longPress(find.byKey(ValueKey('cover-${dune.id}')));
+        expect(longPressed.last.title, 'Dune');
+      },
+    );
+
     testWidgets('the choices are kept for the next visit', (tester) async {
       await open(tester);
       await tester.tap(find.byKey(const ValueKey('works-view')));
