@@ -98,6 +98,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   late String _source = widget.quote?.source ?? widget.source;
   List<Work> _works = const [];
   List<Board> _boards = const [];
+
+  /// What the form offers to fill the boxes with: the cast of the chosen work, the chapters already used in it, and
+  /// the tags the library already has.
+  List<Quote> _inWork = const [];
+  List<String> _knownTags = const [];
   late int? _boardId = widget.quote?.boardId;
   String? _error;
   bool _saving = false;
@@ -135,12 +140,95 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             ? p
             : x.name.toLowerCase().compareTo(y.name.toLowerCase());
       });
+    final tags = await widget.store.tags();
     if (mounted) {
       setState(() {
         _works = ws;
         _boards = bs;
+        _knownTags = tags;
       });
     }
+    await _loadWorkHints();
+  }
+
+  Future<void> _loadWorkHints() async {
+    final id = _workId;
+    final qs = id == null
+        ? const <Quote>[]
+        : await widget.store.quotes(workId: id, limit: 1 << 30);
+    if (mounted) setState(() => _inWork = qs);
+  }
+
+  /// The characters (or, for a book, the speakers already used) the chosen work offers for "who said it".
+  List<String> get _speakerHints {
+    final w = _works.where((w) => w.id == _workId).firstOrNull;
+    final seen = <String>{};
+    final out = <String>[];
+    void add(String s) {
+      final n = s.trim();
+      if (n.isNotEmpty && seen.add(n.toLowerCase())) out.add(n);
+    }
+
+    if (w != null) {
+      for (final c in w.details.cast) {
+        add(c.character);
+      }
+    }
+    for (final q in _inWork) {
+      for (final n in q.speaker.split(RegExp(r'\s*[,;&]\s*'))) {
+        add(n);
+      }
+    }
+    return out.take(14).toList();
+  }
+
+  List<String> get _chapterHints {
+    final seen = <String>{};
+    return [
+      for (final q in _inWork)
+        if (q.chapter.trim().isNotEmpty && seen.add(q.chapter.trim()))
+          q.chapter.trim(),
+    ].take(14).toList();
+  }
+
+  /// Adds [name] to a comma-separated box, unless it is already there.
+  void _append(TextEditingController c, String name) {
+    final parts = [
+      for (final p in c.text.split(','))
+        if (p.trim().isNotEmpty) p.trim(),
+    ];
+    if (parts.any((p) => p.toLowerCase() == name.toLowerCase())) return;
+    setState(() => c.text = [...parts, name].join(', '));
+  }
+
+  Widget _hints(
+    String label,
+    List<String> options,
+    void Function(String) pick,
+  ) {
+    if (options.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 0,
+            children: [
+              for (final o in options)
+                ActionChip(
+                  label: Text(o),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => pick(o),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _newWork() async {
@@ -150,6 +238,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     if (w == null) return;
     await _loadWorks();
     if (mounted) setState(() => _workId = w.id);
+    await _loadWorkHints();
   }
 
   /// Puts [t] in the words: replacing them if they are empty, otherwise added after what is there, so a second
@@ -325,7 +414,10 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   ),
                 ),
             ],
-            onChanged: (v) => setState(() => _workId = v),
+            onChanged: (v) {
+              setState(() => _workId = v);
+              _loadWorkHints();
+            },
           ),
           Align(
             alignment: Alignment.centerLeft,
@@ -361,6 +453,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(labelText: context.tr('Who said it')),
           ),
+          _hints(
+            context.tr('In this work'),
+            _speakerHints,
+            (n) => _append(_speaker, n),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -382,6 +479,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                 ),
               ),
             ],
+          ),
+          _hints(
+            context.tr('Chapters you used'),
+            _chapterHints,
+            (n) => setState(() => _chapter.text = n),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -412,6 +514,17 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
               labelText: context.tr('Tags'),
               helperText: context.tr('Separated by commas.'),
             ),
+          ),
+          _hints(
+            context.tr('Your tags'),
+            [
+              for (final t in _knownTags)
+                if (!_tags.text
+                    .split(',')
+                    .any((p) => p.trim().toLowerCase() == t.toLowerCase()))
+                  t,
+            ].take(14).toList(),
+            (n) => _append(_tags, n),
           ),
           const SizedBox(height: 16),
           Wrap(
