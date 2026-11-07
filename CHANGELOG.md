@@ -8,6 +8,9 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Added
 
+- A book, film or quote that is on both the phone and the server is now one item after the first sync, not two. Before, a work you typed here
+  that your server already had (or the other way round) came down as a second copy. Now they are joined; if they differ you see both
+  versions in Sync and choose.
 - Deleting now syncs both ways. A quote or work you delete here is deleted on your server too (it sits in the server's bin for a while, and
   you can bring it back from Settings > Bin), and one you delete on the server is removed here at the next sync. If you changed it here after
   it was deleted there, it is kept and sent up again. If your server suddenly lists far fewer items than the phone knows (it looks wiped or

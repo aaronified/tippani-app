@@ -80,7 +80,7 @@ class PushSync {
     if (!_controller.paired) {
       return const PushResult(stoppedBy: ApiFailure.unauthorised);
     }
-    final works = await _store.unsyncedWorks();
+    final works = await _withoutTwins(await _store.unsyncedWorks());
     final quotes = await _store.unsyncedQuotes();
     final byId = {for (final w in await _store.works()) w.id: w};
     final total = works.length + quotes.length;
@@ -176,6 +176,66 @@ class PushSync {
       _log?.warn('push: ${r.what} refused: ${r.reason}');
     }
     return result;
+  }
+
+  /// Links a work that was never sent to the server's copy of it, when the server already has one with the
+  /// same title (and creator), and leaves it out of what is sent: sending it would make a second copy. The first
+  /// pull then compares the two and offers any difference as a conflict. If the server's lists cannot be read
+  /// the works are sent as they are, which stops at once if the server really is unreachable.
+  Future<List<Work>> _withoutTwins(List<Work> works) async {
+    if (works.isEmpty) return works;
+    final Map<Realm, List<Map<String, Object?>>>? theirs;
+    try {
+      theirs = await _controller.withClient((c) async {
+        Future<List<Map<String, Object?>>> list(String path, String key) async {
+          final a = await c.getJson(path);
+          final l = a is Map ? a[key] : null;
+          return [
+            if (l is List)
+              for (final x in l)
+                if (x is Map && x['id'] is int) Map<String, Object?>.from(x),
+          ];
+        }
+
+        return {
+          Realm.book: await list('/books', 'books'),
+          Realm.screen: await list('/movies', 'movies'),
+        };
+      });
+    } on ApiException {
+      return works;
+    }
+    if (theirs == null) return works;
+    final taken = <(Realm, int)>{
+      for (final w in await _store.works())
+        if (w.serverId != null) (realmOfKind(w.kind), w.serverId!),
+    };
+    final left = <Work>[];
+    for (final w in works) {
+      final realm = realmOfKind(w.kind);
+      Map<String, Object?>? twin;
+      for (final row in theirs[realm]!) {
+        final sf = serverWorkFields(row, realm);
+        if (!taken.contains((realm, row['id']! as int)) &&
+            sameWork(
+              w.title,
+              w.creator,
+              sf['title']! as String,
+              sf['creator']! as String,
+            )) {
+          twin = row;
+          break;
+        }
+      }
+      if (twin == null) {
+        left.add(w);
+      } else {
+        final id = twin['id']! as int;
+        taken.add((realm, id));
+        await _store.setWorkServerId(w.id, id);
+      }
+    }
+    return left;
   }
 
   static String _quotePath(Work? w) => w == null

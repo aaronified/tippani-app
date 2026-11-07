@@ -390,4 +390,36 @@ void main() {
     expect(text, isNot(contains('secret')));
     expect(text, isNot(contains('private')));
   });
+
+  test('a work the server already has under that title is linked, not sent a second time', () async {
+    final r = await rig();
+    final id = r.server.seed('/books', {
+      'title': 'Walden',
+      'author': 'Thoreau',
+    });
+    final w = await r.lib.addWork(
+      const WorkDraft(title: ' WALDEN', creator: 'Thoreau'),
+    );
+    final q = await r.lib.addQuote(QuoteDraft(text: 'Simplify.', workId: w.id));
+
+    final res = await r.sync.push();
+
+    expect(r.server.created['/books'], hasLength(1));
+    expect(res.worksSent, 0);
+    expect((await r.lib.work(w.id))!.serverId, id);
+    expect(res.quotesSent, 1);
+    expect((await r.lib.quote(q.id))!.serverId, isNotNull);
+    expect(r.server.created['/annotations']!.single['book_id'], id);
+  });
+
+  test('a work with no twin on the server is sent as before', () async {
+    final r = await rig();
+    r.server.seed('/books', {'title': 'Other', 'author': 'Someone'});
+    await r.lib.addWork(const WorkDraft(title: 'Walden', creator: 'Thoreau'));
+
+    final res = await r.sync.push();
+
+    expect(res.worksSent, 1);
+    expect(r.server.created['/books'], hasLength(2));
+  });
 }

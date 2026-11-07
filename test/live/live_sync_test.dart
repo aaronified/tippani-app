@@ -464,4 +464,44 @@ void main() {
     );
     expect(await lib.pendingDeletions(), isEmpty);
   }, skip: skip);
+
+  test('a work on both phone and server is one work after the first sync, whichever sends first', () async {
+    final log = AppLog();
+    // the server already has it (made on the web)
+    await raw('POST', '/books', {
+      'title': 'Twin book (live)',
+      'author': 'Same Author',
+    });
+    final lib = MemoryLibrary();
+    final w = await lib.addWork(
+      const WorkDraft(title: 'twin book (live)', creator: 'Same Author'),
+    );
+    await lib.addQuote(QuoteDraft(text: 'Twin quote (live).', workId: w.id));
+    final up = await PushSync(lib, controller, log: log).push();
+    expect(up.refused, isEmpty, reason: '${up.refused}');
+    final books = ((await raw('GET', '/books')) as Map)['books'] as List;
+    expect(
+      books.where(
+        (b) =>
+            (b as Map)['title'].toString().toLowerCase() == 'twin book (live)',
+      ),
+      hasLength(1),
+      reason: 'the push made a second copy',
+    );
+    expect((await lib.work(w.id))!.serverId, isNotNull);
+
+    // and the other way round: made on the phone first, then the same title appears on the server side
+    final lib2 = MemoryLibrary();
+    await lib2.addWork(const WorkDraft(title: 'Twin two (live)'));
+    await raw('POST', '/books', {
+      'title': 'Twin two (live)',
+      'author': 'Someone',
+    });
+    final r = await PullSync(lib2, controller, log: log).sync();
+    final mine = (await lib2.works()).where(
+      (x) => x.title.contains('Twin two'),
+    );
+    expect(mine, hasLength(1));
+    expect(r.linked, greaterThanOrEqualTo(1));
+  }, skip: skip);
 }
