@@ -13,10 +13,12 @@ import 'package:tippani/app.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
+import 'package:tippani/quiz/quiz.dart';
 import 'package:tippani/settings/settings_store.dart';
 import 'package:tippani/share/share_people.dart';
 
 import '../../test/support/fake_anthologies.dart';
+import '../../test/support/fake_quiz.dart';
 import '../../test/support/fake_server.dart';
 import '../../test/support/fake_tools.dart';
 import '../../test/support/memory_library.dart';
@@ -52,6 +54,58 @@ Future<void> main() async {
     anthologies: anthologies,
     tools: tools,
     people: _PreviewPeople(),
+    quiz: FakeQuiz(
+      scoresValue: const QuizScores(
+        dailyAnswered: 3,
+        dailyGot: 2,
+        streak: 4,
+        remaining: 5,
+        quota: 8,
+        practiceAnswered: 10,
+        practiceGot: 7,
+        states: QuizStates(
+          remembered: 14,
+          forgetting: 6,
+          probablyForgotten: 3,
+          unseen: 9,
+          total: 32,
+        ),
+      ),
+      deck: const QuizDeck(
+        answeredToday: 3,
+        items: [
+          QuizCard(
+            kind: 'book',
+            id: 1,
+            direction: 'source',
+            quote: 'The mass of men lead lives of quiet desperation.',
+            title: 'Walden',
+            author: 'Henry David Thoreau',
+            year: 1854,
+            options: ['Walden', 'Meditations', 'Moby-Dick', 'Emma'],
+            answer: 0,
+            meta: [
+              QuizOption(
+                source: 'Walden',
+                creator: 'Henry David Thoreau',
+                year: 1854,
+              ),
+              QuizOption(
+                source: 'Meditations',
+                creator: 'Marcus Aurelius',
+                year: 180,
+              ),
+              QuizOption(
+                source: 'Moby-Dick',
+                creator: 'Herman Melville',
+                year: 1851,
+              ),
+              QuizOption(source: 'Emma', creator: 'Jane Austen', year: 1815),
+            ],
+          ),
+        ],
+      ),
+    ),
   );
   runApp(TippaniApp(controller: controller, harness: harness));
 }
