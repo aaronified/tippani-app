@@ -17,6 +17,8 @@ class MemoryLibrary implements LibraryStore {
   final _works = <int, Work>{};
   final _quotes = <int, Quote>{};
   var _next = 1;
+  final _boards = <int, Board>{};
+  var _nextBoard = 1;
   final _deletions = <PendingDeletion>[];
   var _deletionId = 1;
   var _quiet = false;
@@ -169,6 +171,9 @@ class MemoryLibrary implements LibraryStore {
         ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
       serverId: old?.serverId,
       syncedHash: old?.syncedHash,
+      boardId: d.workId == null && _boards.containsKey(d.boardId)
+          ? d.boardId
+          : null,
     );
   }
 
@@ -223,6 +228,7 @@ class MemoryLibrary implements LibraryStore {
         notedAt: q.notedAt,
         source: q.source,
         tags: q.tags,
+        boardId: q.boardId,
       ),
       q.createdAt,
       q,
@@ -235,6 +241,8 @@ class MemoryLibrary implements LibraryStore {
     String query = '',
     bool favouritesOnly = false,
     String? tag,
+    int? boardId,
+    bool unfiled = false,
     int limit = 200,
     int offset = 0,
   }) async {
@@ -242,6 +250,8 @@ class MemoryLibrary implements LibraryStore {
     bool matches(Quote q) {
       if (workId != null && q.workId != workId) return false;
       if (favouritesOnly && !q.favorite) return false;
+      if (boardId != null && q.boardId != boardId) return false;
+      if (unfiled && q.boardId != null) return false;
       if (tag != null &&
           !q.tags.any((t) => t.toLowerCase() == tag.trim().toLowerCase())) {
         return false;
@@ -304,6 +314,89 @@ class MemoryLibrary implements LibraryStore {
   Future<void> setQuoteServerId(int id, int serverId) async {
     final q = _quotes[id];
     if (q != null) _quotes[id] = q.withServerId(serverId);
+  }
+
+  @override
+  Future<List<Board>> boards() async => [
+    for (final b in _boards.values)
+      Board(
+        id: b.id,
+        name: b.name,
+        color: b.color,
+        quotes: _quotes.values.where((q) => q.boardId == b.id).length,
+      ),
+  ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+  void _checkBoardName(String name, {int? except}) {
+    final n = name.trim();
+    if (n.isEmpty) throw const LibraryException('a board needs a name');
+    if (_boards.values.any(
+      (b) => b.id != except && b.name.toLowerCase() == n.toLowerCase(),
+    )) {
+      throw const LibraryException('a board with that name already exists');
+    }
+  }
+
+  @override
+  Future<Board> addBoard(String name, {String color = ''}) async {
+    _checkBoardName(name);
+    final b = Board(
+      id: _nextBoard++,
+      name: name.trim(),
+      color: quoteColors.contains(color) ? color : '',
+    );
+    _boards[b.id] = b;
+    _notify();
+    return b;
+  }
+
+  @override
+  Future<void> renameBoard(int id, String name) async {
+    final b = _boards[id];
+    if (b == null) throw const LibraryException('no such board');
+    _checkBoardName(name, except: id);
+    _boards[id] = Board(id: id, name: name.trim(), color: b.color);
+    _notify();
+  }
+
+  @override
+  Future<void> recolourBoard(int id, String color) async {
+    final b = _boards[id];
+    if (b == null) return;
+    _boards[id] = Board(
+      id: id,
+      name: b.name,
+      color: quoteColors.contains(color) ? color : '',
+    );
+    _notify();
+  }
+
+  @override
+  Future<void> deleteBoard(int id) async {
+    _boards.remove(id);
+    for (final q in _quotes.values.where((q) => q.boardId == id).toList()) {
+      _quotes[q.id] = Quote(
+        id: q.id,
+        workId: q.workId,
+        text: q.text,
+        translation: q.translation,
+        language: q.language,
+        speaker: q.speaker,
+        chapter: q.chapter,
+        location: q.location,
+        note: q.note,
+        color: q.color,
+        favorite: q.favorite,
+        notedAt: q.notedAt,
+        source: q.source,
+        createdAt: q.createdAt,
+        updatedAt: q.updatedAt,
+        tags: q.tags,
+        serverId: q.serverId,
+        syncedHash: q.syncedHash,
+      );
+    }
+    _notify();
   }
 
   @override

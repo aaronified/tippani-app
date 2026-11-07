@@ -60,6 +60,8 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   late String _color = widget.quote?.color ?? 'yellow';
   late bool _favourite = widget.quote?.favorite ?? false;
   List<Work> _works = const [];
+  List<Board> _boards = const [];
+  late int? _boardId = widget.quote?.boardId;
   String? _error;
   bool _saving = false;
 
@@ -88,7 +90,13 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
 
   Future<void> _loadWorks() async {
     final ws = await widget.store.works();
-    if (mounted) setState(() => _works = ws);
+    final bs = await widget.store.boards();
+    if (mounted) {
+      setState(() {
+        _works = ws;
+        _boards = bs;
+      });
+    }
   }
 
   Future<void> _newWork() async {
@@ -114,6 +122,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     notedAt: widget.quote?.notedAt,
     source: widget.quote?.source ?? widget.source,
     tags: _tags.text.split(','),
+    boardId: _workId == null ? _boardId : null,
   );
 
   Future<void> _save() async {
@@ -231,6 +240,25 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
               label: const Text('New work'),
             ),
           ),
+          if (_workId == null && _boards.isNotEmpty) ...[
+            DropdownButtonFormField<int?>(
+              initialValue: _boards.any((b) => b.id == _boardId)
+                  ? _boardId
+                  : null,
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Board'),
+              items: [
+                const DropdownMenuItem<int?>(
+                  value: null,
+                  child: Text('No board'),
+                ),
+                for (final b in _boards)
+                  DropdownMenuItem<int?>(value: b.id, child: Text(b.name)),
+              ],
+              onChanged: (v) => setState(() => _boardId = v),
+            ),
+            const SizedBox(height: 12),
+          ],
           TextField(
             controller: _speaker,
             textCapitalization: TextCapitalization.words,
