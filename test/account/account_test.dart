@@ -301,32 +301,45 @@ void main() {
   });
 
   group('the language', () {
+    // the bundled Bengali: two tokens of the web's, one of the app's
     final bundle = _Bundle({
-      'assets/l10n/en.txt': 'nav.tab.settings.label = Settings\nnav.tab.library.label = Library\ncommon.save = Save',
       'assets/l10n/bn.txt':
           'nav.tab.settings.label = সেটিংস\nnav.tab.library.label = লাইব্রেরি',
+      'assets/l10n/app.bn.txt': 'app.test.only_here = শুধু এখানে',
     });
 
-    test('shows the web app\'s Bengali for a line it has', () async {
-      final l = L10n(bundle: bundle, deviceLanguage: 'en')..use('bn');
-      await l.loaded;
-      expect(l.tr('Settings'), 'সেটিংস');
-      expect(l.tr('Library'), 'লাইব্রেরি');
+    test('shows English from the start, with nothing loaded', () {
+      final l = L10n(bundle: bundle, deviceLanguage: 'en');
+      expect(l.tr('nav.tab.settings.label'), 'Settings');
+      expect(l.tr('nav.tab.library.label'), 'Library');
     });
 
-    test('shows English, never blank, for a line nobody translated', () async {
+    test(
+      'shows the web app\'s Bengali for a token it has, and the app\'s own',
+      () async {
+        final l = L10n(bundle: bundle, deviceLanguage: 'en')..use('bn');
+        await l.loaded;
+        expect(l.tr('nav.tab.settings.label'), 'সেটিংস');
+        expect(l.tr('nav.tab.library.label'), 'লাইব্রেরি');
+        expect(l.tr('app.test.only_here'), 'শুধু এখানে');
+      },
+    );
+
+    test('shows English, never blank, for a token nobody translated', () async {
       final l = L10n(bundle: bundle, deviceLanguage: 'en')..use('bn');
       await l.loaded;
-      expect(l.tr('Save'), 'Save');
-      expect(
-        l.tr('Something only the app says'),
-        'Something only the app says',
-      );
+      // a real web token the fake Bengali file does not carry
+      expect(l.tr('common.action.copy.label'), 'Copy');
+    });
+
+    test('shows the token itself for one that exists nowhere', () {
+      final l = L10n(bundle: bundle, deviceLanguage: 'en');
+      expect(l.tr('nope.not.a.token'), 'nope.not.a.token');
     });
 
     test('puts values into {places}', () {
       final l = L10n(bundle: bundle, deviceLanguage: 'en');
-      expect(l.tr('{n} days', {'n': 7}), '7 days');
+      expect(l.tr('settings.changed.count', {'n': 7}), '7 changed');
     });
 
     test('the server\'s own text wins over the bundled one', () async {
@@ -340,8 +353,8 @@ void main() {
           },
         },
       });
-      expect(l.tr('Settings'), 'বিন্যাস');
-      expect(l.tr('Library'), 'লাইব্রেরি');
+      expect(l.tr('nav.tab.settings.label'), 'বিন্যাস');
+      expect(l.tr('nav.tab.library.label'), 'লাইব্রেরি');
     });
 
     test(
@@ -359,8 +372,12 @@ void main() {
         expect(l.choices.map((c) => c.code), ['en', 'bn', 'fr']);
         l.use('fr');
         await l.loaded;
-        expect(l.tr('Settings'), 'Réglages');
-        expect(l.tr('Library'), 'লাইব্রেরি', reason: 'its fallback');
+        expect(l.tr('nav.tab.settings.label'), 'Réglages');
+        expect(
+          l.tr('nav.tab.library.label'),
+          'লাইব্রেরি',
+          reason: 'its fallback',
+        );
       },
     );
 

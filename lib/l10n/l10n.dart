@@ -3,7 +3,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import 'app_bengali.dart';
+import 'english.g.dart';
+import 'locale_file.dart';
+
+export 'locale_file.dart' show parseLocale;
 
 /// One language the reader can choose for the app's words.
 class LocaleChoice {
@@ -15,39 +18,15 @@ class LocaleChoice {
   final String name;
 }
 
-/// Parses a Tippani locale file: `key = value` per line, `#` for comments, the first `=` splits, `_key` is
-/// metadata, an empty value counts as absent. The same rules the server's parser keeps.
-({Map<String, String> keys, Map<String, String> reserved}) parseLocale(
-  String src,
-) {
-  final keys = <String, String>{};
-  final reserved = <String, String>{};
-  var text = src.startsWith('﻿') ? src.substring(1) : src;
-  text = text.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-  for (final line in text.split('\n')) {
-    final s = line.trim();
-    if (s.isEmpty || s.startsWith('#')) continue;
-    final eq = s.indexOf('=');
-    if (eq <= 0) continue;
-    final k = s.substring(0, eq).trim();
-    final v = s.substring(eq + 1).trim();
-    if (k.isEmpty || v.isEmpty) continue;
-    if (k.startsWith('_')) {
-      reserved[k] = v;
-    } else {
-      keys[k] = v;
-    }
-  }
-  return (keys: keys, reserved: reserved);
-}
-
-/// The words of the app in the language the reader chose.
+/// The words of the app in the language the reader chose, found by TOKEN, never by the English words:
+/// `tr('nav.tab.settings.label')`. The tokens are the server's own (its `en.txt` and `bn.txt`, bundled with the
+/// app), plus the app's `app.*` tokens for what the web has no line for (`app.en.txt`, `app.bn.txt`).
 ///
-/// The app is written in English, and each English string is its own key: `tr('Settings')`. A Bengali string is
-/// found in this order: the server's own text for the language (any file under its Locales folder, which the
-/// server serves at `/locales`, so a correction made there reaches the phone), then the web app's Bengali (the
-/// copy of its text bundled with the app, matched by the English line), then the app's own Bengali for what the
-/// web has no line for. Anything not found is shown in English, never blank.
+/// A token is found in this order: the server's text for the chosen language (any file under its Locales folder,
+/// which it serves at `/locales`, so a correction made there reaches the phone), then the bundled text for that
+/// language, then the language the file names as its `_fallback`, then English. English is compiled in
+/// (`english.g.dart`), so it is there the moment the app starts and a token with no Bengali shows its English
+/// words, never blank. A token that is nowhere shows as itself, which a test makes impossible to ship.
 class L10n extends ChangeNotifier {
   L10n({AssetBundle? bundle, String? deviceLanguage})
     : _bundle = bundle ?? rootBundle,
@@ -62,8 +41,7 @@ class L10n extends ChangeNotifier {
   /// The language in use ('en', 'bn', or the code of a file the server holds).
   String get code => _code;
 
-  Map<String, String>? _enToBn; // English line -> the web's Bengali line
-  Map<String, String> _enToKey = const {};
+  Map<String, String>? _bn; // the bundled Bengali: the web's, then the app's
   // the server's files: code -> keys, and code -> reserved
   final Map<String, Map<String, String>> _files = {};
   final Map<String, Map<String, String>> _filesReserved = {};
@@ -115,58 +93,87 @@ class L10n extends ChangeNotifier {
   }
 
   Future<void> _load() async {
-    try {
-      final en = parseLocale(await _bundle.loadString('assets/l10n/en.txt'));
-      final bn = parseLocale(await _bundle.loadString('assets/l10n/bn.txt'));
-      final toBn = <String, String>{};
-      final toKey = <String, String>{};
-      for (final e in en.keys.entries) {
-        toKey.putIfAbsent(e.value, () => e.key);
-        final b = bn.keys[e.key];
-        if (b != null) toBn.putIfAbsent(e.value, () => b);
-      }
-      _enToBn = toBn;
-      _enToKey = toKey;
-      notifyListeners();
-    } on Object {
-      _enToBn = const {};
-    }
-  }
-
-  String? _lookup(String english) {
-    if (_code == 'en') {
-      final key = _enToKey[english];
-      return key == null ? null : _files['en']?[key];
-    }
-    final key = _enToKey[english];
-    String? fromFile(String code) => key == null ? null : _files[code]?[key];
-    final own = fromFile(_code);
-    if (own != null) return own;
-    if (_code == 'bn') return _enToBn?[english] ?? appBengali[english];
-    // another language the server holds: its own lines, then the language it says to fall back to
-    final back = _filesReserved[_code]?['_fallback'];
-    if (back != null && back != _code) {
-      final b = fromFile(back);
-      if (b != null) return b;
-      if (back == 'bn') return _enToBn?[english] ?? appBengali[english];
-    }
-    return null;
-  }
-
-  /// [english] in the chosen language; [args] fill `{name}` places.
-  String tr(String english, [Map<String, Object?>? args]) {
-    var out = _lookup(english) ?? english;
-    if (args != null) {
-      for (final e in args.entries) {
-        out = out.replaceAll('{${e.key}}', '${e.value}');
+    final bn = <String, String>{};
+    for (final f in ['assets/l10n/bn.txt', 'assets/l10n/app.bn.txt']) {
+      try {
+        bn.addAll(parseLocale(await _bundle.loadString(f)).keys);
+      } on Object {
+        // a missing file costs only its lines
       }
     }
-    return out;
+    _bn = bn;
+    notifyListeners();
+  }
+
+  String? _in(String code, String token) =>
+      _files[code]?[token] ??
+      switch (code) {
+        'en' => englishTokens[token],
+        'bn' => _bn?[token],
+        _ => null,
+      };
+
+  String? _lookup(String token) {
+    var code = _code;
+    final seen = <String>{};
+    while (seen.add(code)) {
+      final v = _in(code, token);
+      if (v != null) return v;
+      final back = _filesReserved[code]?['_fallback'];
+      if (back == null) break;
+      code = back;
+    }
+    return _in('en', token);
+  }
+
+  /// The words for [token] in the chosen language; [args] fill `{name}` places. A message made by [tok] (a token
+  /// that travelled as a string, with its values) is opened first. Anything else that is not a token (the server's
+  /// own words in an error) comes back as it is.
+  String tr(String token, [Map<String, Object?>? args]) {
+    final m = openMessage(token);
+    if (m != null) return tr(m.$1, {...?m.$2, ...?args});
+    return fill(_lookup(token) ?? token, args);
   }
 
   /// Whether the text is ready (a test waits on this).
   @visibleForTesting
   Future<void> get loaded async => _loading ?? Future<void>.value();
+}
+
+const _sep = '\u0001';
+
+/// A token that has to travel as a plain string (an error message from a service, with no screen to translate it
+/// yet), with the values for its `{places}`. The screen that shows it passes it through `context.tr`, which opens
+/// it. Use this where the words are decided far from the widget; in a widget write `context.tr('token')`.
+String tok(String token, [Map<String, Object?>? args]) {
+  if (args == null || args.isEmpty) return token;
+  final b = StringBuffer(token);
+  for (final e in args.entries) {
+    b.write('$_sep${e.key}=${e.value}');
+  }
+  return b.toString();
+}
+
+/// The token and values inside a message made by [tok], or null for a plain string.
+(String, Map<String, Object?>?)? openMessage(String s) {
+  if (!s.contains(_sep)) return null;
+  final parts = s.split(_sep);
+  final args = <String, Object?>{};
+  for (final p in parts.skip(1)) {
+    final eq = p.indexOf('=');
+    if (eq > 0) args[p.substring(0, eq)] = p.substring(eq + 1);
+  }
+  return (parts.first, args);
+}
+
+/// Puts [args] into the `{name}` places of [text].
+String fill(String text, Map<String, Object?>? args) {
+  if (args == null) return text;
+  var out = text;
+  for (final e in args.entries) {
+    out = out.replaceAll('{${e.key}}', '${e.value}');
+  }
+  return out;
 }
 
 /// Gives the screens below it the [L10n], and rebuilds the ones that ask it for words when the language changes.
@@ -179,18 +186,12 @@ class L10nScope extends InheritedNotifier<L10n> {
 }
 
 extension TrContext on BuildContext {
-  /// The words [english] in the language the reader chose; English when there is no translation.
-  String tr(String english, [Map<String, Object?>? args]) {
+  /// The words for [token] in the language the reader chose (English where there is no Bengali, or no [L10n] above).
+  String tr(String token, [Map<String, Object?>? args]) {
     final l = L10nScope.of(this);
-    if (l == null) {
-      var out = english;
-      if (args != null) {
-        for (final e in args.entries) {
-          out = out.replaceAll('{${e.key}}', '${e.value}');
-        }
-      }
-      return out;
-    }
-    return l.tr(english, args);
+    if (l != null) return l.tr(token, args);
+    final m = openMessage(token);
+    if (m != null) return tr(m.$1, {...?m.$2, ...?args});
+    return fill(englishTokens[token] ?? token, args);
   }
 }
