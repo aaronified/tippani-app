@@ -6,6 +6,12 @@ version. Write each entry for the person using the app, in plain words.
 
 ## [Unreleased]
 
+### Changed
+
+- Scanning a page and speaking a quote are now on the Add a quote screen itself, under the words: Scan a page and Speak. What you scan or say
+  goes into the words (after what is already there, so a second page does not wipe the first), where you can correct it before saving. The
+  separate scan and microphone buttons on the Library and on a work's page are gone.
+
 ### Added
 
 - Boards, on the phone: shelves for standalone quotes. Make, rename, colour and delete them from the Boards button in the Library (deleting a

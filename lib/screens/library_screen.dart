@@ -11,10 +11,8 @@ import 'conflicts_screen.dart';
 import '../library/cover_cache.dart';
 import 'boards_screen.dart';
 import 'library_widgets.dart';
-import 'capture_screen.dart';
 import 'quote_form_screen.dart';
 import 'quote_screen.dart';
-import 'voice_screen.dart';
 import 'work_form_screen.dart';
 import 'work_screen.dart';
 
@@ -113,20 +111,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _addQuote() async {
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => QuoteFormScreen(store: widget.store)),
-    );
-    await _load();
-  }
-
-  Future<void> _scan() async {
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => CaptureScreen(store: widget.store)),
-    );
-    await _load();
-  }
-
-  Future<void> _say() async {
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => VoiceScreen(store: widget.store)),
     );
     await _load();
   }
@@ -300,16 +284,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 return const SizedBox.shrink();
               },
             ),
-          IconButton(
-            tooltip: 'Say a quote',
-            icon: const Icon(Icons.mic_none),
-            onPressed: _say,
-          ),
-          IconButton(
-            tooltip: 'Scan a page',
-            icon: const Icon(Icons.document_scanner_outlined),
-            onPressed: _scan,
-          ),
           PopupMenuButton<ExportKind>(
             tooltip: 'Export',
             icon: const Icon(Icons.ios_share),

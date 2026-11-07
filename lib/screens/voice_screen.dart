@@ -1,21 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../capture/voice_listener.dart';
-import '../library/library_store.dart';
-import 'quote_form_screen.dart';
+import 'capture_screen.dart' show CapturedText;
 
-/// Adds a quote by speaking it: press the microphone, say the words, press again, correct the text, then carry on
-/// to the quote form to say where it is from and save. The app keeps no audio. Pops `true` when a quote was saved.
+/// Turns speech into words: press the microphone, say them, press again, and correct the text. Pops a
+/// [CapturedText] for the quote form to put in the words. The app keeps no audio.
 class VoiceScreen extends StatefulWidget {
-  const VoiceScreen({
-    super.key,
-    required this.store,
-    this.workId,
-    this.listener,
-  });
+  const VoiceScreen({super.key, this.listener});
 
-  final LibraryStore store;
-  final int? workId;
   final VoiceListener? listener;
 
   @override
@@ -80,22 +72,14 @@ class _VoiceScreenState extends State<VoiceScreen> {
     }
   }
 
-  Future<void> _carryOn() async {
+  Future<void> _use() async {
     if (_listening) {
       await _listener.stop();
       if (mounted) setState(() => _listening = false);
     }
     if (!mounted) return;
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => QuoteFormScreen(
-          store: widget.store,
-          workId: widget.workId,
-          initialText: _text.text.trim(),
-        ),
-      ),
-    );
-    if (saved == true && mounted) Navigator.of(context).pop(true);
+    // The server accepts only "manual" and "ocr" as a quote's source, so spoken words are kept as typed ones.
+    Navigator.of(context).pop(CapturedText(_text.text.trim(), 'manual'));
   }
 
   @override
@@ -153,7 +137,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
           ),
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: _text.text.trim().isEmpty ? null : _carryOn,
+            onPressed: _text.text.trim().isEmpty ? null : _use,
             child: const Text('Use this text'),
           ),
           const SizedBox(height: 12),

@@ -4,6 +4,7 @@ import 'package:tippani/capture/photo_source.dart';
 import 'package:tippani/capture/text_recogniser.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/capture_screen.dart';
+import 'package:tippani/screens/quote_form_screen.dart';
 
 import '../support/memory_library.dart';
 
@@ -64,27 +65,41 @@ void main() {
   });
 
   group('the capture screen', () {
-    late MemoryLibrary lib;
     late _Photos photos;
     late _Reader reader;
+    CapturedText? result;
 
-    Future<void> open(WidgetTester tester, {int? workId}) async {
+    /// Opens the screen the way the quote form does, and keeps what it hands back.
+    Future<void> open(WidgetTester tester) async {
       tester.view.physicalSize = const Size(800, 2400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      lib = MemoryLibrary();
       photos = _Photos();
       reader = _Reader('Simplify,\nsimplify.');
+      result = null;
       await tester.pumpWidget(
         MaterialApp(
-          home: CaptureScreen(
-            store: lib,
-            workId: workId,
-            photos: photos,
-            recogniser: reader,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: FilledButton(
+                  onPressed: () async {
+                    result = await Navigator.of(context).push<CapturedText>(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            CaptureScreen(photos: photos, recogniser: reader),
+                      ),
+                    );
+                  },
+                  child: const Text('open'),
+                ),
+              ),
+            ),
           ),
         ),
       );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
     }
 
     testWidgets(
@@ -155,44 +170,145 @@ void main() {
       expect(find.text('The picture could not be opened.'), findsOneWidget);
     });
 
-    testWidgets(
-      'corrected text carries to the form and saves as an ocr quote in the work',
-      (tester) async {
-        final work = await (() async {
-          lib = MemoryLibrary();
-          return lib.addWork(const WorkDraft(title: 'Walden'));
-        })();
-        photos = _Photos();
-        reader = _Reader('Simplfy.');
-        tester.view.physicalSize = const Size(800, 2400);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(
-          MaterialApp(
-            home: CaptureScreen(
-              store: lib,
-              workId: work.id,
-              photos: photos,
-              recogniser: reader,
-            ),
+    testWidgets('the corrected text is handed back, as scanned', (
+      tester,
+    ) async {
+      await open(tester);
+      await tester.tap(find.text('Take a photo'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'The text, as read'),
+        'Simplify.',
+      );
+      await tester.tap(find.text('Use this text'));
+      await tester.pumpAndSettle();
+      expect(result!.text, 'Simplify.');
+      expect(result!.source, 'ocr');
+    });
+
+    testWidgets('going back without using the text hands back nothing', (
+      tester,
+    ) async {
+      await open(tester);
+      await tester.tap(find.text('Take a photo'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(result, isNull);
+    });
+  });
+
+  group('scanning from the Add a quote screen', () {
+    late MemoryLibrary lib;
+    late _Photos photos;
+    late _Reader reader;
+
+    Future<void> open(WidgetTester tester, {bool existing = false}) async {
+      tester.view.physicalSize = const Size(800, 2600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      lib = MemoryLibrary();
+      final quote = existing
+          ? await lib.addQuote(const QuoteDraft(text: 'Old.'))
+          : null;
+      photos = _Photos();
+      reader = _Reader('Simplfy.');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: QuoteFormScreen(
+            store: lib,
+            quote: quote,
+            photos: photos,
+            recogniser: reader,
           ),
-        );
-        await tester.tap(find.text('Take a photo'));
-        await tester.pumpAndSettle();
-        await tester.enterText(
-          find.widgetWithText(TextField, 'The text, as read'),
-          'Simplify.',
-        );
-        await tester.tap(find.text('Use this text'));
-        await tester.pumpAndSettle();
-        expect(find.widgetWithText(TextField, 'The words'), findsOneWidget);
-        expect(find.text('Simplify.'), findsOneWidget);
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> scan(WidgetTester tester, {String fix = 'Simplify.'}) async {
+      await tester.tap(find.text('Scan a page'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Take a photo'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'The text, as read'),
+        fix,
+      );
+      await tester.tap(find.text('Use this text'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the buttons are on the form itself', (tester) async {
+      await open(tester);
+      expect(find.text('Scan a page'), findsOneWidget);
+      expect(find.text('Speak'), findsOneWidget);
+    });
+
+    testWidgets(
+      'scanned text lands in the words, and the saved quote is marked as scanned',
+      (tester) async {
+        await open(tester);
+        await scan(tester);
+        expect(find.widgetWithText(TextField, 'Simplify.'), findsOneWidget);
         await tester.tap(find.text('Save'));
         await tester.pumpAndSettle();
         final saved = (await lib.quotes()).single;
         expect(saved.text, 'Simplify.');
         expect(saved.source, 'ocr');
-        expect(saved.workId, work.id);
+      },
+    );
+
+    testWidgets('a second page is added after the first, not over it', (
+      tester,
+    ) async {
+      await open(tester);
+      await scan(tester, fix: 'First page.');
+      await scan(tester, fix: 'Second page.');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect((await lib.quotes()).single.text, 'First page.\n\nSecond page.');
+    });
+
+    testWidgets('words already typed are kept, with the scan after them', (
+      tester,
+    ) async {
+      await open(tester);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'The words'),
+        'Typed.',
+      );
+      await scan(tester, fix: 'Scanned.');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      final saved = (await lib.quotes()).single;
+      expect(saved.text, 'Typed.\n\nScanned.');
+      expect(saved.source, 'ocr');
+    });
+
+    testWidgets('backing out of the scan changes nothing', (tester) async {
+      await open(tester);
+      await tester.enterText(
+        find.widgetWithText(TextField, 'The words'),
+        'Typed.',
+      );
+      await tester.tap(find.text('Scan a page'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(TextField, 'Typed.'), findsOneWidget);
+    });
+
+    testWidgets(
+      'scanning into a quote that already exists keeps the way it was first captured',
+      (tester) async {
+        await open(tester, existing: true);
+        await scan(tester);
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        final saved = (await lib.quotes()).single;
+        expect(saved.text, 'Old.\n\nSimplify.');
+        expect(saved.source, 'manual');
       },
     );
   });

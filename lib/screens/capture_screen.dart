@@ -4,23 +4,24 @@ import 'package:flutter/material.dart';
 
 import '../capture/photo_source.dart';
 import '../capture/text_recogniser.dart';
-import '../library/library_store.dart';
-import 'quote_form_screen.dart';
 
-/// Adds a quote from a page: photograph it (or choose a picture), let Tesseract read the text on the phone,
-/// correct the text, then carry on to the quote form to say where it is from and save. Nothing leaves the phone.
-/// Pops `true` when a quote was saved.
+/// Text read from a page, handed back to the quote form: [text] as the reader corrected it, and how it was
+/// captured ([source]: "ocr").
+class CapturedText {
+  const CapturedText(this.text, this.source);
+  final String text;
+  final String source;
+}
+
+/// Reads text from a page: photograph it (or choose a picture), let Tesseract read the text on the phone, and
+/// correct the text. Pops a [CapturedText] for the quote form to put in the words. Nothing leaves the phone.
 class CaptureScreen extends StatefulWidget {
   const CaptureScreen({
     super.key,
-    required this.store,
-    this.workId,
     this.photos,
     this.recogniser = const TesseractRecogniser(),
   });
 
-  final LibraryStore store;
-  final int? workId;
   final PhotoSource? photos;
   final TextRecogniser recogniser;
 
@@ -90,19 +91,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
-  Future<void> _carryOn() async {
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => QuoteFormScreen(
-          store: widget.store,
-          workId: widget.workId,
-          initialText: _text.text.trim(),
-          source: 'ocr',
-        ),
-      ),
-    );
-    if (saved == true && mounted) Navigator.of(context).pop(true);
-  }
+  void _use() =>
+      Navigator.of(context).pop(CapturedText(_text.text.trim(), 'ocr'));
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +171,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: _text.text.trim().isEmpty ? null : _carryOn,
+              onPressed: _text.text.trim().isEmpty ? null : _use,
               child: const Text('Use this text'),
             ),
           ],

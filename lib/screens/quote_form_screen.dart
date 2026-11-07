@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../capture/photo_source.dart';
+import '../capture/text_recogniser.dart';
+import '../capture/voice_listener.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
+import 'capture_screen.dart';
+import 'voice_screen.dart';
 import 'work_form_screen.dart';
 
 /// The colour a quote's name stands for, drawn in the theme's own tone so it works in light and dark.
@@ -23,7 +28,16 @@ class QuoteFormScreen extends StatefulWidget {
     this.workId,
     this.initialText = '',
     this.source = 'manual',
+    this.photos,
+    this.recogniser = const TesseractRecogniser(),
+    this.listener,
   });
+
+  /// Where a scanned page's picture comes from, how its text is read, and what listens when the reader speaks.
+  /// Null uses the phone's own; a test passes stand-ins.
+  final PhotoSource? photos;
+  final TextRecogniser recogniser;
+  final VoiceListener? listener;
 
   final LibraryStore store;
 
@@ -59,6 +73,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   late int? _workId = widget.quote?.workId ?? widget.workId;
   late String _color = widget.quote?.color ?? 'yellow';
   late bool _favourite = widget.quote?.favorite ?? false;
+  late String _source = widget.quote?.source ?? widget.source;
   List<Work> _works = const [];
   List<Board> _boards = const [];
   late int? _boardId = widget.quote?.boardId;
@@ -108,6 +123,36 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     if (mounted) setState(() => _workId = w.id);
   }
 
+  /// Puts [t] in the words: replacing them if they are empty, otherwise added after what is there, so a second
+  /// page or a second thing said does not wipe the first.
+  void _put(CapturedText t) {
+    if (t.text.isEmpty) return;
+    setState(() {
+      _text.text = _text.text.trim().isEmpty
+          ? t.text
+          : '${_text.text.trimRight()}\n\n${t.text}';
+      // a quote being changed keeps the way it was first captured
+      if (widget.quote == null && t.source == 'ocr') _source = 'ocr';
+    });
+  }
+
+  Future<void> _scan() async {
+    final t = await Navigator.of(context).push<CapturedText>(
+      MaterialPageRoute(
+        builder: (_) =>
+            CaptureScreen(photos: widget.photos, recogniser: widget.recogniser),
+      ),
+    );
+    if (t != null) _put(t);
+  }
+
+  Future<void> _speak() async {
+    final t = await Navigator.of(context).push<CapturedText>(
+      MaterialPageRoute(builder: (_) => VoiceScreen(listener: widget.listener)),
+    );
+    if (t != null) _put(t);
+  }
+
   QuoteDraft _draft() => QuoteDraft(
     text: _text.text,
     workId: _workId,
@@ -120,7 +165,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     color: _color,
     favorite: _favourite,
     notedAt: widget.quote?.notedAt,
-    source: widget.quote?.source ?? widget.source,
+    source: _source,
     tags: _tags.text.split(','),
     boardId: _workId == null ? _boardId : null,
   );
@@ -210,6 +255,23 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
               labelText: 'The words',
               alignLabelWithHint: true,
             ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _scan,
+                icon: const Icon(Icons.document_scanner_outlined),
+                label: const Text('Scan a page'),
+              ),
+              OutlinedButton.icon(
+                onPressed: _speak,
+                icon: const Icon(Icons.mic_none),
+                label: const Text('Speak'),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int?>(
