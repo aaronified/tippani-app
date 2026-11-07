@@ -14,6 +14,12 @@ version. Write each entry for the person using the app, in plain words. **Start 
 - The server is a section of Settings: the Server tab is gone. Settings now opens with a Server section (the address and whether it answers, Check
   again, pairing, paired devices, sync and the other things that need the server), and the app's own settings come after it, under App.
 
+### Added
+
+- Author, actor and character chips: a quote shows the people on it as chips, as the web app does. A book's quote shows its author and who said it; a
+  film's, show's or game's shows each character with the actor who plays them under the name (from the work's cast). They are in the Library list
+  and on the quote screen, and pressing one shows the library for that name.
+
 ## [0.4.0] - 2026-11-07
 
 ### Changed

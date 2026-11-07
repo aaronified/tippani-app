@@ -14,6 +14,7 @@ import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../anthologies/anthologies.dart';
 import '../library/models.dart';
+import '../library/quote_chips.dart';
 import '../tools/work_lookup.dart';
 import '../library/work_order.dart';
 import 'library_widgets.dart';
@@ -160,7 +161,7 @@ class _WorkScreenState extends State<WorkScreen> {
   }
 
   Future<void> _open(Quote q) async {
-    await Navigator.of(context).push<bool>(
+    final result = await Navigator.of(context).push<Object?>(
       MaterialPageRoute(
         builder: (_) => QuoteScreen(
           store: widget.store,
@@ -172,6 +173,11 @@ class _WorkScreenState extends State<WorkScreen> {
         ),
       ),
     );
+    // a person pressed on a quote: this page closes and the library shows that name
+    if (result is ChipFilter && mounted) {
+      Navigator.of(context).pop(result);
+      return;
+    }
     await _load();
   }
 
