@@ -112,7 +112,14 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
 
   Future<void> _loadWorks() async {
     final ws = await widget.store.works();
-    final bs = await widget.store.boards();
+    // in the reader's order; a hidden board is not offered (unless the quote is already on it)
+    final bs = await widget.store.boards()
+      ..sort((x, y) {
+        final p = (x.pos ?? 1 << 30).compareTo(y.pos ?? 1 << 30);
+        return p != 0
+            ? p
+            : x.name.toLowerCase().compareTo(y.name.toLowerCase());
+      });
     if (mounted) {
       setState(() {
         _works = ws;
@@ -325,7 +332,9 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   value: null,
                   child: Text('No board'),
                 ),
-                for (final b in _boards)
+                for (final b in _boards.where(
+                  (b) => !b.hidden || b.id == _boardId,
+                ))
                   DropdownMenuItem<int?>(value: b.id, child: Text(b.name)),
               ],
               onChanged: (v) => setState(() => _boardId = v),

@@ -134,7 +134,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final me = ++_request;
     final all = await widget.store.works();
     final counts = await widget.store.counts();
-    final boards = await widget.store.boards();
+    // in the order the reader put them in (the server's), the rest by name
+    final boards = await widget.store.boards()
+      ..sort((x, y) {
+        final p = (x.pos ?? 1 << 30).compareTo(y.pos ?? 1 << 30);
+        return p != 0
+            ? p
+            : x.name.toLowerCase().compareTo(y.name.toLowerCase());
+      });
     final quotes = _mode == _Mode.quotes
         ? await widget.store.quotes(
             query: _search.text,
@@ -234,7 +241,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _manageBoards() async {
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => BoardsScreen(store: widget.store)),
+      MaterialPageRoute(
+        builder: (_) => BoardsScreen(
+          store: widget.store,
+          picker: widget.picker,
+          anthologies: widget.anthologies,
+          auto: widget.auto,
+        ),
+      ),
     );
     // a board may have been deleted while it was the filter
     if (_boardFilter != null &&
@@ -262,7 +276,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 title: Text('No boards yet. Make one from the Boards button.'),
               )
             else
-              for (final b in _boards)
+              // a hidden board is left out, unless it is the one being filtered by
+              for (final b in _boards.where(
+                (b) => !b.hidden || b.id == _boardFilter,
+              ))
                 ListTile(
                   title: Text(b.name),
                   trailing: Text('${b.quotes}'),

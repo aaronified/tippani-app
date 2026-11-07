@@ -103,6 +103,15 @@ class FakeServer {
   /// How many times `GET /people` was asked.
   int peopleReads = 0;
 
+  /// The languages the server has starter proverbs in, and how many in each. `GET /quotes/starters` lists them.
+  final starterLanguages = <String, int>{'Bengali': 12, 'English': 10};
+
+  /// Every `POST /quotes/starters` accepted: the language and the board it was for.
+  final starterSeeds = <Map<String, Object?>>[];
+
+  /// The pictures uploaded to boards (`POST /boards/{id}/cover`), by board id.
+  final boardPictures = <int, List<int>>{};
+
   /// The cover pictures the server holds, by file name. `GET /covers/{name}` serves them.
   final covers = <String, List<int>>{};
 
@@ -304,6 +313,16 @@ class FakeServer {
         return _json(row, 201);
       }
     }
+    final pic = RegExp(r'^/boards/(\d+)/cover$').firstMatch(path);
+    if (pic != null && r.method == 'POST') {
+      final id = int.parse(pic[1]!);
+      final i = boards.indexWhere((b) => b['id'] == id);
+      if (i < 0) return _json({'error': 'board not found'}, 404);
+      boardPictures[id] = r.bodyBytes;
+      final name = '${id.toRadixString(16).padLeft(16, '0')}.png';
+      boards[i] = {...boards[i], 'image_path': name};
+      return _json({'id': id, 'image_path': name, 'path': name});
+    }
     final one = RegExp(r'^/boards/(\d+)$').firstMatch(path);
     if (one == null) return null;
     final id = int.parse(one[1]!);
@@ -398,6 +417,28 @@ class FakeServer {
       return _json({
         'actor_role': 'actor',
         'cast': casts['${castRoute[1]}/${castRoute[2]}'] ?? [],
+      });
+    }
+    if (path == '/quotes/starters') {
+      if (r.method == 'GET') {
+        return _json({
+          'languages': [
+            for (final e in starterLanguages.entries)
+              {'language': e.key, 'count': e.value},
+          ],
+        });
+      }
+      final body = jsonDecode(r.body) as Map;
+      if (!starterLanguages.containsKey(body['language'])) {
+        return _json({
+          'error': 'no starter proverbs for ${body['language']}',
+        }, 400);
+      }
+      starterSeeds.add(Map<String, Object?>.from(body));
+      return _json({
+        'language': body['language'],
+        'added': starterLanguages[body['language']],
+        'skipped': 0,
       });
     }
     if (r.method == 'GET' && path == '/people') {
