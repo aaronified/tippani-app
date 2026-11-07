@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../capture/page_adjuster.dart';
@@ -97,10 +98,20 @@ class _AdjustScreenState extends State<AdjustScreen> {
   ) => Positioned(
     left: at.dx - 22,
     top: at.dy - 22,
-    child: GestureDetector(
+    // A drag recogniser that wins the moment a finger lands: inside a scrolling page an ordinary pan loses to the
+    // page's own scroll on any drag that goes mostly up or down, and the corner would never move.
+    child: RawGestureDetector(
       key: key,
       behavior: HitTestBehavior.opaque,
-      onPanUpdate: (d) => move(d.delta, stage),
+      gestures: {
+        ImmediateMultiDragGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<
+              ImmediateMultiDragGestureRecognizer
+            >(
+              () => ImmediateMultiDragGestureRecognizer(),
+              (r) => r.onStart = (_) => _Drag((d) => move(d, stage)),
+            ),
+      },
       child: SizedBox(
         width: 44,
         height: 44,
@@ -329,4 +340,19 @@ class _FramePainter extends CustomPainter {
   @override
   bool shouldRepaint(_FramePainter old) =>
       old.crop != crop || old.colour != colour;
+}
+
+/// What a finger dragging a corner does: each movement is handed on as it is.
+class _Drag implements Drag {
+  _Drag(this.moved);
+  final void Function(Offset delta) moved;
+
+  @override
+  void update(DragUpdateDetails details) => moved(details.delta);
+
+  @override
+  void end(DragEndDetails details) {}
+
+  @override
+  void cancel() {}
 }
