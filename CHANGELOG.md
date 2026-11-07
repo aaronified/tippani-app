@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-07
+
 ### Changed
 
 - The last sentences that were still English-only (sync results, the Import and checks list, source files, backups, counts such as "1 quote" and
