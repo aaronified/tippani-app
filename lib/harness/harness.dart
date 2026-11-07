@@ -11,8 +11,11 @@ import '../imports/import_service.dart';
 import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
+import '../people/people_console.dart';
 import '../people/people_directory.dart';
 import '../tools/cover_search.dart';
+import '../sources/source_picker.dart';
+import '../sources/sources_service.dart';
 import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
@@ -116,6 +119,9 @@ class Harness {
     this.contextRules,
     this.peopleService,
     this.coverSearch,
+    this.sources,
+    this.sourcePicker = const SystemSourcePicker(),
+    this.peopleConsole,
     this.admin,
     this.serverFiles = const SystemServerFiles(),
     this.quiz,
@@ -196,6 +202,16 @@ class Harness {
 
   /// Finds pictures that could be a work's cover or poster, online. Null in a test about something else.
   final CoverSearch? coverSearch;
+
+  /// The source files (ebooks, subtitles) works' quotes were found in, on the paired server. Null in a test about
+  /// something else.
+  final SourcesService? sources;
+
+  /// Choosing a source file from the phone.
+  final SourcePicker sourcePicker;
+
+  /// Every person and character the server keeps, for the metadata console and the editing on their pages.
+  final PeopleConsole? peopleConsole;
 
   /// Running the server (users, jobs, backups, updates, folders, sources), for an admin account. Null in a test about
   /// something else.
@@ -303,6 +319,8 @@ class Harness {
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
       coverSearch: PairedCoverSearch(controller),
+      sources: PairedSourcesService(controller),
+      peopleConsole: PairedPeopleConsole(controller),
       admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
@@ -339,6 +357,9 @@ class Harness {
     ContextRules? contextRules,
     PeopleService? peopleService,
     CoverSearch? coverSearch,
+    SourcesService? sources,
+    SourcePicker? sourcePicker,
+    PeopleConsole? peopleConsole,
     AdminService? admin,
     ServerFiles? serverFiles,
     QuizService? quiz,
@@ -396,6 +417,9 @@ class Harness {
       contextRules: contextRules,
       peopleService: peopleService,
       coverSearch: coverSearch,
+      sources: sources,
+      sourcePicker: sourcePicker ?? const SystemSourcePicker(),
+      peopleConsole: peopleConsole,
       admin: admin,
       serverFiles: serverFiles ?? const SystemServerFiles(),
       quiz: quiz,

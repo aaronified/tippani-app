@@ -27,6 +27,7 @@ import 'prefs_screens.dart' show showWorkContextRule;
 import 'cover_search_screen.dart';
 import 'quote_screen.dart';
 import '../tools/cover_search.dart';
+import 'shelf_card.dart';
 import 'work_form_screen.dart';
 import 'work_read_screen.dart';
 
@@ -113,8 +114,7 @@ class _WorkScreenState extends State<WorkScreen> {
         .getInheritedWidgetOfExactType<DetailsScope>()
         ?.source;
     if (w == null || source == null || w.serverId == null) return;
-    final at = w.details.fetchedAt;
-    if (at != null && DateTime.now().difference(at) < detailsFreshFor) return;
+    // the shelf can change on the web at any time, so a visit always asks (one try per visit)
     _askedDetails = true;
     final d = await source.fetch(w);
     if (d == null || !mounted) return;
@@ -493,6 +493,7 @@ class _WorkScreenState extends State<WorkScreen> {
                     ],
                   ),
                 ),
+                ShelfCard(work: w, store: widget.store, onChanged: _load),
                 WorkDetailsSection(
                   work: w,
                   onFilter: (f) => Navigator.of(context).pop(f),
