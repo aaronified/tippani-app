@@ -2,9 +2,15 @@
 
 All notable changes to the app are recorded here. The format is [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and the
 app reads this file itself: it shows the entry for the version it has just been updated to, and the What's new screen lists every
-version. Write each entry for the person using the app, in plain words.
+version. Write each entry for the person using the app, in plain words. **Start each entry with a short title and a colon**
+("Sync conflicts has its own place: ..."): the app shows only that title for each change, and the full words are read here, on GitHub.
 
 ## [Unreleased]
+
+### Changed
+
+- What's new shows each change by a short header, not its details, and ends with a link to the full changelog on GitHub. It is in Settings, and the
+  same short list is what you see after an update.
 
 ## [0.4.0] - 2026-11-07
 

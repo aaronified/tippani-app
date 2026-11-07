@@ -125,7 +125,7 @@ Future<void> showWhatsNewDialog(BuildContext context, ChangelogEntry entry) {
   );
 }
 
-/// An entry's sections and bullets.
+/// An entry's sections, each change by its header only (see [changeHeader]); the full words are on GitHub.
 class ChangelogBody extends StatelessWidget {
   const ChangelogBody({super.key, required this.entry});
 
@@ -146,7 +146,7 @@ class ChangelogBody extends StatelessWidget {
           for (final b in s.value)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
-              child: Text('• $b'),
+              child: Text('• ${changeHeader(b)}'),
             ),
         ],
       ],
