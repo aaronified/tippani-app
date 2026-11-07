@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/models.dart';
 import '../library/quote_text.dart';
@@ -172,23 +173,32 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
                               children: [
                                 SelectableText(
                                   '“${q.text.trim()}”',
-                                  style: TextStyle(
-                                    fontSize: _size,
-                                    height: 1.45,
+                                  style: quoteStyle(
+                                    context,
+                                    size: _size,
+                                    height: 1.55,
                                   ),
                                 ),
                                 if (q.location.trim().isNotEmpty)
-                                  Text(
-                                    q.location.trim(),
-                                    style: theme.textTheme.bodySmall,
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      q.location.trim(),
+                                      style: theme.textTheme.labelMedium
+                                          ?.copyWith(
+                                            color: scheme.onSurfaceVariant,
+                                          ),
+                                    ),
                                   ),
                                 if (_translations &&
                                     q.translation.trim().isNotEmpty)
                                   SelectableText(
                                     q.translation.trim(),
-                                    style: TextStyle(
-                                      fontSize: _size * 0.9,
-                                      fontStyle: FontStyle.italic,
+                                    style: quoteStyle(
+                                      context,
+                                      size: _size * 0.9,
+                                      height: 1.5,
+                                      style: FontStyle.italic,
                                       color: scheme.onSurfaceVariant,
                                     ),
                                   ),
