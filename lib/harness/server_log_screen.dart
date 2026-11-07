@@ -8,10 +8,10 @@ import 'server_log.dart';
 import '../l10n/l10n.dart';
 
 final _windows = <(String, Duration)>[
-  ('Last hour', Duration(hours: 1)),
-  ('Last 24 hours', Duration(days: 1)),
-  ('Last 7 days', Duration(days: 7)),
-  ('Last 30 days', Duration(days: 30)),
+  ('settings.logs.range.hour.label', Duration(hours: 1)),
+  ('settings.logs.range.day.label', Duration(days: 1)),
+  ('settings.logs.range.week.label', Duration(days: 7)),
+  ('settings.logs.range.month.label', Duration(days: 30)),
 ];
 
 /// The Tippani SERVER's log, for an admin. It is not the app's log (that is this phone's own record, and

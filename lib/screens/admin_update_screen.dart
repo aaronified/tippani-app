@@ -68,8 +68,10 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
     final ok = await confirmDialog(
       context,
       title: context.tr('app.admin_update.update_the_server'),
-      body:
-          'The server pulls ${i.latest}, restarts, and is out of reach for a minute or two. Every reader is disconnected meanwhile.',
+      body: context.tr(
+        'app.admin_update.the_server_pulls_latest_restarts_and',
+        {'latest': i.latest},
+      ),
       yes: 'Update',
     );
     if (!ok || !mounted) return;
@@ -101,7 +103,12 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
               _info = now;
               _applying = null;
             });
-            say(context, 'The server now runs ${now.current}.');
+            say(
+              context,
+              tok('app.admin_update.the_server_now_runs_current', {
+                'current': now.current,
+              }),
+            );
           }
           return;
         }

@@ -46,7 +46,7 @@ class CaptureScreen extends StatefulWidget {
 final captureLanguages = {
   'eng': 'English',
   'hin': 'Hindi',
-  'eng+hin': 'English and Hindi',
+  'eng+hin': 'app.capture.english_and_hindi',
 };
 
 class _CaptureScreenState extends State<CaptureScreen> {

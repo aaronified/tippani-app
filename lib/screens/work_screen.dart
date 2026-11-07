@@ -166,13 +166,15 @@ class _WorkScreenState extends State<WorkScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
-                title: const Text('From my photos'),
+                title: Text(context.tr('app.work.from_my_photos')),
                 onTap: () => Navigator.pop(context, 'photos'),
               ),
               ListTile(
                 leading: const Icon(Icons.travel_explore_rounded),
-                title: const Text('Find one online'),
-                subtitle: const Text('Search by title, author or ISBN'),
+                title: Text(context.tr('app.work.find_one_online')),
+                subtitle: Text(
+                  context.tr('app.work.search_by_title_author_or_isbn'),
+                ),
                 onTap: () => Navigator.pop(context, 'online'),
               ),
             ],
@@ -198,7 +200,9 @@ class _WorkScreenState extends State<WorkScreen> {
         path = await (widget.photos ?? DevicePhotos()).choose();
       } on Object {
         messenger.showSnackBar(
-          SnackBar(content: Text(tr('The picture could not be opened.'))),
+          SnackBar(
+            content: Text(tr('app.work.the_picture_could_not_be_opened')),
+          ),
         );
         return;
       }
@@ -210,9 +214,7 @@ class _WorkScreenState extends State<WorkScreen> {
     messenger.clearSnackBars();
     if (name == null) {
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(tr('The server did not take that picture as a cover.')),
-        ),
+        SnackBar(content: Text(tr('app.work.the_server_did_not_take_that'))),
       );
       return;
     }
@@ -274,20 +276,24 @@ class _WorkScreenState extends State<WorkScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Delete {name}?', {'name': _work!.title})),
+        title: Text(
+          context.tr('quotes.board.delete.confirm.title', {
+            'name': _work!.title,
+          }),
+        ),
         content: Text(
           n == 0
-              ? 'It is removed from this phone.'
+              ? context.tr('app.work.it_is_removed_from_this_phone')
               : 'Its $n ${n == 1 ? 'quote is' : 'quotes are'} deleted with it. This cannot be undone.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('Keep it')),
+            child: Text(context.tr('app.anthologies.keep_it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('Delete')),
+            child: Text(context.tr('common.action.delete.label')),
           ),
         ],
       ),
@@ -306,9 +312,9 @@ class _WorkScreenState extends State<WorkScreen> {
       case QuoteGroup.colour:
         return quoteColourName(key);
       case QuoteGroup.tag:
-        return key.isEmpty ? context.tr('No tag') : '#$key';
+        return key.isEmpty ? context.tr('app.work.no_tag') : '#$key';
       case QuoteGroup.speaker:
-        return key.isEmpty ? context.tr('Nobody named') : key;
+        return key.isEmpty ? context.tr('app.board.nobody_named') : key;
       case QuoteGroup.month:
         return MaterialLocalizations.of(context).formatMonthYear(
           DateTime(int.parse(key.substring(0, 4)), int.parse(key.substring(5))),
@@ -336,7 +342,12 @@ class _WorkScreenState extends State<WorkScreen> {
         ),
     ],
     child: Chip(
-      label: Text('$title: ${label(value)}'),
+      label: Text(
+        context.tr('app.works_view.title_x', {
+          'title': title,
+          'x': label(value),
+        }),
+      ),
       visualDensity: VisualDensity.compact,
     ),
   );
@@ -358,7 +369,7 @@ class _WorkScreenState extends State<WorkScreen> {
       return Scaffold(
         appBar: AppBar(),
         body: Center(
-          child: Text(context.tr('This work is no longer in the library.')),
+          child: Text(context.tr('app.work.this_work_is_no_longer_in')),
         ),
       );
     }
@@ -398,7 +409,7 @@ class _WorkScreenState extends State<WorkScreen> {
               actions: [
                 if (w != null) ...[
                   IconButton(
-                    tooltip: context.tr('Edit'),
+                    tooltip: context.tr('common.action.edit.label'),
                     icon: const Icon(Icons.edit_outlined),
                     onPressed: _edit,
                   ),
@@ -431,26 +442,32 @@ class _WorkScreenState extends State<WorkScreen> {
                     itemBuilder: (_) => [
                       PopupMenuItem(
                         value: 'share',
-                        child: Text(context.tr('Share as Markdown')),
+                        child: Text(
+                          context.tr('app.library.share_as_markdown'),
+                        ),
                       ),
                       PopupMenuItem(
                         value: 'save',
-                        child: Text(context.tr('Save as Markdown file')),
+                        child: Text(
+                          context.tr('app.library.save_as_markdown_file'),
+                        ),
                       ),
                       if (w.serverId != null && CoverScope.of(context) != null)
                         PopupMenuItem(
                           value: 'cover',
-                          child: Text(context.tr('Choose a cover')),
+                          child: Text(context.tr('app.work.choose_a_cover')),
                         ),
                       if (w.serverId != null &&
                           ContextRulesScope.of(context)?.available == true)
                         PopupMenuItem(
                           value: 'context',
-                          child: Text(context.tr('Context around its quotes')),
+                          child: Text(
+                            context.tr('app.work.context_around_its_quotes'),
+                          ),
                         ),
                       PopupMenuItem(
                         value: 'delete',
-                        child: Text(context.tr('Delete work')),
+                        child: Text(context.tr('app.work.delete_work')),
                       ),
                     ],
                   ),
@@ -462,7 +479,7 @@ class _WorkScreenState extends State<WorkScreen> {
           : FloatingActionButton.extended(
               onPressed: _addQuote,
               icon: const Icon(Icons.add),
-              label: Text(context.tr('Add a quote')),
+              label: Text(context.tr('app.work.add_a_quote')),
             ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
@@ -507,9 +524,15 @@ class _WorkScreenState extends State<WorkScreen> {
                       ],
                       const SizedBox(height: 4),
                       Text(
-                        '${_quotes.length} ${_quotes.length == 1 ? 'quote' : 'quotes'}'
-                        '${chapters > 0 ? ' · $chapters ${chapters == 1 ? 'chapter' : 'chapters'}' : ''}'
-                        ' · $favourites ${favourites == 1 ? 'favourite' : 'favourites'}',
+                        context.tr('app.work.n_x_x2_favourites_x3', {
+                          'n': _quotes.length,
+                          'x': _quotes.length == 1 ? 'quote' : 'quotes',
+                          'x2': chapters > 0
+                              ? ' · $chapters ${chapters == 1 ? 'chapter' : 'chapters'}'
+                              : '',
+                          'favourites': favourites,
+                          'x3': favourites == 1 ? 'favourite' : 'favourites',
+                        }),
                         style: text.bodySmall,
                       ),
                       if (_quotes.isNotEmpty) ...[
@@ -520,17 +543,21 @@ class _WorkScreenState extends State<WorkScreen> {
                             FilledButton.tonalIcon(
                               onPressed: _read,
                               icon: const Icon(Icons.menu_book_outlined),
-                              label: Text(context.tr('Read')),
+                              label: Text(
+                                context.tr('anthologies.reader.label'),
+                              ),
                             ),
                             FilterChip(
-                              label: Text(context.tr('Favourites')),
+                              label: Text(
+                                context.tr('stats.overview.favourites.label'),
+                              ),
                               selected: _onlyFavourites,
                               onSelected: (v) =>
                                   setState(() => _onlyFavourites = v),
                             ),
                             _menuChip<QuoteOrder>(
                               key: const ValueKey('work-order'),
-                              title: context.tr('Order'),
+                              title: context.tr('app.work.order'),
                               values: QuoteOrder.values,
                               value: _order,
                               label: (v) => context.tr(v.label),
@@ -538,7 +565,7 @@ class _WorkScreenState extends State<WorkScreen> {
                             ),
                             _menuChip<QuoteGroup>(
                               key: const ValueKey('work-group'),
-                              title: context.tr('Group'),
+                              title: context.tr('app.board.group'),
                               values: QuoteGroup.values,
                               value: _group,
                               label: (v) => context.tr(v.label),
@@ -558,12 +585,16 @@ class _WorkScreenState extends State<WorkScreen> {
                 if (_quotes.isEmpty)
                   Padding(
                     padding: EdgeInsets.all(16),
-                    child: Text(context.tr('No quotes from this work yet.')),
+                    child: Text(
+                      context.tr('app.work_read.no_quotes_from_this_work_yet'),
+                    ),
                   ),
                 if (_quotes.isNotEmpty && ordered.isEmpty)
                   Padding(
                     padding: EdgeInsets.all(16),
-                    child: Text(context.tr('No favourites in this work yet.')),
+                    child: Text(
+                      context.tr('app.work.no_favourites_in_this_work_yet'),
+                    ),
                   ),
                 for (final s in sections) ...[
                   if (_heading(s.key).isNotEmpty)

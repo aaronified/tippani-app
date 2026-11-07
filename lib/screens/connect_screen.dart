@@ -132,7 +132,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
 /// One plain sentence for each way asking a server can go wrong. Pure, so the words are tested.
 /// One line on how the server is: being asked, not asked yet, connected (and its version), or why it is not.
 String serverStatusLine(AppController c) {
-  if (c.checking) return 'Asking the server…';
+  if (c.checking) return 'app.connect.asking_the_server';
   final check = c.check;
   if (check == null) return 'Not checked yet.';
   final caps = check.capabilities;
@@ -144,9 +144,9 @@ String serverStatusLine(AppController c) {
 String describeCheck(ServerCheck check) {
   switch (check.verdict) {
     case Compatibility.serverTooOld:
-      return 'This Tippani server is older than this app needs. Update the server, then try again.';
+      return 'app.connect.this_tippani_server_is_older_than';
     case Compatibility.appTooOld:
-      return 'This Tippani server is newer than this app understands. Update the app, then try again.';
+      return 'app.connect.this_tippani_server_is_newer_than';
     case Compatibility.ok:
       return '';
     case null:
@@ -154,18 +154,20 @@ String describeCheck(ServerCheck check) {
   }
   switch (check.failure) {
     case ApiFailure.timeout:
-      return 'The server did not answer in time. If it was asleep, wait a moment and try again.';
+      return 'app.connect.the_server_did_not_answer_in';
     case ApiFailure.network:
       return 'Could not reach that address. Check it, and that your phone can see the server (the same Wi-Fi, or your VPN).';
     case ApiFailure.badResponse:
-      return 'Something answered, but it is not a Tippani server. Check the address and the port.';
+      return 'app.connect.something_answered_but_it_is_not';
     case ApiFailure.rateLimited:
-      return 'The server is asking you to slow down. Wait a moment and try again.';
+      return 'app.connect.the_server_is_asking_you_to';
     case ApiFailure.unauthorised:
     case ApiFailure.forbidden:
     case ApiFailure.server:
-      return 'The server refused the question${check.detail.isEmpty ? '' : ': ${check.detail}'}.';
+      return tok('app.connect.the_server_refused_the_questionx', {
+        'x': check.detail.isEmpty ? '' : ': ${check.detail}',
+      });
     case null:
-      return 'Could not ask the server.';
+      return 'app.connect.could_not_ask_the_server';
   }
 }

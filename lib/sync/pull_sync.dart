@@ -812,16 +812,15 @@ class PullSync {
   }
 
   static String _why(_Put p) {
-    if (p.gone) return 'The server no longer has it.';
+    if (p.gone) return 'app.pull_sync.the_server_no_longer_has_it';
     if (p.reason != null) return 'The server refused it: ${p.reason}.';
     return switch (p.stopped) {
       ApiFailure.network ||
-      ApiFailure.timeout => 'The server could not be reached.',
-      ApiFailure.unauthorised =>
-        'The server does not accept this phone. Pair it again in Settings.',
-      ApiFailure.rateLimited => 'The server asked the app to slow down.',
-      ApiFailure.forbidden => 'This account is not allowed to change it.',
-      _ => 'The server answered with an error.',
+      ApiFailure.timeout => 'app.admin_service.the_server_could_not_be_reached',
+      ApiFailure.unauthorised => 'app.pull.the_server_does_not_accept_this',
+      ApiFailure.rateLimited => 'app.pull_sync.the_server_asked_the_app_to',
+      ApiFailure.forbidden => 'app.pull_sync.this_account_is_not_allowed_to',
+      _ => 'app.pull_sync.the_server_answered_with_an_error',
     };
   }
 }

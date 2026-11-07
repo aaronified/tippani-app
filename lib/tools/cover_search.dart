@@ -23,15 +23,15 @@ class CoverOption {
 /// What names a supplier in words.
 String coverSourceName(String slug) =>
     const {
-      'google': 'Google Books',
-      'openlibrary': 'Open Library',
+      'google': 'vocab.source.google.label',
+      'openlibrary': 'vocab.source.openlibrary.label',
       'amazon': 'Amazon',
       'tmdb': 'TMDB',
       'tvdb': 'TheTVDB',
       'igdb': 'IGDB',
       'wikidata': 'Wikidata',
-      'google-images': 'Web images',
-      'images': 'Web images',
+      'google-images': 'app.cover_search.web_images',
+      'images': 'app.cover_search.web_images',
     }[slug] ??
     (slug.isEmpty ? 'Web' : slug);
 

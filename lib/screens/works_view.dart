@@ -10,10 +10,10 @@ import 'shelf_card.dart';
 /// How the works are ordered.
 enum WorkSort {
   title('Title'),
-  creator('Author or maker'),
-  yearNewest('Year, newest first'),
-  yearOldest('Year, oldest first'),
-  added('Recently added');
+  creator('app.works_view.author_or_maker'),
+  yearNewest('app.works_view.year_newest_first'),
+  yearOldest('app.works_view.year_oldest_first'),
+  added('app.works_view.recently_added');
 
   const WorkSort(this.label);
   final String label;
@@ -21,10 +21,10 @@ enum WorkSort {
 
 /// What the works are gathered under.
 enum WorkGroup {
-  none('No grouping'),
-  creator('Author or maker'),
+  none('app.works_view.no_grouping'),
+  creator('app.works_view.author_or_maker'),
   decade('Decade'),
-  status('Where I am with it'),
+  status('app.works_view.where_i_am_with_it'),
   genre('Genre'),
   language('Language');
 
@@ -35,8 +35,8 @@ enum WorkGroup {
 /// Which works to keep, by where the reader is with them.
 enum WorkShelfFilter {
   all('All'),
-  inProgress('In progress'),
-  notStarted('Not started'),
+  inProgress('app.works_view.in_progress'),
+  notStarted('app.shelf.not_started'),
   paused('Paused'),
   finished('Finished'),
   abandoned('Abandoned');

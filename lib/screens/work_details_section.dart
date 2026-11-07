@@ -153,7 +153,9 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
                 child: Text(
                   _allCast
                       ? context.tr('app.dashboard.show_fewer')
-                      : 'Show all ${d.cast.length}',
+                      : context.tr('app.work_details.show_all_n', {
+                          'n': d.cast.length,
+                        }),
                 ),
               ),
           ],

@@ -22,32 +22,32 @@ String greetingFor(DateTime now, String? name) {
   final h = now.hour;
   final String hello;
   if (h < 5) {
-    hello = 'Up late';
+    hello = 'app.dashboard.up_late';
   } else if (h < 8) {
-    hello = 'Early start';
+    hello = 'app.dashboard.early_start';
   } else if (h < 12) {
-    hello = 'Good morning';
+    hello = 'app.dashboard.good_morning';
   } else if (h < 17) {
-    hello = 'Good afternoon';
+    hello = 'app.dashboard.good_afternoon';
   } else if (h < 21) {
-    hello = 'Good evening';
+    hello = 'app.dashboard.good_evening';
   } else {
-    hello = 'Winding down';
+    hello = 'app.dashboard.winding_down';
   }
   return name == null || name.isEmpty ? hello : '$hello, $name';
 }
 
 final _epigraphs = [
   'A margin is a promise: that there is always room to answer back.',
-  'The book is the author’s. The margin is yours.',
-  'Nothing is really read until something is written beside it.',
+  'greeting.epigraph.2',
+  'greeting.epigraph.3',
   'A quote you cannot find again is a quote you did not keep.',
-  'Reading twice is not repetition. It is the second half of reading once.',
-  'Keep the line, and the book keeps you.',
-  'Underlining is a question. A note is the answer.',
-  'What you copied out by hand is what you actually read.',
+  'greeting.epigraph.5',
+  'greeting.epigraph.6',
+  'greeting.epigraph.7',
+  'greeting.epigraph.8',
   'A commonplace book is a memory you are allowed to lend.',
-  'The margin is the only part of a book that is about you.',
+  'greeting.epigraph.10',
 ];
 
 /// The line for the day: the same all day, a different one tomorrow.

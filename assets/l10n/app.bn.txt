@@ -86,6 +86,11 @@ app.bulk_bar.the_quotes_of_the_others_move = অন্যগুলোর উক�
 app.bulk_bar.their_q_quotes_are_deleted_with = তাদের {q}টি উক্তিও সঙ্গে মুছে যাবে। এটি ফেরানো যাবে না।
 app.bulk_bar.they_are_removed_from_this_phone = এগুলো এই ফোন থেকে সরে যাবে, আর পরের সিঙ্কে সার্ভার থেকেও (তার বিনে কিছুদিন থাকে)।
 
+# --- bulk_ops ---
+app.bulk_ops.author_director_or_studio = লেখক, পরিচালক বা স্টুডিও
+app.bulk_ops.page_or_position = পৃষ্ঠা বা অবস্থান
+app.bulk_ops.quotes_from_a_book_or_film = বই বা ছবির উক্তি বোর্ডে রাখা হয় না।
+
 # --- capture ---
 app.capture.correct_anything_it_got_wrong_and = যা ভুল পড়েছে ঠিক করুন, আর যা রাখতে চান না তা মুছে দিন।
 app.capture.language_of_the_page = পাতার ভাষা
@@ -280,6 +285,9 @@ app.search.the_server_could_not_be_reached = সার্ভারে পৌঁ�
 app.search.try_fewer_words_or_take_a = কম শব্দ চেষ্টা করুন, নয়তো একটি ফিল্টার সরান।
 app.search.words_from_a_quote_a_title = উক্তির শব্দ, শিরোনাম, নাম বা ট্যাগ। ফিল্টার দিয়ে ছোট করুন, বা author:, tag: কিংবা colour: লিখুন।
 
+# --- search_models ---
+app.search_models.films_and_shows = ছবি ও ধারাবাহিক
+
 # --- server_log ---
 app.server_log.load_older_lines = পুরোনো লাইন আনুন
 app.server_log.refresh = নতুন করে আনুন
@@ -357,6 +365,8 @@ app.work.context_around_its_quotes = এর উক্তিগুলোর চ�
 app.work.delete_work = রচনা মুছুন
 app.work.in_reading_order = পড়ার ক্রমে
 app.work.no_favourites_in_this_work_yet = এই রচনায় এখনও কোনো প্রিয় নেই।
+app.work.no_tag = ট্যাগ নেই
+app.work.order = ক্রম
 app.work.the_picture_could_not_be_opened = ছবিটি খোলা যায়নি।
 app.work.the_server_did_not_take_that = সার্ভার ওই ছবিটি মলাট হিসেবে নেয়নি।
 app.work.this_work_is_no_longer_in = এই রচনাটি আর গ্রন্থাগারে নেই।

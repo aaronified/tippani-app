@@ -35,7 +35,7 @@ class SystemServerFiles implements ServerFiles {
   Future<bool> save(
     String fileName,
     Uint8List bytes, {
-    String title = 'Save the backup',
+    String title = 'app.server_files.save_the_backup',
   }) async {
     final saved = await FilePicker.saveFile(
       dialogTitle: title,
@@ -48,7 +48,7 @@ class SystemServerFiles implements ServerFiles {
   @override
   Future<ChosenFile?> pick() async {
     final f = await FilePicker.pickFile(
-      dialogTitle: 'Choose a backup from the server',
+      dialogTitle: 'app.server_files.choose_a_backup_from_the_server',
       type: FileType.any,
     );
     if (f == null) return null;

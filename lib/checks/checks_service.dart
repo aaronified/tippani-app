@@ -166,36 +166,36 @@ class CleanupScan {
 /// The reader's words for each rule, as the web's own page gives them.
 const cleanupRuleWords = <String, (String, String)>{
   'invisible': (
-    'Invisible characters',
-    'An invisible space or hyphen, from HTML, a justified PDF, or a word broken across lines.',
+    'cleanup.rule.invisible.label',
+    'app.checks_service.an_invisible_space_or_hyphen_from',
   ),
   'edge-space': (
-    'Space at the ends',
-    'The quote begins or ends with a space, which a card hides and a search does not.',
+    'cleanup.rule.edge-space.label',
+    'cleanup.rule.edge-space.body',
   ),
   'double-space': (
-    'Double spaces',
-    'Two or more spaces in a row, from justified text, or typed on purpose after a full stop.',
+    'cleanup.rule.double-space.label',
+    'app.checks_service.two_or_more_spaces_in_a',
   ),
   'space-before-punctuation': (
-    'Space before punctuation',
+    'cleanup.rule.space-before-punctuation.label',
     'A space before a comma, full stop or bracket. French does this deliberately.',
   ),
   'reference-mark': (
-    'Footnote numbers',
+    'cleanup.rule.reference-mark.label',
     'A leftover reference mark: a superscript, a number in brackets, or a digit stuck to the last word.',
   ),
   'pronunciation': (
-    'Pronunciation glosses',
+    'cleanup.rule.pronunciation.label',
     "A dictionary's guide to saying the word, carried in with the headword.",
   ),
   'hyphen-break': (
-    'Hyphen from a line break',
+    'cleanup.rule.hyphen-break.label',
     'A word split across two lines and rejoined with the hyphen still in it.',
   ),
   'repeated-punctuation': (
-    'Repeated punctuation',
-    'Doubled commas, stops or marks. An ellipsis and an em-dash pair are left alone.',
+    'cleanup.rule.repeated-punctuation.label',
+    'cleanup.rule.repeated-punctuation.body',
   ),
 };
 
@@ -279,9 +279,12 @@ class CorrectionsScan {
 
 /// The buckets of corrections, in the server's order, with the web's words.
 const correctionBuckets = <String, (String, String)>{
-  'spacing': ('Line breaks and spacing', 'The same words, spaced differently.'),
+  'spacing': (
+    'corrections.bucket.spacing.title',
+    'corrections.bucket.spacing.note',
+  ),
   'punctuation': (
-    'Punctuation and quote marks',
+    'corrections.bucket.punctuation.title',
     'The same words; the marks between them differ.',
   ),
   'capitalisation': ('Capitalisation', 'The same words in a different case.'),
@@ -290,26 +293,26 @@ const correctionBuckets = <String, (String, String)>{
     'The same letters; the accents differ. A file can lack them altogether.',
   ),
   'marks': (
-    'Several marks at once',
+    'corrections.bucket.marks.title',
     'Accents, case and punctuation together; the words are the same.',
   ),
   'extend': (
-    'Your quote stops early',
-    'The line continues past where your quote ends.',
+    'corrections.bucket.extend.title',
+    'corrections.bucket.extend.note',
   ),
-  'trim': (
-    'Your quote runs past the line',
-    "Your quote holds words the file's line does not.",
-  ),
+  'trim': ('corrections.bucket.trim.title', 'corrections.bucket.trim.note'),
   'one-word': (
-    'One word differs',
-    'The word is marked. Read each before taking it.',
+    'corrections.bucket.one-word.title',
+    'corrections.bucket.one-word.note',
   ),
   'few-words': (
-    'Two or three words differ',
-    'The words are marked. Read each before taking it.',
+    'corrections.bucket.few-words.title',
+    'corrections.bucket.few-words.note',
   ),
-  'wording': ('The wording differs', 'A longer difference. Read each one.'),
+  'wording': (
+    'corrections.bucket.wording.title',
+    'A longer difference. Read each one.',
+  ),
 };
 
 // ------------------------------------------------------------------ times and places

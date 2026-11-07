@@ -20,7 +20,9 @@ List<String> describePush(PushResult r) {
       if (r.quotesSent > 0) _count(r.quotesSent, 'quote'),
     ];
     if (parts.isNotEmpty) {
-      lines.add('Sent ${parts.join(' and ')} to your server.');
+      lines.add(
+        tok('app.sync.sent_x_to_your_server', {'x': parts.join(' and ')}),
+      );
     }
     if (r.alreadyThere > 0) {
       lines.add(
@@ -37,19 +39,13 @@ List<String> describePush(PushResult r) {
         'The server could not be reached, so the rest was not sent. What went up stays there; try again when it answers.',
       );
     case ApiFailure.unauthorised:
-      lines.add(
-        'The server does not accept this phone. Pair it again in Settings, then send what is left.',
-      );
+      lines.add('app.sync.the_server_does_not_accept_this');
     case ApiFailure.rateLimited:
-      lines.add(
-        'The server asked the app to slow down. Try again in a minute.',
-      );
+      lines.add('app.pull.the_server_asked_the_app_to');
     case ApiFailure.forbidden:
-      lines.add('This account is not allowed to add to the library.');
+      lines.add('app.sync.this_account_is_not_allowed_to');
     case ApiFailure.server || ApiFailure.badResponse:
-      lines.add(
-        'The server answered with an error, so the rest was not sent. Try again later.',
-      );
+      lines.add('app.sync.the_server_answered_with_an_error');
   }
   if (r.waiting > 0) {
     lines.add(

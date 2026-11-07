@@ -7,10 +7,10 @@ import '../l10n/l10n.dart';
 
 /// One plain sentence for each way a pairing can fail. Pure, so the words are tested.
 String pairFailureText(PairFailure f) => switch (f) {
-  PairFailure.invalidCode => 'That code did not work. Codes last five minutes and work once. Make a new one in Tippani\'s Settings on your computer and try again.',
-  PairFailure.rateLimited => 'Too many tries. Wait a minute, then try again.',
-  PairFailure.unreachable => 'Could not reach the server. Check that your phone can see it, then try again.',
-  PairFailure.unexpected => 'The server answered in a way this app does not understand. Update the app and the server, then try again.',
+  PairFailure.invalidCode => 'app.pair.that_code_did_not_work_codes',
+  PairFailure.rateLimited => 'app.pair.too_many_tries_wait_a_minute',
+  PairFailure.unreachable => 'app.pair.could_not_reach_the_server_check',
+  PairFailure.unexpected => 'app.pair.the_server_answered_in_a_way',
 };
 
 /// Pairs this phone with the server: the reader makes a code in Tippani's Settings on a computer, and types
@@ -27,7 +27,7 @@ class PairScreen extends StatefulWidget {
 
 class _PairScreenState extends State<PairScreen> {
   final _code = TextEditingController();
-  final _name = TextEditingController(text: 'My Android phone');
+  final _name = TextEditingController(text: 'app.pair.my_android_phone');
   bool _busy = false;
   String? _problem;
 

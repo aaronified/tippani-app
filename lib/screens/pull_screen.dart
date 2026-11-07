@@ -16,7 +16,7 @@ List<String> describePull(PullResult r) {
       r.conflicts.isEmpty &&
       r.refused.isEmpty &&
       r.stoppedBy == null) {
-    lines.add('Your phone and your server already agree.');
+    lines.add('app.pull.your_phone_and_your_server_already');
   }
   final down = [
     if (r.worksAdded > 0) _count(r.worksAdded, 'new work'),
@@ -29,7 +29,11 @@ List<String> describePull(PullResult r) {
     if (r.worksSent > 0) _count(r.worksSent, 'work'),
     if (r.quotesSent > 0) _count(r.quotesSent, 'quote'),
   ];
-  if (up.isNotEmpty) lines.add('Sent up your changes to ${up.join(' and ')}.');
+  if (up.isNotEmpty) {
+    lines.add(
+      tok('app.pull.sent_up_your_changes_to_x', {'x': up.join(' and ')}),
+    );
+  }
   if (r.conflicts.isNotEmpty) {
     lines.add(
       '${_count(r.conflicts.length, 'item')} changed on both sides. Nothing was changed for ${r.conflicts.length == 1 ? 'it' : 'them'}: choose below.',
@@ -81,17 +85,13 @@ List<String> describePull(PullResult r) {
         'The server could not be reached. Nothing more was changed; try again when it answers.',
       );
     case ApiFailure.unauthorised:
-      lines.add(
-        'The server does not accept this phone. Pair it again in Settings.',
-      );
+      lines.add('app.pull.the_server_does_not_accept_this');
     case ApiFailure.rateLimited:
-      lines.add(
-        'The server asked the app to slow down. Try again in a minute.',
-      );
+      lines.add('app.pull.the_server_asked_the_app_to');
     case ApiFailure.forbidden:
-      lines.add('This account is not allowed to do that.');
+      lines.add('app.pull.this_account_is_not_allowed_to');
     case ApiFailure.server || ApiFailure.badResponse:
-      lines.add('The server answered with an error. Try again later.');
+      lines.add('app.pull.the_server_answered_with_an_error');
   }
   return lines;
 }

@@ -416,7 +416,10 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
       ),
     );
     if (ok && mounted) {
-      _say(context, 'Attached to ${chosen.work.title}.');
+      _say(
+        context,
+        tok('app.source_files.attached_to_title', {'title': chosen.work.title}),
+      );
       await _read();
       _tabs.animateTo(0);
     }
@@ -585,8 +588,10 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                 'Looking… ${_scan.scanned} files read, ${_scan.found} found.',
               'partial' =>
                 'Stopped part-way: ${_scan.scanned} files read. Scan again to carry on.',
-              'failed' || 'interrupted' =>
-                'The scan did not finish${_scan.error.isEmpty ? '' : ': ${_scan.error}'}',
+              'failed' || 'interrupted' => tok(
+                'app.source_files.the_scan_did_not_finishx',
+                {'x': _scan.error.isEmpty ? '' : ': ${_scan.error}'},
+              ),
               _ =>
                 '${_scan.scanned} files read, ${_scan.found} fit a work${_scan.unclaimed > 0 ? ', ${_scan.unclaimed} fit none' : ''}.',
             }, style: text.bodySmall),

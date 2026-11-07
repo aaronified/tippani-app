@@ -449,6 +449,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
         if (changed) await _load();
       case _Menu.fill:
         final nothingNew = context.tr('app.anthologies.nothing_new_to_add');
+        final addedText = context.tr;
         final r = await Navigator.of(context).push<FillResult>(
           MaterialPageRoute(
             builder: (_) => FillScreen(service: widget.service, anthology: a),
@@ -459,7 +460,9 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           _say(
             r.added == 0
                 ? nothingNew
-                : 'Added ${r.added} ${r.added == 1 ? 'passage' : 'passages'}.',
+                : r.added == 1
+                ? addedText('app.anthologies.added_one_passage')
+                : addedText('app.anthologies.added_n_passages', {'n': r.added}),
           );
         }
       case _Menu.removed:
@@ -479,7 +482,9 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
             await widget.shareFile(f.bytes, f.name);
           } else {
             final saved = await widget.picker!.save(f.name, f.bytes);
-            if (saved && mounted) _say('Saved ${f.name}.');
+            if (saved && mounted) {
+              _say(context.tr('app.admin_backup.saved_name', {'name': f.name}));
+            }
           }
         } on AnthologyException catch (e) {
           if (mounted) _say(e.message);
@@ -837,6 +842,7 @@ Future<void> addToAnthologyDialog(
   required int itemId,
 }) async {
   final messenger = ScaffoldMessenger.of(context);
+  final tr = context.tr;
   List<Anthology> all;
   try {
     all = await service.list();
@@ -881,7 +887,9 @@ Future<void> addToAnthologyDialog(
     messenger.showSnackBar(
       SnackBar(
         content: Text(
-          added ? 'Added to ${target.title}.' : 'Already in ${target.title}.',
+          added
+              ? tr('app.anthologies.added_to_title', {'title': target.title})
+              : tr('app.anthologies.already_in_title', {'title': target.title}),
         ),
       ),
     );

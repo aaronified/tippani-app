@@ -17,7 +17,7 @@ Future<BackupSecret?> askBackupSecret(
   required String body,
   String? mode,
   String account = '',
-  String yes = 'Go on',
+  String yes = 'app.admin_backup.go_on',
 }) {
   return showDialog<BackupSecret>(
     context: context,
@@ -58,7 +58,9 @@ Future<BackupSecret?> askBackupSecret(
                       ? 'Passphrase'
                       : account.isEmpty
                       ? context.tr('settings.restore.password.label')
-                      : 'Password of $account',
+                      : tok('app.admin_backup.password_of_account', {
+                          'account': account,
+                        }),
                 ),
               ),
             ],
@@ -197,7 +199,9 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       if (!mounted) return;
       setState(() => _working = null);
       final saved = await widget.files.save(f.name, f.bytes);
-      if (mounted && saved) say(context, 'Saved ${f.name}.');
+      if (mounted && saved) {
+        say(context, tok('app.admin_backup.saved_name', {'name': f.name}));
+      }
     } on ServerException catch (e) {
       if (mounted) say(context, e.message);
     }
@@ -281,8 +285,12 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       context,
       title: context.tr('app.admin_backup.replace_the_whole_library'),
       body: fromPhone
-          ? 'Every reader\'s library on the server is replaced with ${file!.name}. First you will keep a copy of what the server holds now.'
-          : 'Every reader\'s library on the server is replaced with the backup made ${info!.created}. First you will keep a copy of what the server holds now.',
+          ? tok('app.admin_backup.every_reader_s_library_on_the', {
+              'name': file!.name,
+            })
+          : tok('app.admin_backup.every_reader_s_library_on_the_2', {
+              'created': info!.created,
+            }),
       yes: 'Continue',
       danger: true,
     );
@@ -296,7 +304,11 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
           : info!.needsPassphrase
           ? context.tr('app.admin_backup.this_backup_is_sealed_with_a')
           : info.needsPassword
-          ? 'This backup is sealed with the password of ${info.account.isEmpty ? 'the account that made it' : info.account}.'
+          ? tok('app.admin_backup.this_backup_is_sealed_with_the', {
+              'account': info.account.isEmpty
+                  ? 'the account that made it'
+                  : info.account,
+            })
           : context.tr('app.admin_backup.this_backup_is_not_sealed_press'),
       mode: fromPhone ? null : (info!.key == 'none' ? 'password' : info.key),
       account: fromPhone ? '' : info!.account,

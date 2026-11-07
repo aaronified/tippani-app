@@ -66,7 +66,12 @@ class _DevicesScreenState extends State<DevicesScreen> {
     } on ApiException catch (e) {
       // 404 is "already gone": the list is about to say so
       if (e.status != 404 && mounted) {
-        setState(() => _problem = 'Could not unpair ${d.name}. Try again.');
+        setState(
+          () => _problem = context.tr(
+            'app.devices.could_not_unpair_name_try_again',
+            {'name': d.name},
+          ),
+        );
         return;
       }
     }
@@ -112,8 +117,13 @@ class _DevicesScreenState extends State<DevicesScreen> {
                       d.current
                           ? context.tr('app.devices.this_phone')
                           : d.lastSeenAt.isEmpty
-                          ? 'Paired ${d.createdAt}. Not used yet.'
-                          : 'Last used ${d.lastSeenAt}',
+                          ? context.tr(
+                              'app.devices.paired_created_at_not_used_yet',
+                              {'created_at': d.createdAt},
+                            )
+                          : context.tr('app.devices.last_used_last_seen_at', {
+                              'last_seen_at': d.lastSeenAt,
+                            }),
                     ),
                     trailing: d.current
                         ? const Icon(Icons.smartphone)

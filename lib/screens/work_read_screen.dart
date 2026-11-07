@@ -129,8 +129,10 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
                           label: context.tr('app.work_read.round', {
                             'round': _size.round(),
                           }),
-                          semanticFormatterCallback: (v) =>
-                              'Text size ${v.round()}',
+                          semanticFormatterCallback: (v) => context.tr(
+                            'app.work_read.text_size_round',
+                            {'round': v.round()},
+                          ),
                           onChanged: (v) => setState(() => _size = v),
                         ),
                       ),

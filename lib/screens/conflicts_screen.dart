@@ -46,8 +46,12 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
         ),
         content: Text(
           phone
-              ? 'The server’s version of all $n will be replaced by what is on this phone.'
-              : 'This phone’s version of all $n will be replaced by what is on the server.',
+              ? context.tr('app.conflicts.the_server_s_version_of_all', {
+                  'n': n,
+                })
+              : context.tr('app.conflicts.this_phone_s_version_of_all', {
+                  'n': n,
+                }),
         ),
         actions: [
           TextButton(

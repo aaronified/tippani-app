@@ -17,7 +17,7 @@ const maxImportBytes = 5 * 1024 * 1024;
 class ImportTooBig implements Exception {
   const ImportTooBig();
   @override
-  String toString() => 'That file is over 5 MB, more than the importer takes.';
+  String toString() => 'app.import_picker.that_file_is_over_5_mb';
 }
 
 /// Choosing the file to import with the system's own picker. Tests hand the harness a fake.
@@ -32,7 +32,7 @@ class SystemImportPicker implements ImportPicker {
   @override
   Future<ImportFile?> pick({List<String>? extensions}) async {
     final f = await FilePicker.pickFile(
-      dialogTitle: 'Choose a file to import',
+      dialogTitle: 'app.import_picker.choose_a_file_to_import',
       type: FileType.custom,
       allowedExtensions: extensions ?? importExtensions,
     );

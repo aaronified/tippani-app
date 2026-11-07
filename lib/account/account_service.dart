@@ -85,8 +85,7 @@ class PairedAccount implements AccountService {
   @override
   bool get available => _controller.paired;
 
-  static const _offline =
-      'The server could not be reached. Check your connection and try again.';
+  static const _offline = 'app.account_service.the_server_could_not_be_reached';
 
   /// Runs [run] with the device's client. Every failure becomes an [Outcome] with words for the reader.
   /// [wrong401] says a 401 here means "that was wrong" (a wrong password), not "this phone was unpaired",
@@ -107,7 +106,7 @@ class PairedAccount implements AccountService {
       }
       final v = await _controller.withClient(run);
       if (v == null && !_controller.paired) {
-        return Outcome.fail('This phone is not paired.');
+        return Outcome.fail('app.account_service.this_phone_is_not_paired');
       }
       return Outcome.ok(v);
     } on ApiException catch (e) {
@@ -117,9 +116,13 @@ class PairedAccount implements AccountService {
       return switch (e.failure) {
         ApiFailure.network ||
         ApiFailure.timeout => const Outcome.fail(_offline),
-        ApiFailure.forbidden => Outcome.fail('The server does not allow that.'),
+        ApiFailure.forbidden => Outcome.fail(
+          'app.account_service.the_server_does_not_allow_that',
+        ),
         _ => Outcome.fail(
-          e.detail.isEmpty ? 'The server refused that.' : e.detail,
+          e.detail.isEmpty
+              ? 'app.account_service.the_server_refused_that'
+              : e.detail,
         ),
       };
     }
@@ -261,14 +264,16 @@ class PairedContextRules implements ContextRules {
     try {
       final v = await _controller.withClient(run);
       if (v == null && !_controller.paired) {
-        return Outcome.fail('This phone is not paired.');
+        return Outcome.fail('app.account_service.this_phone_is_not_paired');
       }
       return Outcome.ok(v);
     } on ApiException catch (e) {
       return Outcome.fail(
         e.failure == ApiFailure.network || e.failure == ApiFailure.timeout
-            ? 'The server could not be reached. Check your connection and try again.'
-            : (e.detail.isEmpty ? 'The server refused that.' : e.detail),
+            ? 'app.account_service.the_server_could_not_be_reached'
+            : (e.detail.isEmpty
+                  ? 'app.account_service.the_server_refused_that'
+                  : e.detail),
       );
     }
   }

@@ -1,9 +1,10 @@
 import 'models.dart';
+import '../l10n/l10n.dart';
 
 /// The ways a quote can be sent. Same five as the web app's share dialog.
 enum ShareFormat {
   picture('Picture'),
-  plain('Plain text'),
+  plain('app.share_format.plain_text'),
   markdown('Markdown'),
   whatsapp('WhatsApp'),
   reddit('Reddit');
@@ -54,7 +55,7 @@ List<ShareField> shareFieldsOf(Quote q, Work? w) {
   add('location', 'Location', q.location);
   add('noted', 'Noted', _date(q.notedAt));
   add('tags', 'Tags', q.tags.map((t) => '#$t').join(' '));
-  add('note', 'My note', q.note);
+  add('note', 'app.share_format.my_note', q.note);
   return out;
 }
 
@@ -120,7 +121,7 @@ String buildShareText(Quote q, Work? w, Set<String> on, ShareFormat format) {
   ];
   if (credit.isNotEmpty) out.add('— ${credit.join(', ')}');
   if (on.contains('noted') && fields['noted'] != null) {
-    out.add('Noted ${fields['noted']}');
+    out.add(tok('app.quote.noted_x', {'x': fields['noted']}));
   }
   if (on.contains('tags') && fields['tags'] != null) out.add(fields['tags']!);
   if (on.contains('note') && fields['note'] != null) {

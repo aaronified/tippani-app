@@ -2,9 +2,9 @@
 enum SearchScope {
   all('all', 'Everything'),
   books('books', 'Books'),
-  movies('movies', 'Films and shows'),
+  movies('movies', 'app.search_models.films_and_shows'),
   highlights('annotations', 'Highlights'),
-  lines('dialogues', 'Film lines'),
+  lines('dialogues', 'bin.kind.dialogue.plural'),
   quotes('quotes', 'Quotes');
 
   const SearchScope(this.param, this.label);

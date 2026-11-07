@@ -15,12 +15,12 @@ import '../l10n/l10n.dart';
 
 /// How the quotes of a board are put in order.
 enum BoardSort {
-  newest('Newest first'),
-  oldest('Oldest first'),
+  newest('app.board.newest_first'),
+  oldest('app.board.oldest_first'),
   text('A to Z'),
-  speaker('Who said it'),
+  speaker('anthologies.form.fields.credit.label'),
   colour('Colour'),
-  favourites('Favourites first');
+  favourites('app.board.favourites_first');
 
   const BoardSort(this.label);
   final String label;
@@ -28,8 +28,8 @@ enum BoardSort {
 
 /// How the quotes of a board are gathered under headings.
 enum BoardGroup {
-  none('No groups'),
-  speaker('Who said it'),
+  none('app.board.no_groups'),
+  speaker('anthologies.form.fields.credit.label'),
   language('Language'),
   colour('Colour');
 

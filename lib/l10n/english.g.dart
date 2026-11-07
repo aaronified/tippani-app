@@ -425,6 +425,8 @@ const Map<String, String> englishTokens = {
       'Bringing the backup to this phone…',
   'app.admin_backup.bringing_the_safety_copy_to_this':
       'Bringing the safety copy to this phone…',
+  'app.admin_backup.every_reader_s_library_on_the': 'Every reader\'s library on the server is replaced with {name}. First you will keep a copy of what the server holds now.',
+  'app.admin_backup.every_reader_s_library_on_the_2': 'Every reader\'s library on the server is replaced with the backup made {created}. First you will keep a copy of what the server holds now.',
   'app.admin_backup.give_the_password_of_the_account':
       'Give the password of the account it was made under, or its passphrase.',
   'app.admin_backup.go_on': 'Go on',
@@ -433,6 +435,7 @@ const Map<String, String> englishTokens = {
   'app.admin_backup.making_the_safety_copy': 'Making the safety copy…',
   'app.admin_backup.making_the_safety_copy_2': 'Making the safety copy',
   'app.admin_backup.open_the_backup': 'Open the backup',
+  'app.admin_backup.password_of_account': 'Password of {account}',
   'app.admin_backup.put_a_backup_back': 'Put a backup back',
   'app.admin_backup.replace_the_whole_library': 'Replace the whole library?',
   'app.admin_backup.restore_from_a_file': 'Restore from a file',
@@ -440,6 +443,7 @@ const Map<String, String> englishTokens = {
   'app.admin_backup.restoring_the_server_will_be_busy':
       'Restoring. The server will be busy for a while…',
   'app.admin_backup.save_on_this_phone': 'Save on this phone',
+  'app.admin_backup.saved_name': 'Saved {name}.',
   'app.admin_backup.server_backup': 'Server backup',
   'app.admin_backup.starting_the_backup': 'Starting the backup…',
   'app.admin_backup.the_backup_did_not_finish': 'The backup did not finish.',
@@ -456,6 +460,8 @@ const Map<String, String> englishTokens = {
       'This backup is not sealed. Press Restore to go on.',
   'app.admin_backup.this_backup_is_sealed_with_a':
       'This backup is sealed with a passphrase.',
+  'app.admin_backup.this_backup_is_sealed_with_the':
+      'This backup is sealed with the password of {account}.',
   'app.admin_backup.this_replaces_every_reader_s_library': 'This replaces every reader\'s library on the server. A copy of what is there now is made first and kept on this phone.',
   'app.admin_folders.a_folder_on_the_server': 'A folder on the server',
   'app.admin_folders.every_attached_file_is_where_it':
@@ -555,6 +561,9 @@ const Map<String, String> englishTokens = {
   'app.admin_update.starting_the_update': 'Starting the update…',
   'app.admin_update.the_server_did_not_come_back': 'The server did not come back on a new version. Check it on its own computer.',
   'app.admin_update.the_server_is_restarting': 'The server is restarting…',
+  'app.admin_update.the_server_now_runs_current':
+      'The server now runs {current}.',
+  'app.admin_update.the_server_pulls_latest_restarts_and': 'The server pulls {latest}, restarts, and is out of reach for a minute or two. Every reader is disconnected meanwhile.',
   'app.admin_update.this_server_cannot_update_itself_run':
       'This server cannot update itself. Run this on its computer:',
   'app.admin_update.up_to_date': 'Up to date',
@@ -563,14 +572,19 @@ const Map<String, String> englishTokens = {
   'app.admin_users.a_password_for_trim': 'A password for {trim}',
   'app.admin_users.add_a_user': 'Add a user',
   'app.admin_users.an_admin_can_see_every_job': 'An admin can see every job, change the server and its backups, and add or remove users.',
+  'app.admin_users.make_username_an_admin': 'Make {username} an admin?',
   'app.admin_users.new_user': 'New user',
   'app.admin_users.remove_this_user': 'Remove this user',
   'app.admin_users.remove_username': 'Remove {username}?',
   'app.admin_users.step_down_from_admin': 'Step down from admin',
+  'app.admin_users.step_username_down': 'Step {username} down?',
   'app.admin_users.users': 'Users',
   'app.anthologies.a_new_anthology': 'A new anthology…',
   'app.anthologies.add_a_heading': 'Add a heading',
   'app.anthologies.add_a_heading_after': 'Add a heading after',
+  'app.anthologies.added_added_x': 'Added {added} {x}.',
+  'app.anthologies.added_to_title': 'Added to {title}.',
+  'app.anthologies.already_in_title': 'Already in {title}.',
   'app.anthologies.commentary': 'Commentary',
   'app.anthologies.cover_and_front': 'Cover and front…',
   'app.anthologies.delete_heading': 'Delete heading',
@@ -582,15 +596,22 @@ const Map<String, String> englishTokens = {
   'app.anthologies.group_by': 'Group by…',
   'app.anthologies.keep_it': 'Keep it',
   'app.anthologies.more_for_this_one': 'More for this one',
+  'app.anthologies.my_commentary': 'My commentary',
   'app.anthologies.new_heading': 'New heading',
   'app.anthologies.no_anthologies_yet': 'No anthologies yet.',
+  'app.anthologies.not_named': 'Not named',
   'app.anthologies.nothing_in_this_anthology_yet_open': 'Nothing in this anthology yet. Open a quote and choose Add to anthology, or use Fill from.',
   'app.anthologies.nothing_new_to_add': 'Nothing new to add.',
   'app.anthologies.remove_from_anthology': 'Remove from anthology',
   'app.anthologies.taken_out': 'Taken out…',
   'app.anthologies.the_anthology_is_removed_from_the': 'The anthology is removed from the server. The quotes in it stay in your library.',
+  'app.anthologies.the_book_or_film': 'The book or film',
+  'app.anthologies.the_colour_edge': 'The colour edge',
+  'app.anthologies.the_date': 'The date',
   'app.anthologies.trim': '“{trim}”',
   'app.anthologies.what_it_shows': 'What it shows…',
+  'app.anthologies.where_in_the_work': 'Where in the work',
+  'app.anthologies.who_it_is_by': 'Who it is by',
   'app.anthology_tools.a_passage_you_take_out_stays': 'A passage you take out stays out when the anthology fills again. Put one back here.',
   'app.anthology_tools.add_a_cover': 'Add a cover',
   'app.anthology_tools.book_or_film': 'Book or film',
@@ -598,6 +619,7 @@ const Map<String, String> englishTokens = {
   'app.anthology_tools.choose_where_the_passages_come_from': 'Choose where the passages come from. They are added now, after any that are already in it.',
   'app.anthology_tools.fill_from': 'Fill from',
   'app.anthology_tools.fill_now': 'Fill now',
+  'app.anthology_tools.from_from': 'From {from}',
   'app.anthology_tools.front_of_the_book': 'Front of the book',
   'app.anthology_tools.group_passages_by': 'Group passages by',
   'app.anthology_tools.keep_adding_as_new_quotes_arrive':
@@ -610,11 +632,16 @@ const Map<String, String> englishTokens = {
   'app.anthology_tools.save_as_label': 'Save as {label}',
   'app.anthology_tools.send_as_label': 'Send as {label}',
   'app.anthology_tools.taken_out': 'Taken out',
+  'app.anthology_tools.to_to': 'To {to}',
   'app.anthology_tools.what_it_shows': 'What it shows',
   'app.anthology_tools.words_under_it_optional': 'Words under it (optional)',
   'app.anthology_tools.your_words_for_this_passage_shown':
       'Your words for this passage, shown before it.',
   'app.backup.a_backup_keeps_the_app_s': 'A backup keeps the app\'s settings. It does not hold the key that pairs this phone with your server, so after a restore you pair again.',
+  'app.backup.backed_up_as_name_here_and':
+      'Backed up as {name}, here and in your Downloads folder.',
+  'app.backup.backed_up_as_name_this_phone':
+      'Backed up as {name}. This phone could not also copy it to Downloads.',
   'app.backup.backup_and_restore': 'Backup and restore',
   'app.backup.backup_saved': 'Backup saved.',
   'app.backup.copies_on_this_phone': 'Copies on this phone',
@@ -685,6 +712,10 @@ const Map<String, String> englishTokens = {
       'Their {q} quotes are deleted with them. This cannot be undone.',
   'app.bulk_bar.they_are_removed_from_this_phone': 'They are removed from this phone, and from the server at the next sync (its bin keeps them for a while).',
   'app.bulk_bar.title_creator': '{title} — {creator}',
+  'app.bulk_ops.author_director_or_studio': 'Author, director or studio',
+  'app.bulk_ops.page_or_position': 'Page or position',
+  'app.bulk_ops.quotes_from_a_book_or_film':
+      'Quotes from a book or film are not filed on boards.',
   'app.capture.correct_anything_it_got_wrong_and':
       'Correct anything it got wrong, and delete what you do not want to keep.',
   'app.capture.english_and_hindi': 'English and Hindi',
@@ -720,10 +751,13 @@ const Map<String, String> englishTokens = {
   'app.checks.times_and_places': 'Times and places',
   'app.checks_entry.import_and_checks': 'Import and checks',
   'app.checks_entry.pending': '{pending}',
+  'app.checks_service.an_invisible_space_or_hyphen_from': 'An invisible space or hyphen, from HTML, a justified PDF, or a word broken across lines.',
+  'app.checks_service.two_or_more_spaces_in_a': 'Two or more spaces in a row, from justified text, or typed on purpose after a full stop.',
   'app.checks_tabs.a_subtitle_file_knows_when_each': 'A subtitle file knows when each line is spoken. A book’s EPUB knows each highlight’s chapter and how far in it sits. Nothing changes until you accept.',
   'app.checks_tabs.a_subtitle_file_knows_when_each_2': 'A subtitle file knows when each line is spoken, and a book’s EPUB knows each highlight’s chapter. Attach one to a work and its proposals appear here.',
   'app.checks_tabs.a_work_s_attached_file_knows': 'A work’s attached file knows its own words. Where your quote differs, its version is offered. Nothing changes until you accept.',
   'app.checks_tabs.accept_all': 'Accept all',
+  'app.checks_tabs.accept_all_n': 'Accept all {n}?',
   'app.checks_tabs.all_n': 'All ({n})',
   'app.checks_tabs.all_x': 'All ({x})',
   'app.checks_tabs.book_quote': 'Book quote',
@@ -736,7 +770,9 @@ const Map<String, String> englishTokens = {
   'app.checks_tabs.fix': 'Fix',
   'app.checks_tabs.fix_all': 'Fix all',
   'app.checks_tabs.fix_all_n': 'Fix all {n}',
+  'app.checks_tabs.fix_all_n_2': 'Fix all {n}?',
   'app.checks_tabs.ignored_ignored': 'Ignored ({ignored})',
+  'app.checks_tabs.ignored_n': 'Ignored {n}',
   'app.checks_tabs.marks_you_say_are_meant_stay':
       'Marks you say are meant stay listed here, so you can bring them back.',
   'app.checks_tabs.no_stray_marks': 'No stray marks.',
@@ -751,6 +787,7 @@ const Map<String, String> englishTokens = {
   'app.checks_tabs.quote_on_its_own': 'Quote on its own',
   'app.checks_tabs.quotes_can_carry_things_that_came': 'Quotes can carry things that came from the page rather than the writer. They are invisible on a card but still in the search index, so a phrase you can see may not be found.',
   'app.checks_tabs.quotes_on_their_own': 'Quotes on their own',
+  'app.checks_tabs.restored_n': 'Restored {n}',
   'app.checks_tabs.rule_fieldx': '{rule} · {field}{x}',
   'app.checks_tabs.something_went_wrong': 'Something went wrong.',
   'app.checks_tabs.the_attached_file_is_probably_not':
@@ -779,6 +816,8 @@ const Map<String, String> englishTokens = {
   'app.conflicts.phone_value': 'Phone: {value}',
   'app.conflicts.server_value': 'Server: {value}',
   'app.conflicts.sync_conflicts': 'Sync conflicts',
+  'app.conflicts.the_server_s_version_of_all': 'The server’s version of all {n} will be replaced by what is on this phone.',
+  'app.conflicts.this_phone_s_version_of_all': 'This phone’s version of all {n} will be replaced by what is on the server.',
   'app.connect.asking_the_server': 'Asking the server…',
   'app.connect.check_and_connect': 'Check and connect',
   'app.connect.connected_but_this_address_uses_plain': 'Connected, but this address uses plain http outside your own network. Anyone on the way can read what the app sends. Use https if you can.',
@@ -788,6 +827,8 @@ const Map<String, String> englishTokens = {
   'app.connect.the_server_did_not_answer_in': 'The server did not answer in time. If it was asleep, wait a moment and try again.',
   'app.connect.the_server_is_asking_you_to':
       'The server is asking you to slow down. Wait a moment and try again.',
+  'app.connect.the_server_refused_the_questionx':
+      'The server refused the question{x}.',
   'app.connect.this_tippani_server_is_newer_than': 'This Tippani server is newer than this app understands. Update the app, then try again.',
   'app.connect.this_tippani_server_is_older_than': 'This Tippani server is older than this app needs. Update the server, then try again.',
   'app.connect.tippani_runs_on_a_server_you': 'Tippani runs on a server you own. Enter its address, the one you open in a browser.',
@@ -824,7 +865,12 @@ const Map<String, String> englishTokens = {
   'app.dashboard.your_library_is_bigger_than_the': 'Your library is bigger than the schedule can keep up with: about {capacity} quotes stay current, and you have {total}. The quiz still leads with the stalest.',
   'app.devices.could_not_load_the_devices_check':
       'Could not load the devices. Check your connection and try again.',
+  'app.devices.could_not_unpair_name_try_again':
+      'Could not unpair {name}. Try again.',
+  'app.devices.last_used_last_seen_at': 'Last used {last_seen_at}',
   'app.devices.no_devices_are_paired': 'No devices are paired.',
+  'app.devices.paired_created_at_not_used_yet':
+      'Paired {created_at}. Not used yet.',
   'app.devices.paired_devices': 'Paired devices',
   'app.devices.that_device_is_signed_out_of': 'That device is signed out of Tippani and cannot be used again until it is paired with a new code. This cannot be undone.',
   'app.devices.this_phone': 'This phone',
@@ -836,11 +882,29 @@ const Map<String, String> englishTokens = {
   'app.filtered_quotes.no_quotes_here': 'No quotes here.',
   'app.filtered_quotes.nothing_on_this_phone_matches':
       'Nothing on this phone matches.',
+  'app.harness.choose_a_tippani_backup': 'Choose a Tippani backup',
+  'app.harness.save_your_backup': 'Save your backup',
   'app.home.connect_to_your_server': 'Connect to your server',
   'app.home.not_connected_to_a_server_yet': 'Not connected to a server yet.',
   'app.home.pair_this_phone': 'Pair this phone',
   'app.home.paired_as_name': 'Paired as {name}.',
   'app.home.this_phone_was_unpaired_from_the': 'This phone was unpaired from the server. Pair it again to use your library.',
+  'app.import_picker.choose_a_file_to_import': 'Choose a file to import',
+  'app.import_picker.that_file_is_over_5_mb':
+      'That file is over 5 MB, more than the importer takes.',
+  'app.import_service.import_it_every_book_in_the':
+      'Import it. Every book in the file lands at once.',
+  'app.import_service.kindle_highlights_through_the_bookcision_bookmarklet':
+      'Kindle highlights through the Bookcision bookmarklet.',
+  'app.import_service.readest_s_annotation_export_colours_and': 'Readest\'s annotation export. Colours and the date of each highlight come across.',
+  'app.import_service.save_it_as_a_web_page':
+      'Save it as a web page, HTML only.',
+  'app.import_service.the_kindle_device_s_own_file': 'The Kindle device\'s own file. Every book at once, highlights and notes.',
+  'app.import_service.the_server_could_not_read_that':
+      'The server could not read that file.',
+  'app.import_service.tippani_exports_of_books_or_the':
+      'Tippani exports of books or the catalogue, or a Readest export.',
+  'app.import_service.without_the_bookmarklet_import_the_saved': 'Without the bookmarklet, import the saved Kindle notebook page instead. It keeps the colours.',
   'app.library.add_a_book': 'Add a book',
   'app.library.add_a_film_show_or_game': 'Add a film, show or game',
   'app.library.add_one_with_the_button_below': 'Add one with the button below.',
@@ -970,6 +1034,7 @@ const Map<String, String> englishTokens = {
       'Showing {n} of {total}. "Show their quotes" lists them all.',
   'app.person.the_server_could_not_be_reached':
       'The server could not be reached, so only what the phone holds is shown.',
+  'app.person.your_server_has_no_page_for': 'Your server has no page for {name} yet, or this phone is not paired with it.',
   'app.prefs.a_credit_such_as_pratchett_gaiman': 'A credit such as "Pratchett & Gaiman" becomes two people where it is split on a separator you turn on.',
   'app.prefs.a_shade_for_name': 'A shade for {name}',
   'app.prefs.after': 'After',
@@ -1046,6 +1111,7 @@ const Map<String, String> englishTokens = {
   'app.pull.a_few_seconds_after_you_change': 'A few seconds after you change something, and once a day (when the app opens, or the network comes back)',
   'app.pull.brings_down_what_is_new_or': 'Brings down what is new or changed on your server, sends up what you changed here, and carries deletes both ways. If the same quote or work changed in both places, it waits in Sync conflicts for you to choose.',
   'app.pull.last_synced_when': 'Last synced {when}.',
+  'app.pull.sent_up_your_changes_to_x': 'Sent up your changes to {x}.',
   'app.pull.sync_automatically': 'Sync automatically',
   'app.pull.sync_now': 'Sync now',
   'app.pull.sync_with_server': 'Sync with server',
@@ -1059,6 +1125,13 @@ const Map<String, String> englishTokens = {
       'This account is not allowed to do that.',
   'app.pull.your_phone_and_your_server_already':
       'Your phone and your server already agree.',
+  'app.pull_sync.the_server_answered_with_an_error':
+      'The server answered with an error.',
+  'app.pull_sync.the_server_asked_the_app_to':
+      'The server asked the app to slow down.',
+  'app.pull_sync.the_server_no_longer_has_it': 'The server no longer has it.',
+  'app.pull_sync.this_account_is_not_allowed_to':
+      'This account is not allowed to change it.',
   'app.quiz.add_more_quotes_or_come_back':
       'Add more quotes, or come back tomorrow.',
   'app.quiz.answer_kept_on_this_phone_it':
@@ -1076,6 +1149,8 @@ const Map<String, String> englishTokens = {
   'app.quiz.the_ones_you_missed_come_back':
       'The ones you missed come back sooner.',
   'app.quiz.what_you_wrote_typed': 'what you wrote: {typed}',
+  'app.quiz.which_noun_is_this_quote_from': 'Which {noun} is this quote from?',
+  'app.quiz.which_quote_is_from_this_noun': 'Which quote is from this {noun}?',
   'app.quiz.x_of_total': '{x} of {total}',
   'app.quote.noted_x': 'Noted {x}',
   'app.quote.quote_deleted': 'Quote deleted.',
@@ -1144,6 +1219,10 @@ const Map<String, String> englishTokens = {
   'app.search.try_fewer_words_or_take_a':
       'Try fewer words, or take a filter off.',
   'app.search.words_from_a_quote_a_title': 'Words from a quote, a title, a name or a tag. Narrow it with a filter, or type author:, tag: or colour:.',
+  'app.search_models.films_and_shows': 'Films and shows',
+  'app.server_files.choose_a_backup_from_the_server':
+      'Choose a backup from the server',
+  'app.server_files.save_the_backup': 'Save the backup',
   'app.server_log.could_not_reach_the_server': 'Could not reach the server.',
   'app.server_log.load_older_lines': 'Load older lines',
   'app.server_log.refresh': 'Refresh',
@@ -1217,6 +1296,8 @@ const Map<String, String> englishTokens = {
   'app.share.the_quote_could_not_be_shared': 'The quote could not be shared.',
   'app.share.the_text': 'The text',
   'app.share.you_can_edit_it_before_sending': 'You can edit it before sending.',
+  'app.share_format.my_note': 'My note',
+  'app.share_format.plain_text': 'Plain text',
   'app.share_picture.quote': '“{quote}”',
   'app.shelf.finished_n_times': 'Finished {n} times.',
   'app.shelf.finished_once': 'Finished once.',
@@ -1226,6 +1307,7 @@ const Map<String, String> englishTokens = {
   'app.shelf.the_shelf_is_kept_on_your': 'The shelf is kept on your server. Pair this phone and sync this work to change it.',
   'app.source_files.a_work_has_one_file_a': 'A work has one file. A book takes an ebook or a text file; a film or a show\'s episode takes subtitles.',
   'app.source_files.attach_all': 'Attach all',
+  'app.source_files.attached_to_title': 'Attached to {title}.',
   'app.source_files.browse_the_server_s_folders_and': 'Browse the server\'s folders and choose the file. It is read in place, not copied.',
   'app.source_files.folder': 'Folder',
   'app.source_files.free_the_space': 'Free the space',
@@ -1252,6 +1334,7 @@ const Map<String, String> englishTokens = {
   'app.source_files.send_an_ebook_or_a_subtitle': 'Send an ebook or a subtitle file (up to 25 MB). The server keeps a copy.',
   'app.source_files.the_file_is_taken_off_x': 'The file is taken off {x}. Quotes keep the surroundings already cut from it; new quotes will have none.',
   'app.source_files.the_file_x_is_deleted_from': 'The file ({x}) is deleted from the server; {x2} of surroundings stay. {with_context} {x3} its surroundings.{x4}',
+  'app.source_files.the_scan_did_not_finishx': 'The scan did not finish{x}',
   'app.source_files.the_server_has_no_folder_to': 'The server has no folder to look in. An admin adds them under Server administration, Library folders.',
   'app.source_files.the_server_has_no_folder_to_2': 'The server has no folder to browse. An admin adds them in Library folders.',
   'app.source_files.title_episode': '{title} · {episode}',
@@ -1259,11 +1342,16 @@ const Map<String, String> englishTokens = {
   'app.source_files.waiting_for_the_server_to_start':
       'Waiting for the server to start…',
   'app.source_files.which_work_is_it_for': 'Which work is it for?',
+  'app.source_picker.choose_an_ebook_or_a_subtitle':
+      'Choose an ebook or a subtitle file',
+  'app.source_picker.that_file_is_over_25_mb':
+      'That file is over 25 MB, more than a source can be.',
   'app.staging.a_staged_quote_keeps_both_kinds': 'A staged quote keeps both kinds of location. Approval uses the one its destination needs.',
   'app.staging.all_files_pending': 'All files ({pending})',
   'app.staging.an_import_lands_here_first_and':
       'An import lands here first and stays until you say yes to it.',
   'app.staging.apply_to_count': 'Apply to {count}',
+  'app.staging.approve_all_pending': 'Approve all {pending}',
   'app.staging.approve_count': 'Approve {count}',
   'app.staging.approve_this_file': 'Approve this file',
   'app.staging.approve_this_group': 'Approve this group',
@@ -1273,12 +1361,18 @@ const Map<String, String> englishTokens = {
   'app.staging.count_selected': '{count} selected',
   'app.staging.discard_this_file': 'Discard this file',
   'app.staging.discard_this_group': 'Discard this group',
+  'app.staging.discarded_gone': 'Discarded {gone}',
+  'app.staging.done_x_of_x2': 'Done {x} of {x2}',
+  'app.staging.edit_count_selected': 'Edit {count} selected',
   'app.staging.edit_fields': 'Edit fields',
   'app.staging.filename_quotes': '{filename} · {quotes}',
   'app.staging.find_a_book_or_film_in': 'Find a book or film in your library',
+  'app.staging.joins_your_target_titlex': 'Joins your {target_title}{x}',
   'app.staging.locations': 'Locations',
   'app.staging.make_it_c': 'Make it {c}',
   'app.staging.move_to_another_work': 'Move to another work…',
+  'app.staging.no_quotes_approving_adds_the_x':
+      'No quotes. Approving adds the {x} itself.',
   'app.staging.no_quotes_left_in_this_group': 'No quotes left in this group.',
   'app.staging.note_note': 'Note: {note}',
   'app.staging.nothing_waiting': 'Nothing waiting.',
@@ -1288,12 +1382,15 @@ const Map<String, String> englishTokens = {
   'app.staging.quotes_of_their_own': 'Quotes of their own',
   'app.staging.quotes_quotes': '{quotes} quotes',
   'app.staging.separate_with_commas': 'Separate with commas',
+  'app.staging.shift_locations_on_count_selected':
+      'Shift locations on {count} selected',
   'app.staging.show_more_shown_of_total': 'Show more ({shown} of {total})',
   'app.staging.the_server_could_not_add_those':
       'The server could not add those quotes.',
   'app.staging.this_group': 'This group',
   'app.staging.to_upper_casex': '{to_upper_case}{x}',
   'app.staging.waiting_for_the_server': 'Waiting for the server…',
+  'app.staging.will_be_added_as_a_new': 'Will be added as a new {x}',
   'app.staging.will_be_saved_as_quotes_of':
       'Will be saved as quotes of their own, from no book or film',
   'app.staging.you_chose_this_destination': 'You chose this destination',
@@ -1318,6 +1415,7 @@ const Map<String, String> englishTokens = {
   'app.sync.nothing_is_waiting': 'Nothing is waiting.',
   'app.sync.send_to_server': 'Send to server',
   'app.sync.sends_the_works_and_quotes_that': 'Sends the works and quotes that are only on this phone to your Tippani server. It only adds: nothing on the server is changed or deleted, and what is already there is not sent again.',
+  'app.sync.sent_x_to_your_server': 'Sent {x} to your server.',
   'app.sync.the_server_answered_with_an_error': 'The server answered with an error, so the rest was not sent. Try again later.',
   'app.sync.the_server_does_not_accept_this': 'The server does not accept this phone. Pair it again in Settings, then send what is left.',
   'app.sync.this_account_is_not_allowed_to':
@@ -1363,8 +1461,11 @@ const Map<String, String> englishTokens = {
   'app.update_ui.the_update_was_cancelled': 'The update was cancelled.',
   'app.update_ui.there_is_no_update_to_install':
       'There is no update to install.',
+  'app.update_ui.version_app_version': 'Version {app_version}.',
   'app.update_ui.version_version_is_available':
       'Version {version} is available',
+  'app.update_ui.version_version_is_available_2':
+      'Version {version} is available.',
   'app.voice.correct_anything_it_got_wrong': 'Correct anything it got wrong.',
   'app.voice.language_you_will_speak': 'Language you will speak',
   'app.voice.listening': 'Listening…',
@@ -1383,6 +1484,8 @@ const Map<String, String> englishTokens = {
   'app.work.it_is_removed_from_this_phone': 'It is removed from this phone.',
   'app.work.n_x_x2_favourites_x3': '{n} {x}{x2} · {favourites} {x3}',
   'app.work.no_favourites_in_this_work_yet': 'No favourites in this work yet.',
+  'app.work.no_tag': 'No tag',
+  'app.work.order': 'Order',
   'app.work.search_by_title_author_or_isbn': 'Search by title, author or ISBN',
   'app.work.the_picture_could_not_be_opened':
       'The picture could not be opened.',
@@ -1390,6 +1493,7 @@ const Map<String, String> englishTokens = {
       'The server did not take that picture as a cover.',
   'app.work.this_work_is_no_longer_in':
       'This work is no longer in the library.',
+  'app.work_details.show_all_n': 'Show all {n}',
   'app.work_form.look_up_details': 'Look up details',
   'app.work_form.nothing_matched_that_title': 'Nothing matched that title.',
   'app.work_form.the_year_must_be_a_number': 'The year must be a number.',
@@ -1401,6 +1505,7 @@ const Map<String, String> englishTokens = {
   'app.work_read.no_quotes_from_this_work_yet': 'No quotes from this work yet.',
   'app.work_read.round': '{round}',
   'app.work_read.share_all': 'Share all',
+  'app.work_read.text_size_round': 'Text size {round}',
   'app.work_read.the_work_could_not_be_read':
       'The work could not be read aloud.',
   'app.work_read.translations': 'Translations',

@@ -76,7 +76,13 @@ class _Users extends StatelessWidget {
     final make = !u.isAdmin;
     final ok = await confirmDialog(
       context,
-      title: make ? 'Make ${u.username} an admin?' : 'Step ${u.username} down?',
+      title: make
+          ? context.tr('app.admin_users.make_username_an_admin', {
+              'username': u.username,
+            })
+          : context.tr('app.admin_users.step_username_down', {
+              'username': u.username,
+            }),
       body: make
           ? context.tr('app.admin_users.an_admin_can_see_every_job')
           : '${u.username} will no longer be able to change the server.',

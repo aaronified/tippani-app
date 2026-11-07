@@ -698,14 +698,26 @@ class _FillScreenState extends State<FillScreen> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => _pickDate(true),
-                      child: Text(_from.isEmpty ? 'From' : 'From $_from'),
+                      child: Text(
+                        _from.isEmpty
+                            ? 'From'
+                            : context.tr('app.anthology_tools.from_from', {
+                                'from': _from,
+                              }),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => _pickDate(false),
-                      child: Text(_to.isEmpty ? 'To' : 'To $_to'),
+                      child: Text(
+                        _to.isEmpty
+                            ? 'To'
+                            : context.tr('app.anthology_tools.to_to', {
+                                'to': _to,
+                              }),
+                      ),
                     ),
                   ),
                 ],

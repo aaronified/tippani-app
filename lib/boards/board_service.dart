@@ -80,12 +80,15 @@ class ServerBoards implements BoardService {
       return await _controller.withClient(run) as T;
     } on ApiException catch (e) {
       throw BoardException(switch (e.failure) {
-        ApiFailure.network => 'The server could not be reached.',
-        ApiFailure.timeout => 'The server took too long to answer.',
+        ApiFailure.network =>
+          'app.admin_service.the_server_could_not_be_reached',
+        ApiFailure.timeout => 'app.admin_service.the_server_took_too_long_to',
         ApiFailure.unauthorised =>
-          'The server no longer accepts this phone. Pair it again.',
-        ApiFailure.forbidden => 'The server does not allow that.',
-        ApiFailure.rateLimited => 'The server asks you to wait a moment.',
+          'app.board_service.the_server_no_longer_accepts_this',
+        ApiFailure.forbidden =>
+          'app.account_service.the_server_does_not_allow_that',
+        ApiFailure.rateLimited =>
+          'app.board_service.the_server_asks_you_to_wait',
         ApiFailure.server || ApiFailure.badResponse =>
           e.detail.isNotEmpty ? e.detail : 'The server could not do that.',
       });

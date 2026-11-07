@@ -115,7 +115,7 @@ class PersonChip extends StatelessWidget {
   String get _what => switch (chip.kind) {
     ChipKind.author => 'Author',
     ChipKind.character => 'Character',
-    ChipKind.speaker => 'Said by',
+    ChipKind.speaker => 'app.search.said_by',
   };
 
   @override

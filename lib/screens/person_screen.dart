@@ -61,9 +61,9 @@ Future<void> openPersonPage(
   if (f != null) onFilter(f);
 }
 
-String _years(String born, String died) {
+String _years(BuildContext context, String born, String died) {
   if (born.isEmpty && died.isEmpty) return '';
-  if (died.isEmpty) return 'Born $born';
+  if (died.isEmpty) return context.tr('app.person.born_born', {'born': born});
   return '${born.isEmpty ? '?' : born} – $died';
 }
 
@@ -579,7 +579,7 @@ class _PersonScreenState extends State<PersonScreen> {
     final name = p?.name.isNotEmpty == true ? p!.name : widget.name;
     final image = p?.image ?? _dir?.anyPerson(widget.name)?.image ?? '';
     final canEdit = p != null && (_service?.available ?? false);
-    final years = _years(p?.born ?? '', p?.died ?? '');
+    final years = _years(context, p?.born ?? '', p?.died ?? '');
     final credits = [...?p?.credits]
       ..sort((a, b) {
         if (a.year == 0 || b.year == 0) return b.year.compareTo(a.year);
@@ -745,7 +745,10 @@ class _PersonScreenState extends State<PersonScreen> {
                     child: Text(
                       _error ??
                           (widget.id == 0
-                              ? 'Your server has no page for $name yet, or this phone is not paired with it.'
+                              ? context.tr(
+                                  'app.person.your_server_has_no_page_for',
+                                  {'name': name},
+                                )
                               : context.tr(
                                   'app.person.the_server_could_not_be_reached',
                                 )),
@@ -1305,7 +1308,10 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     child: Text(
                       _error ??
                           (widget.id == 0
-                              ? 'Your server has no page for $name yet, or this phone is not paired with it.'
+                              ? context.tr(
+                                  'app.person.your_server_has_no_page_for',
+                                  {'name': name},
+                                )
                               : context.tr(
                                   'app.person.the_server_could_not_be_reached',
                                 )),

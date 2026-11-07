@@ -7,8 +7,8 @@ import '../l10n/l10n.dart';
 /// The name of a metadata source in words.
 String sourceName(String s) =>
     const {
-      'google': 'Google Books',
-      'openlibrary': 'Open Library',
+      'google': 'vocab.source.google.label',
+      'openlibrary': 'vocab.source.openlibrary.label',
       'amazon': 'Amazon',
       'tmdb': 'TMDB',
       'tvdb': 'TheTVDB',
@@ -21,9 +21,9 @@ String sourceName(String s) =>
     s;
 
 String _stateWords(String s) => switch (s) {
-  'needed' => 'Needs a key',
-  'optional' => 'Works without a key',
-  'builtin' => 'Built in',
+  'needed' => 'app.admin_sources.needs_a_key',
+  'optional' => 'app.admin_sources.works_without_a_key',
+  'builtin' => 'app.admin_sources.built_in',
   'ok' => 'Working',
   _ => s,
 };
@@ -40,9 +40,14 @@ final _keyFields = [
   _KeyField('tvdb_pin', 'TheTVDB PIN', 'tvdb'),
   _KeyField('igdb_client_id', 'IGDB client id', 'igdb'),
   _KeyField('igdb_secret', 'IGDB secret', 'igdb'),
-  _KeyField('google_books_key', 'Google Books key', 'google'),
-  _KeyField('amazon_cookie', 'Amazon cookie', 'amazon'),
-  _KeyField('amazon_domain', 'Amazon domain', 'amazon', secret: false),
+  _KeyField('google_books_key', 'app.admin_sources.google_books_key', 'google'),
+  _KeyField('amazon_cookie', 'app.admin_sources.amazon_cookie', 'amazon'),
+  _KeyField(
+    'amazon_domain',
+    'app.admin_sources.amazon_domain',
+    'amazon',
+    secret: false,
+  ),
 ];
 
 /// Who the server asks for details (books, films, people, pictures) and the keys it asks with. Each source can be

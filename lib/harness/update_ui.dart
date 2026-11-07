@@ -10,20 +10,22 @@ import '../l10n/l10n.dart';
 
 /// One plain sentence for each way an install can fail. Pure, so the words are tested.
 String installFailureText(InstallFailure f) => switch (f) {
-  InstallFailure.download =>
-    'The download did not finish. Check your connection and try again.',
-  InstallFailure.checksum => 'The downloaded file is not the one that was published, so it was not installed. Try again.',
+  InstallFailure.download => 'app.update_ui.the_download_did_not_finish_check',
+  InstallFailure.checksum => 'app.update_ui.the_downloaded_file_is_not_the',
   InstallFailure.notAllowed => 'Android will not let Tippani install updates yet. Allow "Install unknown apps" for Tippani in the phone\'s settings, then try again.',
-  InstallFailure.install => 'Android\'s installer would not open. Try again, or download the update from the project\'s releases page.',
-  InstallFailure.cancelled => 'The update was cancelled.',
-  InstallFailure.internal => 'Something went wrong while updating. Try again.',
+  InstallFailure.install => 'app.update_ui.android_s_installer_would_not_open',
+  InstallFailure.cancelled => 'app.update_ui.the_update_was_cancelled',
+  InstallFailure.internal =>
+    'app.update_ui.something_went_wrong_while_updating_try',
 };
 
 /// What a reader asked for by pressing "Check for updates", in a sentence.
 String checkResultText(UpdateController u) {
   switch (u.stage) {
     case UpdateStage.available:
-      return 'Version ${u.release?.version} is available.';
+      return tok('app.update_ui.version_version_is_available_2', {
+        'version': u.release?.version,
+      });
     case UpdateStage.upToDate:
       return 'You have the latest version ($appVersion).';
     case UpdateStage.checking:
@@ -31,11 +33,13 @@ String checkResultText(UpdateController u) {
     default:
       return switch (u.checkFailure) {
         CheckFailure.offline =>
-          'Could not reach GitHub. Check your connection.',
+          'app.update_ui.could_not_reach_github_check_your',
         CheckFailure.rateLimited => 'GitHub is limiting requests from this network. Try again in a while.',
         CheckFailure.badReply =>
           'GitHub answered, but not in a way this app understands.',
-        null => 'Version $appVersion.',
+        null => tok('app.update_ui.version_app_version', {
+          'app_version': appVersion,
+        }),
       };
   }
 }

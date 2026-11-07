@@ -348,9 +348,11 @@ class PairedAdminService implements AdminService {
       return await run(c);
     } on ApiException catch (e) {
       throw ServerException(switch (e.failure) {
-        ApiFailure.unauthorised => 'That password is not right.',
-        ApiFailure.network => 'The server could not be reached.',
-        ApiFailure.timeout => 'The server took too long to answer.',
+        ApiFailure.unauthorised =>
+          'app.admin_service.that_password_is_not_right',
+        ApiFailure.network =>
+          'app.admin_service.the_server_could_not_be_reached',
+        ApiFailure.timeout => 'app.admin_service.the_server_took_too_long_to',
         _ => e.detail.isNotEmpty ? e.detail : 'The server could not do that.',
       });
     } finally {

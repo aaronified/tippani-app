@@ -9,13 +9,13 @@ import '../l10n/l10n.dart';
 
 /// One plain sentence for each reason a file could not be restored. Pure, so the words are tested.
 String backupProblemText(BackupProblem p) => switch (p) {
-  BackupProblem.tooBig => 'That file is too big to be a Tippani backup.',
+  BackupProblem.tooBig => 'app.backup.that_file_is_too_big_to',
   BackupProblem.notJson =>
     'That file is not a Tippani backup (it is not readable as one).',
-  BackupProblem.notOurs => 'That file is not a Tippani backup.',
-  BackupProblem.tooNew => 'That backup was made by a newer version of the app. Update the app, then restore it.',
-  BackupProblem.noSections => 'That backup holds nothing to restore.',
-  BackupProblem.damaged => 'Part of that backup is damaged, so none of it was restored. Nothing on this phone has changed.',
+  BackupProblem.notOurs => 'app.backup.that_file_is_not_a_tippani',
+  BackupProblem.tooNew => 'app.backup.that_backup_was_made_by_a',
+  BackupProblem.noSections => 'app.backup.that_backup_holds_nothing_to_restore',
+  BackupProblem.damaged => 'app.backup.part_of_that_backup_is_damaged',
 };
 
 /// Back up what the app keeps, and restore it. A backup is written to the app's own storage and to the
@@ -65,8 +65,8 @@ class _BackupScreenState extends State<BackupScreen> {
       _message = r == null
           ? context.tr('app.backup.the_backup_could_not_be_written')
           : r.inDownloads
-          ? 'Backed up as ${r.name}, here and in your Downloads folder.'
-          : 'Backed up as ${r.name}. This phone could not also copy it to Downloads.';
+          ? tok('app.backup.backed_up_as_name_here_and', {'name': r.name})
+          : tok('app.backup.backed_up_as_name_this_phone', {'name': r.name});
     });
     await _load();
   }

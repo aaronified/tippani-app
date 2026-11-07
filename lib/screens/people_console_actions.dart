@@ -320,7 +320,7 @@ Future<bool> removeRecord(
 /// The form for a new or changed character; null when cancelled.
 Future<CharacterEdit?> characterForm(
   BuildContext context, {
-  String title = 'Edit the character',
+  String title = 'app.people_console_actions.edit_the_character',
   String name = '',
   String description = '',
   String born = '',

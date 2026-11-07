@@ -26,9 +26,9 @@ String sourceName(String source) {
     }
   }
   return switch (source) {
-    'kindle_clippings' => 'My Clippings',
+    'kindle_clippings' => 'import.source.kindle-clippings.title',
     'readest_json' => 'Readest',
-    'kindle_notebook' => 'Kindle notebook',
+    'kindle_notebook' => 'import.source.kindle-notebook.title',
     'imdb' => 'IMDb quotes',
     _ => source.isEmpty ? 'Import' : source.replaceAll('_', ' '),
   };
@@ -168,7 +168,10 @@ class _StagingScreenState extends State<StagingScreen> {
                 Text(
                   p.$2 == 0
                       ? context.tr('app.staging.waiting_for_the_server')
-                      : 'Done ${p.$1} of ${p.$2}',
+                      : tok('app.staging.done_x_of_x2', {
+                          'x': p.$1,
+                          'x2': p.$2,
+                        }),
                 ),
               ],
             ),
@@ -220,7 +223,7 @@ class _StagingScreenState extends State<StagingScreen> {
     await _run(() async {
       final gone = await widget.service.discard(sel);
       _picked.clear();
-      if (mounted) _say('Discarded $gone');
+      if (mounted) _say(tok('app.staging.discarded_gone', {'gone': gone}));
       await _load();
     });
   }
@@ -336,7 +339,9 @@ class _StagingScreenState extends State<StagingScreen> {
                   child: Text(
                     _batch > 0
                         ? context.tr('app.staging.approve_this_file')
-                        : 'Approve all $pending',
+                        : tok('app.staging.approve_all_pending', {
+                            'pending': pending,
+                          }),
                   ),
                 ),
                 PopupMenuItem(
@@ -537,8 +542,13 @@ class _GroupCard extends StatelessWidget {
     final destination = standalone
         ? context.tr('app.staging.will_be_saved_as_quotes_of')
         : work.targetId > 0
-        ? 'Joins your ${work.targetTitle}${work.targetYear > 0 ? ' (${work.targetYear})' : ''}'
-        : 'Will be added as a new ${_kindWord(work.kind)}';
+        ? tok('app.staging.joins_your_target_titlex', {
+            'target_title': work.targetTitle,
+            'x': work.targetYear > 0 ? ' (${work.targetYear})' : '',
+          })
+        : tok('app.staging.will_be_added_as_a_new', {
+            'x': _kindWord(work.kind),
+          });
     final who = [
       if (work.author.isNotEmpty) work.author,
       if (work.year > 0) '${work.year}',
@@ -644,7 +654,9 @@ class _GroupCard extends StatelessWidget {
               child: Text(
                 standalone
                     ? context.tr('app.staging.no_quotes_left_in_this_group')
-                    : 'No quotes. Approving adds the ${_kindWord(work.kind)} itself.',
+                    : tok('app.staging.no_quotes_approving_adds_the_x', {
+                        'x': _kindWord(work.kind),
+                      }),
                 style: theme.textTheme.bodySmall,
               ),
             ),
@@ -1041,68 +1053,72 @@ class _FieldsSheetState extends State<_FieldsSheet> {
   @override
   Widget build(BuildContext context) {
     String? v(String k) => _touched.contains(k) ? _c[k]!.text.trim() : null;
-    return _sheet(context, 'Edit ${widget.count} selected', [
-      Text(
-        context.tr('app.staging.only_the_boxes_you_type_in'),
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      const SizedBox(height: 12),
-      for (final e in _c.entries)
+    return _sheet(
+      context,
+      tok('app.staging.edit_count_selected', {'count': widget.count}),
+      [
+        Text(
+          context.tr('app.staging.only_the_boxes_you_type_in'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        for (final e in _c.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: TextField(
+              controller: e.value,
+              onChanged: (_) => _touched.add(e.key),
+              decoration: InputDecoration(
+                labelText: context.tr('app.staging.to_upper_casex', {
+                  'to_upper_case': e.key[0].toUpperCase(),
+                  'x': e.key.substring(1),
+                }),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: TextField(
-            controller: e.value,
-            onChanged: (_) => _touched.add(e.key),
+            controller: _add,
             decoration: InputDecoration(
-              labelText: context.tr('app.staging.to_upper_casex', {
-                'to_upper_case': e.key[0].toUpperCase(),
-                'x': e.key.substring(1),
-              }),
-              border: const OutlineInputBorder(),
+              labelText: context.tr('common.action.add-tags.label'),
+              helperText: context.tr('app.staging.separate_with_commas'),
+              border: OutlineInputBorder(),
             ),
           ),
         ),
-      Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: TextField(
-          controller: _add,
-          decoration: InputDecoration(
-            labelText: context.tr('common.action.add-tags.label'),
-            helperText: context.tr('app.staging.separate_with_commas'),
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: TextField(
-          controller: _remove,
-          decoration: InputDecoration(
-            labelText: context.tr('staging.fields.remove-tags.label'),
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ),
-      Align(
-        alignment: Alignment.centerRight,
-        child: FilledButton(
-          onPressed: () => Navigator.of(context).pop(
-            StagedEdit(
-              chapter: v('chapter'),
-              location: v('location'),
-              character: v('character'),
-              actor: v('actor'),
-              timestamp: v('timestamp'),
-              addTags: _tags(_add),
-              removeTags: _tags(_remove),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: TextField(
+            controller: _remove,
+            decoration: InputDecoration(
+              labelText: context.tr('staging.fields.remove-tags.label'),
+              border: OutlineInputBorder(),
             ),
           ),
-          child: Text(
-            context.tr('app.staging.apply_to_count', {'count': widget.count}),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton(
+            onPressed: () => Navigator.of(context).pop(
+              StagedEdit(
+                chapter: v('chapter'),
+                location: v('location'),
+                character: v('character'),
+                actor: v('actor'),
+                timestamp: v('timestamp'),
+                addTags: _tags(_add),
+                removeTags: _tags(_remove),
+              ),
+            ),
+            child: Text(
+              context.tr('app.staging.apply_to_count', {'count': widget.count}),
+            ),
           ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 }
 
@@ -1139,80 +1155,86 @@ class _ShiftSheetState extends State<_ShiftSheet> {
     final ready =
         _op == 'reset' ||
         (needsNumber ? number != null : _by.text.trim().isNotEmpty);
-    return _sheet(context, 'Shift locations on ${widget.count} selected', [
-      SegmentedButton<String>(
-        segments: [
-          ButtonSegment(
-            value: 'location',
-            label: Text(context.tr('app.staging.page_location')),
-          ),
-          ButtonSegment(
-            value: 'timestamp',
-            label: Text(context.tr('common.field.timestamp.label')),
-          ),
-        ],
-        selected: {_field},
-        onSelectionChanged: (s) => setState(() => _field = s.single),
-      ),
-      const SizedBox(height: 12),
-      Wrap(
-        spacing: 8,
-        children: [
-          for (final o in const [
-            'add',
-            'subtract',
-            'multiply',
-            'divide',
-            'set',
-            'reset',
-          ])
-            ChoiceChip(
-              label: Text(switch (o) {
-                'set' => 'set to',
-                _ => o,
-              }),
-              selected: _op == o,
-              onSelected: (_) => setState(() => _op = o),
+    return _sheet(
+      context,
+      tok('app.staging.shift_locations_on_count_selected', {
+        'count': widget.count,
+      }),
+      [
+        SegmentedButton<String>(
+          segments: [
+            ButtonSegment(
+              value: 'location',
+              label: Text(context.tr('app.staging.page_location')),
             ),
-        ],
-      ),
-      const SizedBox(height: 12),
-      if (_op != 'reset')
-        TextField(
-          controller: _by,
-          onChanged: (_) => setState(() {}),
-          keyboardType: needsNumber
-              ? const TextInputType.numberWithOptions(decimal: true)
-              : TextInputType.text,
-          decoration: InputDecoration(
-            labelText: needsNumber ? 'By' : 'To',
-            hintText: needsNumber ? '5' : 'p.1',
-            border: const OutlineInputBorder(),
+            ButtonSegment(
+              value: 'timestamp',
+              label: Text(context.tr('common.field.timestamp.label')),
+            ),
+          ],
+          selected: {_field},
+          onSelectionChanged: (s) => setState(() => _field = s.single),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final o in const [
+              'add',
+              'subtract',
+              'multiply',
+              'divide',
+              'set',
+              'reset',
+            ])
+              ChoiceChip(
+                label: Text(switch (o) {
+                  'set' => 'set to',
+                  _ => o,
+                }),
+                selected: _op == o,
+                onSelected: (_) => setState(() => _op = o),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_op != 'reset')
+          TextField(
+            controller: _by,
+            onChanged: (_) => setState(() {}),
+            keyboardType: needsNumber
+                ? const TextInputType.numberWithOptions(decimal: true)
+                : TextInputType.text,
+            decoration: InputDecoration(
+              labelText: needsNumber ? 'By' : 'To',
+              hintText: needsNumber ? '5' : 'p.1',
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        const SizedBox(height: 8),
+        Text(
+          context.tr('app.staging.only_the_numbers_in_the_text'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton(
+            onPressed: !ready
+                ? null
+                : () => Navigator.of(context).pop(
+                    StagedEdit(
+                      shiftField: _field,
+                      shiftOp: _op,
+                      shiftValue: needsNumber ? number : null,
+                      shiftText: _op == 'set' ? _by.text.trim() : null,
+                    ),
+                  ),
+            child: Text(context.tr('common.action.apply.label')),
           ),
         ),
-      const SizedBox(height: 8),
-      Text(
-        context.tr('app.staging.only_the_numbers_in_the_text'),
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      const SizedBox(height: 12),
-      Align(
-        alignment: Alignment.centerRight,
-        child: FilledButton(
-          onPressed: !ready
-              ? null
-              : () => Navigator.of(context).pop(
-                  StagedEdit(
-                    shiftField: _field,
-                    shiftOp: _op,
-                    shiftValue: needsNumber ? number : null,
-                    shiftText: _op == 'set' ? _by.text.trim() : null,
-                  ),
-                ),
-          child: Text(context.tr('common.action.apply.label')),
-        ),
-      ),
-    ]);
+      ],
+    );
   }
 }
 

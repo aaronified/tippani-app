@@ -131,8 +131,8 @@ final _providers = <(String, String)>[
   (r'(^|\.)(fandom|wikia)\.com$', 'Fandom'),
   (r'(^|\.)wikidata\.org$', 'Wikidata'),
   (r'(^|\.)wikimedia\.org$', 'Wikimedia'),
-  (r'(^|\.)openlibrary\.org$', 'Open Library'),
-  (r'^books\.google\.[a-z.]+$', 'Google Books'),
+  (r'(^|\.)openlibrary\.org$', 'vocab.source.openlibrary.label'),
+  (r'^books\.google\.[a-z.]+$', 'vocab.source.google.label'),
   (r'(^|\.)amazon\.[a-z.]+$', 'Amazon'),
 ];
 
@@ -397,7 +397,9 @@ class PairedPeopleService implements PeopleService {
   Future<String> fetch(int id) => serverCall<String>(_controller, (c) async {
     final r = await c.postJson('/people/id/$id/fetch', const {});
     final p = r is Map ? r['person'] : null;
-    return p is Map ? 'Fetched what the server could find.' : 'Done.';
+    return p is Map
+        ? 'app.people_service.fetched_what_the_server_could_find'
+        : 'Done.';
   });
 
   @override

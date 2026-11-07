@@ -198,9 +198,9 @@ List<List<T>> _chunks<T>(List<T> all, int n) => [
 ];
 
 String _kindLabel(String kind) => switch (kind) {
-  'book' => 'Book quote',
-  'screen' => 'Film or show quote',
-  _ => 'Quote on its own',
+  'book' => 'app.checks_tabs.book_quote',
+  'screen' => 'app.checks_tabs.film_or_show_quote',
+  _ => 'app.checks_tabs.quote_on_its_own',
 };
 
 // ============================================================ stray marks
@@ -302,8 +302,8 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                   duplicates: dup,
                 ).words
               : ignore!
-              ? 'Ignored ${ts.length}'
-              : 'Restored ${ts.length}',
+              ? tok('app.checks_tabs.ignored_n', {'n': ts.length})
+              : tok('app.checks_tabs.restored_n', {'n': ts.length}),
         );
         setState(() => _nonce++);
         if (fix) await widget.onChanged();
@@ -421,7 +421,9 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                         : () async {
                             if (await _confirm(
                               context,
-                              'Fix all ${fixable.length}?',
+                              tok('app.checks_tabs.fix_all_n_2', {
+                                'n': fixable.length,
+                              }),
                               context.tr(
                                 'app.checks_tabs.each_is_rewritten_as_shown_the',
                               ),
@@ -724,7 +726,7 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                 skippedEdited: edited,
                 duplicates: dup,
               ).words
-            : 'Ignored ${items.length}',
+            : context.tr('app.checks_tabs.ignored_n', {'n': items.length}),
       );
       setState(() => _nonce++);
       if (accept) await widget.onChanged();
@@ -857,7 +859,9 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                                       .length;
                                   if (await _confirm(
                                     context,
-                                    'Accept all ${rows.length}?',
+                                    tok('app.checks_tabs.accept_all_n', {
+                                      'n': rows.length,
+                                    }),
                                     '${correctionBuckets[b]?.$2 ?? ''}\n\nEach quote takes the file’s words.${edited > 0 ? ' $edited you edited yourself are left alone.' : ''}',
                                     context.tr('app.checks_tabs.accept_all'),
                                   )) {
@@ -1019,7 +1023,7 @@ class _LocatorsTabState extends State<LocatorsTab> {
                 stale: stale,
                 skipped: skipped,
               ).words
-            : 'Ignored ${items.length}',
+            : context.tr('app.checks_tabs.ignored_n', {'n': items.length}),
       );
       setState(() => _nonce++);
       if (accept) await widget.onChanged();
@@ -1090,7 +1094,9 @@ class _LocatorsTabState extends State<LocatorsTab> {
                           : () async {
                               if (await _confirm(
                                 context,
-                                'Accept all ${rows.length}?',
+                                tok('app.checks_tabs.accept_all_n', {
+                                  'n': rows.length,
+                                }),
                                 context.tr(
                                   'app.checks_tabs.each_quote_takes_the_file_s',
                                 ),
