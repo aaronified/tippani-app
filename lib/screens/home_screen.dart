@@ -37,7 +37,7 @@ class HomeScreen extends StatelessWidget {
             ] else ...[
               Text(url, style: text.titleMedium),
               const SizedBox(height: 4),
-              Text(_status(controller)),
+              Text(serverStatusLine(controller)),
               const SizedBox(height: 16),
               if (controller.revoked) ...[
                 const SizedBox(height: 8),
@@ -68,15 +68,5 @@ class HomeScreen extends StatelessWidget {
         );
       },
     );
-  }
-
-  static String _status(AppController c) {
-    if (c.checking) return 'Asking the server…';
-    final check = c.check;
-    if (check == null) return 'Not checked yet.';
-    final caps = check.capabilities;
-    if (caps == null) return describeCheck(check);
-    final detail = caps.version.isEmpty ? '' : ' (version ${caps.version})';
-    return check.usable ? 'Connected$detail.' : describeCheck(check);
   }
 }

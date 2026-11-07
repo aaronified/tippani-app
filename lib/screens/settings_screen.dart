@@ -86,26 +86,43 @@ class SettingsScreen extends StatelessWidget {
         final url = controller.serverUrl;
         return ListView(
           children: [
-            ListTile(
-              leading: const Icon(Icons.record_voice_over_outlined),
-              title: const Text('Read aloud'),
-              subtitle: const Text('Voice, speed and pitch'),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const ReadAloudSettingsScreen(),
-                ),
-              ),
-            ),
+            const _Section('Server'),
             ListTile(
               leading: const Icon(Icons.dns_outlined),
-              title: const Text('Server'),
-              subtitle: Text(url ?? 'Not set'),
+              title: Text(url == null ? 'Connect to your server' : 'Server'),
+              subtitle: Text(
+                url == null
+                    ? 'Not connected to a server yet.'
+                    : '$url\n${serverStatusLine(controller)}',
+              ),
+              isThreeLine: url != null,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => ConnectScreen(controller: controller),
                 ),
               ),
             ),
+            if (controller.revoked)
+              ListTile(
+                leading: Icon(
+                  Icons.warning_amber_outlined,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                title: const Text('This phone was unpaired from the server'),
+                subtitle: const Text('Pair it again to use your library.'),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => PairScreen(controller: controller),
+                  ),
+                ),
+              ),
+            if (url != null)
+              ListTile(
+                leading: const Icon(Icons.refresh),
+                title: const Text('Check again'),
+                enabled: !controller.checking,
+                onTap: controller.refresh,
+              ),
             if (url != null && !controller.paired)
               ListTile(
                 leading: const Icon(Icons.phonelink_lock_outlined),
@@ -249,6 +266,17 @@ class SettingsScreen extends StatelessWidget {
                 onTap: () => _forget(context),
               ),
             const Divider(),
+            const _Section('App'),
+            ListTile(
+              leading: const Icon(Icons.record_voice_over_outlined),
+              title: const Text('Read aloud'),
+              subtitle: const Text('Voice, speed and pitch'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ReadAloudSettingsScreen(),
+                ),
+              ),
+            ),
             ListenableBuilder(
               listenable: harness.updates,
               builder: (context, _) {
@@ -330,6 +358,27 @@ class SettingsScreen extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// A heading over a group of settings.
+class _Section extends StatelessWidget {
+  const _Section(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Text(
+        title,
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: theme.colorScheme.primary,
+        ),
+      ),
     );
   }
 }

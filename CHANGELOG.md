@@ -11,6 +11,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 - What's new shows each change by a short header, not its details, and ends with a link to the full changelog on GitHub. It is in Settings, and the
   same short list is what you see after an update.
+- The server is a section of Settings: the Server tab is gone. Settings now opens with a Server section (the address and whether it answers, Check
+  again, pairing, paired devices, sync and the other things that need the server), and the app's own settings come after it, under App.
 
 ## [0.4.0] - 2026-11-07
 

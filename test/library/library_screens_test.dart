@@ -134,8 +134,12 @@ void main() {
           find.text('No quotes yet. Add the first one with the button below.'),
           findsOneWidget,
         );
-        expect(find.text('Server'), findsOneWidget);
-        await tapText(tester, 'Server');
+        expect(
+          find.text('Server'),
+          findsNothing,
+          reason: 'it is in Settings now',
+        );
+        await tapText(tester, 'Settings');
         expect(find.text('Connect to your server'), findsOneWidget);
       },
     );
