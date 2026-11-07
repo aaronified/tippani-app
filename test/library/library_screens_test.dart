@@ -130,10 +130,8 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        expect(
-          find.text('No quotes yet. Add the first one with the button below.'),
-          findsOneWidget,
-        );
+        // the app opens on the Library: the books
+        expect(find.text('No books yet.'), findsOneWidget);
         expect(
           find.text('Server'),
           findsNothing,

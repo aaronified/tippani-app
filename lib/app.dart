@@ -7,6 +7,8 @@ import 'library/cover_cache.dart';
 import 'tools/quote_context.dart';
 import 'tools/work_details_source.dart';
 import 'harness/update_ui.dart';
+import 'screens/anthologies_screen.dart';
+import 'screens/nav_icons.dart';
 import 'screens/home_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/settings_screen.dart';
@@ -88,23 +90,39 @@ class _ShellState extends State<Shell> {
 
   @override
   Widget build(BuildContext context) {
-    // The library comes first: the app works with no server, so what it opens on is the reader's own
-    // quotes. A harness with no library (a test of the server screens alone) has no such tab.
+    // The library comes first: the app works with no server, so what it opens on is the reader's own books.
+    // The sections are the web app's own (Library, Catalogue, Quotes, Anthologies), each with its icon. Anthologies
+    // live on the server, so that one is there only where the app has the means to reach them. A harness with no
+    // library (a test of the server screens alone) has none of these.
     final library = widget.harness.library;
     final tabs = <({Widget screen, NavigationDestination destination})>[
       if (library != null)
-        (
-          screen: LibraryScreen(
-            store: library,
-            picker: widget.harness.picker,
-            anthologies: widget.harness.anthologies,
-            lookup: widget.harness.lookup,
-            auto: widget.harness.auto,
+        for (final (nav, part) in [
+          (NavSection.library, LibrarySection.books),
+          (NavSection.catalogue, LibrarySection.catalogue),
+          (NavSection.quotes, LibrarySection.quotes),
+        ])
+          (
+            screen: LibraryScreen(
+              key: ValueKey(part),
+              store: library,
+              picker: widget.harness.picker,
+              anthologies: widget.harness.anthologies,
+              lookup: widget.harness.lookup,
+              auto: widget.harness.auto,
+              section: part,
+            ),
+            destination: NavigationDestination(
+              icon: NavSectionIcon(nav),
+              label: nav.label,
+            ),
           ),
-          destination: const NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Library',
+      if (library != null && widget.harness.anthologies != null)
+        (
+          screen: AnthologiesScreen(service: widget.harness.anthologies!),
+          destination: NavigationDestination(
+            icon: NavSectionIcon(NavSection.anthologies),
+            label: NavSection.anthologies.label,
           ),
         ),
       // Without a library (a test of the server screens alone) there is nothing else to open on, so the server

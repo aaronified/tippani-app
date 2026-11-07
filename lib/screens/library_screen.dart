@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../harness/harness.dart' show BackupPicker;
@@ -19,6 +21,22 @@ import 'work_screen.dart';
 
 enum _Mode { quotes, works }
 
+/// Which part of the library a [LibraryScreen] shows. The app's navigation has one screen for each of the first three
+/// (as the web app has its Library, Catalogue and Quotes); [all] is the whole library with a switch between quotes and
+/// works.
+enum LibrarySection {
+  all,
+
+  /// Books (and works of no particular kind).
+  books,
+
+  /// Films, shows and games.
+  catalogue,
+
+  /// Quotes, with their boards.
+  quotes,
+}
+
 /// The library on the phone: every quote and work, searchable, with the way to add, open, favourite and
 /// export them. It reads only the local [LibraryStore], so it works with no server.
 class LibraryScreen extends StatefulWidget {
@@ -31,7 +49,11 @@ class LibraryScreen extends StatefulWidget {
     this.anthologies,
     this.lookup,
     this.auto,
+    this.section = LibrarySection.all,
   });
+
+  /// Which part is shown; the default is all of it.
+  final LibrarySection section;
 
   final LibraryStore store;
   final BackupPicker picker;
@@ -48,7 +70,23 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  _Mode _mode = _Mode.quotes;
+  late _Mode _mode = switch (widget.section) {
+    LibrarySection.books || LibrarySection.catalogue => _Mode.works,
+    _ => _Mode.quotes,
+  };
+
+  bool _inSection(Work w) {
+    final screen =
+        w.kind == WorkKind.film ||
+        w.kind == WorkKind.show ||
+        w.kind == WorkKind.game;
+    return switch (widget.section) {
+      LibrarySection.books => !screen,
+      LibrarySection.catalogue => screen,
+      _ => true,
+    };
+  }
+
   final _search = TextEditingController();
   bool _favourites = false;
   String? _tag;
@@ -71,10 +109,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
   void initState() {
     super.initState();
     _load();
+    // The sections are separate screens over one library: a change made in one (or by a sync) shows in the others.
+    _changes = widget.store.changes.listen((_) => _load());
+    widget.auto?.addListener(_onSync);
+  }
+
+  StreamSubscription<void>? _changes;
+  bool _wasSyncing = false;
+
+  void _onSync() {
+    final syncing = widget.auto?.syncing ?? false;
+    if (_wasSyncing && !syncing) _load();
+    _wasSyncing = syncing;
   }
 
   @override
   void dispose() {
+    _changes?.cancel();
+    widget.auto?.removeListener(_onSync);
     _search.dispose();
     super.dispose();
   }
@@ -96,7 +148,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
           )
         : const <Quote>[];
     final works = _mode == _Mode.works
-        ? await widget.store.works(query: _search.text)
+        ? [
+            for (final w in await widget.store.works(query: _search.text))
+              if (_inSection(w)) w,
+          ]
         : const <Work>[];
     if (!mounted || me != _request) return;
     setState(() {
@@ -119,8 +174,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _addWork() async {
     await Navigator.of(context).push<Work>(
       MaterialPageRoute(
-        builder: (_) =>
-            WorkFormScreen(store: widget.store, lookup: widget.lookup),
+        builder: (_) => WorkFormScreen(
+          store: widget.store,
+          lookup: widget.lookup,
+          initialKind: widget.section == LibrarySection.catalogue
+              ? WorkKind.film
+              : WorkKind.book,
+        ),
       ),
     );
     await _load();
@@ -259,13 +319,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final counts = _counts;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Library'),
+        title: Text(switch (widget.section) {
+          LibrarySection.catalogue => 'Catalogue',
+          LibrarySection.quotes => 'Quotes',
+          _ => 'Library',
+        }),
         actions: [
-          IconButton(
-            tooltip: 'Boards',
-            icon: const Icon(Icons.dashboard_customize_outlined),
-            onPressed: _manageBoards,
-          ),
+          if (widget.section == LibrarySection.all ||
+              widget.section == LibrarySection.quotes)
+            IconButton(
+              tooltip: 'Boards',
+              icon: const Icon(Icons.dashboard_customize_outlined),
+              onPressed: _manageBoards,
+            ),
           if (widget.auto != null)
             ListenableBuilder(
               listenable: widget.auto!,
@@ -317,9 +383,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'add-${widget.section.name}',
         onPressed: _mode == _Mode.quotes ? _addQuote : _addWork,
         icon: const Icon(Icons.add),
-        label: Text(_mode == _Mode.quotes ? 'Add a quote' : 'Add a work'),
+        label: Text(
+          _mode == _Mode.quotes
+              ? 'Add a quote'
+              : switch (widget.section) {
+                  LibrarySection.books => 'Add a book',
+                  LibrarySection.catalogue => 'Add a film, show or game',
+                  _ => 'Add a work',
+                },
+        ),
       ),
       body: Column(
         children: [
@@ -354,28 +429,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                SegmentedButton<_Mode>(
-                  segments: [
-                    ButtonSegment(
-                      value: _Mode.quotes,
-                      label: Text(
-                        counts == null ? 'Quotes' : 'Quotes ${counts.quotes}',
+                if (widget.section == LibrarySection.all)
+                  SegmentedButton<_Mode>(
+                    segments: [
+                      ButtonSegment(
+                        value: _Mode.quotes,
+                        label: Text(
+                          counts == null ? 'Quotes' : 'Quotes ${counts.quotes}',
+                        ),
                       ),
-                    ),
-                    ButtonSegment(
-                      value: _Mode.works,
-                      label: Text(
-                        counts == null ? 'Works' : 'Works ${counts.works}',
+                      ButtonSegment(
+                        value: _Mode.works,
+                        label: Text(
+                          counts == null ? 'Works' : 'Works ${counts.works}',
+                        ),
                       ),
-                    ),
-                  ],
-                  selected: {_mode},
-                  showSelectedIcon: false,
-                  onSelectionChanged: (s) {
-                    setState(() => _mode = s.single);
-                    _load();
-                  },
-                ),
+                    ],
+                    selected: {_mode},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (s) {
+                      setState(() => _mode = s.single);
+                      _load();
+                    },
+                  ),
                 const Spacer(),
                 if (_mode == _Mode.quotes) ...[
                   FilterChip(
@@ -522,7 +598,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ? 'Nothing matches.'
                 : _mode == _Mode.quotes
                 ? 'No quotes yet. Add the first one with the button below.'
-                : 'No works yet.',
+                : switch (widget.section) {
+                    LibrarySection.books => 'No books yet.',
+                    LibrarySection.catalogue => 'No films, shows or games yet.',
+                    _ => 'No works yet.',
+                  },
             textAlign: TextAlign.center,
           ),
         ),

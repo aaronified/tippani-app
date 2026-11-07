@@ -29,7 +29,11 @@ class WorkFormScreen extends StatefulWidget {
     required this.store,
     this.work,
     this.lookup,
+    this.initialKind = WorkKind.book,
   });
+
+  /// The kind a new work starts as (a film when it is added from the Catalogue).
+  final WorkKind initialKind;
 
   final LibraryStore store;
   final Work? work;
@@ -48,7 +52,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
     text: widget.work?.year?.toString() ?? '',
   );
   late final _language = TextEditingController(text: widget.work?.language);
-  late WorkKind _kind = widget.work?.kind ?? WorkKind.book;
+  late WorkKind _kind = widget.work?.kind ?? widget.initialKind;
   String? _error;
   bool _saving = false;
   bool _looking = false;

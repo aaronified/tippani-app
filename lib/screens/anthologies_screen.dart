@@ -139,6 +139,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Anthologies')),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'add-anthology',
         onPressed: _create,
         icon: const Icon(Icons.add),
         label: const Text('New anthology'),

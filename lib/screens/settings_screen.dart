@@ -1,4 +1,3 @@
-import 'anthologies_screen.dart';
 import 'conflicts_screen.dart';
 import 'read_aloud_settings_screen.dart';
 import 'tools_screens.dart';
@@ -145,20 +144,6 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              if (harness.anthologies != null)
-                ListTile(
-                  leading: const Icon(Icons.collections_bookmark_outlined),
-                  title: const Text('Anthologies'),
-                  subtitle: const Text(
-                    'Collections of quotes you have gathered, kept on the server',
-                  ),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) =>
-                          AnthologiesScreen(service: harness.anthologies!),
-                    ),
-                  ),
-                ),
               if (harness.tools != null) ...[
                 ListTile(
                   leading: const Icon(Icons.bar_chart_outlined),

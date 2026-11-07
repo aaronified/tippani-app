@@ -212,6 +212,13 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## The sections
+
+`Shell` (`lib/app.dart`) builds Library, Catalogue and Quotes from one `LibraryScreen` with a `LibrarySection` each, then Anthologies where the harness has an
+`AnthologyService`, then Settings. The icons are the web app's four SVGs in `NavSection` (`nav_icons.dart`), tinted by the icon theme of the bar. The
+screens sit in an `IndexedStack`, so each listens to `LibraryStore.changes` and to the automatic sync finishing to stay current when another section
+or a sync changes the library. A harness with no library (a test of the server screens alone) shows a Home tab instead.
+
 ## The changelog in the app
 
 `CHANGELOG.md` is bundled into the app and parsed by `parseChangelog`. The app shows each change by `changeHeader` only (the text before a colon if it is
