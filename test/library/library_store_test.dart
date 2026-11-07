@@ -825,4 +825,52 @@ void main() {
       expect(n, 0);
     });
   });
+
+  group('what the server knows about a work', () {
+    const details = WorkDetails(
+      description: 'About living simply.',
+      genres: ['Essay'],
+      pages: 352,
+      cast: [CastMember(character: 'Thoreau')],
+    );
+
+    test('is kept with the work, and changes nothing else about it', () async {
+      final w = await walden();
+      await store.setWorkDetails(w.id, details);
+      final back = (await store.work(w.id))!;
+      expect(back.details.description, 'About living simply.');
+      expect(back.details.genres, ['Essay']);
+      expect(back.details.cast.single.character, 'Thoreau');
+      expect(back.updatedAt, w.updatedAt);
+      expect(back.title, w.title);
+    });
+
+    test('an empty record clears it', () async {
+      final w = await walden();
+      await store.setWorkDetails(w.id, details);
+      await store.setWorkDetails(w.id, const WorkDetails());
+      expect((await store.work(w.id))!.details.isEmpty, isTrue);
+    });
+
+    test('an edit of the work keeps it', () async {
+      final w = await walden();
+      await store.setWorkDetails(w.id, details);
+      await store.updateWork(w.id, const WorkDraft(title: 'Walden II'));
+      expect(
+        (await store.work(w.id))!.details.description,
+        'About living simply.',
+      );
+    });
+
+    test('goes into a backup and comes back out of it', () async {
+      final w = await walden();
+      await store.setWorkDetails(w.id, details);
+      await store.setWorkCover(w.id, '0123456789abcdef.png');
+      final data = await store.exportAll();
+      await store.replaceAll(data);
+      final back = (await store.works()).single;
+      expect(back.details.description, 'About living simply.');
+      expect(back.cover, '0123456789abcdef.png');
+    });
+  });
 }

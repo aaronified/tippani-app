@@ -26,6 +26,7 @@ class Work {
     this.serverId,
     this.syncedHash,
     this.cover = '',
+    this.details = const WorkDetails(),
   });
 
   final int id;
@@ -50,6 +51,26 @@ class Work {
   /// it is not part of what syncs, so a cover change is never a conflict.
   final String cover;
 
+  /// What the server knows about the work beyond the few fields that sync: a description, genres, publisher,
+  /// pages, ISBN, series and its cast. Read-only metadata fetched when the work's page is opened and kept for
+  /// when the server is out of reach.
+  final WorkDetails details;
+
+  Work withDetails(WorkDetails d) => Work(
+    id: id,
+    kind: kind,
+    title: title,
+    creator: creator,
+    year: year,
+    language: language,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    serverId: serverId,
+    syncedHash: syncedHash,
+    cover: cover,
+    details: d,
+  );
+
   Work withCover(String name) => Work(
     id: id,
     kind: kind,
@@ -62,6 +83,7 @@ class Work {
     serverId: serverId,
     syncedHash: syncedHash,
     cover: name,
+    details: details,
   );
 
   Work withServerId(int? id) => Work(
@@ -76,6 +98,7 @@ class Work {
     serverId: id,
     syncedHash: syncedHash,
     cover: cover,
+    details: details,
   );
 
   Work withSyncedHash(String? hash) => Work(
@@ -90,6 +113,7 @@ class Work {
     serverId: serverId,
     syncedHash: hash,
     cover: cover,
+    details: details,
   );
 
   Map<String, Object?> toJson() => {
@@ -104,7 +128,117 @@ class Work {
     'server_id': serverId,
     'synced_hash': syncedHash,
     'cover': cover,
+    'details': details.toJson(),
   };
+}
+
+/// A character in a work, and the actor who plays them (empty for a book).
+class CastMember {
+  const CastMember({required this.character, this.actor = ''});
+  final String character;
+  final String actor;
+
+  Map<String, Object?> toJson() => {'character': character, 'actor': actor};
+
+  static CastMember? fromJson(Object? j) {
+    if (j is! Map) return null;
+    final c = j['character'], a = j['actor'];
+    final character = c is String ? c.trim() : '';
+    final actor = a is String ? a.trim() : '';
+    if (character.isEmpty && actor.isEmpty) return null;
+    return CastMember(character: character, actor: actor);
+  }
+}
+
+/// The server's extra facts about a work. Every part may be empty.
+class WorkDetails {
+  const WorkDetails({
+    this.description = '',
+    this.genres = const [],
+    this.publisher = '',
+    this.pages = 0,
+    this.isbn = '',
+    this.subtitle = '',
+    this.series = '',
+    this.cast = const [],
+    this.fetchedAt,
+  });
+
+  final String description;
+  final List<String> genres;
+  final String publisher;
+  final int pages;
+  final String isbn;
+  final String subtitle;
+  final String series;
+  final List<CastMember> cast;
+
+  /// When it was last fetched (null: never).
+  final DateTime? fetchedAt;
+
+  bool get isEmpty =>
+      description.isEmpty &&
+      genres.isEmpty &&
+      publisher.isEmpty &&
+      pages == 0 &&
+      isbn.isEmpty &&
+      subtitle.isEmpty &&
+      series.isEmpty &&
+      cast.isEmpty;
+
+  WorkDetails copyWith({List<CastMember>? cast, DateTime? fetchedAt}) =>
+      WorkDetails(
+        description: description,
+        genres: genres,
+        publisher: publisher,
+        pages: pages,
+        isbn: isbn,
+        subtitle: subtitle,
+        series: series,
+        cast: cast ?? this.cast,
+        fetchedAt: fetchedAt ?? this.fetchedAt,
+      );
+
+  Map<String, Object?> toJson() => {
+    'description': description,
+    'genres': genres,
+    'publisher': publisher,
+    'pages': pages,
+    'isbn': isbn,
+    'subtitle': subtitle,
+    'series': series,
+    'cast': [for (final c in cast) c.toJson()],
+    'fetched_at': fetchedAt?.toUtc().toIso8601String(),
+  };
+
+  /// Reads what [toJson] wrote, or anything shaped like the server's own record (a book's or a film's), leaving
+  /// out whatever is not there. Never throws.
+  factory WorkDetails.fromJson(Object? j) {
+    if (j is! Map) return const WorkDetails();
+    String s(String k) => j[k] is String ? (j[k] as String).trim() : '';
+    final g = j['genres'];
+    final c = j['cast'];
+    final at = j['fetched_at'];
+    return WorkDetails(
+      description: s('description'),
+      genres: [
+        if (g is List)
+          for (final x in g)
+            if (x is String && x.trim().isNotEmpty) x.trim(),
+      ],
+      publisher: s('publisher'),
+      pages: j['pages'] is int ? j['pages'] as int : 0,
+      isbn: s('isbn'),
+      subtitle: s('subtitle'),
+      series: s('series'),
+      cast: [
+        if (c is List)
+          for (final x in c)
+            if (CastMember.fromJson(x) != null) CastMember.fromJson(x)!,
+      ],
+      fetchedAt: at is String ? DateTime.tryParse(at) : null,
+    );
+  }
 }
 
 /// What a reader fills in to make or change a work.

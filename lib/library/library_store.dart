@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:sqflite/sqflite.dart';
 
@@ -79,6 +80,9 @@ abstract interface class LibraryStore {
   /// `updated_at`: a cover is metadata, not an edit.
   Future<void> setWorkCover(int id, String name);
 
+  /// Keeps what the server knows about a work (see [WorkDetails]). Changes nothing else, not even `updated_at`.
+  Future<void> setWorkDetails(int id, WorkDetails details);
+
   /// Fires after the reader changes the library (add, edit, delete, favourite). Not for what a sync writes.
   Stream<void> get changes;
 
@@ -111,7 +115,7 @@ class SqliteLibraryStore implements LibraryStore {
   final Database _db;
   final DateTime Function() _clock;
 
-  static const schemaVersion = 4;
+  static const schemaVersion = 5;
 
   /// The longest a quote's text or a title may be. A pasted book is not a quote.
   static const maxText = 20000;
@@ -138,6 +142,11 @@ class SqliteLibraryStore implements LibraryStore {
           await db.execute('ALTER TABLE quotes ADD COLUMN synced_hash TEXT');
         }
         if (from < 3) await _createDeletions(db);
+        if (from < 5) {
+          await db.execute(
+            "ALTER TABLE works ADD COLUMN details TEXT NOT NULL DEFAULT ''",
+          );
+        }
         if (from < 4) {
           await db.execute(
             "ALTER TABLE works ADD COLUMN cover TEXT NOT NULL DEFAULT ''",
@@ -174,7 +183,8 @@ class SqliteLibraryStore implements LibraryStore {
         updated_at TEXT NOT NULL,
         server_id INTEGER,
         synced_hash TEXT,
-        cover TEXT NOT NULL DEFAULT ''
+        cover TEXT NOT NULL DEFAULT '',
+        details TEXT NOT NULL DEFAULT ''
       )''');
     await db.execute('''
       CREATE TABLE quotes (
@@ -226,7 +236,17 @@ class SqliteLibraryStore implements LibraryStore {
     serverId: r['server_id'] as int?,
     syncedHash: r['synced_hash'] as String?,
     cover: (r['cover'] as String?) ?? '',
+    details: _details(r['details']),
   );
+
+  static WorkDetails _details(Object? raw) {
+    if (raw is! String || raw.isEmpty) return const WorkDetails();
+    try {
+      return WorkDetails.fromJson(jsonDecode(raw));
+    } on FormatException {
+      return const WorkDetails();
+    }
+  }
 
   String _title(String raw) {
     final t = raw.trim();
@@ -655,6 +675,16 @@ class SqliteLibraryStore implements LibraryStore {
   }
 
   @override
+  Future<void> setWorkDetails(int id, WorkDetails details) async {
+    await _db.update(
+      'works',
+      {'details': details.isEmpty ? '' : jsonEncode(details.toJson())},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
   Future<void> setWorkCover(int id, String name) async {
     await _db.update(
       'works',
@@ -795,6 +825,9 @@ class SqliteLibraryStore implements LibraryStore {
           'server_id': m['server_id'] is int ? m['server_id'] : null,
           'synced_hash': m['synced_hash'] is String ? m['synced_hash'] : null,
           'cover': m['cover'] is String ? m['cover'] : '',
+          'details': m['details'] is Map
+              ? jsonEncode(WorkDetails.fromJson(m['details']).toJson())
+              : '',
         });
       }
       for (final q in quotes) {

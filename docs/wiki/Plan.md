@@ -246,6 +246,10 @@ synced account's theme preferences are ignored here.
       server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
       its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
       Checked against a real server in `test/live`. **Not yet:** reordering, per-passage commentary, sections, grouping, the cover, boards.
+- [x] **Work details** (done 7 November 2026): a work's page shows the server's description, genres, publisher, pages, ISBN, series and cast (a
+      film's cast, a book's characters). Fetched from `GET /books|movies/{id}` and `/{id}/cast` when the page opens if never fetched or over a day
+      old (`lib/tools/work_details_source.dart`), kept on the work (`works.details`, schema 5) as read-only metadata outside the sync fingerprint.
+      **Not done:** editing any of it on the phone, and details for a work not yet on the server.
 - [x] **Covers** (done 7 November 2026): the server's cover and poster pictures show on a work's page and in the works list, fetched once from
       `GET /covers/{name}` into the app's own storage (`lib/library/cover_cache.dart`); Choose a cover sends a gallery picture to
       `POST /books|movies/{id}/cover`. The cover name is kept on the work (`works.cover`, schema 4) as read-only metadata, outside the fingerprint, so

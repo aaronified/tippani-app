@@ -8,6 +8,9 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Added
 
+- A work's page now shows what your server knows about it: the description, genres, publisher, page count, ISBN and series, and the cast of a
+  film or show or the characters of a book. It is fetched when you open the page (and again after a day), and kept, so it is still there
+  without the server.
 - Covers: a book's cover or a film's poster from your server now shows on the work's page and beside it in the Library's list of works.
   The picture is fetched once and kept on the phone, so it shows again without the server. For a work that is on the server, the menu on its
   page has Choose a cover, which sends a picture from your gallery to the server as the cover.

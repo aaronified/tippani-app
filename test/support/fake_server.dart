@@ -98,6 +98,15 @@ class FakeServer {
   /// Cover reads and uploads answer with this status instead, when set.
   int? failCoversWith;
 
+  /// The cast the server holds, by route and id (`/books/3`, `/movies/4`): `{character, actor}` rows.
+  final casts = <String, List<Map<String, Object?>>>{};
+
+  /// Every `GET /{books|movies}/{id}/cast` asked for, in order.
+  final castReads = <String>[];
+
+  /// A cast read answers with this status instead, when set.
+  int? failCastWith;
+
   /// Puts a row on the server as if it had been made on the web, and returns its id. [path] is a create
   /// route (`/books`, `/annotations`...). The row is what the server's list would give back.
   int seed(String path, Map<String, Object?> fields, {int? id}) {
@@ -273,6 +282,17 @@ class FakeServer {
       return _json({'token': claimedToken, 'username': username}, 201);
     }
     if (!_authed(r)) return _json({'error': 'not logged in'}, 401);
+    final castRoute = RegExp(r'^(/books|/movies)/(\d+)/cast$').firstMatch(path);
+    if (r.method == 'GET' && castRoute != null) {
+      castReads.add('${castRoute[1]}/${castRoute[2]}');
+      if (failCastWith != null) {
+        return _json({'error': 'try later'}, failCastWith!);
+      }
+      return _json({
+        'actor_role': 'actor',
+        'cast': casts['${castRoute[1]}/${castRoute[2]}'] ?? [],
+      });
+    }
     final cover = RegExp(r'^/covers/([^/]+)$').firstMatch(path);
     if (r.method == 'GET' && cover != null) {
       coverReads.add(cover[1]!);

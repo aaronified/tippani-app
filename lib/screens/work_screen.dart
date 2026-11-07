@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -5,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import '../capture/photo_source.dart';
 import '../library/cover_cache.dart';
+import '../tools/work_details_source.dart';
+import 'work_details_section.dart';
 
 import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
@@ -76,6 +79,27 @@ class _WorkScreenState extends State<WorkScreen> {
       _quotes = qs;
       _loaded = true;
     });
+    unawaited(_refreshDetails());
+  }
+
+  bool _askedDetails = false;
+
+  /// Asks the server for the work's description, genres and cast when the page opens, if they were never
+  /// fetched or are over a day old. One try per visit; offline, what was kept earlier stays on show.
+  Future<void> _refreshDetails() async {
+    if (_askedDetails) return;
+    final w = _work;
+    final source = context
+        .getInheritedWidgetOfExactType<DetailsScope>()
+        ?.source;
+    if (w == null || source == null || w.serverId == null) return;
+    final at = w.details.fetchedAt;
+    if (at != null && DateTime.now().difference(at) < detailsFreshFor) return;
+    _askedDetails = true;
+    final d = await source.fetch(w);
+    if (d == null || !mounted) return;
+    await widget.store.setWorkDetails(w.id, d);
+    if (mounted) await _load();
   }
 
   Future<void> _edit() async {
@@ -380,6 +404,7 @@ class _WorkScreenState extends State<WorkScreen> {
                     ],
                   ),
                 ),
+                WorkDetailsSection(work: w),
                 if (_quotes.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(16),

@@ -212,6 +212,13 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## Work details
+
+`PairedWorkDetails` (`lib/tools/work_details_source.dart`) reads a work's own record and its cast when a work's page opens, and the page keeps
+the answer in `works.details` as JSON (`WorkDetails` in `models.dart`, tolerant of anything: it never throws on a record it does not
+understand). It is read-only metadata, kept out of the sync fingerprint, so it can never be a conflict. A page asks once per visit, and only
+when the details were never fetched or are over a day old; if the server does not answer, what was kept stays on show.
+
 ## Covers
 
 `CoverCache` (`lib/library/cover_cache.dart`) fetches `GET /covers/{name}` once into `<app support>/covers/` and answers from disk after. The server
