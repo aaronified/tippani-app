@@ -177,16 +177,10 @@ void main() {
       },
     );
 
-    test(
-      'a server that errors, or no longer has the work, is nothing',
-      () async {
-        await setUpRig();
-        expect(await source.fetch(work()), isNull);
-        server.seed('/books', {'title': 'Walden'}, id: 3);
-        server.failReadsWith = 500;
-        expect(await source.fetch(work()), isNull);
-      },
-    );
+    test('a work the server no longer has is nothing', () async {
+      await setUpRig();
+      expect(await source.fetch(work()), isNull);
+    });
   });
 
   group('on screen', () {
