@@ -10,11 +10,23 @@ import '../library/quote_chips.dart';
 
 /// One person the server knows: the name, and the files of the portrait and the signature ('' for none).
 class PersonInfo {
-  const PersonInfo(this.name, this.image, this.signature);
+  const PersonInfo(this.name, this.image, this.signature, [this.id = 0]);
 
   final String name;
   final String image;
   final String signature;
+
+  /// The person's id on the server (0 if unknown), which opens their page.
+  final int id;
+}
+
+/// One character the server knows: its id, name and the file of its picture ('' for none).
+class CharacterInfo {
+  const CharacterInfo(this.id, this.name, this.image);
+
+  final int id;
+  final String name;
+  final String image;
 }
 
 String foldName(String s) =>
@@ -25,6 +37,12 @@ String foldName(String s) =>
 abstract class PeopleDirectory implements Listenable {
   /// The person of [kind] ('author', 'actor' or 'speaker') called [name], or null if the server has none.
   PersonInfo? person(String kind, String name);
+
+  /// The person called [name] under any kind (author, actor, director ...), preferring one with a portrait.
+  PersonInfo? anyPerson(String name);
+
+  /// The character called [name], or null if the server has none.
+  CharacterInfo? character(String name);
 
   /// The picture file of the character called [name], or '' if there is none.
   String characterImage(String name);
@@ -63,7 +81,7 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
   final DateTime Function() _clock;
 
   final _people = <String, Map<String, PersonInfo>>{};
-  final _characters = <String, String>{};
+  final _characters = <String, CharacterInfo>{};
   DateTime? _loadedAt;
   Future<void>? _loading;
   bool _diskRead = false;
@@ -71,7 +89,16 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
   /// How long a reading stays good before the next look-up reads again.
   static const staleAfter = Duration(minutes: 15);
 
-  static const kinds = ['author', 'actor', 'speaker', 'director'];
+  static const kinds = [
+    'author',
+    'actor',
+    'director',
+    'speaker',
+    'translator',
+    'editor',
+    'studio',
+    'publisher',
+  ];
 
   Future<File> _store() async {
     var d = _folder;
@@ -136,6 +163,7 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
           name,
           '${r['image_path'] ?? ''}',
           '${r['signature_path'] ?? ''}',
+          r['id'] is int ? r['id'] as int : 0,
         );
       }
       _people[k] = byName;
@@ -144,8 +172,16 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
       if (r is! Map) continue;
       final image = '${r['image_path'] ?? ''}';
       final name = '${r['name'] ?? ''}';
-      if (name.isNotEmpty && image.isNotEmpty) {
-        _characters[foldName(name)] = image;
+      if (name.isEmpty) continue;
+      final key = foldName(name);
+      final had = _characters[key];
+      // two characters can share a name; the one with a picture speaks for it
+      if (had == null || (had.image.isEmpty && image.isNotEmpty)) {
+        _characters[key] = CharacterInfo(
+          r['id'] is int ? r['id'] as int : 0,
+          name,
+          image,
+        );
       }
     }
   }
@@ -177,6 +213,7 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
           for (final r in e.value)
             if (r is Map)
               {
+                'id': r['id'],
                 'name': r['name'],
                 'image_path': r['image_path'],
                 'signature_path': r['signature_path'],
@@ -198,18 +235,40 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
   }
 
   @override
+  PersonInfo? anyPerson(String name) {
+    _ensure();
+    final key = foldName(name);
+    PersonInfo? found;
+    for (final k in kinds) {
+      final p = _people[k]?[key];
+      if (p == null) continue;
+      if (p.image.isNotEmpty) return p;
+      found ??= p;
+    }
+    return found;
+  }
+
+  @override
+  CharacterInfo? character(String name) {
+    _ensure();
+    return _characters[foldName(name)];
+  }
+
+  @override
   String characterImage(String name) {
     _ensure();
-    return _characters[foldName(name)] ?? '';
+    return _characters[foldName(name)]?.image ?? '';
   }
 
   @override
   String faceOf(QuoteChip chip) {
     switch (chip.kind) {
       case ChipKind.author:
-        return person('author', chip.name)?.image ?? '';
+        final a = person('author', chip.name)?.image ?? '';
+        return a.isNotEmpty ? a : anyPerson(chip.name)?.image ?? '';
       case ChipKind.speaker:
-        return person('speaker', chip.name)?.image ?? '';
+        final s = person('speaker', chip.name)?.image ?? '';
+        return s.isNotEmpty ? s : anyPerson(chip.name)?.image ?? '';
       case ChipKind.character:
         final own = characterImage(chip.name);
         if (own.isNotEmpty) return own;
@@ -227,7 +286,7 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
       final img = _people[k]?[key]?.image ?? '';
       if (img.isNotEmpty) return img;
     }
-    return _characters[key] ?? '';
+    return _characters[key]?.image ?? '';
   }
 
   @override
