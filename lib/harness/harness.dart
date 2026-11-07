@@ -12,6 +12,7 @@ import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
 import '../people/people_directory.dart';
+import '../tools/cover_search.dart';
 import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
@@ -114,6 +115,7 @@ class Harness {
     this.account,
     this.contextRules,
     this.peopleService,
+    this.coverSearch,
     this.admin,
     this.serverFiles = const SystemServerFiles(),
     this.quiz,
@@ -191,6 +193,9 @@ class Harness {
 
   /// The pages of people and characters (and edits to a person) from the paired server.
   final PeopleService? peopleService;
+
+  /// Finds pictures that could be a work's cover or poster, online. Null in a test about something else.
+  final CoverSearch? coverSearch;
 
   /// Running the server (users, jobs, backups, updates, folders, sources), for an admin account. Null in a test about
   /// something else.
@@ -297,6 +302,7 @@ class Harness {
       account: PairedAccount(controller),
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
+      coverSearch: PairedCoverSearch(controller),
       admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
@@ -332,6 +338,7 @@ class Harness {
     AccountService? account,
     ContextRules? contextRules,
     PeopleService? peopleService,
+    CoverSearch? coverSearch,
     AdminService? admin,
     ServerFiles? serverFiles,
     QuizService? quiz,
@@ -388,6 +395,7 @@ class Harness {
       account: account,
       contextRules: contextRules,
       peopleService: peopleService,
+      coverSearch: coverSearch,
       admin: admin,
       serverFiles: serverFiles ?? const SystemServerFiles(),
       quiz: quiz,

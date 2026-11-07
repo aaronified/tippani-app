@@ -9,6 +9,9 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Find a cover online: on a work's page, Choose a cover now offers From my photos or Find one online. The online search starts with the work's own
+  title and author (you can change them, and search a book by ISBN), shows what the catalogues and picture suppliers have with the name of each,
+  lets you narrow to one supplier, and uses the one you press for the cover. Films, shows and games search for posters.
 - Search is a page of its own, like the web's: a search button on the Library, Catalogue and Quotes screens and a search box on Home open it.
   With your server it forgives typos ("showing results for ..."), and reads names, tags and genres as well as the words; without one it
   searches what is on the phone, and it says which it did. Results come in sections (titles, people, characters, tags, genres, notes, quotes)
