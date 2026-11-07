@@ -15,7 +15,9 @@ import '../library/quote_chips.dart';
 import '../sync/fingerprint.dart' show realmOfQuote;
 import 'anthologies_screen.dart' show addToAnthologyDialog;
 import 'library_widgets.dart';
+import '../tags/tag_service.dart';
 import 'quote_form_screen.dart';
+import 'tags_screen.dart';
 import 'quote_screen.dart';
 import 'work_form_screen.dart';
 import 'work_screen.dart';
@@ -283,6 +285,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _pickTag() async {
     final tags = await widget.store.tags();
     if (!mounted) return;
+    const manage = '\u0000manage';
     final picked = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => SafeArea(
@@ -298,11 +301,35 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   selected: t == _tag,
                   onTap: () => Navigator.of(context).pop(t),
                 ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.sell_outlined),
+              title: const Text('Manage tags'),
+              subtitle: const Text('Rename, colour, merge, delete'),
+              onTap: () => Navigator.of(context).pop(manage),
+            ),
           ],
         ),
       ),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
+    if (picked == manage) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) => TagsScreen(
+            store: widget.store,
+            picker: widget.picker,
+            service: TagServiceScope.of(context),
+            anthologies: widget.anthologies,
+          ),
+        ),
+      );
+      if (_tag != null && !(await widget.store.tags()).contains(_tag)) {
+        _tag = null;
+      }
+      await _load();
+      return;
+    }
     setState(() => _tag = picked);
     await _load();
   }

@@ -12,6 +12,7 @@ import '../harness/harness.dart';
 import '../harness/log_screen.dart';
 import '../harness/server_log_screen.dart';
 import 'devices_screen.dart';
+import 'tags_screen.dart';
 import 'pair_screen.dart';
 import 'pull_screen.dart';
 import 'sync_screen.dart';
@@ -164,7 +165,12 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => StatsScreen(tools: harness.tools!),
+                          builder: (_) => StatsScreen(
+                            tools: harness.tools!,
+                            store: harness.library,
+                            picker: harness.picker,
+                            anthologies: harness.anthologies,
+                          ),
                         ),
                       ),
                     ),
@@ -276,6 +282,24 @@ class SettingsScreen extends StatelessWidget {
             const _Section('App'),
             _Group(
               children: [
+                if (harness.library != null)
+                  ListTile(
+                    leading: const Icon(Icons.sell_outlined),
+                    title: const Text('Tags'),
+                    subtitle: const Text(
+                      'Rename, colour, merge and delete your tags',
+                    ),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => TagsScreen(
+                          store: harness.library!,
+                          picker: harness.picker,
+                          service: harness.tags,
+                          anthologies: harness.anthologies,
+                        ),
+                      ),
+                    ),
+                  ),
                 ListTile(
                   leading: const Icon(Icons.record_voice_over_outlined),
                   title: const Text('Read aloud'),
