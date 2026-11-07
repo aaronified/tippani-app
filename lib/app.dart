@@ -103,14 +103,17 @@ class _ShellState extends State<Shell> {
             label: 'Library',
           ),
         ),
-      (
-        screen: HomeScreen(controller: widget.controller),
-        destination: NavigationDestination(
-          icon: const Icon(Icons.home_outlined),
-          selectedIcon: const Icon(Icons.home),
-          label: library == null ? 'Home' : 'Server',
+      // Without a library (a test of the server screens alone) there is nothing else to open on, so the server
+      // screen stands in; with one, the server is a section of Settings.
+      if (library == null)
+        (
+          screen: HomeScreen(controller: widget.controller),
+          destination: const NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
         ),
-      ),
       (
         screen: SettingsScreen(
           controller: widget.controller,

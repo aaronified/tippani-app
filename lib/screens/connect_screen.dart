@@ -125,6 +125,17 @@ class _ConnectScreenState extends State<ConnectScreen> {
 }
 
 /// One plain sentence for each way asking a server can go wrong. Pure, so the words are tested.
+/// One line on how the server is: being asked, not asked yet, connected (and its version), or why it is not.
+String serverStatusLine(AppController c) {
+  if (c.checking) return 'Asking the server…';
+  final check = c.check;
+  if (check == null) return 'Not checked yet.';
+  final caps = check.capabilities;
+  if (caps == null) return describeCheck(check);
+  final detail = caps.version.isEmpty ? '' : ' (version ${caps.version})';
+  return check.usable ? 'Connected$detail.' : describeCheck(check);
+}
+
 String describeCheck(ServerCheck check) {
   switch (check.verdict) {
     case Compatibility.serverTooOld:

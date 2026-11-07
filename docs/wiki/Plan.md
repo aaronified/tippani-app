@@ -246,6 +246,9 @@ synced account's theme preferences are ignored here.
       server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
       its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
       Checked against a real server in `test/live`. **Not yet:** reordering, per-passage commentary, sections, grouping, the cover, boards.
+- [x] **The server is a section of Settings** (done 8 November 2026, owner's ask): the Server tab is removed; Settings opens with a Server section (address
+      and status via `serverStatusLine`, Check again, the unpaired warning, pairing, and everything that needs a paired server) followed by App. Only
+      the test-only harness with no library keeps a Home tab.
 - [x] **Scan: choose words on the picture** (done 7 November 2026): Tesseract's hOCR (`extractHocr`) is parsed (`lib/capture/recognised_page.dart`,
       `parseHocr`) into lines and words with boxes; `PageSelector` draws them over the page and `PageSelection` turns the chosen words into text (reading
       order, hyphens mended, a gap kept as a paragraph break). Falls back to plain `read` text when hOCR gives no words. **Not done:** proposing a page
