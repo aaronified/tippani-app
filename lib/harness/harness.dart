@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
 import '../anthologies/anthologies.dart';
+import '../library/cover_cache.dart';
 import '../tools/server_tools.dart';
 import '../tools/work_lookup.dart';
 import '../app_controller.dart';
@@ -84,6 +85,7 @@ class Harness {
     this.pull,
     this.auto,
     this.runAutoSync = false,
+    this.covers,
     this.anthologies,
     this.tools,
     this.lookup,
@@ -116,6 +118,9 @@ class Harness {
 
   /// Whether the app starts [auto] when it opens. Off in tests, where a timer left running fails the test.
   final bool runAutoSync;
+
+  /// Fetches and keeps cover pictures from the paired server. Null in a test that is about something else.
+  final CoverSource? covers;
 
   /// The paired server's anthologies. Null in a test that is about something else.
   final AnthologyService? anthologies;
@@ -178,6 +183,7 @@ class Harness {
               log: appLog,
             ),
       runAutoSync: true,
+      covers: CoverCache(controller),
       anthologies: ServerAnthologies(controller),
       tools: PairedServerTools(controller),
       lookup: PairedWorkLookup(controller),
@@ -195,6 +201,7 @@ class Harness {
     ApkInstaller? installer,
     BackupPicker? picker,
     LibraryStore? library,
+    CoverSource? covers,
     AnthologyService? anthologies,
     ServerTools? tools,
     WorkLookup? lookup,
@@ -232,6 +239,7 @@ class Harness {
       auto: push == null || pull == null || controller == null
           ? null
           : AutoSync(push: push, pull: pull, controller: controller, log: l),
+      covers: covers,
       anthologies: anthologies,
       tools: tools,
       lookup: lookup,

@@ -290,11 +290,14 @@ class PullSync {
             t.linked++;
           }
         }
+        final cover = _coverOf(row, realm);
         if (w == null) {
-          await _store.adoptWork(_workDraft(sf, null), id, sfp);
+          final adopted = await _store.adoptWork(_workDraft(sf, null), id, sfp);
+          if (cover.isNotEmpty) await _store.setWorkCover(adopted.id, cover);
           t.worksAdded++;
           continue;
         }
+        if (w.cover != cover) await _store.setWorkCover(w.id, cover);
         final lf = workFields(w);
         final lfp = fingerprint(lf);
         switch (_decide(w.syncedHash, lfp, sfp)) {
@@ -327,6 +330,12 @@ class PullSync {
         }
       }
     }
+  }
+
+  /// The name of the cover (or poster) file the server holds for a work row, or '' for none.
+  static String _coverOf(Map row, Realm realm) {
+    final v = realm == Realm.screen ? row['poster_path'] : row['cover_path'];
+    return v is String ? v : '';
   }
 
   WorkDraft _workDraft(Fields sf, Work? old) {

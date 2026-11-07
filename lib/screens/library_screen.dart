@@ -8,6 +8,7 @@ import '../library/models.dart';
 import '../tools/work_lookup.dart';
 import '../sync/auto_sync.dart';
 import 'conflicts_screen.dart';
+import '../library/cover_cache.dart';
 import 'library_widgets.dart';
 import 'capture_screen.dart';
 import 'quote_form_screen.dart';
@@ -393,6 +394,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
           : [
               for (final w in _works)
                 ListTile(
+                  leading: w.cover.isEmpty
+                      ? null
+                      : WorkCover(
+                          work: w,
+                          width: 40,
+                          height: 56,
+                          fallback: const SizedBox(width: 40, height: 56),
+                        ),
                   title: Text(w.title),
                   subtitle: Text(
                     [

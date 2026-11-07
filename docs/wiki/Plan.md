@@ -246,6 +246,10 @@ synced account's theme preferences are ignored here.
       server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
       its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
       Checked against a real server in `test/live`. **Not yet:** reordering, per-passage commentary, sections, grouping, the cover, boards.
+- [x] **Covers** (done 7 November 2026): the server's cover and poster pictures show on a work's page and in the works list, fetched once from
+      `GET /covers/{name}` into the app's own storage (`lib/library/cover_cache.dart`); Choose a cover sends a gallery picture to
+      `POST /books|movies/{id}/cover`. The cover name is kept on the work (`works.cover`, schema 4) as read-only metadata, outside the fingerprint, so
+      a cover change is never a conflict. **Not done:** setting a cover from a lookup result, covers for a work not yet on the server.
 - [x] **Automatic sync, deletes, linked duplicates, a Conflicts menu** (done 7 November 2026, as separate pull requests): `AutoSync` runs a push then a
       pull on open, resume, after edits and on a timer with back-off ([ADR-0018](ADR-0018-Sync-Runs-By-Itself-And-Never-Stops-For-A-Conflict.md));
       deletes go both ways with a wipe guard ([ADR-0017](ADR-0017-Deletes-Travel-Both-Ways-With-A-Wipe-Guard.md)); a work or quote on both sides is

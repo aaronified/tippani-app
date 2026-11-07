@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+
+import '../capture/photo_source.dart';
+import '../library/cover_cache.dart';
 
 import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
@@ -26,7 +31,11 @@ class WorkScreen extends StatefulWidget {
     this.shareImage = shareImageThroughSheet,
     this.anthologies,
     this.lookup,
+    this.photos,
   });
+
+  /// Where a chosen cover picture comes from (the gallery); null uses the phone's own.
+  final PhotoSource? photos;
 
   final LibraryStore store;
   final int workId;
@@ -103,6 +112,40 @@ class _WorkScreenState extends State<WorkScreen> {
         builder: (_) => VoiceScreen(store: widget.store, workId: widget.workId),
       ),
     );
+    await _load();
+  }
+
+  Future<void> _chooseCover() async {
+    final source = CoverScope.of(context);
+    final w = _work;
+    if (source == null || w == null || w.serverId == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final String? path;
+    try {
+      path = await (widget.photos ?? DevicePhotos()).choose();
+    } on Object {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('The picture could not be opened.')),
+      );
+      return;
+    }
+    if (path == null) return;
+    final bytes = await File(path).readAsBytes();
+    final name = await source.upload(
+      w,
+      bytes,
+      path.split(RegExp(r'[\\/]')).last,
+    );
+    messenger.clearSnackBars();
+    if (name == null) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('The server did not take that picture as a cover.'),
+        ),
+      );
+      return;
+    }
+    await widget.store.setWorkCover(w.id, name);
     await _load();
   }
 
@@ -226,17 +269,30 @@ class _WorkScreenState extends State<WorkScreen> {
                       kind: v == 'share' ? ExportKind.share : ExportKind.save,
                       work: w,
                     );
+                  case 'cover':
+                    _chooseCover();
                   case 'delete':
                     _delete();
                 }
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'share', child: Text('Share as Markdown')),
-                PopupMenuItem(
+              itemBuilder: (_) => [
+                const PopupMenuItem(
+                  value: 'share',
+                  child: Text('Share as Markdown'),
+                ),
+                const PopupMenuItem(
                   value: 'save',
                   child: Text('Save as Markdown file'),
                 ),
-                PopupMenuItem(value: 'delete', child: Text('Delete work')),
+                if (w.serverId != null && CoverScope.of(context) != null)
+                  const PopupMenuItem(
+                    value: 'cover',
+                    child: Text('Choose a cover'),
+                  ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Delete work'),
+                ),
               ],
             ),
           ],
@@ -254,12 +310,25 @@ class _WorkScreenState extends State<WorkScreen> {
           : ListView(
               padding: const EdgeInsets.only(bottom: 88),
               children: [
+                if (w!.cover.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: WorkCover(
+                        work: w,
+                        width: 120,
+                        height: 180,
+                        fallback: const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(w!.title, style: text.headlineSmall),
+                      Text(w.title, style: text.headlineSmall),
                       const SizedBox(height: 4),
                       Text(
                         [

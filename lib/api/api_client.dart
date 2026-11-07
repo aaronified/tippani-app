@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -126,7 +127,45 @@ class ApiClient {
   Future<Object?> getJson(String path) =>
       _send(() => _client.get(_uri(path), headers: _headers));
 
+  /// GET [path] and return the raw bytes (a picture).
+  Future<Uint8List> getBytes(String path) async =>
+      (await _checked(() => _client.get(_uri(path), headers: _headers)))
+          .bodyBytes;
+
+  /// POST one file to [path] as a multipart form, in the form field [field], and decode the JSON answer.
+  Future<Object?> postFile(
+    String path,
+    String field,
+    Uint8List bytes,
+    String fileName,
+  ) => _send(() async {
+    final req = http.MultipartRequest('POST', _uri(path))
+      ..headers.addAll(_headers)
+      ..files.add(
+        http.MultipartFile.fromBytes(field, bytes, filename: fileName),
+      );
+    return http.Response.fromStream(await _client.send(req));
+  });
+
   Future<Object?> _send(Future<http.Response> Function() request) async {
+    final response = await _checked(request);
+    final status = response.statusCode;
+    if (response.body.isEmpty) return null;
+    try {
+      return jsonDecode(utf8.decode(response.bodyBytes));
+    } on FormatException {
+      throw ApiException(
+        ApiFailure.badResponse,
+        'the answer was not JSON',
+        status,
+      );
+    }
+  }
+
+  /// Makes the request and turns every way it can fail into an [ApiException]. A good answer is returned as is.
+  Future<http.Response> _checked(
+    Future<http.Response> Function() request,
+  ) async {
     final http.Response response;
     try {
       response = await request().timeout(timeout);
@@ -160,16 +199,7 @@ class ApiClient {
         _bodyOf(response),
       );
     }
-    if (response.body.isEmpty) return null;
-    try {
-      return jsonDecode(utf8.decode(response.bodyBytes));
-    } on FormatException {
-      throw ApiException(
-        ApiFailure.badResponse,
-        'the answer was not JSON',
-        status,
-      );
-    }
+    return response;
   }
 
   Object? _bodyOf(http.Response response) {

@@ -25,6 +25,7 @@ class Work {
     required this.updatedAt,
     this.serverId,
     this.syncedHash,
+    this.cover = '',
   });
 
   final int id;
@@ -45,6 +46,24 @@ class Work {
   /// Null until they have agreed once.
   final String? syncedHash;
 
+  /// The name of this work's cover (or poster) file on the server, or '' when it has none. Read-only metadata:
+  /// it is not part of what syncs, so a cover change is never a conflict.
+  final String cover;
+
+  Work withCover(String name) => Work(
+    id: id,
+    kind: kind,
+    title: title,
+    creator: creator,
+    year: year,
+    language: language,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    serverId: serverId,
+    syncedHash: syncedHash,
+    cover: name,
+  );
+
   Work withServerId(int? id) => Work(
     id: this.id,
     kind: kind,
@@ -56,6 +75,7 @@ class Work {
     updatedAt: updatedAt,
     serverId: id,
     syncedHash: syncedHash,
+    cover: cover,
   );
 
   Work withSyncedHash(String? hash) => Work(
@@ -69,6 +89,7 @@ class Work {
     updatedAt: updatedAt,
     serverId: serverId,
     syncedHash: hash,
+    cover: cover,
   );
 
   Map<String, Object?> toJson() => {
@@ -82,6 +103,7 @@ class Work {
     'updated_at': updatedAt.toUtc().toIso8601String(),
     'server_id': serverId,
     'synced_hash': syncedHash,
+    'cover': cover,
   };
 }
 

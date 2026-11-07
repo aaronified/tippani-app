@@ -75,6 +75,10 @@ abstract interface class LibraryStore {
   Future<void> dropWork(int id);
   Future<void> dropQuote(int id);
 
+  /// Records which cover file the server holds for a work ('' for none). Changes nothing else, not even
+  /// `updated_at`: a cover is metadata, not an edit.
+  Future<void> setWorkCover(int id, String name);
+
   /// Fires after the reader changes the library (add, edit, delete, favourite). Not for what a sync writes.
   Stream<void> get changes;
 
@@ -107,7 +111,7 @@ class SqliteLibraryStore implements LibraryStore {
   final Database _db;
   final DateTime Function() _clock;
 
-  static const schemaVersion = 3;
+  static const schemaVersion = 4;
 
   /// The longest a quote's text or a title may be. A pasted book is not a quote.
   static const maxText = 20000;
@@ -134,6 +138,11 @@ class SqliteLibraryStore implements LibraryStore {
           await db.execute('ALTER TABLE quotes ADD COLUMN synced_hash TEXT');
         }
         if (from < 3) await _createDeletions(db);
+        if (from < 4) {
+          await db.execute(
+            "ALTER TABLE works ADD COLUMN cover TEXT NOT NULL DEFAULT ''",
+          );
+        }
       },
     );
     return SqliteLibraryStore(db, clock: clock);
@@ -164,7 +173,8 @@ class SqliteLibraryStore implements LibraryStore {
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         server_id INTEGER,
-        synced_hash TEXT
+        synced_hash TEXT,
+        cover TEXT NOT NULL DEFAULT ''
       )''');
     await db.execute('''
       CREATE TABLE quotes (
@@ -215,6 +225,7 @@ class SqliteLibraryStore implements LibraryStore {
     updatedAt: DateTime.parse(r['updated_at']! as String),
     serverId: r['server_id'] as int?,
     syncedHash: r['synced_hash'] as String?,
+    cover: (r['cover'] as String?) ?? '',
   );
 
   String _title(String raw) {
@@ -644,6 +655,16 @@ class SqliteLibraryStore implements LibraryStore {
   }
 
   @override
+  Future<void> setWorkCover(int id, String name) async {
+    await _db.update(
+      'works',
+      {'cover': name},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
   Future<void> markWorkSynced(int id, String hash) async {
     await _db.update(
       'works',
@@ -773,6 +794,7 @@ class SqliteLibraryStore implements LibraryStore {
           'updated_at': _time(m['updated_at']),
           'server_id': m['server_id'] is int ? m['server_id'] : null,
           'synced_hash': m['synced_hash'] is String ? m['synced_hash'] : null,
+          'cover': m['cover'] is String ? m['cover'] : '',
         });
       }
       for (final q in quotes) {
