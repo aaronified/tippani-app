@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_controller.dart';
 import 'connect_screen.dart';
 import 'pair_screen.dart';
+import '../l10n/l10n.dart';
 
 /// The first screen. For now it says whether a server is set and whether it answers; the screens that
 /// do things (capture, quotes) arrive in later phases and take their own destinations in the bar.
@@ -21,10 +22,10 @@ class HomeScreen extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('Tippani', style: text.headlineMedium),
+            Text(context.tr('Tippani'), style: text.headlineMedium),
             const SizedBox(height: 8),
             if (url == null) ...[
-              const Text('Not connected to a server yet.'),
+              Text(context.tr('Not connected to a server yet.')),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => Navigator.of(context).push(
@@ -32,7 +33,7 @@ class HomeScreen extends StatelessWidget {
                     builder: (_) => ConnectScreen(controller: controller),
                   ),
                 ),
-                child: const Text('Connect to your server'),
+                child: Text(context.tr('Connect to your server')),
               ),
             ] else ...[
               Text(url, style: text.titleMedium),
@@ -42,13 +43,19 @@ class HomeScreen extends StatelessWidget {
               if (controller.revoked) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'This phone was unpaired from the server. Pair it again to use your library.',
+                  context.tr(
+                    'This phone was unpaired from the server. Pair it again to use your library.',
+                  ),
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
               const SizedBox(height: 8),
               if (controller.paired)
-                Text('Paired as ${controller.username ?? ''}.')
+                Text(
+                  context.tr('Paired as {name}.', {
+                    'name': controller.username ?? '',
+                  }),
+                )
               else
                 FilledButton(
                   onPressed: () => Navigator.of(context).push(
@@ -56,12 +63,12 @@ class HomeScreen extends StatelessWidget {
                       builder: (_) => PairScreen(controller: controller),
                     ),
                   ),
-                  child: const Text('Pair this phone'),
+                  child: Text(context.tr('Pair this phone')),
                 ),
               const SizedBox(height: 8),
               OutlinedButton(
                 onPressed: controller.checking ? null : controller.refresh,
-                child: const Text('Check again'),
+                child: Text(context.tr('Check again')),
               ),
             ],
           ],

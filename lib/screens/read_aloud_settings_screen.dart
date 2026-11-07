@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../speech/speaker.dart';
 import '../speech/speech_settings.dart';
+import '../l10n/l10n.dart';
 
 /// Chooses how the app reads aloud: which voice, how fast, how high. The voices are the ones Android's speech
 /// service offers, so the natural-sounding ones appear after installing them in Android's own settings.
@@ -110,7 +111,7 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             return a.name.compareTo(b.name);
           }));
     return Scaffold(
-      appBar: AppBar(title: const Text('Read aloud')),
+      appBar: AppBar(title: Text(context.tr('Read aloud'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -119,7 +120,10 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             'or to change the speech service, open Android Settings and search for “Text-to-speech”.',
           ),
           const SizedBox(height: 16),
-          Text('Speed', style: Theme.of(context).textTheme.titleSmall),
+          Text(
+            context.tr('Speed'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
           Slider(
             value: _prefs.rate.clamp(0.1, 1.0),
             min: 0.1,
@@ -128,7 +132,10 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             label: _prefs.rate.toStringAsFixed(1),
             onChanged: (v) => _save(_prefs.copyWith(rate: v)),
           ),
-          Text('Pitch', style: Theme.of(context).textTheme.titleSmall),
+          Text(
+            context.tr('Pitch'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
           Slider(
             value: _prefs.pitch.clamp(0.5, 2.0),
             min: 0.5,
@@ -153,15 +160,20 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          Text('Voice', style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            context.tr('Voice'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           ListTile(
             leading: Icon(
               _prefs.voiceName == null
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
             ),
-            title: const Text('Automatic'),
-            subtitle: const Text('The best voice installed for each language'),
+            title: Text(context.tr('Automatic')),
+            subtitle: Text(
+              context.tr('The best voice installed for each language'),
+            ),
             onTap: () => _save(_prefs.copyWith(automatic: true)),
           ),
           if (voices == null)
@@ -170,14 +182,14 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
               child: Center(child: CircularProgressIndicator()),
             )
           else if (voices.isEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(8),
-              child: Text('The phone lists no voices.'),
+              child: Text(context.tr('The phone lists no voices.')),
             )
           else ...[
             DropdownButtonFormField<String>(
               initialValue: _language,
-              decoration: const InputDecoration(labelText: 'Language'),
+              decoration: InputDecoration(labelText: context.tr('Language')),
               items: [
                 for (final l in languages)
                   DropdownMenuItem(value: l, child: Text(l)),

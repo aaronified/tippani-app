@@ -4,6 +4,7 @@ import '../library/library_store.dart';
 import '../api/server_call.dart';
 import '../library/models.dart';
 import '../tools/work_lookup.dart';
+import '../l10n/l10n.dart';
 
 String workKindLabel(WorkKind k) => switch (k) {
   WorkKind.book => 'Book',
@@ -93,7 +94,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
     final chosen = await showDialog<WorkMatch>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Which one?'),
+        title: Text(context.tr('Which one?')),
         children: [
           for (final m in found.take(8))
             SimpleDialogOption(
@@ -156,7 +157,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
-            child: const Text('Save'),
+            child: Text(context.tr('Save')),
           ),
         ],
       ),
@@ -183,7 +184,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
           TextField(
             controller: _title,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Title'),
+            decoration: InputDecoration(labelText: context.tr('Title')),
           ),
           if (widget.lookup?.available == true) ...[
             const SizedBox(height: 8),
@@ -198,7 +199,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.travel_explore),
-                label: const Text('Look up details'),
+                label: Text(context.tr('Look up details')),
               ),
             ),
           ],
@@ -212,15 +213,16 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
           TextField(
             controller: _year,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Year'),
+            decoration: InputDecoration(labelText: context.tr('Year')),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _language,
-            decoration: const InputDecoration(
-              labelText: 'Language',
-              helperText:
-                  'What it is written or spoken in, if you want to say.',
+            decoration: InputDecoration(
+              labelText: context.tr('Language'),
+              helperText: context.tr(
+                'What it is written or spoken in, if you want to say.',
+              ),
             ),
           ),
         ],

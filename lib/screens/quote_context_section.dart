@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/server_call.dart';
 import '../library/models.dart';
 import '../tools/quote_context.dart';
+import '../l10n/l10n.dart';
 
 /// What the server stored around a quote in its source file: a button to show it, then the text before, the quote as the
 /// file has it, and the text after, with Show more on each side up to what is stored. It asks the server when pressed (the
@@ -70,7 +71,7 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Context', style: theme.textTheme.titleSmall),
+          Text(context.tr('Context'), style: theme.textTheme.titleSmall),
           const SizedBox(height: 4),
           if (!_asked && !_busy)
             Align(
@@ -78,17 +79,19 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
               child: OutlinedButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.article_outlined),
-                label: const Text('Show where it comes from'),
+                label: Text(context.tr('Show where it comes from')),
               ),
             ),
           if (_busy) const LinearProgressIndicator(),
           if (_problem != null) ...[
             Text(_problem!, style: TextStyle(color: theme.colorScheme.error)),
-            TextButton(onPressed: _load, child: const Text('Try again')),
+            TextButton(onPressed: _load, child: Text(context.tr('Try again'))),
           ],
           if (_asked && c == null && _problem == null)
-            const Text(
-              'The server has no context for this quote: it was not found in a file.',
+            Text(
+              context.tr(
+                'The server has no context for this quote: it was not found in a file.',
+              ),
             ),
           if (c != null) ...[
             if (c.before.isNotEmpty)
@@ -102,7 +105,7 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
-                  'The start of the chapter or scene.',
+                  context.tr('The start of the chapter or scene.'),
                   style: theme.textTheme.labelSmall,
                 ),
               ),
@@ -114,7 +117,7 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
                         before: c.shownBefore + contextStep,
                         after: c.shownAfter,
                       ),
-                child: Text('Show more before'),
+                child: Text(context.tr('Show more before')),
               ),
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -146,13 +149,13 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
                         before: c.shownBefore,
                         after: c.shownAfter + contextStep,
                       ),
-                child: const Text('Show more after'),
+                child: Text(context.tr('Show more after')),
               ),
             if (c.boundAfter)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
-                  'The end of the chapter, scene or work.',
+                  context.tr('The end of the chapter, scene or work.'),
                   style: theme.textTheme.labelSmall,
                 ),
               ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_controller.dart';
 import '../pairing/pairing_code.dart';
 import '../pairing/pairing_service.dart';
+import '../l10n/l10n.dart';
 
 /// One plain sentence for each way a pairing can fail. Pure, so the words are tested.
 String pairFailureText(PairFailure f) => switch (f) {
@@ -67,12 +68,14 @@ class _PairScreenState extends State<PairScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Pair this phone')),
+      appBar: AppBar(title: Text(context.tr('Pair this phone'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'On a computer, open Tippani, go to Settings, then Server, then Devices, and choose Pair a device. It shows a code. Type it here.',
+          Text(
+            context.tr(
+              'On a computer, open Tippani, go to Settings, then Server, then Devices, and choose Pair a device. It shows a code. Type it here.',
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -81,8 +84,8 @@ class _PairScreenState extends State<PairScreen> {
             autocorrect: false,
             textCapitalization: TextCapitalization.characters,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Pairing code',
+            decoration: InputDecoration(
+              labelText: context.tr('Pairing code'),
               border: OutlineInputBorder(),
             ),
           ),
@@ -93,9 +96,11 @@ class _PairScreenState extends State<PairScreen> {
             maxLength: 64,
             textInputAction: TextInputAction.go,
             onSubmitted: (_) => _pair(),
-            decoration: const InputDecoration(
-              labelText: 'Name for this phone',
-              helperText: 'Shown in the device list, so you can tell your phones apart.',
+            decoration: InputDecoration(
+              labelText: context.tr('Name for this phone'),
+              helperText: context.tr(
+                'Shown in the device list, so you can tell your phones apart.',
+              ),
               border: OutlineInputBorder(),
             ),
           ),
@@ -108,7 +113,7 @@ class _PairScreenState extends State<PairScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Pair'),
+                : Text(context.tr('Pair')),
           ),
           if (_problem != null) ...[
             const SizedBox(height: 16),

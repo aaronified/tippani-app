@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../capture/page_adjuster.dart';
 import '../capture/page_geometry.dart';
+import '../l10n/l10n.dart';
 
 /// Straightens and crops a photographed page before it is read. The app first works out how the page is tilted and
 /// where the text is (both can be changed): turn the picture with the slider or the nudge buttons, and drag the
@@ -137,7 +138,7 @@ class _AdjustScreenState extends State<AdjustScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Straighten and crop')),
+      appBar: AppBar(title: Text(context.tr('Straighten and crop'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -240,7 +241,7 @@ class _AdjustScreenState extends State<AdjustScreen> {
             Row(
               children: [
                 IconButton(
-                  tooltip: 'Turn anticlockwise',
+                  tooltip: context.tr('Turn anticlockwise'),
                   icon: const Icon(Icons.rotate_left),
                   onPressed: _busy ? null : () => _turn(-0.5),
                 ),
@@ -255,13 +256,19 @@ class _AdjustScreenState extends State<AdjustScreen> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Turn clockwise',
+                  tooltip: context.tr('Turn clockwise'),
                   icon: const Icon(Icons.rotate_right),
                   onPressed: _busy ? null : () => _turn(0.5),
                 ),
               ],
             ),
-            Center(child: Text('Turned ${_angle.toStringAsFixed(1)}°')),
+            Center(
+              child: Text(
+                context.tr('Turned {angle}°', {
+                  'angle': _angle.toStringAsFixed(1),
+                }),
+              ),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -271,12 +278,12 @@ class _AdjustScreenState extends State<AdjustScreen> {
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _auto,
                   icon: const Icon(Icons.auto_fix_high),
-                  label: const Text('Auto'),
+                  label: Text(context.tr('Auto')),
                 ),
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _reset,
                   icon: const Icon(Icons.restart_alt),
-                  label: const Text('Reset'),
+                  label: Text(context.tr('Reset')),
                 ),
               ],
             ),
@@ -289,13 +296,13 @@ class _AdjustScreenState extends State<AdjustScreen> {
             children: [
               FilledButton(
                 onPressed: _busy || !_ready ? null : _use,
-                child: const Text('Use this'),
+                child: Text(context.tr('Use this')),
               ),
               OutlinedButton(
                 onPressed: _busy && _problem == null
                     ? null
                     : () => Navigator.of(context).pop(widget.imagePath),
-                child: const Text('Use as is'),
+                child: Text(context.tr('Use as is')),
               ),
             ],
           ),

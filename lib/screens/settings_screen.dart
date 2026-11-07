@@ -11,6 +11,7 @@ import '../harness/harness.dart';
 import '../harness/log_screen.dart';
 import '../harness/server_log_screen.dart';
 import 'devices_screen.dart';
+import 'prefs_entries.dart';
 import 'tags_screen.dart';
 import 'pair_screen.dart';
 import 'pull_screen.dart';
@@ -19,6 +20,7 @@ import '../harness/update_controller.dart';
 import '../harness/update_ui.dart';
 import '../harness/version.dart';
 import 'connect_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Which server the app is pointed at, and the way to point it somewhere else or forget it.
 class SettingsScreen extends StatelessWidget {
@@ -35,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Forget this server?'),
+        title: Text(context.tr('Forget this server?')),
         content: const Text(
           'The app forgets the server address and the credential it holds for it. Nothing on the server changes; '
           'you can pair this phone again later.',
@@ -43,11 +45,11 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Forget'),
+            child: Text(context.tr('Forget')),
           ),
         ],
       ),
@@ -59,18 +61,20 @@ class SettingsScreen extends StatelessWidget {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Unpair this phone?'),
-        content: const Text(
-          'The server is told to forget this phone, and the app forgets its key. The server address stays, so you can pair again with a new code.',
+        title: Text(context.tr('Unpair this phone?')),
+        content: Text(
+          context.tr(
+            'The server is told to forget this phone, and the app forgets its key. The server address stays, so you can pair again with a new code.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Unpair'),
+            child: Text(context.tr('Unpair')),
           ),
         ],
       ),
@@ -116,10 +120,12 @@ class SettingsScreen extends StatelessWidget {
                       Icons.warning_amber_outlined,
                       color: Theme.of(context).colorScheme.error,
                     ),
-                    title: const Text(
-                      'This phone was unpaired from the server',
+                    title: Text(
+                      context.tr('This phone was unpaired from the server'),
                     ),
-                    subtitle: const Text('Pair it again to use your library.'),
+                    subtitle: Text(
+                      context.tr('Pair it again to use your library.'),
+                    ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => PairScreen(controller: controller),
@@ -129,15 +135,15 @@ class SettingsScreen extends StatelessWidget {
                 if (url != null)
                   ListTile(
                     leading: const Icon(Icons.refresh),
-                    title: const Text('Check again'),
+                    title: Text(context.tr('Check again')),
                     enabled: !controller.checking,
                     onTap: controller.refresh,
                   ),
                 if (url != null && !controller.paired)
                   ListTile(
                     leading: const Icon(Icons.phonelink_lock_outlined),
-                    title: const Text('Pair this phone'),
-                    subtitle: const Text('Needed to use your library'),
+                    title: Text(context.tr('Pair this phone')),
+                    subtitle: Text(context.tr('Needed to use your library')),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => PairScreen(controller: controller),
@@ -147,8 +153,12 @@ class SettingsScreen extends StatelessWidget {
                 if (controller.paired) ...[
                   ListTile(
                     leading: const Icon(Icons.devices_outlined),
-                    title: const Text('Paired devices'),
-                    subtitle: Text('Paired as ${controller.username ?? ''}'),
+                    title: Text(context.tr('Paired devices')),
+                    subtitle: Text(
+                      context.tr('Paired as {name}', {
+                        'name': controller.username ?? '',
+                      }),
+                    ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => DevicesScreen(controller: controller),
@@ -158,9 +168,11 @@ class SettingsScreen extends StatelessWidget {
                   if (harness.tools != null) ...[
                     ListTile(
                       leading: const Icon(Icons.bar_chart_outlined),
-                      title: const Text('Statistics'),
-                      subtitle: const Text(
-                        'The numbers the server keeps about your library',
+                      title: Text(context.tr('Statistics')),
+                      subtitle: Text(
+                        context.tr(
+                          'The numbers the server keeps about your library',
+                        ),
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -175,9 +187,9 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     ListTile(
                       leading: const Icon(Icons.delete_outline),
-                      title: const Text('Bin'),
-                      subtitle: const Text(
-                        'What you deleted lately, to bring back',
+                      title: Text(context.tr('Bin')),
+                      subtitle: Text(
+                        context.tr('What you deleted lately, to bring back'),
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -204,7 +216,7 @@ class SettingsScreen extends StatelessWidget {
                                       ),
                                     )
                                   : const Icon(Icons.sync),
-                              title: const Text('Sync with server'),
+                              title: Text(context.tr('Sync with server')),
                               subtitle: Text(
                                 auto.failure != null
                                     ? 'The last try did not finish'
@@ -224,7 +236,7 @@ class SettingsScreen extends StatelessWidget {
                             ),
                             ListTile(
                               leading: const Icon(Icons.sync_problem_outlined),
-                              title: const Text('Sync conflicts'),
+                              title: Text(context.tr('Sync conflicts')),
                               subtitle: Text(
                                 n == 0
                                     ? 'Nothing to settle'
@@ -248,8 +260,10 @@ class SettingsScreen extends StatelessWidget {
                   if (harness.sync != null)
                     ListTile(
                       leading: const Icon(Icons.cloud_upload_outlined),
-                      title: const Text('Send library to server'),
-                      subtitle: const Text('Adds what is only on this phone'),
+                      title: Text(context.tr('Send library to server')),
+                      subtitle: Text(
+                        context.tr('Adds what is only on this phone'),
+                      ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => SyncScreen(sync: harness.sync!),
@@ -258,18 +272,19 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ListTile(
                     leading: const Icon(Icons.phonelink_erase_outlined),
-                    title: const Text('Unpair this phone'),
+                    title: Text(context.tr('Unpair this phone')),
                     onTap: () => _unpair(context),
                   ),
                 ],
                 if (url != null)
                   ListTile(
                     leading: const Icon(Icons.link_off),
-                    title: const Text('Forget this server'),
+                    title: Text(context.tr('Forget this server')),
                     onTap: () => _forget(context),
                   ),
               ],
             ),
+            PrefsEntries(controller: controller, harness: harness),
             const _Section('App'),
             _Group(
               children: [
@@ -293,8 +308,8 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ListTile(
                   leading: const Icon(Icons.record_voice_over_outlined),
-                  title: const Text('Read aloud'),
-                  subtitle: const Text('Voice, speed and pitch'),
+                  title: Text(context.tr('Read aloud')),
+                  subtitle: Text(context.tr('Voice, speed and pitch')),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => const ReadAloudSettingsScreen(),
@@ -338,7 +353,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.backup_outlined),
-                  title: const Text('Backup and restore'),
+                  title: Text(context.tr('Backup and restore')),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => BackupScreen(harness: harness),
@@ -350,7 +365,7 @@ class SettingsScreen extends StatelessWidget {
                 // screen, a copy or a file.
                 ListTile(
                   leading: const Icon(Icons.receipt_long_outlined),
-                  title: const Text('App log'),
+                  title: Text(context.tr('App log')),
                   subtitle: const Text("What this app did on this phone"),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
@@ -361,7 +376,7 @@ class SettingsScreen extends StatelessWidget {
                 if (controller.isAdmin)
                   ListTile(
                     leading: const Icon(Icons.dns_outlined),
-                    title: const Text('Server log'),
+                    title: Text(context.tr('Server log')),
                     subtitle: const Text(
                       "The Tippani server's own log. Admins only",
                     ),
@@ -374,13 +389,15 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            const _Group(
+            _Group(
               children: [
                 ListTile(
                   leading: Icon(Icons.info_outline),
                   title: Text('Tippani for Android $appVersion'),
                   subtitle: Text(
-                    'Free software, GPL-3.0. Source: github.com/aaronified/tippani-app',
+                    context.tr(
+                      'Free software, GPL-3.0. Source: github.com/aaronified/tippani-app',
+                    ),
                   ),
                 ),
               ],

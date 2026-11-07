@@ -53,6 +53,11 @@ class SettingsStore {
 
   Future<void> setServerUrl(String url) => _prefs.setString(_serverKey, url);
 
+  /// A small piece of text the app keeps for itself (a copy of the account's preferences, say).
+  String? read(String key) => _prefs.getString(key);
+
+  Future<void> write(String key, String value) => _prefs.setString(key, value);
+
   static const _seenKey = 'last_seen_version';
 
   /// The app version this phone last showed "what is new" for, or null on a first install.
