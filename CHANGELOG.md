@@ -25,6 +25,9 @@ version. Write each entry for the person using the app, in plain words. **Start 
 - Author, actor and character chips: a quote shows the people on it as chips, as the web app does. A book's quote shows its author and who said it; a
   film's, show's or game's shows each character with the actor who plays them under the name (from the work's cast). They are in the Library list
   and on the quote screen, and pressing one shows the library for that name.
+- Sync is lighter: it runs a few seconds after you change something, and once a day (when the app opens, comes back to the front, or the phone gets a
+  network again, or once a day passes while it is open). The every-few-minutes timer and the retries are gone. A change that could not be sent waits and
+  goes at the next opening, network or change, even after the app is closed.
 
 ## [0.4.0] - 2026-11-07
 
