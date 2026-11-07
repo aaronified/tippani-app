@@ -104,6 +104,12 @@ Future<void> open(WidgetTester tester, Rig r) async {
 Future<void> goSettings(WidgetTester tester, String entry) async {
   await tester.tap(find.text('Settings'));
   await tester.pumpAndSettle();
+  // Settings is a long list: bring the entry into view before tapping it.
+  await tester.scrollUntilVisible(
+    find.text(entry),
+    300,
+    scrollable: find.byType(Scrollable).first,
+  );
   await tester.tap(find.text(entry));
   await tester.pumpAndSettle();
 }
