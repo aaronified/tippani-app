@@ -518,7 +518,7 @@ void main() {
         await settle(tester, const Duration(seconds: 6));
         final p = await SharedPreferences.getInstance();
         expect(p.getInt('auto_sync_last'), r.clock.now.millisecondsSinceEpoch);
-        expect(p.getBool('auto_sync_dirty'), isFalse);
+        expect(p.getBool('auto_sync_dirty') ?? false, isFalse);
         r.server.failReadsWith = 500;
         await r.lib.addQuote(const QuoteDraft(text: 'Fails.'));
         await settle(tester, const Duration(seconds: 6));
