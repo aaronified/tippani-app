@@ -11,6 +11,7 @@ import '../imports/import_service.dart';
 import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
+import '../metadata/metadata_service.dart';
 import '../people/people_console.dart';
 import '../people/people_directory.dart';
 import '../tools/cover_search.dart';
@@ -119,6 +120,7 @@ class Harness {
     this.contextRules,
     this.peopleService,
     this.coverSearch,
+    this.metadata,
     this.sources,
     this.sourcePicker = const SystemSourcePicker(),
     this.peopleConsole,
@@ -202,6 +204,10 @@ class Harness {
 
   /// Finds pictures that could be a work's cover or poster, online. Null in a test about something else.
   final CoverSearch? coverSearch;
+
+  /// What the server could still find out about the library's works, and the works saved twice. Null in a test
+  /// about something else.
+  final MetadataService? metadata;
 
   /// The source files (ebooks, subtitles) works' quotes were found in, on the paired server. Null in a test about
   /// something else.
@@ -319,6 +325,7 @@ class Harness {
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
       coverSearch: PairedCoverSearch(controller),
+      metadata: PairedMetadataService(controller),
       sources: PairedSourcesService(controller),
       peopleConsole: PairedPeopleConsole(controller),
       admin: PairedAdminService(controller),
@@ -357,6 +364,7 @@ class Harness {
     ContextRules? contextRules,
     PeopleService? peopleService,
     CoverSearch? coverSearch,
+    MetadataService? metadata,
     SourcesService? sources,
     SourcePicker? sourcePicker,
     PeopleConsole? peopleConsole,
@@ -417,6 +425,7 @@ class Harness {
       contextRules: contextRules,
       peopleService: peopleService,
       coverSearch: coverSearch,
+      metadata: metadata,
       sources: sources,
       sourcePicker: sourcePicker ?? const SystemSourcePicker(),
       peopleConsole: peopleConsole,
