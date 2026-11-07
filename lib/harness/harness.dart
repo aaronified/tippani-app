@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../admin/admin_service.dart';
+import '../admin/server_files.dart';
 import '../checks/checks_service.dart';
 import '../imports/import_picker.dart';
 import '../imports/import_service.dart';
@@ -113,6 +115,8 @@ class Harness {
     this.contextRules,
     this.peopleService,
     this.peopleConsole,
+    this.admin,
+    this.serverFiles = const SystemServerFiles(),
     this.quiz,
     this.details,
     this.contexts,
@@ -190,6 +194,13 @@ class Harness {
 
   /// Every person and character the server keeps, for the metadata console and the editing on their pages.
   final PeopleConsole? peopleConsole;
+
+  /// Running the server (users, jobs, backups, updates, folders, sources), for an admin account. Null in a test about
+  /// something else.
+  final AdminService? admin;
+
+  /// The system's file pickers for the server's big backup files.
+  final ServerFiles serverFiles;
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
@@ -287,6 +298,7 @@ class Harness {
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
       peopleConsole: PairedPeopleConsole(controller),
+      admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
@@ -321,6 +333,8 @@ class Harness {
     ContextRules? contextRules,
     PeopleService? peopleService,
     PeopleConsole? peopleConsole,
+    AdminService? admin,
+    ServerFiles? serverFiles,
     QuizService? quiz,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
@@ -375,6 +389,8 @@ class Harness {
       contextRules: contextRules,
       peopleService: peopleService,
       peopleConsole: peopleConsole,
+      admin: admin,
+      serverFiles: serverFiles ?? const SystemServerFiles(),
       quiz: quiz,
       details: details,
       contexts: contexts,
