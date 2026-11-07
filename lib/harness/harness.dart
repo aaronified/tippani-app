@@ -9,6 +9,7 @@ import '../imports/import_service.dart';
 import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
+import '../people/people_console.dart';
 import '../people/people_directory.dart';
 import '../people/people_service.dart';
 import '../quiz/quiz.dart';
@@ -111,6 +112,7 @@ class Harness {
     this.account,
     this.contextRules,
     this.peopleService,
+    this.peopleConsole,
     this.quiz,
     this.details,
     this.contexts,
@@ -185,6 +187,9 @@ class Harness {
 
   /// The pages of people and characters (and edits to a person) from the paired server.
   final PeopleService? peopleService;
+
+  /// Every person and character the server keeps, for the metadata console and the editing on their pages.
+  final PeopleConsole? peopleConsole;
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
@@ -281,6 +286,7 @@ class Harness {
       account: PairedAccount(controller),
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
+      peopleConsole: PairedPeopleConsole(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
@@ -314,6 +320,7 @@ class Harness {
     AccountService? account,
     ContextRules? contextRules,
     PeopleService? peopleService,
+    PeopleConsole? peopleConsole,
     QuizService? quiz,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
@@ -367,6 +374,7 @@ class Harness {
       account: account,
       contextRules: contextRules,
       peopleService: peopleService,
+      peopleConsole: peopleConsole,
       quiz: quiz,
       details: details,
       contexts: contexts,

@@ -9,6 +9,12 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- People and characters console (Settings, Your library): every person and character your server keeps, with search that also finds other
+  spellings, filters for no photo or no links and by kind, and counts of works and quotes. Open one, edit its spellings (the first line is the
+  name shown), merge two that are the same (you choose the name that stays; the Bin can undo it), remove one, make a new character, ask the
+  server to fetch the photos and details that are missing, and clear out people and characters nothing uses. Press and hold to choose two to merge.
+- A character's page can be edited: its details, its picture (from the phone, or taken away), its spellings (press one to make it a record of its
+  own), merging it into another character, and removing it. A person's page gains the same for spellings, merging and removing.
 - Import and checks, in Settings: bring in a file and look over what it holds before it joins your library. Choose a Kindle My Clippings file,
   a Kindle notebook page, Bookcision, Readest, Goodreads, Hardcover, IMDb or Markdown, and your server reads it (it works out the format
   itself, or you name it). The quotes wait in a queue you review: edit a quote's colour, favourite mark and where it came from, shift page
