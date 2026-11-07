@@ -1,5 +1,6 @@
 import 'admin_screen.dart';
 import 'checks_entry.dart';
+import 'metadata_tools_screen.dart';
 import 'source_files_screen.dart';
 import 'filtered_quotes_screen.dart';
 import 'people_console_screen.dart';
@@ -333,6 +334,23 @@ class SettingsScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (harness.metadata != null && harness.library != null)
+                    ListTile(
+                      leading: const Icon(Icons.travel_explore_rounded),
+                      title: const Text('Details and duplicates'),
+                      subtitle: const Text(
+                        'Works that lack a cover or details, checked against the web; works saved twice',
+                      ),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => MetadataToolsScreen(
+                            service: harness.metadata!,
+                            admin: controller.isAdmin,
+                            onChanged: () => harness.auto?.scheduleSoon(),
                           ),
                         ),
                       ),
