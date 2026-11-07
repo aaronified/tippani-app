@@ -26,9 +26,9 @@ String sourceName(String source) {
     }
   }
   return switch (source) {
-    'kindle_clippings' => 'import.source.kindle-clippings.title',
+    'kindle_clippings' => tx('import.source.kindle-clippings.title'),
     'readest_json' => 'Readest',
-    'kindle_notebook' => 'import.source.kindle-notebook.title',
+    'kindle_notebook' => tx('import.source.kindle-notebook.title'),
     'imdb' => 'IMDb quotes',
     _ => source.isEmpty ? 'Import' : source.replaceAll('_', ' '),
   };
@@ -168,10 +168,7 @@ class _StagingScreenState extends State<StagingScreen> {
                 Text(
                   p.$2 == 0
                       ? context.tr('app.staging.waiting_for_the_server')
-                      : tok('app.staging.done_x_of_x2', {
-                          'x': p.$1,
-                          'x2': p.$2,
-                        }),
+                      : tx('app.staging.done_x_of_x2', {'x': p.$1, 'x2': p.$2}),
                 ),
               ],
             ),
@@ -223,7 +220,7 @@ class _StagingScreenState extends State<StagingScreen> {
     await _run(() async {
       final gone = await widget.service.discard(sel);
       _picked.clear();
-      if (mounted) _say(tok('app.staging.discarded_gone', {'gone': gone}));
+      if (mounted) _say(tx('app.staging.discarded_gone', {'gone': gone}));
       await _load();
     });
   }
@@ -339,7 +336,7 @@ class _StagingScreenState extends State<StagingScreen> {
                   child: Text(
                     _batch > 0
                         ? context.tr('app.staging.approve_this_file')
-                        : tok('app.staging.approve_all_pending', {
+                        : tx('app.staging.approve_all_pending', {
                             'pending': pending,
                           }),
                   ),
@@ -542,13 +539,11 @@ class _GroupCard extends StatelessWidget {
     final destination = standalone
         ? context.tr('app.staging.will_be_saved_as_quotes_of')
         : work.targetId > 0
-        ? tok('app.staging.joins_your_target_titlex', {
+        ? tx('app.staging.joins_your_target_titlex', {
             'target_title': work.targetTitle,
             'x': work.targetYear > 0 ? ' (${work.targetYear})' : '',
           })
-        : tok('app.staging.will_be_added_as_a_new', {
-            'x': _kindWord(work.kind),
-          });
+        : tx('app.staging.will_be_added_as_a_new', {'x': _kindWord(work.kind)});
     final who = [
       if (work.author.isNotEmpty) work.author,
       if (work.year > 0) '${work.year}',
@@ -654,7 +649,7 @@ class _GroupCard extends StatelessWidget {
               child: Text(
                 standalone
                     ? context.tr('app.staging.no_quotes_left_in_this_group')
-                    : tok('app.staging.no_quotes_approving_adds_the_x', {
+                    : tx('app.staging.no_quotes_approving_adds_the_x', {
                         'x': _kindWord(work.kind),
                       }),
                 style: theme.textTheme.bodySmall,
@@ -1055,7 +1050,7 @@ class _FieldsSheetState extends State<_FieldsSheet> {
     String? v(String k) => _touched.contains(k) ? _c[k]!.text.trim() : null;
     return _sheet(
       context,
-      tok('app.staging.edit_count_selected', {'count': widget.count}),
+      tx('app.staging.edit_count_selected', {'count': widget.count}),
       [
         Text(
           context.tr('app.staging.only_the_boxes_you_type_in'),
@@ -1157,7 +1152,7 @@ class _ShiftSheetState extends State<_ShiftSheet> {
         (needsNumber ? number != null : _by.text.trim().isNotEmpty);
     return _sheet(
       context,
-      tok('app.staging.shift_locations_on_count_selected', {
+      tx('app.staging.shift_locations_on_count_selected', {
         'count': widget.count,
       }),
       [

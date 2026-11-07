@@ -1,5 +1,6 @@
 import '../api/server_call.dart';
 import '../app_controller.dart';
+import '../l10n/l10n.dart';
 
 /// What a press on "accept" or "ignore" did, as the server counts it.
 class ChangeResult {
@@ -164,38 +165,38 @@ class CleanupScan {
 }
 
 /// The reader's words for each rule, as the web's own page gives them.
-const cleanupRuleWords = <String, (String, String)>{
+final cleanupRuleWords = <String, (String, String)>{
   'invisible': (
-    'cleanup.rule.invisible.label',
-    'app.checks_service.an_invisible_space_or_hyphen_from',
+    tx('cleanup.rule.invisible.label'),
+    tx('app.checks_service.an_invisible_space_or_hyphen_from'),
   ),
   'edge-space': (
-    'cleanup.rule.edge-space.label',
-    'cleanup.rule.edge-space.body',
+    tx('cleanup.rule.edge-space.label'),
+    tx('cleanup.rule.edge-space.body'),
   ),
   'double-space': (
-    'cleanup.rule.double-space.label',
-    'app.checks_service.two_or_more_spaces_in_a',
+    tx('cleanup.rule.double-space.label'),
+    tx('app.checks_service.two_or_more_spaces_in_a'),
   ),
   'space-before-punctuation': (
-    'cleanup.rule.space-before-punctuation.label',
+    tx('cleanup.rule.space-before-punctuation.label'),
     'A space before a comma, full stop or bracket. French does this deliberately.',
   ),
   'reference-mark': (
-    'cleanup.rule.reference-mark.label',
+    tx('cleanup.rule.reference-mark.label'),
     'A leftover reference mark: a superscript, a number in brackets, or a digit stuck to the last word.',
   ),
   'pronunciation': (
-    'cleanup.rule.pronunciation.label',
+    tx('cleanup.rule.pronunciation.label'),
     "A dictionary's guide to saying the word, carried in with the headword.",
   ),
   'hyphen-break': (
-    'cleanup.rule.hyphen-break.label',
+    tx('cleanup.rule.hyphen-break.label'),
     'A word split across two lines and rejoined with the hyphen still in it.',
   ),
   'repeated-punctuation': (
-    'cleanup.rule.repeated-punctuation.label',
-    'cleanup.rule.repeated-punctuation.body',
+    tx('cleanup.rule.repeated-punctuation.label'),
+    tx('cleanup.rule.repeated-punctuation.body'),
   ),
 };
 
@@ -278,13 +279,13 @@ class CorrectionsScan {
 }
 
 /// The buckets of corrections, in the server's order, with the web's words.
-const correctionBuckets = <String, (String, String)>{
+final correctionBuckets = <String, (String, String)>{
   'spacing': (
-    'corrections.bucket.spacing.title',
-    'corrections.bucket.spacing.note',
+    tx('corrections.bucket.spacing.title'),
+    tx('corrections.bucket.spacing.note'),
   ),
   'punctuation': (
-    'corrections.bucket.punctuation.title',
+    tx('corrections.bucket.punctuation.title'),
     'The same words; the marks between them differ.',
   ),
   'capitalisation': ('Capitalisation', 'The same words in a different case.'),
@@ -293,24 +294,27 @@ const correctionBuckets = <String, (String, String)>{
     'The same letters; the accents differ. A file can lack them altogether.',
   ),
   'marks': (
-    'corrections.bucket.marks.title',
+    tx('corrections.bucket.marks.title'),
     'Accents, case and punctuation together; the words are the same.',
   ),
   'extend': (
-    'corrections.bucket.extend.title',
-    'corrections.bucket.extend.note',
+    tx('corrections.bucket.extend.title'),
+    tx('corrections.bucket.extend.note'),
   ),
-  'trim': ('corrections.bucket.trim.title', 'corrections.bucket.trim.note'),
+  'trim': (
+    tx('corrections.bucket.trim.title'),
+    tx('corrections.bucket.trim.note'),
+  ),
   'one-word': (
-    'corrections.bucket.one-word.title',
-    'corrections.bucket.one-word.note',
+    tx('corrections.bucket.one-word.title'),
+    tx('corrections.bucket.one-word.note'),
   ),
   'few-words': (
-    'corrections.bucket.few-words.title',
-    'corrections.bucket.few-words.note',
+    tx('corrections.bucket.few-words.title'),
+    tx('corrections.bucket.few-words.note'),
   ),
   'wording': (
-    'corrections.bucket.wording.title',
+    tx('corrections.bucket.wording.title'),
     'A longer difference. Read each one.',
   ),
 };

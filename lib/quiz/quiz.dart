@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import '../api/api_client.dart';
 import '../app_controller.dart';
 import '../settings/settings_store.dart';
+import '../l10n/l10n.dart';
 
 /// The character the server leaves where the words of a fill-in-the-blank were.
 const String clozeBlank = '￼';
@@ -601,15 +602,21 @@ class ServerQuiz extends ChangeNotifier implements QuizService {
       return await _controller.withClient(run) as T;
     } on ApiException catch (e) {
       throw QuizException(switch (e.failure) {
-        ApiFailure.network =>
+        ApiFailure.network => tx(
           'app.admin_service.the_server_could_not_be_reached',
-        ApiFailure.timeout => 'app.admin_service.the_server_took_too_long_to',
-        ApiFailure.unauthorised =>
+        ),
+        ApiFailure.timeout => tx(
+          'app.admin_service.the_server_took_too_long_to',
+        ),
+        ApiFailure.unauthorised => tx(
           'app.board_service.the_server_no_longer_accepts_this',
-        ApiFailure.forbidden =>
+        ),
+        ApiFailure.forbidden => tx(
           'app.account_service.the_server_does_not_allow_that',
-        ApiFailure.rateLimited =>
+        ),
+        ApiFailure.rateLimited => tx(
           'app.board_service.the_server_asks_you_to_wait',
+        ),
         ApiFailure.server || ApiFailure.badResponse =>
           e.detail.isNotEmpty ? e.detail : 'The server could not do that.',
       });

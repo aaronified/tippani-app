@@ -198,9 +198,9 @@ List<List<T>> _chunks<T>(List<T> all, int n) => [
 ];
 
 String _kindLabel(String kind) => switch (kind) {
-  'book' => 'app.checks_tabs.book_quote',
-  'screen' => 'app.checks_tabs.film_or_show_quote',
-  _ => 'app.checks_tabs.quote_on_its_own',
+  'book' => tx('app.checks_tabs.book_quote'),
+  'screen' => tx('app.checks_tabs.film_or_show_quote'),
+  _ => tx('app.checks_tabs.quote_on_its_own'),
 };
 
 // ============================================================ stray marks
@@ -302,8 +302,8 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                   duplicates: dup,
                 ).words
               : ignore!
-              ? tok('app.checks_tabs.ignored_n', {'n': ts.length})
-              : tok('app.checks_tabs.restored_n', {'n': ts.length}),
+              ? tx('app.checks_tabs.ignored_n', {'n': ts.length})
+              : tx('app.checks_tabs.restored_n', {'n': ts.length}),
         );
         setState(() => _nonce++);
         if (fix) await widget.onChanged();
@@ -421,7 +421,7 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                         : () async {
                             if (await _confirm(
                               context,
-                              tok('app.checks_tabs.fix_all_n_2', {
+                              tx('app.checks_tabs.fix_all_n_2', {
                                 'n': fixable.length,
                               }),
                               context.tr(
@@ -859,7 +859,7 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                                       .length;
                                   if (await _confirm(
                                     context,
-                                    tok('app.checks_tabs.accept_all_n', {
+                                    tx('app.checks_tabs.accept_all_n', {
                                       'n': rows.length,
                                     }),
                                     '${correctionBuckets[b]?.$2 ?? ''}\n\nEach quote takes the file’s words.${edited > 0 ? ' $edited you edited yourself are left alone.' : ''}',
@@ -1094,7 +1094,7 @@ class _LocatorsTabState extends State<LocatorsTab> {
                           : () async {
                               if (await _confirm(
                                 context,
-                                tok('app.checks_tabs.accept_all_n', {
+                                tx('app.checks_tabs.accept_all_n', {
                                   'n': rows.length,
                                 }),
                                 context.tr(

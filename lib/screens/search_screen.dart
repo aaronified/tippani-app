@@ -547,7 +547,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: InputChip(
-                      label: Text(f.label),
+                      label: Text(context.tr(f.label)),
                       onDeleted: () => _removeFacet(f),
                     ),
                   ),
@@ -599,7 +599,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           size: 16,
                           color: theme.colorScheme.primary,
                         ),
-                        label: Text(s.label),
+                        label: Text(context.tr(s.label)),
                         onPressed: () => _useSuggestion(s),
                       ),
                     ),

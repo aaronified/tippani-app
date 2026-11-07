@@ -21,7 +21,7 @@ List<String> describePush(PushResult r) {
     ];
     if (parts.isNotEmpty) {
       lines.add(
-        tok('app.sync.sent_x_to_your_server', {'x': parts.join(' and ')}),
+        tx('app.sync.sent_x_to_your_server', {'x': parts.join(' and ')}),
       );
     }
     if (r.alreadyThere > 0) {
@@ -39,13 +39,13 @@ List<String> describePush(PushResult r) {
         'The server could not be reached, so the rest was not sent. What went up stays there; try again when it answers.',
       );
     case ApiFailure.unauthorised:
-      lines.add('app.sync.the_server_does_not_accept_this');
+      lines.add(tx('app.sync.the_server_does_not_accept_this'));
     case ApiFailure.rateLimited:
-      lines.add('app.pull.the_server_asked_the_app_to');
+      lines.add(tx('app.pull.the_server_asked_the_app_to'));
     case ApiFailure.forbidden:
-      lines.add('app.sync.this_account_is_not_allowed_to');
+      lines.add(tx('app.sync.this_account_is_not_allowed_to'));
     case ApiFailure.server || ApiFailure.badResponse:
-      lines.add('app.sync.the_server_answered_with_an_error');
+      lines.add(tx('app.sync.the_server_answered_with_an_error'));
   }
   if (r.waiting > 0) {
     lines.add(

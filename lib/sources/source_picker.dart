@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 
+import '../l10n/l10n.dart';
+
 /// A file the reader chose as a source.
 class SourceFile {
   const SourceFile(this.name, this.bytes);
@@ -15,7 +17,7 @@ const maxSourceBytes = 25 * 1024 * 1024;
 class SourceTooBig implements Exception {
   const SourceTooBig();
   @override
-  String toString() => 'app.source_picker.that_file_is_over_25_mb';
+  String toString() => tx('app.source_picker.that_file_is_over_25_mb');
 }
 
 /// Choosing a source file with the system's own picker. Tests hand the harness a fake.
@@ -30,7 +32,7 @@ class SystemSourcePicker implements SourcePicker {
   @override
   Future<SourceFile?> pick() async {
     final f = await FilePicker.pickFile(
-      dialogTitle: 'app.source_picker.choose_an_ebook_or_a_subtitle',
+      dialogTitle: tx('app.source_picker.choose_an_ebook_or_a_subtitle'),
       type: FileType.any,
     );
     if (f == null) return null;

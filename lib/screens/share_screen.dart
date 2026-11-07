@@ -307,7 +307,7 @@ class _ShareScreenState extends State<ShareScreen> {
             children: [
               for (final f in ShareFormat.values)
                 ChoiceChip(
-                  label: Text(f.label),
+                  label: Text(context.tr(f.label)),
                   selected: _format == f,
                   onSelected: (_) => _rebuild(() => _format = f),
                 ),
@@ -325,7 +325,7 @@ class _ShareScreenState extends State<ShareScreen> {
             children: [
               for (final f in _fields)
                 FilterChip(
-                  label: Text(f.label),
+                  label: Text(context.tr(f.label)),
                   selected: _on.contains(f.id),
                   onSelected: (v) => _rebuild(() {
                     _on = {..._on};

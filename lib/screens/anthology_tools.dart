@@ -200,7 +200,7 @@ Future<Map<String, bool>?> askSwitches(BuildContext context, Anthology a) {
             for (final s in anthologySwitches)
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(s.label),
+                title: Text(context.tr(s.label)),
                 value: shown[s.key]!,
                 onChanged: (v) => setState(() => shown[s.key] = v),
               ),
@@ -665,7 +665,7 @@ class _FillScreenState extends State<FillScreen> {
               children: [
                 for (final s in FillSource.values)
                   ChoiceChip(
-                    label: Text(s.label),
+                    label: Text(context.tr(s.label)),
                     selected: _source == s,
                     onSelected: (_) => setState(() {
                       _source = s;

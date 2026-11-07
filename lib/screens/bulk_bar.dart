@@ -221,7 +221,7 @@ class QuoteBulkActions {
     final value = await askBulkText(
       context,
       title: context.tr('app.bulk_bar.set_one_field_2'),
-      label: field.label,
+      label: context.tr(field.label),
       offer: const [],
       action: 'Set',
       allowEmpty: true,
@@ -444,7 +444,7 @@ class WorkBulkActions {
     final value = await askBulkText(
       context,
       title: context.tr('app.bulk_bar.set_one_field_2'),
-      label: field.label,
+      label: context.tr(field.label),
       offer: const [],
       action: 'Set',
       allowEmpty: field != WorkField.year,

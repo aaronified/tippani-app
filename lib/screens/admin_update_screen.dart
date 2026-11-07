@@ -105,7 +105,7 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
             });
             say(
               context,
-              tok('app.admin_update.the_server_now_runs_current', {
+              tx('app.admin_update.the_server_now_runs_current', {
                 'current': now.current,
               }),
             );

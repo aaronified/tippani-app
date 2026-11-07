@@ -68,7 +68,7 @@ class SystemBackupPicker implements BackupPicker {
   @override
   Future<bool> save(String fileName, Uint8List bytes) async {
     final saved = await FilePicker.saveFile(
-      dialogTitle: 'app.harness.save_your_backup',
+      dialogTitle: tx('app.harness.save_your_backup'),
       fileName: fileName,
       bytes: bytes,
     );
@@ -78,7 +78,7 @@ class SystemBackupPicker implements BackupPicker {
   @override
   Future<PickedFile?> pick() async {
     final f = await FilePicker.pickFile(
-      dialogTitle: 'app.harness.choose_a_tippani_backup',
+      dialogTitle: tx('app.harness.choose_a_tippani_backup'),
       type: FileType.custom,
       allowedExtensions: const ['json'],
     );

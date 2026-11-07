@@ -16,7 +16,7 @@ List<String> describePull(PullResult r) {
       r.conflicts.isEmpty &&
       r.refused.isEmpty &&
       r.stoppedBy == null) {
-    lines.add('app.pull.your_phone_and_your_server_already');
+    lines.add(tx('app.pull.your_phone_and_your_server_already'));
   }
   final down = [
     if (r.worksAdded > 0) _count(r.worksAdded, 'new work'),
@@ -31,7 +31,7 @@ List<String> describePull(PullResult r) {
   ];
   if (up.isNotEmpty) {
     lines.add(
-      tok('app.pull.sent_up_your_changes_to_x', {'x': up.join(' and ')}),
+      tx('app.pull.sent_up_your_changes_to_x', {'x': up.join(' and ')}),
     );
   }
   if (r.conflicts.isNotEmpty) {
@@ -85,13 +85,13 @@ List<String> describePull(PullResult r) {
         'The server could not be reached. Nothing more was changed; try again when it answers.',
       );
     case ApiFailure.unauthorised:
-      lines.add('app.pull.the_server_does_not_accept_this');
+      lines.add(tx('app.pull.the_server_does_not_accept_this'));
     case ApiFailure.rateLimited:
-      lines.add('app.pull.the_server_asked_the_app_to');
+      lines.add(tx('app.pull.the_server_asked_the_app_to'));
     case ApiFailure.forbidden:
-      lines.add('app.pull.this_account_is_not_allowed_to');
+      lines.add(tx('app.pull.this_account_is_not_allowed_to'));
     case ApiFailure.server || ApiFailure.badResponse:
-      lines.add('app.pull.the_server_answered_with_an_error');
+      lines.add(tx('app.pull.the_server_answered_with_an_error'));
   }
   return lines;
 }

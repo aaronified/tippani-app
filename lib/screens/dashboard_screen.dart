@@ -22,32 +22,32 @@ String greetingFor(DateTime now, String? name) {
   final h = now.hour;
   final String hello;
   if (h < 5) {
-    hello = 'app.dashboard.up_late';
+    hello = tx('app.dashboard.up_late');
   } else if (h < 8) {
-    hello = 'app.dashboard.early_start';
+    hello = tx('app.dashboard.early_start');
   } else if (h < 12) {
-    hello = 'app.dashboard.good_morning';
+    hello = tx('app.dashboard.good_morning');
   } else if (h < 17) {
-    hello = 'app.dashboard.good_afternoon';
+    hello = tx('app.dashboard.good_afternoon');
   } else if (h < 21) {
-    hello = 'app.dashboard.good_evening';
+    hello = tx('app.dashboard.good_evening');
   } else {
-    hello = 'app.dashboard.winding_down';
+    hello = tx('app.dashboard.winding_down');
   }
   return name == null || name.isEmpty ? hello : '$hello, $name';
 }
 
 final _epigraphs = [
   'A margin is a promise: that there is always room to answer back.',
-  'greeting.epigraph.2',
-  'greeting.epigraph.3',
+  tx('greeting.epigraph.2'),
+  tx('greeting.epigraph.3'),
   'A quote you cannot find again is a quote you did not keep.',
-  'greeting.epigraph.5',
-  'greeting.epigraph.6',
-  'greeting.epigraph.7',
-  'greeting.epigraph.8',
+  tx('greeting.epigraph.5'),
+  tx('greeting.epigraph.6'),
+  tx('greeting.epigraph.7'),
+  tx('greeting.epigraph.8'),
   'A commonplace book is a memory you are allowed to lend.',
-  'greeting.epigraph.10',
+  tx('greeting.epigraph.10'),
 ];
 
 /// The line for the day: the same all day, a different one tomorrow.

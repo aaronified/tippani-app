@@ -240,7 +240,7 @@ class _BoardScreenState extends State<BoardScreen> {
                 CheckedPopupMenuItem(
                   value: s,
                   checked: s == _sort,
-                  child: Text(s.label),
+                  child: Text(context.tr(s.label)),
                 ),
             ],
           ),
@@ -254,7 +254,7 @@ class _BoardScreenState extends State<BoardScreen> {
                 CheckedPopupMenuItem(
                   value: g,
                   checked: g == _group,
-                  child: Text(g.label),
+                  child: Text(context.tr(g.label)),
                 ),
             ],
           ),

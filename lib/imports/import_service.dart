@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../api/server_call.dart';
 import '../app_controller.dart';
+import '../l10n/l10n.dart';
 
 /// One kind of file the server's importer reads, with the steps for getting that file, as the web's import page
 /// lists them.
@@ -25,12 +26,12 @@ class ImportSource {
   final String caveat;
 }
 
-const importSources = <ImportSource>[
+final importSources = <ImportSource>[
   ImportSource(
     'markdown',
     'Markdown',
     ['md', 'markdown', 'txt'],
-    'app.import_service.tippani_exports_of_books_or_the',
+    tx('app.import_service.tippani_exports_of_books_or_the'),
     [
       'Import a Tippani export (books or catalogue), a Readest export, or your own frontmatter and quotes.',
       'A single .md may hold many books or titles. Each one is imported.',
@@ -40,7 +41,7 @@ const importSources = <ImportSource>[
     'readest',
     'Readest',
     ['json'],
-    'app.import_service.readest_s_annotation_export_colours_and',
+    tx('app.import_service.readest_s_annotation_export_colours_and'),
     [
       "In Readest, open the book's annotations and export them.",
       "Import the .json. Readest's Markdown export is read too.",
@@ -50,22 +51,24 @@ const importSources = <ImportSource>[
     'bookcision',
     'Bookcision',
     ['json'],
-    'app.import_service.kindle_highlights_through_the_bookcision_bookmarklet',
+    tx(
+      'app.import_service.kindle_highlights_through_the_bookcision_bookmarklet',
+    ),
     [
       "On read.amazon.com/notebook, open the book's Notes & Highlights.",
       'Run the Bookcision bookmarklet, then Download → JSON, and import that file.',
-      'app.import_service.without_the_bookmarklet_import_the_saved',
+      tx('app.import_service.without_the_bookmarklet_import_the_saved'),
     ],
   ),
   ImportSource(
     'hardcover-html',
     'Hardcover',
     ['html', 'htm'],
-    'import.source.hardcover-html.desc',
+    tx('import.source.hardcover-html.desc'),
     [
       'Open your journal page, for example hardcover.app/books/<book>/journals/@you.',
-      'app.import_service.save_it_as_a_web_page',
-      'import.source.imdb-quotes.step.3',
+      tx('app.import_service.save_it_as_a_web_page'),
+      tx('import.source.imdb-quotes.step.3'),
     ],
   ),
   ImportSource(
@@ -75,8 +78,8 @@ const importSources = <ImportSource>[
     "A book's public Quotes page. Quote tags come across too.",
     [
       "Open the book's Quotes page, for example goodreads.com/work/quotes/<id>-<book>.",
-      'app.import_service.save_it_as_a_web_page',
-      'import.source.imdb-quotes.step.3',
+      tx('app.import_service.save_it_as_a_web_page'),
+      tx('import.source.imdb-quotes.step.3'),
     ],
   ),
   ImportSource(
@@ -86,32 +89,32 @@ const importSources = <ImportSource>[
     "A film or show's Quotes page, imported as dialogues.",
     [
       "Open the title's Quotes page, for example imdb.com/title/tt0434409/quotes.",
-      'app.import_service.save_it_as_a_web_page',
-      'import.source.imdb-quotes.step.3',
+      tx('app.import_service.save_it_as_a_web_page'),
+      tx('import.source.imdb-quotes.step.3'),
     ],
   ),
   ImportSource(
     'kindle-notebook',
-    'import.source.kindle-notebook.title',
+    tx('import.source.kindle-notebook.title'),
     ['html', 'htm'],
     'Your Kindle Notes & Highlights page. Colours and locations come across.',
     [
       'Open read.amazon.com/notebook and pick the book.',
-      'app.import_service.save_it_as_a_web_page',
-      'import.source.imdb-quotes.step.3',
+      tx('app.import_service.save_it_as_a_web_page'),
+      tx('import.source.imdb-quotes.step.3'),
     ],
   ),
   ImportSource(
     'kindle-clippings',
-    'import.source.kindle-clippings.title',
+    tx('import.source.kindle-clippings.title'),
     ['txt'],
-    'app.import_service.the_kindle_device_s_own_file',
+    tx('app.import_service.the_kindle_device_s_own_file'),
     [
       'Plug the Kindle in by USB.',
       'Copy documents/My Clippings.txt off the device.',
-      'app.import_service.import_it_every_book_in_the',
+      tx('app.import_service.import_it_every_book_in_the'),
     ],
-    caveat: 'import.source.kindle-clippings.caveat',
+    caveat: tx('import.source.kindle-clippings.caveat'),
   ),
 ];
 
@@ -552,7 +555,7 @@ class PairedImportService implements ImportService {
       final msg =
           (body['error'] as String?) ??
           (job['error'] as String?) ??
-          'app.import_service.the_server_could_not_read_that';
+          tx('app.import_service.the_server_could_not_read_that');
       return ImportOutcome(
         ok: false,
         message: msg,
@@ -631,7 +634,7 @@ class PairedImportService implements ImportService {
         message:
             (body['error'] as String?) ??
             (job['error'] as String?) ??
-            'app.staging.the_server_could_not_add_those',
+            tx('app.staging.the_server_could_not_add_those'),
       );
     }
     return ApprovalOutcome(

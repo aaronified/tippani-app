@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import '../api/api_client.dart';
 import '../api/server_call.dart';
 import '../app_controller.dart';
+import '../l10n/l10n.dart';
 
 int _int(Object? v) => v is int ? v : (v is num ? v.toInt() : 0);
 String _s(Object? v) => v == null ? '' : '$v';
@@ -348,11 +349,15 @@ class PairedAdminService implements AdminService {
       return await run(c);
     } on ApiException catch (e) {
       throw ServerException(switch (e.failure) {
-        ApiFailure.unauthorised =>
+        ApiFailure.unauthorised => tx(
           'app.admin_service.that_password_is_not_right',
-        ApiFailure.network =>
+        ),
+        ApiFailure.network => tx(
           'app.admin_service.the_server_could_not_be_reached',
-        ApiFailure.timeout => 'app.admin_service.the_server_took_too_long_to',
+        ),
+        ApiFailure.timeout => tx(
+          'app.admin_service.the_server_took_too_long_to',
+        ),
         _ => e.detail.isNotEmpty ? e.detail : 'The server could not do that.',
       });
     } finally {

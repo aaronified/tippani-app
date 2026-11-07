@@ -58,7 +58,7 @@ Future<BackupSecret?> askBackupSecret(
                       ? 'Passphrase'
                       : account.isEmpty
                       ? context.tr('settings.restore.password.label')
-                      : tok('app.admin_backup.password_of_account', {
+                      : tx('app.admin_backup.password_of_account', {
                           'account': account,
                         }),
                 ),
@@ -75,7 +75,7 @@ Future<BackupSecret?> askBackupSecret(
                 password: passphrase ? '' : c.text,
                 passphrase: passphrase ? c.text : '',
               )),
-              child: Text(yes),
+              child: Text(context.tr(yes)),
             ),
           ],
         ),
@@ -200,7 +200,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       setState(() => _working = null);
       final saved = await widget.files.save(f.name, f.bytes);
       if (mounted && saved) {
-        say(context, tok('app.admin_backup.saved_name', {'name': f.name}));
+        say(context, tx('app.admin_backup.saved_name', {'name': f.name}));
       }
     } on ServerException catch (e) {
       if (mounted) say(context, e.message);
@@ -285,10 +285,10 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       context,
       title: context.tr('app.admin_backup.replace_the_whole_library'),
       body: fromPhone
-          ? tok('app.admin_backup.every_reader_s_library_on_the', {
+          ? tx('app.admin_backup.every_reader_s_library_on_the', {
               'name': file!.name,
             })
-          : tok('app.admin_backup.every_reader_s_library_on_the_2', {
+          : tx('app.admin_backup.every_reader_s_library_on_the_2', {
               'created': info!.created,
             }),
       yes: 'Continue',
@@ -304,7 +304,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
           : info!.needsPassphrase
           ? context.tr('app.admin_backup.this_backup_is_sealed_with_a')
           : info.needsPassword
-          ? tok('app.admin_backup.this_backup_is_sealed_with_the', {
+          ? tx('app.admin_backup.this_backup_is_sealed_with_the', {
               'account': info.account.isEmpty
                   ? 'the account that made it'
                   : info.account,

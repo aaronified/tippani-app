@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../api/api_client.dart';
 import '../app_controller.dart';
 import '../sync/fingerprint.dart';
+import '../l10n/l10n.dart';
 
 /// A collection of quotes the reader has gathered and ordered, kept on the server.
 class Anthology {
@@ -56,17 +57,29 @@ class Anthology {
 
 /// The display switches of an anthology, in the order the page offers them: the key the server stores, the
 /// words for the reader, and whether the key is a "hide" switch (on means shown unless set) or a "show" one.
-const anthologySwitches = <({String key, String label, bool hide})>[
-  (key: 'hide_credit', label: 'app.anthologies.who_it_is_by', hide: true),
-  (key: 'hide_source', label: 'app.anthologies.the_book_or_film', hide: true),
-  (key: 'hide_commentary', label: 'app.anthologies.my_commentary', hide: true),
-  (key: 'hide_colour', label: 'app.anthologies.the_colour_edge', hide: true),
+final anthologySwitches = <({String key, String label, bool hide})>[
+  (key: 'hide_credit', label: tx('app.anthologies.who_it_is_by'), hide: true),
+  (
+    key: 'hide_source',
+    label: tx('app.anthologies.the_book_or_film'),
+    hide: true,
+  ),
+  (
+    key: 'hide_commentary',
+    label: tx('app.anthologies.my_commentary'),
+    hide: true,
+  ),
+  (
+    key: 'hide_colour',
+    label: tx('app.anthologies.the_colour_edge'),
+    hide: true,
+  ),
   (
     key: 'show_locator',
-    label: 'app.anthologies.where_in_the_work',
+    label: tx('app.anthologies.where_in_the_work'),
     hide: false,
   ),
-  (key: 'show_date', label: 'app.anthologies.the_date', hide: false),
+  (key: 'show_date', label: tx('app.anthologies.the_date'), hide: false),
 ];
 
 /// One passage in an anthology, as the server draws it.
@@ -153,7 +166,7 @@ class AnthologyEntry {
       'person' => personName.isNotEmpty ? personName : credit,
       _ => characterName,
     };
-    return label.isEmpty ? 'app.anthologies.not_named' : label;
+    return label.isEmpty ? tx('app.anthologies.not_named') : label;
   }
 
   /// Names a passage by what the server calls it.
@@ -484,19 +497,25 @@ class ServerAnthologies implements AnthologyService {
       return await _controller.withClient(run) as T;
     } on ApiException catch (e) {
       throw AnthologyException(switch (e.failure) {
-        ApiFailure.network =>
+        ApiFailure.network => tx(
           'app.admin_service.the_server_could_not_be_reached',
-        ApiFailure.timeout => 'app.admin_service.the_server_took_too_long_to',
-        ApiFailure.unauthorised =>
+        ),
+        ApiFailure.timeout => tx(
+          'app.admin_service.the_server_took_too_long_to',
+        ),
+        ApiFailure.unauthorised => tx(
           'app.board_service.the_server_no_longer_accepts_this',
-        ApiFailure.forbidden =>
+        ),
+        ApiFailure.forbidden => tx(
           'app.account_service.the_server_does_not_allow_that',
-        ApiFailure.rateLimited =>
+        ),
+        ApiFailure.rateLimited => tx(
           'app.board_service.the_server_asks_you_to_wait',
+        ),
         ApiFailure.server || ApiFailure.badResponse =>
           e.detail.isNotEmpty
               ? e.detail
-              : 'app.admin_service.the_server_could_not_do_that',
+              : tx('app.admin_service.the_server_could_not_do_that'),
       });
     }
   }

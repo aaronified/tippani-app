@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../api/api_client.dart';
 import '../app_controller.dart';
+import '../l10n/l10n.dart';
 
 /// The answer to a call: the [value], or the server's [error] in its own words.
 class Outcome<T> {
@@ -106,7 +107,7 @@ class PairedAccount implements AccountService {
       }
       final v = await _controller.withClient(run);
       if (v == null && !_controller.paired) {
-        return Outcome.fail('app.account_service.this_phone_is_not_paired');
+        return Outcome.fail(tx('app.account_service.this_phone_is_not_paired'));
       }
       return Outcome.ok(v);
     } on ApiException catch (e) {
@@ -114,14 +115,13 @@ class PairedAccount implements AccountService {
         return Outcome.fail(wrong401);
       }
       return switch (e.failure) {
-        ApiFailure.network ||
-        ApiFailure.timeout => const Outcome.fail(_offline),
+        ApiFailure.network || ApiFailure.timeout => Outcome.fail(tx(_offline)),
         ApiFailure.forbidden => Outcome.fail(
-          'app.account_service.the_server_does_not_allow_that',
+          tx('app.account_service.the_server_does_not_allow_that'),
         ),
         _ => Outcome.fail(
           e.detail.isEmpty
-              ? 'app.account_service.the_server_refused_that'
+              ? tx('app.account_service.the_server_refused_that')
               : e.detail,
         ),
       };
@@ -264,15 +264,15 @@ class PairedContextRules implements ContextRules {
     try {
       final v = await _controller.withClient(run);
       if (v == null && !_controller.paired) {
-        return Outcome.fail('app.account_service.this_phone_is_not_paired');
+        return Outcome.fail(tx('app.account_service.this_phone_is_not_paired'));
       }
       return Outcome.ok(v);
     } on ApiException catch (e) {
       return Outcome.fail(
         e.failure == ApiFailure.network || e.failure == ApiFailure.timeout
-            ? 'app.account_service.the_server_could_not_be_reached'
+            ? tx('app.account_service.the_server_could_not_be_reached')
             : (e.detail.isEmpty
-                  ? 'app.account_service.the_server_refused_that'
+                  ? tx('app.account_service.the_server_refused_that')
                   : e.detail),
       );
     }

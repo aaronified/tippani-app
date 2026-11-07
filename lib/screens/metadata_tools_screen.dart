@@ -13,7 +13,7 @@ void _say(BuildContext context, String text) {
 
 /// What a field of a work is called in words.
 String fieldName(String f) =>
-    const {
+    {
       'title': 'Title',
       'author': 'Author',
       'director': 'Director',
@@ -25,7 +25,7 @@ String fieldName(String f) =>
       'release_year': 'Year',
       'genres': 'Genres',
       'series': 'Series',
-      'series_index': 'app.metadata_tools.place_in_the_series',
+      'series_index': tx('app.metadata_tools.place_in_the_series'),
       'cover': 'Cover',
       'poster': 'Poster',
       'cast': 'Cast',
@@ -34,7 +34,7 @@ String fieldName(String f) =>
       'bio': 'About',
       'born': 'Born',
       'died': 'Died',
-      'identity': 'app.metadata_tools.source_link',
+      'identity': tx('app.metadata_tools.source_link'),
       'language': 'Language',
       'publisher': 'Publisher',
       'pages': 'Pages',

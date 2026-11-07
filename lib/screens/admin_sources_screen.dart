@@ -6,9 +6,9 @@ import '../l10n/l10n.dart';
 
 /// The name of a metadata source in words.
 String sourceName(String s) =>
-    const {
-      'google': 'vocab.source.google.label',
-      'openlibrary': 'vocab.source.openlibrary.label',
+    {
+      'google': tx('vocab.source.google.label'),
+      'openlibrary': tx('vocab.source.openlibrary.label'),
       'amazon': 'Amazon',
       'tmdb': 'TMDB',
       'tvdb': 'TheTVDB',
@@ -21,9 +21,9 @@ String sourceName(String s) =>
     s;
 
 String _stateWords(String s) => switch (s) {
-  'needed' => 'app.admin_sources.needs_a_key',
-  'optional' => 'app.admin_sources.works_without_a_key',
-  'builtin' => 'app.admin_sources.built_in',
+  'needed' => tx('app.admin_sources.needs_a_key'),
+  'optional' => tx('app.admin_sources.works_without_a_key'),
+  'builtin' => tx('app.admin_sources.built_in'),
   'ok' => 'Working',
   _ => s,
 };
@@ -40,11 +40,15 @@ final _keyFields = [
   _KeyField('tvdb_pin', 'TheTVDB PIN', 'tvdb'),
   _KeyField('igdb_client_id', 'IGDB client id', 'igdb'),
   _KeyField('igdb_secret', 'IGDB secret', 'igdb'),
-  _KeyField('google_books_key', 'app.admin_sources.google_books_key', 'google'),
-  _KeyField('amazon_cookie', 'app.admin_sources.amazon_cookie', 'amazon'),
+  _KeyField(
+    'google_books_key',
+    tx('app.admin_sources.google_books_key'),
+    'google',
+  ),
+  _KeyField('amazon_cookie', tx('app.admin_sources.amazon_cookie'), 'amazon'),
   _KeyField(
     'amazon_domain',
-    'app.admin_sources.amazon_domain',
+    tx('app.admin_sources.amazon_domain'),
     'amazon',
     secret: false,
   ),
@@ -99,7 +103,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
   Future<void> _set(_KeyField f) async {
     final v = await askText(
       context,
-      title: f.label,
+      title: context.tr(f.label),
       label: f.secret ? 'New value (kept secret)' : 'Value',
       secret: f.secret,
       initial: f.secret ? '' : (_keys?.text(f.field) ?? ''),
@@ -221,7 +225,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                       ),
                       child: Card(
                         child: ListTile(
-                          title: Text(f.label),
+                          title: Text(context.tr(f.label)),
                           subtitle: Text(
                             f.secret
                                 ? (keys.isSet(f.field)

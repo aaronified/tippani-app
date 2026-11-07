@@ -272,8 +272,8 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   String _stem(QuizCard c) => switch (c.direction) {
-    'source' => tok('app.quiz.which_noun_is_this_quote_from', {'noun': c.noun}),
-    'quote' => tok('app.quiz.which_quote_is_from_this_noun', {'noun': c.noun}),
+    'source' => tx('app.quiz.which_noun_is_this_quote_from', {'noun': c.noun}),
+    'quote' => tx('app.quiz.which_quote_is_from_this_noun', {'noun': c.noun}),
     'cloze' => context.tr('quiz.question.cloze.label'),
     'cloze-mcq' => context.tr('quiz.question.cloze-mcq.stem'),
     'speaker' => context.tr('quiz.question.speaker.stem'),

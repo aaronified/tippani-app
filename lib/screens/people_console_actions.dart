@@ -336,7 +336,7 @@ Future<CharacterEdit?> characterForm(
   return showDialog<CharacterEdit>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text(title),
+      title: Text(context.tr(title)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

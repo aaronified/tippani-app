@@ -7,11 +7,11 @@ import '../l10n/l10n.dart';
 export 'stats_screen.dart';
 
 String _kindWords(String kind) => switch (kind) {
-  'annotation' => 'app.checks_tabs.book_quote',
-  'dialogue' => 'app.checks_tabs.film_or_show_quote',
+  'annotation' => tx('app.checks_tabs.book_quote'),
+  'dialogue' => tx('app.checks_tabs.film_or_show_quote'),
   'quote' || 'utterance' => 'Quote',
   'book' => 'Book',
-  'movie' => 'bin.kind.movie.label',
+  'movie' => tx('bin.kind.movie.label'),
   _ => kind.isEmpty ? 'Item' : '${kind[0].toUpperCase()}${kind.substring(1)}',
 };
 

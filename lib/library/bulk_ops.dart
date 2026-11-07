@@ -1,6 +1,7 @@
 import '../sync/fingerprint.dart' show realmOfKind;
 import 'library_store.dart';
 import 'models.dart';
+import '../l10n/l10n.dart';
 
 /// A quote as a draft, so an edit can start from what it already says.
 extension QuoteAsDraft on Quote {
@@ -166,7 +167,7 @@ class BulkOps {
       return BulkResult(
         0,
         skipped: works.length,
-        note: 'app.work_form.the_year_must_be_a_number',
+        note: tx('app.work_form.the_year_must_be_a_number'),
       );
     }
     var n = 0;
@@ -209,7 +210,7 @@ class BulkOps {
       n,
       skipped: left,
       note: quotes.any((q) => q.workId != null)
-          ? 'app.bulk_ops.quotes_from_a_book_or_film'
+          ? tx('app.bulk_ops.quotes_from_a_book_or_film')
           : '',
     );
   }

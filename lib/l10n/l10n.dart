@@ -166,6 +166,23 @@ String tok(String token, [Map<String, Object?>? args]) {
   return (parts.first, args);
 }
 
+/// The [L10n] the running app uses, for code that has no screen to ask (a service that words an error). The app
+/// sets it when it starts; a test leaves it empty and gets English.
+class Tr {
+  static L10n? current;
+}
+
+/// The words for [token] in the language the app is in, made right where there is no [BuildContext]: a message a
+/// service builds, a label in a function. In a widget write `context.tr('token')` instead, which also follows a
+/// change of language while the screen is open. Never use it in a `const`.
+String tx(String token, [Map<String, Object?>? args]) {
+  final l = Tr.current;
+  if (l != null) return l.tr(token, args);
+  final m = openMessage(token);
+  if (m != null) return tx(m.$1, {...?m.$2, ...?args});
+  return fill(englishTokens[token] ?? token, args);
+}
+
 /// Puts [args] into the `{name}` places of [text].
 String fill(String text, Map<String, Object?>? args) {
   if (args == null) return text;

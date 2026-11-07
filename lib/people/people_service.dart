@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../api/server_call.dart';
 import '../app_controller.dart';
+import '../l10n/l10n.dart';
 
 /// One work a person is credited on (a book they wrote, a film they directed).
 class PersonCredit {
@@ -131,8 +132,8 @@ final _providers = <(String, String)>[
   (r'(^|\.)(fandom|wikia)\.com$', 'Fandom'),
   (r'(^|\.)wikidata\.org$', 'Wikidata'),
   (r'(^|\.)wikimedia\.org$', 'Wikimedia'),
-  (r'(^|\.)openlibrary\.org$', 'vocab.source.openlibrary.label'),
-  (r'^books\.google\.[a-z.]+$', 'vocab.source.google.label'),
+  (r'(^|\.)openlibrary\.org$', tx('vocab.source.openlibrary.label')),
+  (r'^books\.google\.[a-z.]+$', tx('vocab.source.google.label')),
   (r'(^|\.)amazon\.[a-z.]+$', 'Amazon'),
 ];
 
@@ -398,7 +399,7 @@ class PairedPeopleService implements PeopleService {
     final r = await c.postJson('/people/id/$id/fetch', const {});
     final p = r is Map ? r['person'] : null;
     return p is Map
-        ? 'app.people_service.fetched_what_the_server_could_find'
+        ? tx('app.people_service.fetched_what_the_server_could_find')
         : 'Done.';
   });
 

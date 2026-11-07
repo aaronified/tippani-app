@@ -132,7 +132,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
 /// One plain sentence for each way asking a server can go wrong. Pure, so the words are tested.
 /// One line on how the server is: being asked, not asked yet, connected (and its version), or why it is not.
 String serverStatusLine(AppController c) {
-  if (c.checking) return 'app.connect.asking_the_server';
+  if (c.checking) return tx('app.connect.asking_the_server');
   final check = c.check;
   if (check == null) return 'Not checked yet.';
   final caps = check.capabilities;
@@ -144,9 +144,9 @@ String serverStatusLine(AppController c) {
 String describeCheck(ServerCheck check) {
   switch (check.verdict) {
     case Compatibility.serverTooOld:
-      return 'app.connect.this_tippani_server_is_older_than';
+      return tx('app.connect.this_tippani_server_is_older_than');
     case Compatibility.appTooOld:
-      return 'app.connect.this_tippani_server_is_newer_than';
+      return tx('app.connect.this_tippani_server_is_newer_than');
     case Compatibility.ok:
       return '';
     case null:
@@ -154,20 +154,20 @@ String describeCheck(ServerCheck check) {
   }
   switch (check.failure) {
     case ApiFailure.timeout:
-      return 'app.connect.the_server_did_not_answer_in';
+      return tx('app.connect.the_server_did_not_answer_in');
     case ApiFailure.network:
       return 'Could not reach that address. Check it, and that your phone can see the server (the same Wi-Fi, or your VPN).';
     case ApiFailure.badResponse:
-      return 'app.connect.something_answered_but_it_is_not';
+      return tx('app.connect.something_answered_but_it_is_not');
     case ApiFailure.rateLimited:
-      return 'app.connect.the_server_is_asking_you_to';
+      return tx('app.connect.the_server_is_asking_you_to');
     case ApiFailure.unauthorised:
     case ApiFailure.forbidden:
     case ApiFailure.server:
-      return tok('app.connect.the_server_refused_the_questionx', {
+      return tx('app.connect.the_server_refused_the_questionx', {
         'x': check.detail.isEmpty ? '' : ': ${check.detail}',
       });
     case null:
-      return 'app.connect.could_not_ask_the_server';
+      return tx('app.connect.could_not_ask_the_server');
   }
 }
