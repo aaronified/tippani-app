@@ -1,0 +1,387 @@
+import 'package:flutter/material.dart';
+
+import '../api/server_call.dart';
+import '../people/people_console.dart';
+
+void _say(BuildContext context, String text) {
+  ScaffoldMessenger.of(context)
+    ..clearSnackBars()
+    ..showSnackBar(SnackBar(content: Text(text)));
+}
+
+/// Runs [job] and says what the server refused with. True when it worked.
+Future<bool> consoleCall(
+  BuildContext context,
+  Future<void> Function() job,
+) async {
+  try {
+    await job();
+    return true;
+  } on ServerException catch (e) {
+    if (context.mounted) _say(context, e.message);
+    return false;
+  }
+}
+
+/// A record in the pickers: a name, a line of counts, and what it is to the picker's caller.
+class PickRow {
+  const PickRow({
+    required this.id,
+    required this.name,
+    this.hint = '',
+    this.spellings = const [],
+  });
+  final int id;
+  final String name, hint;
+  final List<String> spellings;
+}
+
+String countsHint(int works, int quotes) {
+  String n(int c, String one, String many) => '$c ${c == 1 ? one : many}';
+  return [
+    if (works > 0) n(works, 'work', 'works'),
+    if (quotes > 0) n(quotes, 'quote', 'quotes'),
+  ].join(' · ');
+}
+
+/// Edits every spelling of a record in one box, one per line; the first line is the name it prints under.
+/// True when saved.
+Future<bool> editSpellings(
+  BuildContext context,
+  PeopleConsole console, {
+  required bool character,
+  required int id,
+  required List<String> names,
+}) async {
+  final c = TextEditingController(text: names.join('\n'));
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Names and spellings'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'One name per line. The first is the one shown; the others are other ways it is written, and quotes using them are found under it.',
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: c,
+            autofocus: true,
+            minLines: 3,
+            maxLines: 8,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+  if (go != true || !context.mounted) return false;
+  final lines = [
+    for (final l in c.text.split('\n'))
+      if (l.trim().isNotEmpty) l.trim(),
+  ];
+  if (lines.isEmpty) {
+    _say(context, 'A record needs at least one name.');
+    return false;
+  }
+  return consoleCall(
+    context,
+    () => console.setNames(character: character, id: id, names: lines),
+  );
+}
+
+/// Turns a spelling into a record of its own (the record it was a spelling of loses it). True when it was.
+Future<bool> splitSpelling(
+  BuildContext context,
+  PeopleConsole console, {
+  required bool character,
+  required int id,
+  required String alias,
+}) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Make "$alias" its own record?'),
+      content: const Text(
+        'It stops being a spelling of this one. Quotes that use it follow it.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Split it out'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return false;
+  return consoleCall(
+    context,
+    () => console.splitSpelling(character: character, id: id, alias: alias),
+  );
+}
+
+/// Asks which of two records survives a merge; true when merged. The other's name becomes a spelling of it.
+Future<bool> mergeTwo(
+  BuildContext context,
+  PeopleConsole console, {
+  required bool character,
+  required PickRow a,
+  required PickRow b,
+}) async {
+  var keep = a.id;
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, set) => AlertDialog(
+        title: const Text('Merge into one'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Everything that points at one points at the other. Which name stays?',
+            ),
+            RadioGroup<int>(
+              groupValue: keep,
+              onChanged: (v) => set(() => keep = v ?? keep),
+              child: Column(
+                children: [
+                  for (final r in [a, b])
+                    RadioListTile<int>(
+                      value: r.id,
+                      title: Text(r.name),
+                      subtitle: r.hint.isEmpty ? null : Text(r.hint),
+                    ),
+                ],
+              ),
+            ),
+            const Text('The merge can be undone from the Bin.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Merge'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (go != true || !context.mounted) return false;
+  final drop = keep == a.id ? b.id : a.id;
+  return consoleCall(
+    context,
+    () => character
+        ? console.mergeCharacters(keep, drop)
+        : console.mergePeople(keep, drop),
+  );
+}
+
+/// Lets the reader search the records and pick one; null when they back out.
+Future<PickRow?> pickRecord(
+  BuildContext context, {
+  required String title,
+  required List<PickRow> rows,
+}) {
+  return showModalBottomSheet<PickRow>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (context) {
+      var query = '';
+      return StatefulBuilder(
+        builder: (context, set) {
+          final shown = [
+            for (final r in rows)
+              if (query.isEmpty ||
+                  r.name.toLowerCase().contains(query) ||
+                  r.spellings.any((s) => s.toLowerCase().contains(query)))
+                r,
+          ];
+          return SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.75,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'Search',
+                    ),
+                    onChanged: (v) => set(() => query = v.trim().toLowerCase()),
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      for (final r in shown)
+                        ListTile(
+                          title: Text(r.name),
+                          subtitle: r.hint.isEmpty ? null : Text(r.hint),
+                          onTap: () => Navigator.pop(context, r),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
+/// Asks before removing a record; true when removed.
+Future<bool> removeRecord(
+  BuildContext context,
+  PeopleConsole console, {
+  required bool character,
+  required int id,
+  required String name,
+}) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text('Remove $name?'),
+      content: Text(
+        character
+            ? 'The character is removed from every work it is in, and quotes stop pointing at it. The quotes stay. It goes to the Bin.'
+            : 'The person is removed, and credits and quotes stop pointing at them. The quotes and works stay. It goes to the Bin.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+          ),
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Remove'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return false;
+  return consoleCall(
+    context,
+    () => character ? console.deleteCharacter(id) : console.deletePerson(id),
+  );
+}
+
+/// The form for a new or changed character; null when cancelled.
+Future<CharacterEdit?> characterForm(
+  BuildContext context, {
+  String title = 'Edit the character',
+  String name = '',
+  String description = '',
+  String born = '',
+  String links = '',
+  String note = '',
+  String yes = 'Save',
+}) {
+  final n = TextEditingController(text: name);
+  final d = TextEditingController(text: description);
+  final b = TextEditingController(text: born);
+  final l = TextEditingController(text: links);
+  final o = TextEditingController(text: note);
+  return showDialog<CharacterEdit>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(title),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: n,
+              autofocus: name.isEmpty,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: d,
+              minLines: 2,
+              maxLines: 6,
+              decoration: const InputDecoration(labelText: 'Who they are'),
+            ),
+            TextField(
+              controller: b,
+              decoration: const InputDecoration(
+                labelText: 'Born (in the story)',
+              ),
+            ),
+            TextField(
+              controller: l,
+              minLines: 1,
+              maxLines: 4,
+              keyboardType: TextInputType.url,
+              decoration: const InputDecoration(
+                labelText: 'Links',
+                helperText: 'One address per line',
+              ),
+            ),
+            TextField(
+              controller: o,
+              minLines: 1,
+              maxLines: 4,
+              decoration: const InputDecoration(labelText: 'Your note'),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (n.text.trim().isEmpty) return;
+            Navigator.pop(
+              context,
+              CharacterEdit(
+                name: n.text.trim(),
+                description: d.text.trim(),
+                born: b.text.trim(),
+                links: l.text.trim(),
+                note: o.text.trim(),
+              ),
+            );
+          },
+          child: Text(yes),
+        ),
+      ],
+    ),
+  );
+}
