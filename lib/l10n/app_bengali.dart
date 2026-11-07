@@ -93,7 +93,8 @@ const Map<String, String> appBengali = {
   "Group": "গোষ্ঠী",
   "In progress": "চলছে",
   "Language unknown": "ভাষা অজানা",
-  "No works match. Choose All to see everything.": "কোনো রচনা মেলেনি। সব দেখতে \"সব\" বেছে নিন।",
+  "No works match. Choose All to see everything.":
+      "কোনো রচনা মেলেনি। সব দেখতে \"সব\" বেছে নিন।",
   "Show as a list": "তালিকা হিসেবে দেখান",
   "Show as covers": "প্রচ্ছদ হিসেবে দেখান",
   "Year unknown": "বছর অজানা",
