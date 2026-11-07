@@ -9,6 +9,11 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Run the server from your phone (admin accounts only, in Settings): add a reader, make an account an admin or step down, and remove an account;
+  watch the server's jobs as they run and wait (with Stop, Run again, each job's log, and the common jobs to start); make a backup of the server, keep
+  it on the phone, and put one back, from the server's own copy or from a file on the phone, after keeping a safety copy of what is there now; see the
+  server's version, choose the stable or pre-release line, and update it where it can update itself (or copy the command where it cannot); add and
+  remove the folders its library is read from and tidy saved files nothing uses; test each source it asks for details and set or clear its keys.
 - Quote screen: a Copy button puts the quote and its credit on the clipboard, and after you delete a quote an Undo button brings it back, with
   its note, tags, colour and place.
 - The quote form suggests as you write: the characters of the work you chose (and who else was already quoted from it) under "Who said it", the
