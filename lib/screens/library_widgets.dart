@@ -29,6 +29,7 @@ class QuoteTile extends StatelessWidget {
     this.onChip,
     this.chipWork,
     this.omitAuthor = false,
+    this.onAddToAnthology,
   });
 
   final Quote quote;
@@ -43,6 +44,10 @@ class QuoteTile extends StatelessWidget {
   /// author's pill is dropped there ([omitAuthor]) since the header names them.
   final Work? chipWork;
   final bool omitAuthor;
+
+  /// Puts the quote in an anthology. Null where there is no anthology to add to (no server, or the quote is
+  /// not on it yet): there is no button then, and a long press does nothing.
+  final VoidCallback? onAddToAnthology;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +67,7 @@ class QuoteTile extends StatelessWidget {
       child: Card(
         child: InkWell(
           onTap: onTap,
+          onLongPress: onAddToAnthology,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 16, 6, 14),
             child: Row(
@@ -121,20 +127,34 @@ class QuoteTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  tooltip: quote.favorite
-                      ? 'Remove from favourites'
-                      : 'Favourite',
-                  visualDensity: VisualDensity.compact,
-                  icon: Icon(
-                    quote.favorite
-                        ? Icons.star_rounded
-                        : Icons.star_border_rounded,
-                    color: quote.favorite
-                        ? scheme.primary
-                        : scheme.onSurfaceVariant,
-                  ),
-                  onPressed: onFavourite,
+                Column(
+                  children: [
+                    IconButton(
+                      tooltip: quote.favorite
+                          ? 'Remove from favourites'
+                          : 'Favourite',
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(
+                        quote.favorite
+                            ? Icons.star_rounded
+                            : Icons.star_border_rounded,
+                        color: quote.favorite
+                            ? scheme.primary
+                            : scheme.onSurfaceVariant,
+                      ),
+                      onPressed: onFavourite,
+                    ),
+                    if (onAddToAnthology != null)
+                      IconButton(
+                        tooltip: 'Add to anthology',
+                        visualDensity: VisualDensity.compact,
+                        icon: Icon(
+                          Icons.collections_bookmark_outlined,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        onPressed: onAddToAnthology,
+                      ),
+                  ],
                 ),
               ],
             ),

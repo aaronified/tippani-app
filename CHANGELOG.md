@@ -8,7 +8,6 @@ version. Write each entry for the person using the app, in plain words. **Start 
 ## [Unreleased]
 
 ### Added
-
 - A page for every person and character: press a pill on a quote, a work's author in its header, or a row of a film's cast, and their page opens
   with the portrait (press it to see it big), dates, bio, links by provider (IMDb, Wikipedia and the rest), signature, other spellings, the
   works they are credited on, the parts they played and the quotes that name them. A character's page names who played them in each adaptation
@@ -17,15 +16,17 @@ version. Write each entry for the person using the app, in plain words. **Start 
 - Faces on work cards and the work page: a work's card shows round portraits of its author or director, the work's page shows them as pills
   in its header, and each row of the cast has the character's picture (or the actor's). On a work's own page the author is not named again on
   every quote.
-
-### Added
-
+- Anthologies are complete: drag passages into order (or use Move up and Move down), write your commentary before a passage, add headings with words
+  under them, group passages by book, person or character, and choose what each passage shows (who it is by, the book, your commentary, the colour
+  edge, where in the work, the date). Give an anthology a cover, an epigraph and a dedication. Fill it from a search: everything, a book, a film, a
+  tag, an author, a colour, a shelf, your favourites or a stretch of dates, with a preview first and an option to keep adding as new quotes arrive.
+  Passages you take out can be put back from Taken out, and the whole anthology can be saved or sent as a Markdown file or an EPUB book.
+- Add to anthology from any list: a quote in the library has a button for it (and a long press does the same), not only on the quote's own page.
 - Portraits on the people pills: the round pill on a quote (the author of a book, the speaker, the character with the actor under their name) now
   shows the photo your server holds for them, as on the web, in the library, on the quote and on every card. A character shows its own picture,
   or the actor's if it has none. The photos are kept on the phone, so they are there without the server.
 
 ### Fixed
-
 - Signatures on the share picture: a signature your server keeps as a drawn (vector) picture, which is how most are stored, was left off the
   picture. It is drawn now. The share picture also takes the portraits and signature from the phone's own copy, so it can be made without the
   server, and a book's character can show its picture too.
