@@ -6,22 +6,41 @@ import 'package:flutter/rendering.dart';
 
 import '../library/models.dart';
 import '../library/quote_text.dart';
+import '../library/share_format.dart';
 import 'quote_form_screen.dart' show quoteColour;
 
 /// A quote drawn as a card: the words large, the translation under them, who and what it is from, and an
 /// edge in the quote's own colour. The same widget is what the reader sees and what becomes the picture
 /// they share or save, so the picture is never different from the screen.
 class QuoteCard extends StatelessWidget {
-  const QuoteCard({super.key, required this.quote, required this.work});
+  const QuoteCard({
+    super.key,
+    required this.quote,
+    required this.work,
+    this.show,
+  });
 
   final Quote quote;
   final Work? work;
+
+  /// Which parts to draw, by the ids in `share_format.dart`. Null draws the words, the translation and the
+  /// whole credit (what the quote screen shows).
+  final Set<String>? show;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final from = quoteAttribution(quote, work);
+    final on = show;
+    final from = on == null
+        ? quoteAttribution(quote, work)
+        : shareCredit(quote, work, on);
+    final showQuote = on == null || on.contains('quote');
+    final showTranslation = on == null || on.contains('translation');
+    final note = on != null && on.contains('note') ? quote.note.trim() : '';
+    final tags = on != null && on.contains('tags') && quote.tags.isNotEmpty
+        ? quote.tags.map((t) => '#$t').join(' ')
+        : '';
     return Container(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHigh,
@@ -35,14 +54,15 @@ class QuoteCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '“${quote.text.trim()}”',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: scheme.onSurface,
-              height: 1.35,
+          if (showQuote)
+            Text(
+              '“${quote.text.trim()}”',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: scheme.onSurface,
+                height: 1.35,
+              ),
             ),
-          ),
-          if (quote.translation.trim().isNotEmpty) ...[
+          if (showTranslation && quote.translation.trim().isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
               quote.translation.trim(),
@@ -57,6 +77,24 @@ class QuoteCard extends StatelessWidget {
             Text(
               '— $from',
               style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          if (note.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              note,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.primary,
+              ),
+            ),
+          ],
+          if (tags.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              tags,
+              style: theme.textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
             ),

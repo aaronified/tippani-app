@@ -1,4 +1,5 @@
 import 'anthologies_screen.dart';
+import 'read_aloud_settings_screen.dart';
 import 'tools_screens.dart';
 
 import 'package:flutter/material.dart';
@@ -84,6 +85,16 @@ class SettingsScreen extends StatelessWidget {
         final url = controller.serverUrl;
         return ListView(
           children: [
+            ListTile(
+              leading: const Icon(Icons.record_voice_over_outlined),
+              title: const Text('Read aloud'),
+              subtitle: const Text('Voice, speed and pitch'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ReadAloudSettingsScreen(),
+                ),
+              ),
+            ),
             ListTile(
               leading: const Icon(Icons.dns_outlined),
               title: const Text('Server'),

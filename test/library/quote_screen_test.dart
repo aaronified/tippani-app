@@ -165,22 +165,6 @@ void main() {
       addTearDown(() => tester.pumpWidget(const SizedBox()));
     }
 
-    /// Runs [press] and waits (in real time, because drawing a picture is not driven by the test's clock)
-    /// until [done] is true.
-    Future<void> waitFor(
-      WidgetTester tester,
-      Future<void> Function() press,
-      bool Function() done,
-    ) async {
-      await tester.runAsync(() async {
-        await press();
-        for (var i = 0; i < 100 && !done(); i++) {
-          await Future<void>.delayed(const Duration(milliseconds: 20));
-        }
-      });
-      await tester.pumpAndSettle();
-    }
-
     testWidgets('it shows the quote as a card with its note, tags and work', (
       tester,
     ) async {
@@ -205,84 +189,16 @@ void main() {
       expect(find.byTooltip('Remove from favourites'), findsOneWidget);
     });
 
-    testWidgets('share text sends the words, the translation and the source', (
+    testWidgets('one Share button opens the share screen for this quote', (
       tester,
     ) async {
       await open(tester);
-      await tester.tap(find.text('Share text'));
+      expect(find.text('Share text'), findsNothing);
+      expect(find.text('Share picture'), findsNothing);
+      await tester.tap(find.text('Share'));
       await tester.pumpAndSettle();
-      expect(
-        out.texts.single,
-        startsWith('“Simplify, simplify.”\nsaral\n— Thoreau'),
-      );
-    });
-
-    testWidgets(
-      'share picture sends a real PNG named for the quote, with the text beside it',
-      (tester) async {
-        await open(tester);
-        await waitFor(
-          tester,
-          () => tester.tap(find.text('Share picture')),
-          () => out.images.isNotEmpty,
-        );
-        final sent = out.images.single;
-        expect(isPng(sent.png), isTrue);
-        expect(sent.name, 'tippani-quote-${quote.id}.png');
-        expect(sent.text, contains('Simplify, simplify.'));
-        expect(sent.png.length, greaterThan(2000));
-      },
-    );
-
-    testWidgets(
-      'save picture writes the same kind of PNG where the reader chose',
-      (tester) async {
-        await open(tester);
-        await waitFor(
-          tester,
-          () => tester.tap(find.text('Save picture')),
-          () => picker.saved.isNotEmpty,
-        );
-        expect(picker.saved.keys.single, 'tippani-quote-${quote.id}.png');
-        expect(isPng(picker.saved.values.single), isTrue);
-        expect(find.text('Saved.'), findsOneWidget);
-      },
-    );
-
-    testWidgets('a cancelled save says nothing was saved', (tester) async {
-      await open(tester);
-      picker.accept = false;
-      await waitFor(
-        tester,
-        () => tester.tap(find.text('Save picture')),
-        () => find.text('Nothing was saved.').evaluate().isNotEmpty,
-      );
-      expect(find.text('Nothing was saved.'), findsOneWidget);
-      expect(picker.saved, isEmpty);
-    });
-
-    testWidgets('a save that fails says it could not be saved', (tester) async {
-      await open(tester);
-      picker.fail = true;
-      await waitFor(
-        tester,
-        () => tester.tap(find.text('Save picture')),
-        () =>
-            find.text('The picture could not be saved.').evaluate().isNotEmpty,
-      );
-      expect(find.text('The picture could not be saved.'), findsOneWidget);
-    });
-
-    testWidgets('a share sheet that fails is said, not thrown', (tester) async {
-      await open(tester);
-      out.failImage = true;
-      await waitFor(
-        tester,
-        () => tester.tap(find.text('Share picture')),
-        () =>
-            find.text('The picture could not be shared.').evaluate().isNotEmpty,
-      );
-      expect(find.text('The picture could not be shared.'), findsOneWidget);
+      expect(find.text('Format'), findsOneWidget);
+      expect(find.text('Include'), findsOneWidget);
     });
 
     testWidgets(

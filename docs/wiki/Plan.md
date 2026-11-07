@@ -246,6 +246,10 @@ synced account's theme preferences are ignored here.
       server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
       its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
       Checked against a real server in `test/live`. **Not yet:** reordering, per-passage commentary, sections, grouping, the cover, boards.
+- [x] **Icon, one Share screen, read-aloud voices** (done 7 November 2026): the web app's icon as launcher, adaptive and monochrome
+      (themed) icons; one Share screen with the web dialog's formats and Include toggles and defaults (`lib/library/share_format.dart`,
+      `lib/screens/share_screen.dart`); Read aloud picks the best installed voice per language and has a settings screen for voice, speed and
+      pitch (`lib/speech`). **Not verified on a device:** how the icon looks on a real launcher, and which voices a real phone lists.
 - [x] **Work details and reading mode** (done 7 November 2026): counts, chapter groups in reading order, favourites filter, a Read document
       with text size, translations and notes toggles, and Share all.
 - [x] **Read aloud** (done 7 November 2026; the owner asked why the app lacked it: it was never planned). Android's own text-to-speech through

@@ -118,6 +118,19 @@ the sync that reads the server back is [ADR-0016](ADR-0016-Conflicts-Are-Chosen-
 - **`setWorkServerId` and `setQuoteServerId` do not touch `updated_at`.** Being on the server is not an edit; if it were, every push would
   make every item look changed to the pull.
 
+## The Share screen
+
+`lib/screens/share_screen.dart` (`ShareScreen`), `lib/library/share_format.dart` (`ShareFormat`, `shareFieldsOf`, `shareDefaults`,
+`buildShareText`, `shareCredit`) and `QuoteCard.show`. It mirrors the web dialog (`web/frontend/src/share.jsx` in the Tippani repository): the
+same five formats, the same parts, the same parts off by default. Keep the two in step when one changes. The picture is the card with only the
+switched-on parts drawn; the text formats are the same parts as text, regenerated on every change.
+
+## Reading aloud
+
+`lib/speech/speaker.dart` speaks through Android's TTS service. `chooseVoice` is a plain function (tested): the reader's own pick for its
+language, else the best installed voice (quality first, then online before on-phone). `lib/speech/speech_settings.dart` keeps the choices in
+SharedPreferences. Screens take a `Speaker`, so tests use a fake.
+
 ## The quote screen, sharing and saving
 
 `lib/screens/quote_screen.dart` (`QuoteScreen`), `lib/screens/quote_card.dart` (`QuoteCard`, `captureCard`) and `lib/library/quote_text.dart`
