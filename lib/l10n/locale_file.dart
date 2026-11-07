@@ -25,6 +25,10 @@
   return (keys: keys, reserved: reserved);
 }
 
+/// The app's own files are one line per token, so a line break in a text is written as the two characters
+/// backslash and n; this turns them back into a line break. The web's files do not use it.
+String unescapeApp(String v) => v.replaceAll(r'\n', '\n');
+
 /// A string as a Dart single-quoted literal.
 String dartString(String s) {
   final b = StringBuffer("'");
@@ -53,7 +57,8 @@ String dartString(String s) {
 String englishTable(String serverEn, String appEn) {
   final all = <String, String>{
     ...parseLocale(serverEn).keys,
-    ...parseLocale(appEn).keys,
+    for (final e in parseLocale(appEn).keys.entries)
+      e.key: unescapeApp(e.value),
   };
   final names = all.keys.toList()..sort();
   final b = StringBuffer()

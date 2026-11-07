@@ -29,7 +29,7 @@ void main() {
     for (final f in Directory('lib').listSync(recursive: true))
       if (f is File &&
           f.path.endsWith('.dart') &&
-          !f.path.replaceAll('\\', '/').contains('lib/l10n/'))
+          !f.path.replaceAll('\\', '/').endsWith('l10n/english.g.dart'))
         f,
   ];
 
@@ -77,6 +77,8 @@ void main() {
     }
     expect(asked.length, greaterThan(300), reason: 'the scan found the calls');
 
+    // the machinery's own examples and built names are not tokens a screen asks for
+    asked.removeWhere((k, _) => k == 'token' || k.contains(r'$'));
     final english = {...serverEn, ...appEn};
     final bengali = {...serverBn, ...appBn};
     final notTokens = [

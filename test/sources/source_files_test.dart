@@ -121,7 +121,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('2.0 MB'), findsOneWidget);
       expect(
-        find.textContaining('3 quotes keep its surroundings'),
+        find.textContaining('3 quotes keep their surroundings'),
         findsOneWidget,
       );
       await tapText(tester, 'Free the space');

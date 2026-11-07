@@ -281,8 +281,8 @@ app.backup.backed_up_as_name_this_phone = {name} নামে ব্যাকআ
 app.backup.backup_and_restore = ব্যাকআপ ও পুনরুদ্ধার
 app.backup.backup_saved = ব্যাকআপ সংরক্ষিত হয়েছে।
 app.backup.copies_on_this_phone = এই ফোনের কপি
-app.backup.made_by_version_it_replaces_the_settings = {first} সময়ে {version} সংস্করণে বানানো। এটি এই ফোনের সেটিংস ও লাইব্রেরি ফাইলের বিষয়বস্তু দিয়ে বদলে দেয়।
-app.backup.made_it_replaces_the_settings = {first} সময়ে বানানো। এটি এই ফোনের সেটিংস ও লাইব্রেরি ফাইলের বিষয়বস্তু দিয়ে বদলে দেয়।
+app.backup.made_by_version_it_replaces_the_settings = {first} সময়ে {version} সংস্করণে বানানো।\n\nএটি এই ফোনের সেটিংস ও লাইব্রেরি ফাইলের সেগুলো দিয়ে বদলে দেয়, এখন সেখানে যা-ই থাকুক। এই ফোনটি আবার যুক্ত করতে হবে।
+app.backup.made_it_replaces_the_settings = {first} সময়ে বানানো।\n\nএটি এই ফোনের সেটিংস ও লাইব্রেরি ফাইলের সেগুলো দিয়ে বদলে দেয়, এখন সেখানে যা-ই থাকুক। এই ফোনটি আবার যুক্ত করতে হবে।
 app.backup.none_yet = এখনও কিছু নেই।
 app.backup.part_of_that_backup_is_damaged = ওই ব্যাকআপের একটি অংশ নষ্ট, তাই কিছুই ফেরানো হয়নি। এই ফোনে কিছু বদলায়নি।
 app.backup.restore_from_a_file = ফাইল থেকে ফিরিয়ে আনুন…
@@ -633,6 +633,9 @@ app.library.the_export_could_not_be_written = রপ্তানি লেখা
 app.library.there_are_no_quotes_to_export = রপ্তানি করার মতো উক্তি এখনও নেই।
 app.library.tippani_quotes = টিপ্পনীর উক্তি
 app.library.try_fewer_words_or_clear_a = কম শব্দ চেষ্টা করুন, বা একটি ছাঁকনি সরান।
+
+# --- list ---
+app.list.and = {a} ও {b}
 
 # --- log ---
 app.log.clear_the_log = লগ খালি করবেন?

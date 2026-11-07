@@ -96,7 +96,13 @@ class L10n extends ChangeNotifier {
     final bn = <String, String>{};
     for (final f in ['assets/l10n/bn.txt', 'assets/l10n/app.bn.txt']) {
       try {
-        bn.addAll(parseLocale(await _bundle.loadString(f)).keys);
+        final keys = parseLocale(await _bundle.loadString(f)).keys;
+        // the app's own file writes a line break as a backslash and n
+        bn.addAll(
+          f.contains('app.bn')
+              ? {for (final e in keys.entries) e.key: unescapeApp(e.value)}
+              : keys,
+        );
       } on Object {
         // a missing file costs only its lines
       }

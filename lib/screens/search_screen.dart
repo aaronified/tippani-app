@@ -640,7 +640,9 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Text.rich(
             TextSpan(
               children: [
-                TextSpan(text: context.tr('app.search.showing_results_for')),
+                TextSpan(
+                  text: '${context.tr('app.search.showing_results_for')} ',
+                ),
                 TextSpan(
                   text: r.corrected,
                   style: const TextStyle(fontWeight: FontWeight.w700),
