@@ -8,6 +8,7 @@ import '../library/library_store.dart';
 import '../library/models.dart';
 import '../sync/board_sync.dart' show boardFields;
 import '../sync/fingerprint.dart';
+import '../l10n/l10n.dart';
 
 /// Something went wrong with a board on the server, in words for the reader.
 class BoardException implements Exception {
@@ -25,17 +26,17 @@ class StarterOffer {
 }
 
 /// The kinds of board the server knows, with the words for each.
-const boardKinds = <(String, String)>[
-  ('plain', 'Plain'),
-  ('proverb', 'Proverbs'),
-  ('speech', 'Speeches'),
+final boardKinds = <(String, String)>[
+  ('plain', tx('share.format.plaintext.name')),
+  ('proverb', tx('quotes.board.kind.proverb.label')),
+  ('speech', tx('quotes.starter.speeches.name')),
   ('letter', 'Letters'),
   ('essay', 'Essays'),
 ];
 
 String boardKindLabel(String kind) =>
     boardKinds.where((k) => k.$1 == kind).map((k) => k.$2).firstOrNull ??
-    'Plain';
+    tx('share.format.plaintext.name');
 
 /// What the server holds for a board beyond its name and colour: a description, a picture, its kind and languages,
 /// whether it is hidden, and where it sits in the order. An interface so a test can stand in for the server.
@@ -80,12 +81,21 @@ class ServerBoards implements BoardService {
       return await _controller.withClient(run) as T;
     } on ApiException catch (e) {
       throw BoardException(switch (e.failure) {
-        ApiFailure.network => 'The server could not be reached.',
-        ApiFailure.timeout => 'The server took too long to answer.',
-        ApiFailure.unauthorised =>
-          'The server no longer accepts this phone. Pair it again.',
-        ApiFailure.forbidden => 'The server does not allow that.',
-        ApiFailure.rateLimited => 'The server asks you to wait a moment.',
+        ApiFailure.network => tx(
+          'app.admin_service.the_server_could_not_be_reached',
+        ),
+        ApiFailure.timeout => tx(
+          'app.admin_service.the_server_took_too_long_to',
+        ),
+        ApiFailure.unauthorised => tx(
+          'app.board_service.the_server_no_longer_accepts_this',
+        ),
+        ApiFailure.forbidden => tx(
+          'app.account_service.the_server_does_not_allow_that',
+        ),
+        ApiFailure.rateLimited => tx(
+          'app.board_service.the_server_asks_you_to_wait',
+        ),
         ApiFailure.server || ApiFailure.badResponse =>
           e.detail.isNotEmpty ? e.detail : 'The server could not do that.',
       });

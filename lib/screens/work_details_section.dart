@@ -5,6 +5,7 @@ import '../library/quote_chips.dart';
 import '../people/people_directory.dart';
 import '../people/people_service.dart';
 import 'person_screen.dart';
+import '../l10n/l10n.dart';
 
 /// What the server knows about a work, laid out under its title: description, genres, the small facts (publisher,
 /// pages, ISBN, series) and the cast or characters. Draws nothing for a work with nothing to show.
@@ -82,10 +83,13 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
     final isBook =
         widget.work.kind == WorkKind.book || widget.work.kind == WorkKind.other;
     final facts = <(String, String)>[
-      if (d.subtitle.isNotEmpty) ('Subtitle', d.subtitle),
-      if (d.series.isNotEmpty) ('Series', d.series),
-      if (d.publisher.isNotEmpty) ('Publisher', d.publisher),
-      if (d.pages > 0) ('Pages', '${d.pages}'),
+      if (d.subtitle.isNotEmpty)
+        (context.tr('common.field.subtitle.label'), d.subtitle),
+      if (d.series.isNotEmpty)
+        (context.tr('common.field.series.label'), d.series),
+      if (d.publisher.isNotEmpty)
+        (context.tr('common.field.publisher.label'), d.publisher),
+      if (d.pages > 0) (context.tr('common.field.pages.label'), '${d.pages}'),
       if (d.isbn.isNotEmpty) ('ISBN', d.isbn),
     ];
     final cast = _allCast ? d.cast : d.cast.take(castShown).toList();
@@ -105,7 +109,11 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
                 alignment: Alignment.centerLeft,
                 child: TextButton(
                   onPressed: () => setState(() => _moreText = !_moreText),
-                  child: Text(_moreText ? 'Show less' : 'Show more'),
+                  child: Text(
+                    _moreText
+                        ? context.tr('common.action.show-less.label')
+                        : context.tr('context.more'),
+                  ),
                 ),
               ),
           ],
@@ -137,7 +145,9 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
           if (d.cast.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              isBook ? 'Characters' : 'Cast',
+              isBook
+                  ? context.tr('stats.breakdown.characters.label')
+                  : context.tr('common.field.cast.label'),
               style: theme.textTheme.titleSmall,
             ),
             const SizedBox(height: 4),
@@ -146,7 +156,11 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
               TextButton(
                 onPressed: () => setState(() => _allCast = !_allCast),
                 child: Text(
-                  _allCast ? 'Show fewer' : 'Show all ${d.cast.length}',
+                  _allCast
+                      ? context.tr('app.dashboard.show_fewer')
+                      : context.tr('app.work_details.show_all_n', {
+                          'n': d.cast.length,
+                        }),
                 ),
               ),
           ],

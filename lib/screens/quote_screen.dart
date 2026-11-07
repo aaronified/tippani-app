@@ -98,7 +98,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
       final ok = await _speaker.speak(q.text, language);
       if (!ok && mounted) _say('This phone has no voice for "$language".');
     } on Object {
-      if (mounted) _say('The quote could not be read aloud.');
+      if (mounted) _say(context.tr('app.quote.the_quote_could_not_be_read'));
     } finally {
       if (mounted) setState(() => _speaking = false);
     }
@@ -169,25 +169,25 @@ class _QuoteScreenState extends State<QuoteScreen> {
 
   Future<void> _delete() async {
     final gone = _quote;
-    final deleted = context.tr('Quote deleted.');
-    final undo = context.tr('Undo');
+    final deleted = context.tr('app.quote.quote_deleted');
+    final undo = context.tr('common.action.undo.label');
     // the messenger belongs to the app, so the Undo outlives this screen
     final messenger = ScaffoldMessenger.of(context);
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Delete this quote?')),
+        title: Text(context.tr('quotes.delete.confirm')),
         content: Text(
-          context.tr('It is removed from this phone. This cannot be undone.'),
+          context.tr('app.quote_form.it_is_removed_from_this_phone'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('Keep it')),
+            child: Text(context.tr('app.anthologies.keep_it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('Delete')),
+            child: Text(context.tr('common.action.delete.label')),
           ),
         ],
       ),
@@ -238,7 +238,9 @@ class _QuoteScreenState extends State<QuoteScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
-      ..showSnackBar(SnackBar(content: Text(context.tr('Copied'))));
+      ..showSnackBar(
+        SnackBar(content: Text(context.tr('account.widget.copied'))),
+      );
   }
 
   void _share() {
@@ -266,7 +268,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
         appBar: AppBar(),
         body: _loaded
             ? Center(
-                child: Text(context.tr('This quote is not here any more.')),
+                child: Text(context.tr('app.quote.this_quote_is_not_here_any')),
               )
             : const Center(child: CircularProgressIndicator()),
       );
@@ -277,25 +279,27 @@ class _QuoteScreenState extends State<QuoteScreen> {
     ].where((s) => s.isNotEmpty).join(' · ');
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('Quote')),
+        title: Text(context.tr('common.field.quote.label')),
         actions: [
           IconButton(
-            tooltip: q.favorite ? 'Remove from favourites' : 'Favourite',
+            tooltip: q.favorite
+                ? context.tr('common.action.favourite.off.label')
+                : context.tr('common.field.favourite.label'),
             icon: Icon(q.favorite ? Icons.star : Icons.star_border),
             onPressed: _favourite,
           ),
           IconButton(
-            tooltip: context.tr('Copy'),
+            tooltip: context.tr('common.action.copy.label'),
             icon: const Icon(Icons.copy_rounded),
             onPressed: _copy,
           ),
           IconButton(
-            tooltip: context.tr('Edit'),
+            tooltip: context.tr('common.action.edit.label'),
             icon: const Icon(Icons.edit_outlined),
             onPressed: _edit,
           ),
           IconButton(
-            tooltip: context.tr('Delete'),
+            tooltip: context.tr('common.action.delete.label'),
             icon: const Icon(Icons.delete_outline),
             onPressed: _delete,
           ),
@@ -341,23 +345,30 @@ class _QuoteScreenState extends State<QuoteScreen> {
                     itemId: q.serverId!,
                   ),
                   icon: const Icon(Icons.collections_bookmark_outlined),
-                  label: Text(context.tr('Add to anthology')),
+                  label: Text(context.tr('common.action.anthology.label')),
                 ),
               FilledButton.tonalIcon(
                 onPressed: _speak,
                 icon: Icon(_speaking ? Icons.stop : Icons.volume_up_outlined),
-                label: Text(_speaking ? 'Stop' : 'Read aloud'),
+                label: Text(
+                  _speaking
+                      ? context.tr('settings.jobs.current.stop.label')
+                      : context.tr('speech.play.aria'),
+                ),
               ),
               FilledButton.tonalIcon(
                 onPressed: _share,
                 icon: const Icon(Icons.ios_share),
-                label: Text(context.tr('Share')),
+                label: Text(context.tr('common.action.share.label')),
               ),
             ],
           ),
           const SizedBox(height: 24),
           if (q.note.isNotEmpty) ...[
-            Text(context.tr('Your note'), style: theme.textTheme.titleSmall),
+            Text(
+              context.tr('identity.field.note'),
+              style: theme.textTheme.titleSmall,
+            ),
             const SizedBox(height: 4),
             Text(q.note),
             const SizedBox(height: 16),
@@ -401,7 +412,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
           const SizedBox(height: 24),
           Center(
             child: Text(
-              'Noted ${_date(q.notedAt)}',
+              context.tr('app.quote.noted_x', {'x': _date(q.notedAt)}),
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

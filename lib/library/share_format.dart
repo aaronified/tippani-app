@@ -1,12 +1,13 @@
 import 'models.dart';
+import '../l10n/l10n.dart';
 
 /// The ways a quote can be sent. Same five as the web app's share dialog.
 enum ShareFormat {
-  picture('Picture'),
-  plain('Plain text'),
-  markdown('Markdown'),
+  picture('quotes.board.form.picture.label'),
+  plain('app.share_format.plain_text'),
+  markdown('share.format.markdown.name'),
   whatsapp('WhatsApp'),
-  reddit('Reddit');
+  reddit('share.format.reddit.name');
 
   const ShareFormat(this.label);
   final String label;
@@ -42,19 +43,23 @@ List<ShareField> shareFieldsOf(Quote q, Work? w) {
     if (value.trim().isNotEmpty) out.add(ShareField(id, label, value.trim()));
   }
 
-  add('quote', 'Quote', q.text);
-  add('translation', 'Translation', q.translation);
-  add('speaker', 'Speaker', q.speaker);
+  add('quote', tx('common.field.quote.label'), q.text);
+  add('translation', tx('common.field.translation.label'), q.translation);
+  add('speaker', tx('common.field.speaker.label'), q.speaker);
   if (w != null) {
-    add('author', 'Author', w.creator);
-    add('work', 'Work', w.title);
+    add('author', tx('common.field.author.label'), w.creator);
+    add('work', tx('anthologies.group.work'), w.title);
     add('year', 'Year', w.year == null ? '' : '${w.year}');
   }
-  add('chapter', 'Chapter', q.chapter);
-  add('location', 'Location', q.location);
-  add('noted', 'Noted', _date(q.notedAt));
-  add('tags', 'Tags', q.tags.map((t) => '#$t').join(' '));
-  add('note', 'My note', q.note);
+  add('chapter', tx('board.sort.chapter.label'), q.chapter);
+  add('location', tx('common.field.location.label'), q.location);
+  add('noted', tx('share.field.noted.label'), _date(q.notedAt));
+  add(
+    'tags',
+    tx('common.field.tags.label'),
+    q.tags.map((t) => '#$t').join(' '),
+  );
+  add('note', tx('app.share_format.my_note'), q.note);
   return out;
 }
 
@@ -120,7 +125,7 @@ String buildShareText(Quote q, Work? w, Set<String> on, ShareFormat format) {
   ];
   if (credit.isNotEmpty) out.add('— ${credit.join(', ')}');
   if (on.contains('noted') && fields['noted'] != null) {
-    out.add('Noted ${fields['noted']}');
+    out.add(tx('app.quote.noted_x', {'x': fields['noted']}));
   }
   if (on.contains('tags') && fields['tags'] != null) out.add(fields['tags']!);
   if (on.contains('note') && fields['note'] != null) {

@@ -294,14 +294,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
           shrinkWrap: true,
           children: [
             ListTile(
-              title: Text(context.tr('No board')),
+              title: Text(context.tr('app.bulk_bar.no_board')),
               selected: _boardFilter == _noBoard,
               onTap: () => Navigator.of(context).pop(_noBoard),
             ),
             if (_boards.isEmpty)
               ListTile(
                 title: Text(
-                  context.tr('No boards yet. Make one from the Boards button.'),
+                  context.tr('app.library.no_boards_yet_make_one_from'),
                 ),
               )
             else
@@ -311,7 +311,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ))
                 ListTile(
                   title: Text(b.name),
-                  trailing: Text('${b.quotes}'),
+                  trailing: Text(
+                    context.tr('app.library.quotes', {'quotes': b.quotes}),
+                  ),
                   selected: b.id == _boardFilter,
                   onTap: () => Navigator.of(context).pop(b.id),
                 ),
@@ -335,7 +337,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           shrinkWrap: true,
           children: [
             if (tags.isEmpty)
-              ListTile(title: Text(context.tr('No tags yet.')))
+              ListTile(title: Text(context.tr('app.library.no_tags_yet')))
             else
               for (final t in tags)
                 ListTile(
@@ -346,8 +348,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.sell_outlined),
-              title: const Text('Manage tags'),
-              subtitle: const Text('Rename, colour, merge, delete'),
+              title: Text(context.tr('app.library.manage_tags')),
+              subtitle: Text(
+                context.tr('app.library.rename_colour_merge_delete'),
+              ),
               onTap: () => Navigator.of(context).pop(manage),
             ),
           ],
@@ -437,13 +441,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
   AppBar _normalBar(BuildContext context) {
     return AppBar(
       title: Text(switch (widget.section) {
-        LibrarySection.catalogue => 'Catalogue',
-        LibrarySection.quotes => 'Quotes',
-        _ => 'Library',
+        LibrarySection.catalogue => context.tr('nav.tab.movies.label'),
+        LibrarySection.quotes => context.tr('nav.tab.quotes.label'),
+        _ => context.tr('nav.tab.library.label'),
       }),
       actions: [
         IconButton(
-          tooltip: context.tr('Search everything'),
+          tooltip: context.tr('search.results.everything.label'),
           icon: const Icon(Icons.manage_search),
           onPressed: () => openSearch(
             context,
@@ -459,7 +463,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         if (widget.section == LibrarySection.all ||
             widget.section == LibrarySection.quotes)
           IconButton(
-            tooltip: context.tr('Boards'),
+            tooltip: context.tr('tour.step.boards.name'),
             icon: const Icon(Icons.dashboard_customize_outlined),
             onPressed: _manageBoards,
           ),
@@ -497,17 +501,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
             },
           ),
         PopupMenuButton<ExportKind>(
-          tooltip: context.tr('Export'),
+          tooltip: context.tr('common.action.export.label'),
           icon: const Icon(Icons.ios_share),
           onSelected: _export,
           itemBuilder: (_) => [
             PopupMenuItem(
               value: ExportKind.share,
-              child: Text(context.tr('Share as Markdown')),
+              child: Text(context.tr('app.library.share_as_markdown')),
             ),
             PopupMenuItem(
               value: ExportKind.save,
-              child: Text(context.tr('Save as Markdown file')),
+              child: Text(context.tr('app.library.save_as_markdown_file')),
             ),
           ],
         ),
@@ -526,11 +530,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
               icon: const Icon(Icons.add),
               label: Text(
                 _mode == _Mode.quotes
-                    ? 'Add a quote'
+                    ? context.tr('app.work.add_a_quote')
                     : switch (widget.section) {
-                        LibrarySection.books => 'Add a book',
-                        LibrarySection.catalogue => 'Add a film, show or game',
-                        _ => 'Add a work',
+                        LibrarySection.books => context.tr(
+                          'app.library.add_a_book',
+                        ),
+                        LibrarySection.catalogue => context.tr(
+                          'app.library.add_a_film_show_or_game',
+                        ),
+                        _ => context.tr('identity.works.add.label'),
                       },
               ),
             ),
@@ -544,13 +552,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: _mode == _Mode.quotes
-                    ? 'Search words, people, works and tags'
-                    : 'Search titles and creators',
+                    ? context.tr(
+                        'app.library.search_words_people_works_and_tags',
+                      )
+                    : context.tr(
+                        'app.metadata_tools.search_titles_and_creators',
+                      ),
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _search.text.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: context.tr('Clear'),
+                        tooltip: context.tr(
+                          'common.selection.shelf.clear.label',
+                        ),
                         icon: const Icon(Icons.close),
                         onPressed: () {
                           _search.clear();
@@ -608,7 +622,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   spacing: 8,
                   children: [
                     FilterChip(
-                      label: Text(context.tr('Favourites')),
+                      label: Text(
+                        context.tr('stats.overview.favourites.label'),
+                      ),
                       selected: _favourites,
                       onSelected: (v) {
                         setState(() => _favourites = v);
@@ -629,14 +645,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     InputChip(
                       label: Text(
                         _boardFilter == null
-                            ? 'Board'
+                            ? context.tr('common.field.board.label')
                             : _boardFilter == _noBoard
-                            ? 'No board'
+                            ? context.tr('app.bulk_bar.no_board')
                             : _boards
                                       .where((b) => b.id == _boardFilter)
                                       .map((b) => b.name)
                                       .firstOrNull ??
-                                  'Board',
+                                  context.tr('common.field.board.label'),
                       ),
                       selected: _boardFilter != null,
                       onPressed: _pickBoard,
@@ -648,7 +664,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             },
                     ),
                     FilterChip(
-                      label: Text(context.tr('Group by board')),
+                      label: Text(context.tr('app.library.group_by_board')),
                       selected: _groupByBoard,
                       onSelected: (v) => setState(() => _groupByBoard = v),
                     ),
@@ -732,7 +748,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         if (q.boardId == null) q,
     ];
     if (rest.isNotEmpty) {
-      heading('Not on a board', rest.length, null);
+      heading(context.tr('app.library.not_on_a_board'), rest.length, null);
       out.addAll(rest.map(_quoteTile));
     }
     return out;
@@ -756,19 +772,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ? Icons.movie_outlined
             : Icons.menu_book_rounded,
         title: searching
-            ? 'Nothing matches.'
+            ? context.tr('app.search.nothing_matches')
             : _mode == _Mode.quotes
-            ? 'No quotes yet.'
+            ? context.tr('app.library.no_quotes_yet')
             : switch (widget.section) {
-                LibrarySection.books => 'No books yet.',
-                LibrarySection.catalogue => 'No films, shows or games yet.',
-                _ => 'No works yet.',
+                LibrarySection.books => context.tr('app.library.no_books_yet'),
+                LibrarySection.catalogue => context.tr(
+                  'app.library.no_films_shows_or_games_yet',
+                ),
+                _ => context.tr('app.library.no_works_yet'),
               },
         hint: searching
-            ? 'Try fewer words, or clear a filter.'
+            ? context.tr('app.library.try_fewer_words_or_clear_a')
             : _mode == _Mode.quotes
-            ? 'Add the first one with the button below.'
-            : 'Add one with the button below.',
+            ? context.tr('app.library.add_the_first_one_with_the')
+            : context.tr('app.library.add_one_with_the_button_below'),
       );
     }
     if (_mode == _Mode.works) {

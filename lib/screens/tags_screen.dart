@@ -10,6 +10,7 @@ import '../tags/tag_service.dart';
 import 'filtered_quotes_screen.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
+import '../l10n/l10n.dart';
 
 class _Row {
   _Row(this.name, this.local, this.server);
@@ -149,13 +150,15 @@ class _TagsScreenState extends State<TagsScreen> {
           controller: c,
           autofocus: true,
           maxLength: 64,
-          decoration: const InputDecoration(labelText: 'Tag name'),
+          decoration: InputDecoration(
+            labelText: context.tr('app.tags.tag_name'),
+          ),
           onSubmitted: (v) => Navigator.of(context).pop(v),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(c.text),
@@ -210,11 +213,14 @@ class _TagsScreenState extends State<TagsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '#${r.name}',
+                  context.tr('app.search.name', {'name': r.name}),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 16),
-                Text('Colour', style: Theme.of(context).textTheme.labelLarge),
+                Text(
+                  context.tr('common.field.colour.label'),
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 10,
@@ -246,7 +252,10 @@ class _TagsScreenState extends State<TagsScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text('Style', style: Theme.of(context).textTheme.labelLarge),
+                Text(
+                  context.tr('common.field.style.label'),
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -264,7 +273,7 @@ class _TagsScreenState extends State<TagsScreen> {
                   alignment: Alignment.centerRight,
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('Save'),
+                    child: Text(context.tr('common.action.save.label')),
                   ),
                 ),
               ],
@@ -290,20 +299,20 @@ class _TagsScreenState extends State<TagsScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete $what?'),
+        title: Text(context.tr('app.tags.delete_what', {'what': what})),
         content: Text(
           n == 0
-              ? 'No quote wears it.'
+              ? context.tr('app.tags.no_quote_wears_it')
               : 'It comes off $n ${n == 1 ? 'quote' : 'quotes'}. The quotes stay.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.tr('common.action.delete.label')),
           ),
         ],
       ),
@@ -327,7 +336,7 @@ class _TagsScreenState extends State<TagsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialog) => AlertDialog(
-          title: const Text('Merge into which tag?'),
+          title: Text(context.tr('app.tags.merge_into_which_tag')),
           content: RadioGroup<_Row>(
             groupValue: keep,
             onChanged: (v) => setDialog(() => keep = v ?? keep),
@@ -337,7 +346,9 @@ class _TagsScreenState extends State<TagsScreen> {
                 for (final r in rows)
                   RadioListTile<_Row>(
                     value: r,
-                    title: Text('#${r.name}'),
+                    title: Text(
+                      context.tr('app.search.name', {'name': r.name}),
+                    ),
                     subtitle: Text(_count(r.count)),
                   ),
               ],
@@ -346,11 +357,11 @@ class _TagsScreenState extends State<TagsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(context.tr('common.action.cancel.label')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(keep),
-              child: const Text('Merge'),
+              child: Text(context.tr('staging.move.merge.button.label')),
             ),
           ],
         ),
@@ -386,8 +397,8 @@ class _TagsScreenState extends State<TagsScreen> {
     final svc = _svc;
     if (svc == null) return;
     final got = (await _ask(
-      'New tag',
-      action: 'Add',
+      context.tr('tags.new.title'),
+      action: context.tr('common.action.add.label'),
     ))?.trim().replaceAll(RegExp(r'^#+'), '').trim();
     if (got == null || got.isEmpty) return;
     try {
@@ -405,7 +416,7 @@ class _TagsScreenState extends State<TagsScreen> {
       builder: (_) => FilteredQuotesScreen(
         store: widget.store,
         picker: widget.picker,
-        title: '#${r.name}',
+        title: context.tr('app.search.name', {'name': r.name}),
         tag: r.name,
         anthologies: widget.anthologies,
       ),
@@ -424,10 +435,14 @@ class _TagsScreenState extends State<TagsScreen> {
     ];
     return Scaffold(
       appBar: AppBar(
-        title: Text(selecting ? '${picked.length} selected' : 'Tags'),
+        title: Text(
+          selecting
+              ? '${picked.length} selected'
+              : context.tr('common.field.tags.label'),
+        ),
         leading: selecting
             ? IconButton(
-                tooltip: 'Clear selection',
+                tooltip: context.tr('app.tags.clear_selection'),
                 icon: const Icon(Icons.close),
                 onPressed: () => setState(_picked.clear),
               )
@@ -435,26 +450,32 @@ class _TagsScreenState extends State<TagsScreen> {
         actions: [
           if (selecting) ...[
             IconButton(
-              tooltip: 'Merge',
+              tooltip: context.tr('staging.move.merge.button.label'),
               icon: const Icon(Icons.call_merge_rounded),
               onPressed: picked.length < 2 || _busy
                   ? null
                   : () => _merge(picked),
             ),
             IconButton(
-              tooltip: 'Delete',
+              tooltip: context.tr('common.action.delete.label'),
               icon: const Icon(Icons.delete_outline),
               onPressed: _busy ? null : () => _delete(picked),
             ),
           ] else
             PopupMenuButton<_Sort>(
-              tooltip: 'Sort',
+              tooltip: context.tr('common.filters.sort.aria'),
               icon: const Icon(Icons.sort_rounded),
               initialValue: _sort,
               onSelected: (s) => setState(() => _sort = s),
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: _Sort.name, child: Text('By name')),
-                PopupMenuItem(value: _Sort.used, child: Text('Most used')),
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: _Sort.name,
+                  child: Text(context.tr('app.tags.by_name')),
+                ),
+                PopupMenuItem(
+                  value: _Sort.used,
+                  child: Text(context.tr('app.tags.most_used')),
+                ),
               ],
             ),
         ],
@@ -465,15 +486,15 @@ class _TagsScreenState extends State<TagsScreen> {
               heroTag: 'add-tag',
               onPressed: _create,
               icon: const Icon(Icons.add),
-              label: const Text('New tag'),
+              label: Text(context.tr('tags.new.title')),
             ),
       body: rows == null
           ? const Center(child: CircularProgressIndicator())
           : rows.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.sell_outlined,
-              title: 'No tags yet.',
-              hint: 'Tag a quote and it appears here.',
+              title: context.tr('app.library.no_tags_yet'),
+              hint: context.tr('app.tags.tag_a_quote_and_it_appears'),
             )
           : Column(
               children: [
@@ -483,7 +504,7 @@ class _TagsScreenState extends State<TagsScreen> {
                   child: TextField(
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.search_rounded),
-                      hintText: 'Find a tag',
+                      hintText: context.tr('app.tags.find_a_tag'),
                       filled: true,
                       fillColor: scheme.surfaceContainerHigh,
                       border: OutlineInputBorder(
@@ -539,7 +560,7 @@ class _TagsScreenState extends State<TagsScreen> {
                     shape: BoxShape.circle,
                   ),
                 ),
-          title: Text('#${r.name}'),
+          title: Text(context.tr('app.search.name', {'name': r.name})),
           subtitle: Text(
             [
               _count(r.count),
@@ -551,7 +572,7 @@ class _TagsScreenState extends State<TagsScreen> {
           trailing: selecting
               ? null
               : PopupMenuButton<String>(
-                  tooltip: 'Tag actions',
+                  tooltip: context.tr('app.tags.tag_actions'),
                   onSelected: (a) => switch (a) {
                     'rename' => _rename(r),
                     'look' => _look(r),
@@ -559,17 +580,23 @@ class _TagsScreenState extends State<TagsScreen> {
                     _ => _delete([r]),
                   },
                   itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'rename', child: Text('Rename')),
-                    if (r.server != null && _svc != null)
-                      const PopupMenuItem(
-                        value: 'look',
-                        child: Text('Colour and style'),
-                      ),
-                    const PopupMenuItem(
-                      value: 'select',
-                      child: Text('Select to merge'),
+                    PopupMenuItem(
+                      value: 'rename',
+                      child: Text(context.tr('app.tags.rename')),
                     ),
-                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    if (r.server != null && _svc != null)
+                      PopupMenuItem(
+                        value: 'look',
+                        child: Text(context.tr('app.tags.colour_and_style')),
+                      ),
+                    PopupMenuItem(
+                      value: 'select',
+                      child: Text(context.tr('app.tags.select_to_merge')),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(context.tr('common.action.delete.label')),
+                    ),
                   ],
                 ),
         ),

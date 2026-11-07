@@ -35,14 +35,16 @@ class PrefsEntries extends StatelessWidget {
     return Column(
       children: [
         PrefGroup(
-          title: context.tr('You'),
+          title: context.tr('vocab.source.manual.label'),
           children: [
             if (account != null && paired)
               ListTile(
                 leading: const Icon(Icons.account_circle_outlined),
-                title: Text(context.tr('Account')),
+                title: Text(context.tr('bin.kind.account.label')),
                 subtitle: Text(
-                  context.tr('Picture, password, notifications, widget key'),
+                  context.tr(
+                    'app.prefs.picture_password_notifications_widget_key',
+                  ),
                 ),
                 onTap: () => _open(
                   context,
@@ -50,11 +52,11 @@ class PrefsEntries extends StatelessWidget {
                 ),
               ),
             ChoiceTile<String>(
-              title: context.tr('Language'),
+              title: context.tr('common.field.language.label'),
               icon: Icons.translate_rounded,
               value: p.locale,
               choices: [
-                Choice('', context.tr('The phone\'s own language')),
+                Choice('', context.tr('app.prefs.the_phone_s_own_language')),
                 for (final c in l10n?.choices ?? const <LocaleChoice>[])
                   Choice(c.code, c.name),
               ],
@@ -63,46 +65,46 @@ class PrefsEntries extends StatelessWidget {
           ],
         ),
         PrefGroup(
-          title: context.tr('Reading'),
+          title: context.tr('common.shelf.reading.book.label'),
           children: [
             ListTile(
               leading: const Icon(Icons.text_fields_rounded),
-              title: Text(context.tr('Text and quotes')),
+              title: Text(context.tr('app.prefs.text_and_quotes')),
               subtitle: Text(
-                context.tr('Sizes, line height, typeface, names in a credit'),
+                context.tr('app.prefs.sizes_line_height_typeface_names_in'),
               ),
               onTap: () => _open(context, const ReadingScreen()),
             ),
             ListTile(
               leading: const Icon(Icons.palette_outlined),
-              title: Text(context.tr('Colours')),
-              subtitle: Text(context.tr('Names, shades and which are offered')),
+              title: Text(context.tr('metadata.categories.colours.title')),
+              subtitle: Text(
+                context.tr('app.prefs.names_shades_and_which_are_offered'),
+              ),
               onTap: () => _open(context, const ColoursScreen()),
             ),
             ListTile(
               leading: const Icon(Icons.view_carousel_outlined),
-              title: Text(context.tr('Sections')),
+              title: Text(context.tr('shell.dock.sections.label')),
               subtitle: Text(
-                context.tr(
-                  'What shows at the bottom, and how long the Bin keeps',
-                ),
+                context.tr('app.prefs.what_shows_at_the_bottom_and'),
               ),
               onTap: () => _open(context, const SectionsScreen()),
             ),
             ListTile(
               leading: const Icon(Icons.school_outlined),
-              title: Text(context.tr('Daily review')),
+              title: Text(context.tr('app.prefs.daily_review')),
               subtitle: Text(
-                context.tr('Cards a day, difficulty and schedule'),
+                context.tr('app.prefs.cards_a_day_difficulty_and_schedule'),
               ),
               onTap: () => _open(context, const ReviewPrefsScreen()),
             ),
             if (rules != null && paired)
               ListTile(
                 leading: const Icon(Icons.unfold_more_rounded),
-                title: Text(context.tr('Context around a quote')),
+                title: Text(context.tr('app.prefs.context_around_a_quote')),
                 subtitle: Text(
-                  context.tr('How much of the source shows before and after'),
+                  context.tr('app.prefs.how_much_of_the_source_shows'),
                 ),
                 onTap: () => _open(context, ContextRulesScreen(rules: rules)),
               ),

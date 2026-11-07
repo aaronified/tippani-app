@@ -143,7 +143,9 @@ class _BoardsScreenState extends State<BoardsScreen> {
                   autofocus: true,
                   textCapitalization: TextCapitalization.sentences,
                   onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(labelText: context.tr('Name')),
+                  decoration: InputDecoration(
+                    labelText: context.tr('common.field.name.label'),
+                  ),
                 ),
                 if (onServer) ...[
                   const SizedBox(height: 12),
@@ -152,19 +154,21 @@ class _BoardsScreenState extends State<BoardsScreen> {
                     minLines: 1,
                     maxLines: 4,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'What it is for',
+                    decoration: InputDecoration(
+                      labelText: context.tr(
+                        'quotes.board.form.description.label',
+                      ),
                     ),
                   ),
                 ],
                 const SizedBox(height: 16),
-                Text(context.tr('Colour')),
+                Text(context.tr('common.field.colour.label')),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: [
                     ChoiceChip(
-                      label: Text(context.tr('None')),
+                      label: Text(context.tr('common.group.none.label')),
                       selected: colour.isEmpty,
                       onSelected: (_) => setState(() => colour = ''),
                     ),
@@ -183,7 +187,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
                 ),
                 if (onServer) ...[
                   const SizedBox(height: 16),
-                  const Text('Kind'),
+                  Text(context.tr('quotes.form.kind.label')),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -200,9 +204,13 @@ class _BoardsScreenState extends State<BoardsScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: languages,
-                      decoration: const InputDecoration(
-                        labelText: 'Languages',
-                        helperText: 'Separate with commas: Bengali, Hindi',
+                      decoration: InputDecoration(
+                        labelText: context.tr(
+                          'metadata.section.languages.label',
+                        ),
+                        helperText: context.tr(
+                          'app.boards.separate_with_commas_bengali_hindi',
+                        ),
                       ),
                     ),
                   ],
@@ -213,13 +221,13 @@ class _BoardsScreenState extends State<BoardsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: Text(context.tr('Cancel')),
+              child: Text(context.tr('common.action.cancel.label')),
             ),
             FilledButton(
               onPressed: name.text.trim().isEmpty
                   ? null
                   : () => Navigator.of(context).pop(true),
-              child: Text(context.tr('Save')),
+              child: Text(context.tr('common.action.save.label')),
             ),
           ],
         ),
@@ -261,20 +269,22 @@ class _BoardsScreenState extends State<BoardsScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Delete {name}?', {'name': b.name})),
+        title: Text(
+          context.tr('quotes.board.delete.confirm.title', {'name': b.name}),
+        ),
         content: Text(
           b.quotes == 0
-              ? 'The board is removed.'
-              : 'The board is removed. Its ${b.quotes} ${b.quotes == 1 ? 'quote stays' : 'quotes stay'} in your library, on no board.',
+              ? context.tr('app.boards.the_board_is_removed')
+              : trn('app.boards.removed_keeps', b.quotes),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('Keep it')),
+            child: Text(context.tr('app.anthologies.keep_it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('Delete')),
+            child: Text(context.tr('common.action.delete.label')),
           ),
         ],
       ),
@@ -321,20 +331,25 @@ class _BoardsScreenState extends State<BoardsScreen> {
       final offers = await service.starters();
       if (!mounted) return;
       if (offers.isEmpty) {
-        _say('The server has no starter proverbs.');
+        _say(context.tr('app.boards.the_server_has_no_starter_proverbs'));
         return;
       }
       final wanted = b.languages.map((l) => l.toLowerCase()).toSet();
       final lang = await showDialog<String>(
         context: context,
         builder: (context) => SimpleDialog(
-          title: const Text('Add starter proverbs'),
+          title: Text(context.tr('app.boards.add_starter_proverbs')),
           children: [
             for (final o in offers)
               SimpleDialogOption(
                 onPressed: () => Navigator.of(context).pop(o.language),
                 child: Text(
-                  '${o.language} (${o.count})${wanted.contains(o.language.toLowerCase()) ? ' · this board' : ''}',
+                  context.tr(
+                    wanted.contains(o.language.toLowerCase())
+                        ? 'app.boards.language_count_here'
+                        : 'app.boards.language_count',
+                    {'language': o.language, 'count': o.count},
+                  ),
                 ),
               ),
           ],
@@ -345,7 +360,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
       if (!mounted) return;
       _say(
         n == 0
-            ? 'Those proverbs are already there.'
+            ? context.tr('app.boards.those_proverbs_are_already_there')
             : 'Added $n ${n == 1 ? 'proverb' : 'proverbs'} on the server. Syncing now.',
       );
       await widget.auto?.syncNow();
@@ -381,9 +396,9 @@ class _BoardsScreenState extends State<BoardsScreen> {
           : quoteColour(b.color),
     );
     final facts = [
-      '${b.quotes} ${b.quotes == 1 ? 'quote' : 'quotes'}',
+      countWords('quote', b.quotes),
       if (b.kind != 'plain') boardKindLabel(b.kind),
-      if (b.hidden) 'Hidden',
+      if (b.hidden) tx('app.board.hidden'),
     ].join(' · ');
     return Padding(
       key: ValueKey('board-${b.id}'),
@@ -413,7 +428,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
           ),
           onTap: () => _open(b),
           trailing: PopupMenuButton<String>(
-            tooltip: 'More for ${b.name}',
+            tooltip: context.tr('app.boards.more_for_name', {'name': b.name}),
             onSelected: (v) async {
               switch (v) {
                 case 'edit':
@@ -435,34 +450,52 @@ class _BoardsScreenState extends State<BoardsScreen> {
               }
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(value: 'edit', child: Text('Edit')),
+              PopupMenuItem(
+                value: 'edit',
+                child: Text(context.tr('common.action.edit.label')),
+              ),
               if (onServer) ...[
                 PopupMenuItem(
                   value: 'picture',
                   child: Text(
-                    b.imagePath.isEmpty ? 'Add a picture' : 'Change picture',
+                    b.imagePath.isEmpty
+                        ? context.tr('app.boards.add_a_picture')
+                        : context.tr('app.account.change_picture'),
                   ),
                 ),
                 if (b.imagePath.isNotEmpty)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'nopicture',
-                    child: Text('Remove picture'),
+                    child: Text(context.tr('app.boards.remove_picture')),
                   ),
                 PopupMenuItem(
                   value: 'hide',
-                  child: Text(b.hidden ? 'Show' : 'Hide'),
+                  child: Text(
+                    b.hidden
+                        ? context.tr('common.action.show.label')
+                        : context.tr('common.action.hide.label'),
+                  ),
                 ),
                 if (i > 0)
-                  const PopupMenuItem(value: 'up', child: Text('Move up')),
+                  PopupMenuItem(
+                    value: 'up',
+                    child: Text(context.tr('common.action.move-up.label')),
+                  ),
                 if (i < boards.length - 1)
-                  const PopupMenuItem(value: 'down', child: Text('Move down')),
+                  PopupMenuItem(
+                    value: 'down',
+                    child: Text(context.tr('common.action.move-down.label')),
+                  ),
                 if (b.kind == 'proverb')
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'starters',
-                    child: Text('Add starter proverbs'),
+                    child: Text(context.tr('app.boards.add_starter_proverbs')),
                   ),
               ],
-              const PopupMenuItem(value: 'delete', child: Text('Delete')),
+              PopupMenuItem(
+                value: 'delete',
+                child: Text(context.tr('common.action.delete.label')),
+              ),
             ],
           ),
         ),
@@ -475,11 +508,11 @@ class _BoardsScreenState extends State<BoardsScreen> {
     final boards = _boards;
     final canOrder = _service != null && (boards?.length ?? 0) > 1;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Boards'))),
+      appBar: AppBar(title: Text(context.tr('tour.step.boards.name'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _edit(),
         icon: const Icon(Icons.add),
-        label: Text(context.tr('New board')),
+        label: Text(context.tr('quotes.board.new.label')),
       ),
       body: boards == null
           ? const Center(child: CircularProgressIndicator())
@@ -488,9 +521,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  context.tr(
-                    'No boards yet. A board is a shelf for standalone quotes: make one, then file quotes on it from the quote form.',
-                  ),
+                  context.tr('app.boards.no_boards_yet_a_board_is'),
                   textAlign: TextAlign.center,
                 ),
               ),

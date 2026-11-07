@@ -6,6 +6,7 @@ import '../people/people_console.dart';
 import '../people/picture.dart';
 import 'people_console_actions.dart';
 import 'person_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Every person and character the server keeps: search them, see which have no photo, open one, rename its
 /// spellings, merge two that are the same, remove one, make a character, and ask the server to fetch the photos
@@ -157,9 +158,11 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
       ScaffoldMessenger.of(context)
         ..clearSnackBars()
         ..showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'The server is fetching photos and details for everyone who lacks them. It can take a while.',
+              context.tr(
+                'app.people_console.the_server_is_fetching_photos_and',
+              ),
             ),
           ),
         );
@@ -171,18 +174,22 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove what nothing uses?'),
+        title: Text(context.tr('app.people_console.remove_what_nothing_uses')),
         content: Text(
-          '${_orphans.people} ${_orphans.people == 1 ? 'person' : 'people'} and ${_orphans.characters} ${_orphans.characters == 1 ? 'character' : 'characters'} are in no work and on no quote. $n in all are removed.',
+          context.tr('app.people_console.orphans', {
+            'people': countWords('person', _orphans.people),
+            'characters': countWords('character', _orphans.characters),
+            'n': n,
+          }),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove'),
+            child: Text(context.tr('common.action.remove.label')),
           ),
         ],
       ),
@@ -194,8 +201,8 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
   Future<void> _addCharacter() async {
     final e = await characterForm(
       context,
-      title: 'A new character',
-      yes: 'Add',
+      title: context.tr('app.people_console.a_new_character'),
+      yes: context.tr('common.action.add.label'),
     );
     if (e == null || !mounted) return;
     var id = 0;
@@ -315,7 +322,9 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
           trailing: _picked.isNotEmpty
               ? null
               : PopupMenuButton<String>(
-                  tooltip: 'More',
+                  tooltip: context.tr(
+                    'settings.appearance.contrast.more.label',
+                  ),
                   onSelected: (v) => _rowMenu(
                     v,
                     id: id,
@@ -323,12 +332,19 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                     spellings: spellings,
                     character: character,
                   ),
-                  itemBuilder: (_) => const [
+                  itemBuilder: (_) => [
                     PopupMenuItem(
                       value: 'names',
-                      child: Text('Names and spellings'),
+                      child: Text(
+                        context.tr(
+                          'app.people_console_actions.names_and_spellings',
+                        ),
+                      ),
                     ),
-                    PopupMenuItem(value: 'delete', child: Text('Remove')),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(context.tr('common.action.remove.label')),
+                    ),
                   ],
                 ),
         ),
@@ -368,13 +384,21 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
               onSelected: (v) => setState(() => _kind = v ? k : ''),
             ),
           FilterChip(
-            label: Text('No photo (${all.where((p) => p.noPhoto).length})'),
+            label: Text(
+              context.tr('app.people_console.no_photo_n', {
+                'n': all.where((p) => p.noPhoto).length,
+              }),
+            ),
             selected: _show == _Show.noPhoto,
             onSelected: (v) =>
                 setState(() => _show = v ? _Show.noPhoto : _Show.all),
           ),
           FilterChip(
-            label: Text('No links (${all.where((p) => p.noLinks).length})'),
+            label: Text(
+              context.tr('app.people_console.no_links_n', {
+                'n': all.where((p) => p.noLinks).length,
+              }),
+            ),
             selected: _show == _Show.noLinks,
             onSelected: (v) =>
                 setState(() => _show = v ? _Show.noLinks : _Show.all),
@@ -390,8 +414,10 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                         padding: const EdgeInsets.all(48),
                         child: Text(
                           all.isEmpty
-                              ? 'No one is saved yet. People appear as quotes and works name them.'
-                              : 'No one matches.',
+                              ? context.tr(
+                                  'app.people_console.no_one_is_saved_yet_people',
+                                )
+                              : context.tr('app.people_console.no_one_matches'),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -434,7 +460,9 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
         _filters([
           FilterChip(
             label: Text(
-              'No picture (${all.where((c) => c.image.isEmpty).length})',
+              context.tr('app.people_console.no_picture_n', {
+                'n': all.where((c) => c.image.isEmpty).length,
+              }),
             ),
             selected: _show == _Show.noPhoto,
             onSelected: (v) =>
@@ -451,8 +479,10 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                         padding: const EdgeInsets.all(48),
                         child: Text(
                           all.isEmpty
-                              ? 'No character is saved yet. Add one, or name a speaker on a film\'s quote.'
-                              : 'No one matches.',
+                              ? context.tr(
+                                  'app.people_console.no_character_is_saved_yet_add',
+                                )
+                              : context.tr('app.people_console.no_one_matches'),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -483,10 +513,10 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
   }
 
   String _kindName(String k) => switch (k) {
-    'author' => 'Authors',
-    'actor' => 'Actors',
-    'director' => 'Directors',
-    'speaker' => 'Speakers',
+    'author' => context.tr('stats.breakdown.authors.label'),
+    'actor' => context.tr('stats.breakdown.actors.label'),
+    'director' => context.tr('stats.breakdown.directors.label'),
+    'speaker' => context.tr('stats.breakdown.speakers.label'),
     'creator' => 'Creators',
     _ => k.isEmpty ? k : '${k[0].toUpperCase()}${k.substring(1)}',
   };
@@ -499,29 +529,35 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
       appBar: AppBar(
         leading: selecting
             ? IconButton(
-                tooltip: 'Clear the choice',
+                tooltip: context.tr('app.metadata_tools.clear_the_choice'),
                 icon: const Icon(Icons.close_rounded),
                 onPressed: () => setState(_picked.clear),
               )
             : null,
         title: Text(
-          selecting ? '${_picked.length} chosen' : 'People and characters',
+          selecting
+              ? '${_picked.length} chosen'
+              : context.tr('app.settings.people_and_characters'),
         ),
         actions: [
           if (selecting && _picked.length == 2)
             TextButton.icon(
               onPressed: _merge,
               icon: const Icon(Icons.merge_rounded),
-              label: const Text('Merge'),
+              label: Text(context.tr('staging.move.merge.button.label')),
             ),
           if (!selecting)
             PopupMenuButton<String>(
-              tooltip: 'More',
+              tooltip: context.tr('settings.appearance.contrast.more.label'),
               onSelected: (v) => v == 'fetch' ? _fetch() : _prune(),
               itemBuilder: (_) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'fetch',
-                  child: Text('Fetch missing photos and details'),
+                  child: Text(
+                    context.tr(
+                      'app.people_console.fetch_missing_photos_and_details',
+                    ),
+                  ),
                 ),
                 PopupMenuItem(
                   value: 'prune',
@@ -529,7 +565,9 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                   child: Text(
                     _orphans.total > 0
                         ? 'Remove what nothing uses (${_orphans.total})'
-                        : 'Nothing unused to remove',
+                        : context.tr(
+                            'app.people_console.nothing_unused_to_remove',
+                          ),
                   ),
                 ),
               ],
@@ -542,7 +580,9 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: SearchBar(
-                  hintText: 'Search names and spellings',
+                  hintText: context.tr(
+                    'app.people_console.search_names_and_spellings',
+                  ),
                   leading: const Icon(Icons.search),
                   elevation: const WidgetStatePropertyAll(0),
                   onChanged: (v) => setState(() => _query = v.trim()),
@@ -553,12 +593,12 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                 tabs: [
                   Tab(
                     text: people == null
-                        ? 'People'
+                        ? context.tr('common.field.people.label')
                         : 'People (${people.length})',
                   ),
                   Tab(
                     text: characters == null
-                        ? 'Characters'
+                        ? context.tr('stats.breakdown.characters.label')
                         : 'Characters (${characters.length})',
                   ),
                 ],
@@ -572,7 +612,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
               heroTag: 'add-character',
               onPressed: _addCharacter,
               icon: const Icon(Icons.add),
-              label: const Text('Add a character'),
+              label: Text(context.tr('cast.add.aria')),
             )
           : null,
       body: _problem != null && people == null
@@ -586,7 +626,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _read,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('common.source.retry')),
                     ),
                   ],
                 ),

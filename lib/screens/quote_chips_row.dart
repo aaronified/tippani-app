@@ -5,6 +5,7 @@ import '../library/quote_chips.dart';
 import '../people/people_directory.dart';
 import '../people/people_service.dart';
 import 'person_screen.dart';
+import '../l10n/l10n.dart';
 
 /// The people on a quote as a row of chips that scrolls sideways rather than wrapping (as on the web, so a long name
 /// never pushes the words down): the author of the book, and each character or speaker with the actor under their
@@ -114,7 +115,7 @@ class PersonChip extends StatelessWidget {
   String get _what => switch (chip.kind) {
     ChipKind.author => 'Author',
     ChipKind.character => 'Character',
-    ChipKind.speaker => 'Said by',
+    ChipKind.speaker => tx('app.search.said_by'),
   };
 
   @override
@@ -124,8 +125,16 @@ class PersonChip extends StatelessWidget {
     final r = dense ? 11.0 : 14.0;
     return Semantics(
       button: true,
-      label:
-          '$_what ${chip.name}${chip.actor.isEmpty ? '' : ', played by ${chip.actor}'}',
+      label: chip.actor.isEmpty
+          ? context.tr('app.quote_chips.what_name', {
+              'what': _what,
+              'name': chip.name,
+            })
+          : context.tr('app.quote_chips.what_name_actor', {
+              'what': _what,
+              'name': chip.name,
+              'actor': chip.actor,
+            }),
       child: Tooltip(
         message: chip.actor.isEmpty
             ? chip.name

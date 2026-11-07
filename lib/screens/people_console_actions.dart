@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/server_call.dart';
 import '../people/people_console.dart';
+import '../l10n/l10n.dart';
 
 void _say(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
@@ -57,12 +58,14 @@ Future<bool> editSpellings(
   final go = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Names and spellings'),
+      title: Text(context.tr('app.people_console_actions.names_and_spellings')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'One name per line. The first is the one shown; the others are other ways it is written, and quotes using them are found under it.',
+          Text(
+            context.tr(
+              'app.people_console_actions.one_name_per_line_the_first',
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -77,11 +80,11 @@ Future<bool> editSpellings(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: Text(context.tr('common.action.cancel.label')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('Save'),
+          child: Text(context.tr('common.action.save.label')),
         ),
       ],
     ),
@@ -112,18 +115,22 @@ Future<bool> splitSpelling(
   final ok = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text('Make "$alias" its own record?'),
-      content: const Text(
-        'It stops being a spelling of this one. Quotes that use it follow it.',
+      title: Text(
+        context.tr('app.people_console_actions.make_alias_its_own_record', {
+          'alias': alias,
+        }),
+      ),
+      content: Text(
+        context.tr('app.people_console_actions.it_stops_being_a_spelling_of'),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: Text(context.tr('common.action.cancel.label')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('Split it out'),
+          child: Text(context.tr('app.people_console_actions.split_it_out')),
         ),
       ],
     ),
@@ -148,13 +155,15 @@ Future<bool> mergeTwo(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, set) => AlertDialog(
-        title: const Text('Merge into one'),
+        title: Text(context.tr('app.bulk_bar.merge_into_one')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Everything that points at one points at the other. Which name stays?',
+            Text(
+              context.tr(
+                'app.people_console_actions.everything_that_points_at_one_points',
+              ),
             ),
             RadioGroup<int>(
               groupValue: keep,
@@ -170,17 +179,21 @@ Future<bool> mergeTwo(
                 ],
               ),
             ),
-            const Text('The merge can be undone from the Bin.'),
+            Text(
+              context.tr(
+                'app.people_console_actions.the_merge_can_be_undone_from',
+              ),
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Merge'),
+            child: Text(context.tr('staging.move.merge.button.label')),
           ),
         ],
       ),
@@ -232,9 +245,9 @@ Future<PickRow?> pickRecord(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: TextField(
                     autofocus: true,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       prefixIcon: Icon(Icons.search),
-                      hintText: 'Search',
+                      hintText: context.tr('common.help.topbar.search.term'),
                     ),
                     onChanged: (v) => set(() => query = v.trim().toLowerCase()),
                   ),
@@ -271,16 +284,20 @@ Future<bool> removeRecord(
   final ok = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text('Remove $name?'),
+      title: Text(context.tr('cast.remove.confirm.prose', {'name': name})),
       content: Text(
         character
-            ? 'The character is removed from every work it is in, and quotes stop pointing at it. The quotes stay. It goes to the Bin.'
-            : 'The person is removed, and credits and quotes stop pointing at them. The quotes and works stay. It goes to the Bin.',
+            ? context.tr(
+                'app.people_console_actions.the_character_is_removed_from_every',
+              )
+            : context.tr(
+                'app.people_console_actions.the_person_is_removed_and_credits',
+              ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: Text(context.tr('common.action.cancel.label')),
         ),
         FilledButton(
           style: FilledButton.styleFrom(
@@ -288,7 +305,7 @@ Future<bool> removeRecord(
             foregroundColor: Theme.of(context).colorScheme.onError,
           ),
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('Remove'),
+          child: Text(context.tr('common.action.remove.label')),
         ),
       ],
     ),
@@ -303,7 +320,7 @@ Future<bool> removeRecord(
 /// The form for a new or changed character; null when cancelled.
 Future<CharacterEdit?> characterForm(
   BuildContext context, {
-  String title = 'Edit the character',
+  String title = 'app.people_console_actions.edit_the_character',
   String name = '',
   String description = '',
   String born = '',
@@ -319,7 +336,7 @@ Future<CharacterEdit?> characterForm(
   return showDialog<CharacterEdit>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text(title),
+      title: Text(context.tr(title)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -327,18 +344,26 @@ Future<CharacterEdit?> characterForm(
             TextField(
               controller: n,
               autofocus: name.isEmpty,
-              decoration: const InputDecoration(labelText: 'Name'),
+              decoration: InputDecoration(
+                labelText: context.tr('common.field.name.label'),
+              ),
             ),
             TextField(
               controller: d,
               minLines: 2,
               maxLines: 6,
-              decoration: const InputDecoration(labelText: 'Who they are'),
+              decoration: InputDecoration(
+                labelText: context.tr(
+                  'app.people_console_actions.who_they_are',
+                ),
+              ),
             ),
             TextField(
               controller: b,
-              decoration: const InputDecoration(
-                labelText: 'Born (in the story)',
+              decoration: InputDecoration(
+                labelText: context.tr(
+                  'app.people_console_actions.born_in_the_story',
+                ),
               ),
             ),
             TextField(
@@ -346,16 +371,20 @@ Future<CharacterEdit?> characterForm(
               minLines: 1,
               maxLines: 4,
               keyboardType: TextInputType.url,
-              decoration: const InputDecoration(
-                labelText: 'Links',
-                helperText: 'One address per line',
+              decoration: InputDecoration(
+                labelText: context.tr('common.field.links.label'),
+                helperText: context.tr(
+                  'app.people_console_actions.one_address_per_line',
+                ),
               ),
             ),
             TextField(
               controller: o,
               minLines: 1,
               maxLines: 4,
-              decoration: const InputDecoration(labelText: 'Your note'),
+              decoration: InputDecoration(
+                labelText: context.tr('identity.field.note'),
+              ),
             ),
           ],
         ),
@@ -363,7 +392,7 @@ Future<CharacterEdit?> characterForm(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('common.action.cancel.label')),
         ),
         FilledButton(
           onPressed: () {

@@ -7,6 +7,13 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Changed
+
+- The whole app speaks English or Bengali, from one set of words: every label, button, message and hint is looked up by name, in the language you chose
+  in Settings (or your phone's), using the same words as the web where the web has them. A correction made to the language files on your server reaches
+  the phone, and a word with no Bengali yet shows in English rather than blank. Sync results, error messages and counts ("1 quote", "5 quotes") follow the
+  language too.
+
 ### Added
 
 - A work's quotes can be ordered (reading order, newest, oldest) and gathered under headings by chapter, colour, tag, who said it or the month

@@ -7,6 +7,7 @@ import '../library/library_store.dart';
 import '../library/models.dart';
 import '../sources/source_picker.dart';
 import '../sources/sources_service.dart';
+import '../l10n/l10n.dart';
 
 /// The source a work's file belongs to: 'book' for a book, 'screen' for a film or a show (a game has none).
 String? sourceSubjectOf(Work w) => switch (w.kind) {
@@ -92,7 +93,9 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
         return episode.isEmpty ? w.title : '${w.title} · $episode';
       }
     }
-    return episode.isEmpty ? 'A work not on this phone' : 'A show · $episode';
+    return episode.isEmpty
+        ? tx('app.source_files.a_work_not_on_this_phone')
+        : tx('app.source_files.a_show_episode', {'episode': episode});
   }
 
   Future<void> _read() async {
@@ -169,7 +172,14 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
     if (!ok || !mounted) return;
     _say(
       context,
-      '${r.attached} attached${r.skipped > 0 ? ', ${r.skipped} skipped' : ''}${r.failed > 0 ? ', ${r.failed} could not be read' : ''}.',
+      [
+            tx('app.source_files.attached_n', {'n': r.attached}),
+            if (r.skipped > 0)
+              tx('app.source_files.skipped_n', {'n': r.skipped}),
+            if (r.failed > 0)
+              tx('app.source_files.unreadable_n', {'n': r.failed}),
+          ].join(', ') +
+          tx('app.source_files.full_stop'),
     );
     await _read();
   }
@@ -186,18 +196,20 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove this file?'),
+        title: Text(context.tr('app.source_files.remove_this_file')),
         content: Text(
-          'The file is taken off ${_title(s.subject, s.workId, s.episode)}. Quotes keep the surroundings already cut from it; new quotes will have none.',
+          context.tr('app.source_files.the_file_is_taken_off_x', {
+            'x': _title(s.subject, s.workId, s.episode),
+          }),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove'),
+            child: Text(context.tr('common.action.remove.label')),
           ),
         ],
       ),
@@ -217,18 +229,25 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Free the space of this file?'),
+        title: Text(context.tr('app.source_files.free_the_space_of_this_file')),
         content: Text(
-          'The file (${_size(p.bytes)}) is deleted from the server; ${_size(p.keptBytes)} of surroundings stay. ${p.withContext} ${p.withContext == 1 ? 'quote keeps' : 'quotes keep'} its surroundings.${p.withoutContext > 0 ? ' ${p.withoutContext} ${p.withoutContext == 1 ? 'quote has' : 'quotes have'} none to keep.' : ''}',
+          context.tr('app.source_files.the_file_x_is_deleted_from', {
+            'x': _size(p.bytes),
+            'x2': _size(p.keptBytes),
+            'keeps': trn('app.source_files.keeps', p.withContext),
+            'none': p.withoutContext > 0
+                ? ' ${trn('app.source_files.none_to_keep', p.withoutContext)}'
+                : '',
+          }),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Free the space'),
+            child: Text(context.tr('app.source_files.free_the_space')),
           ),
         ],
       ),
@@ -239,7 +258,10 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
 
   Future<void> _rescan(AttachedSource s) async {
     if (await _try(context, () => widget.service.rescan(s.id)) && mounted) {
-      _say(context, 'Read again. Quotes now have the surroundings it gives.');
+      _say(
+        context,
+        context.tr('app.source_files.read_again_quotes_now_have_the'),
+      );
       await _read();
     }
   }
@@ -251,10 +273,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
         if (w.serverId != null && sourceSubjectOf(w) != null) w,
     ];
     if (candidates.isEmpty) {
-      _say(
-        context,
-        'None of your works is on the server yet. Sync first, then attach a file.',
-      );
+      _say(context, context.tr('app.source_files.none_of_your_works_is_on'));
       return null;
     }
     final work = await showModalBottomSheet<Work>(
@@ -276,19 +295,21 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
               height: MediaQuery.sizeOf(context).height * 0.75,
               child: Column(
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
                     child: Text(
-                      'Which work is it for?',
+                      context.tr('app.source_files.which_work_is_it_for'),
                       style: TextStyle(fontSize: 18),
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: TextField(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         prefixIcon: Icon(Icons.search),
-                        hintText: 'Search your works',
+                        hintText: context.tr(
+                          'app.source_files.search_your_works',
+                        ),
                       ),
                       onChanged: (v) => set(() => q = v.trim().toLowerCase()),
                     ),
@@ -321,23 +342,25 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
       final e = await showDialog<String>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Which episode?'),
+          title: Text(context.tr('common.source.episode.title')),
           content: TextField(
             controller: c,
             autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Episode',
-              helperText: 'Like s01e04. A show\'s subtitles cover one episode.',
+            decoration: InputDecoration(
+              labelText: context.tr('common.field.episode.label'),
+              helperText: context.tr(
+                'app.source_files.like_s01e04_a_show_s_subtitles',
+              ),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.tr('common.action.cancel.label')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, c.text.trim()),
-              child: const Text('Next'),
+              child: Text(context.tr('common.date.picker.next.aria')),
             ),
           ],
         ),
@@ -401,7 +424,10 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
       ),
     );
     if (ok && mounted) {
-      _say(context, 'Attached to ${chosen.work.title}.');
+      _say(
+        context,
+        tx('app.source_files.attached_to_title', {'title': chosen.work.title}),
+      );
       await _read();
       _tabs.animateTo(0);
     }
@@ -412,11 +438,11 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
     final scheme = Theme.of(context).colorScheme;
     if (list.isEmpty) {
       return ListView(
-        children: const [
+        children: [
           Padding(
             padding: EdgeInsets.all(40),
             child: Text(
-              'No file is attached yet. Scan a folder on the Found tab, or attach one by hand on the Add tab, and quotes can show the lines around them.',
+              context.tr('app.source_files.no_file_is_attached_yet_scan'),
               textAlign: TextAlign.center,
             ),
           ),
@@ -455,7 +481,9 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                     ].join('\n'),
                   ),
                   trailing: PopupMenuButton<String>(
-                    tooltip: 'More',
+                    tooltip: context.tr(
+                      'settings.appearance.contrast.more.label',
+                    ),
                     onSelected: (v) => switch (v) {
                       'rescan' => _rescan(s),
                       'prune' => _prune(s),
@@ -463,18 +491,26 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                     },
                     itemBuilder: (_) => [
                       if (s.state != 'pruned')
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'rescan',
-                          child: Text('Read it again'),
+                          child: Text(
+                            context.tr(
+                              'common.shelf.move.reading.again.book.label',
+                            ),
+                          ),
                         ),
                       if (s.prunable)
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'prune',
-                          child: Text('Free the space'),
+                          child: Text(
+                            context.tr('app.source_files.free_the_space'),
+                          ),
                         ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'remove',
-                        child: Text('Remove the file'),
+                        child: Text(
+                          context.tr('app.source_files.remove_the_file'),
+                        ),
                       ),
                     ],
                   ),
@@ -490,11 +526,11 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
     final mounts = _mounts!;
     if (mounts.isEmpty) {
       return ListView(
-        children: const [
+        children: [
           Padding(
             padding: EdgeInsets.all(40),
             child: Text(
-              'The server has no folder to look in. An admin adds them under Server administration, Library folders.',
+              context.tr('app.source_files.the_server_has_no_folder_to'),
               textAlign: TextAlign.center,
             ),
           ),
@@ -550,23 +586,43 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Text(switch (_scan.state) {
-              'none' => 'Not scanned yet. A scan looks for ebooks and subtitle files that fit your works.',
-              'queued' => 'Waiting for the server to start…',
-              'running' =>
-                'Looking… ${_scan.scanned} files read, ${_scan.found} found.',
-              'partial' =>
-                'Stopped part-way: ${_scan.scanned} files read. Scan again to carry on.',
+              'none' => context.tr(
+                'app.source_files.not_scanned_yet_a_scan_looks',
+              ),
+              'queued' => context.tr(
+                'app.source_files.waiting_for_the_server_to_start',
+              ),
+              'running' => tx('app.source_files.looking', {
+                'read': _scan.scanned,
+                'found': _scan.found,
+              }),
+              'partial' => tx('app.source_files.stopped_part_way', {
+                'read': _scan.scanned,
+              }),
               'failed' || 'interrupted' =>
-                'The scan did not finish${_scan.error.isEmpty ? '' : ': ${_scan.error}'}',
+                _scan.error.isEmpty
+                    ? tx('app.source_files.the_scan_did_not_finish')
+                    : tx('app.source_files.the_scan_did_not_finish_why', {
+                        'detail': _scan.error,
+                      }),
               _ =>
-                '${_scan.scanned} files read, ${_scan.found} fit a work${_scan.unclaimed > 0 ? ', ${_scan.unclaimed} fit none' : ''}.',
+                _scan.unclaimed > 0
+                    ? tx('app.source_files.scan_done_some_unclaimed', {
+                        'read': _scan.scanned,
+                        'found': _scan.found,
+                        'none': _scan.unclaimed,
+                      })
+                    : tx('app.source_files.scan_done', {
+                        'read': _scan.scanned,
+                        'found': _scan.found,
+                      }),
             }, style: text.bodySmall),
           ),
           if (_scan.live) const LinearProgressIndicator(),
           if (exact.isNotEmpty) ...[
             _FoundHeading(
               'Exact matches (${exact.length})',
-              action: 'Attach all',
+              action: context.tr('app.source_files.attach_all'),
               onAction: () => _attachFound(exact, 'exact'),
             ),
             for (final f in exact) _foundTile(f),
@@ -574,16 +630,16 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
           if (review.isNotEmpty) ...[
             _FoundHeading(
               'To look over (${review.length})',
-              action: 'Turn all down',
+              action: context.tr('app.source_files.turn_all_down'),
               onAction: () => _ignoreFound(review),
             ),
             for (final f in review) _foundTile(f),
           ],
           if (_found.isEmpty && !_scan.live && _scan.state == 'done')
-            const Padding(
+            Padding(
               padding: EdgeInsets.all(32),
               child: Text(
-                'Nothing new fits. Works that have no quotes, or already have a file, are left out.',
+                context.tr('app.source_files.nothing_new_fits_works_that_have'),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -601,11 +657,21 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              f.episode.isEmpty ? f.title : '${f.title} · ${f.episode}',
+              f.episode.isEmpty
+                  ? f.title
+                  : context.tr('app.source_files.title_episode', {
+                      'title': f.title,
+                      'episode': f.episode,
+                    }),
               style: Theme.of(context).textTheme.titleSmall,
             ),
             Text(
-              '${f.rel}\n${f.format.toUpperCase()} · ${f.exact ? 'matched by its ids' : 'matched by its name'}',
+              context.tr(
+                f.exact
+                    ? 'app.source_files.found_by_ids'
+                    : 'app.source_files.found_by_name',
+                {'rel': f.rel, 'format': f.format.toUpperCase()},
+              ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             Align(
@@ -615,11 +681,11 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                 children: [
                   TextButton(
                     onPressed: () => _ignoreFound([f]),
-                    child: const Text('Not this one'),
+                    child: Text(context.tr('common.source.found.refuse')),
                   ),
                   FilledButton.tonal(
                     onPressed: () => _attachFound([f], f.bucket),
-                    child: const Text('Attach'),
+                    child: Text(context.tr('common.source.found.attach')),
                   ),
                 ],
               ),
@@ -638,11 +704,17 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
         Card(
           child: ListTile(
             leading: const Icon(Icons.folder_open_outlined),
-            title: const Text('From a folder on the server'),
+            title: Text(
+              context.tr('app.source_files.from_a_folder_on_the_server'),
+            ),
             subtitle: Text(
               hasMounts
-                  ? 'Browse the server\'s folders and choose the file. It is read in place, not copied.'
-                  : 'The server has no folder to browse. An admin adds them in Library folders.',
+                  ? context.tr(
+                      'app.source_files.browse_the_server_s_folders_and',
+                    )
+                  : context.tr(
+                      'app.source_files.the_server_has_no_folder_to_2',
+                    ),
             ),
             enabled: hasMounts,
             onTap: hasMounts ? _fromFolder : null,
@@ -652,18 +724,16 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
         Card(
           child: ListTile(
             leading: const Icon(Icons.upload_file_outlined),
-            title: const Text('From this phone'),
-            subtitle: const Text(
-              'Send an ebook or a subtitle file (up to 25 MB). The server keeps a copy.',
+            title: Text(context.tr('app.source_files.from_this_phone')),
+            subtitle: Text(
+              context.tr('app.source_files.send_an_ebook_or_a_subtitle'),
             ),
             onTap: _fromPhone,
           ),
         ),
-        const Padding(
+        Padding(
           padding: EdgeInsets.all(16),
-          child: Text(
-            'A work has one file. A book takes an ebook or a text file; a film or a show\'s episode takes subtitles.',
-          ),
+          child: Text(context.tr('app.source_files.a_work_has_one_file_a')),
         ),
       ],
     );
@@ -674,7 +744,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
     final attached = _attached;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Source files'),
+        title: Text(context.tr('metadata.section.files.label')),
         bottom: TabBar(
           controller: _tabs,
           tabs: [
@@ -684,7 +754,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                   : 'Attached (${attached.length})',
             ),
             Tab(text: _found.isEmpty ? 'Found' : 'Found (${_found.length})'),
-            const Tab(text: 'Add'),
+            Tab(text: context.tr('common.action.add.label')),
           ],
         ),
       ),
@@ -699,7 +769,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _read,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('common.source.retry')),
                     ),
                   ],
                 ),
@@ -795,7 +865,7 @@ class _BrowseScreenState extends State<_BrowseScreen> {
         actions: [
           if (widget.mounts.length > 1)
             PopupMenuButton<String>(
-              tooltip: 'Folder',
+              tooltip: context.tr('app.source_files.folder'),
               icon: const Icon(Icons.folder_special_outlined),
               onSelected: (v) {
                 setState(() => _mount = v);
@@ -815,10 +885,12 @@ class _BrowseScreenState extends State<_BrowseScreen> {
           : ListView(
               children: [
                 if (l.entries.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(40),
                     child: Text(
-                      'Nothing here an ebook or subtitle file could be.',
+                      context.tr(
+                        'app.source_files.nothing_here_an_ebook_or_subtitle',
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -836,10 +908,12 @@ class _BrowseScreenState extends State<_BrowseScreen> {
                         : Navigator.pop(context, (mount: _mount, rel: e.rel)),
                   ),
                 if (l.truncated)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(16),
                     child: Text(
-                      'Only the first part of this folder is shown.',
+                      context.tr(
+                        'app.source_files.only_the_first_part_of_this',
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),

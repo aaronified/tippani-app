@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../app_controller.dart';
 import '../harness/harness.dart';
 import 'checks_screen.dart';
+import '../l10n/l10n.dart';
 
 /// The Settings row that opens Import and checks, badged with how many imported quotes wait for approval.
 class ChecksEntry extends StatefulWidget {
@@ -54,13 +55,19 @@ class _ChecksEntryState extends State<ChecksEntry> {
     final h = widget.harness;
     return ListTile(
       leading: const Icon(Icons.fact_check_outlined),
-      title: const Text('Import and checks'),
+      title: Text(context.tr('app.checks_entry.import_and_checks')),
       subtitle: Text(
         _pending > 0
             ? '$_pending imported ${_pending == 1 ? 'quote waits' : 'quotes wait'} for your approval'
             : 'Bring in files; stray marks, corrections, times and places',
       ),
-      trailing: _pending > 0 ? Badge(label: Text('$_pending')) : null,
+      trailing: _pending > 0
+          ? Badge(
+              label: Text(
+                context.tr('app.checks_entry.pending', {'pending': _pending}),
+              ),
+            )
+          : null,
       onTap: () async {
         await Navigator.of(context).push(
           MaterialPageRoute<void>(

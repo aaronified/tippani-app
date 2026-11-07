@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api/server_call.dart';
+import '../l10n/l10n.dart';
 
 /// Reads something from the server and draws it: a bar while it loads, the server's own words and a Try again
 /// when it cannot be read, and [builder] with the data and a way to read it again when it can.
@@ -43,7 +44,11 @@ class _LoaderState<T> extends State<Loader<T>> {
     } on ServerException catch (e) {
       if (mounted) setState(() => _problem = e.message);
     } on Object {
-      if (mounted) setState(() => _problem = 'That could not be read.');
+      if (mounted) {
+        setState(
+          () => _problem = context.tr('app.admin.that_could_not_be_read'),
+        );
+      }
     }
   }
 
@@ -64,7 +69,7 @@ class _LoaderState<T> extends State<Loader<T>> {
                   setState(() => _problem = null);
                   _read();
                 },
-                child: const Text('Try again'),
+                child: Text(context.tr('common.source.retry')),
               ),
             ],
           ),
@@ -130,7 +135,7 @@ Future<bool> confirmDialog(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: Text(context.tr('common.action.cancel.label')),
         ),
         FilledButton(
           style: danger
@@ -172,7 +177,7 @@ Future<String?> askText(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('common.action.cancel.label')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, c.text),

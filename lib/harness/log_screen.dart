@@ -37,8 +37,9 @@ class _LogScreenState extends State<LogScreen> {
   Future<void> _copy() async {
     await Clipboard.setData(ClipboardData(text: _text));
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(context.tr('Log copied'))));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.tr('app.log.log_copied'))));
   }
 
   Future<void> _share() async {
@@ -50,20 +51,16 @@ class _LogScreenState extends State<LogScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Clear the log?')),
-        content: Text(
-          context.tr(
-            'This empties the log on this phone, including earlier runs. Nothing else changes.',
-          ),
-        ),
+        title: Text(context.tr('app.log.clear_the_log')),
+        content: Text(context.tr('app.log.this_empties_the_log_on_this')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(context.tr('Clear')),
+            child: Text(context.tr('common.selection.shelf.clear.label')),
           ),
         ],
       ),
@@ -78,20 +75,20 @@ class _LogScreenState extends State<LogScreen> {
     final text = _text;
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('Log')),
+        title: Text(context.tr('app.log.log')),
         actions: [
           IconButton(
-            tooltip: context.tr('Copy'),
+            tooltip: context.tr('common.action.copy.label'),
             icon: const Icon(Icons.copy),
             onPressed: text.isEmpty ? null : _copy,
           ),
           IconButton(
-            tooltip: context.tr('Share'),
+            tooltip: context.tr('common.action.share.label'),
             icon: const Icon(Icons.share),
             onPressed: text.isEmpty ? null : _share,
           ),
           IconButton(
-            tooltip: context.tr('Clear'),
+            tooltip: context.tr('common.selection.shelf.clear.label'),
             icon: const Icon(Icons.delete_outline),
             onPressed: _clear,
           ),
@@ -100,14 +97,14 @@ class _LogScreenState extends State<LogScreen> {
       body: Column(
         children: [
           SwitchListTile(
-            title: Text(context.tr('Include earlier runs')),
+            title: Text(context.tr('app.log.include_earlier_runs')),
             value: _history,
             onChanged: (v) => setState(() => _history = v),
           ),
           const Divider(height: 1),
           Expanded(
             child: text.isEmpty
-                ? Center(child: Text(context.tr('The log is empty.')))
+                ? Center(child: Text(context.tr('app.log.the_log_is_empty')))
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(12),
                     child: SelectableText(

@@ -57,7 +57,9 @@ class _AdjustScreenState extends State<AdjustScreen> {
     } on Object {
       if (mounted) {
         setState(
-          () => _problem = 'The picture could not be looked at. You can still use it as it is.',
+          () => _problem = context.tr(
+            'app.adjust.the_picture_could_not_be_looked',
+          ),
         );
       }
     } finally {
@@ -85,7 +87,7 @@ class _AdjustScreenState extends State<AdjustScreen> {
       if (mounted) {
         setState(() {
           _busy = false;
-          _problem = 'The picture could not be adjusted. Try again, or use it as it is.';
+          _problem = context.tr('app.adjust.the_picture_could_not_be_adjusted');
         });
       }
     }
@@ -138,7 +140,7 @@ class _AdjustScreenState extends State<AdjustScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Straighten and crop'))),
+      appBar: AppBar(title: Text(context.tr('app.adjust.straighten_and_crop'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -241,7 +243,7 @@ class _AdjustScreenState extends State<AdjustScreen> {
             Row(
               children: [
                 IconButton(
-                  tooltip: context.tr('Turn anticlockwise'),
+                  tooltip: context.tr('app.adjust.turn_anticlockwise'),
                   icon: const Icon(Icons.rotate_left),
                   onPressed: _busy ? null : () => _turn(-0.5),
                 ),
@@ -256,7 +258,7 @@ class _AdjustScreenState extends State<AdjustScreen> {
                   ),
                 ),
                 IconButton(
-                  tooltip: context.tr('Turn clockwise'),
+                  tooltip: context.tr('app.adjust.turn_clockwise'),
                   icon: const Icon(Icons.rotate_right),
                   onPressed: _busy ? null : () => _turn(0.5),
                 ),
@@ -264,7 +266,7 @@ class _AdjustScreenState extends State<AdjustScreen> {
             ),
             Center(
               child: Text(
-                context.tr('Turned {angle}°', {
+                context.tr('app.adjust.turned_angle', {
                   'angle': _angle.toStringAsFixed(1),
                 }),
               ),
@@ -278,12 +280,12 @@ class _AdjustScreenState extends State<AdjustScreen> {
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _auto,
                   icon: const Icon(Icons.auto_fix_high),
-                  label: Text(context.tr('Auto')),
+                  label: Text(context.tr('board.columns.auto.label')),
                 ),
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _reset,
                   icon: const Icon(Icons.restart_alt),
-                  label: Text(context.tr('Reset')),
+                  label: Text(context.tr('staging.formula.example.reset')),
                 ),
               ],
             ),
@@ -296,13 +298,13 @@ class _AdjustScreenState extends State<AdjustScreen> {
             children: [
               FilledButton(
                 onPressed: _busy || !_ready ? null : _use,
-                child: Text(context.tr('Use this')),
+                child: Text(context.tr('app.adjust.use_this')),
               ),
               OutlinedButton(
                 onPressed: _busy && _problem == null
                     ? null
                     : () => Navigator.of(context).pop(widget.imagePath),
-                child: Text(context.tr('Use as is')),
+                child: Text(context.tr('app.adjust.use_as_is')),
               ),
             ],
           ),

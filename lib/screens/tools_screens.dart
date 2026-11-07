@@ -7,11 +7,11 @@ import '../l10n/l10n.dart';
 export 'stats_screen.dart';
 
 String _kindWords(String kind) => switch (kind) {
-  'annotation' => 'Book quote',
-  'dialogue' => 'Film or show quote',
+  'annotation' => tx('app.checks_tabs.book_quote'),
+  'dialogue' => tx('app.checks_tabs.film_or_show_quote'),
   'quote' || 'utterance' => 'Quote',
   'book' => 'Book',
-  'movie' => 'Film or show',
+  'movie' => tx('bin.kind.movie.label'),
   _ => kind.isEmpty ? 'Item' : '${kind[0].toUpperCase()}${kind.substring(1)}',
 };
 
@@ -64,7 +64,7 @@ class _BinScreenState extends State<BinScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -90,17 +90,17 @@ class _BinScreenState extends State<BinScreen> {
     final bin = _bin;
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('Bin')),
+        title: Text(context.tr('bin.title')),
         actions: [
           if (bin != null && bin.entries.isNotEmpty)
             IconButton(
-              tooltip: context.tr('Empty the bin'),
+              tooltip: context.tr('app.tools.empty_the_bin'),
               icon: const Icon(Icons.delete_sweep_outlined),
               onPressed: () async {
                 if (await _confirm(
-                  'Empty the bin?',
-                  'Everything in it is deleted for good. This cannot be undone.',
-                  'Empty it',
+                  context.tr('bin.confirm.title'),
+                  context.tr('app.tools.everything_in_it_is_deleted_for'),
+                  context.tr('bin.confirm.label'),
                 )) {
                   await _act(widget.tools.emptyBin);
                 }
@@ -119,7 +119,7 @@ class _BinScreenState extends State<BinScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _load,
-                      child: Text(context.tr('Try again')),
+                      child: Text(context.tr('common.source.retry')),
                     ),
                   ],
                 ),
@@ -128,14 +128,16 @@ class _BinScreenState extends State<BinScreen> {
           : bin == null
           ? const Center(child: CircularProgressIndicator())
           : bin.entries.isEmpty
-          ? Center(child: Text(context.tr('The bin is empty.')))
+          ? Center(child: Text(context.tr('app.tools.the_bin_is_empty')))
           : ListView(
               padding: const EdgeInsets.only(bottom: 24),
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                   child: Text(
-                    'Things you delete are kept here for ${bin.keptDays} days.',
+                    context.tr('app.tools.things_you_delete_are_kept_here', {
+                      'kept_days': bin.keptDays,
+                    }),
                   ),
                 ),
                 for (final e in bin.entries)
@@ -155,28 +157,36 @@ class _BinScreenState extends State<BinScreen> {
                           [
                             _kindWords(e.kind),
                             if (e.childCount > 0)
-                              'with ${e.childCount} ${e.childCount == 1 ? 'quote' : 'quotes'}',
+                              context.tr('app.tools.with_quotes', {
+                                'quotes': countWords('quote', e.childCount),
+                              }),
                             if (e.deletedAt.isNotEmpty)
-                              'deleted ${e.deletedAt}',
+                              context.tr('app.tools.deleted_at', {
+                                'when': e.deletedAt,
+                              }),
                           ].join(' · '),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              tooltip: context.tr('Restore'),
+                              tooltip: context.tr(
+                                'common.action.restore.label',
+                              ),
                               icon: const Icon(Icons.restore),
                               onPressed: () =>
                                   _act(() => widget.tools.restore(e.id)),
                             ),
                             IconButton(
-                              tooltip: context.tr('Delete for good'),
+                              tooltip: context.tr('app.tools.delete_for_good'),
                               icon: const Icon(Icons.delete_forever_outlined),
                               onPressed: () async {
                                 if (await _confirm(
-                                  'Delete for good?',
-                                  'It cannot be brought back after this.',
-                                  'Delete',
+                                  context.tr('app.tools.delete_for_good_2'),
+                                  context.tr(
+                                    'app.tools.it_cannot_be_brought_back_after',
+                                  ),
+                                  context.tr('common.action.delete.label'),
                                 )) {
                                   await _act(
                                     () => widget.tools.deleteForever(e.id),

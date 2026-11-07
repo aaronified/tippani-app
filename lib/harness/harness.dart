@@ -68,7 +68,7 @@ class SystemBackupPicker implements BackupPicker {
   @override
   Future<bool> save(String fileName, Uint8List bytes) async {
     final saved = await FilePicker.saveFile(
-      dialogTitle: 'Save your backup',
+      dialogTitle: tx('app.harness.save_your_backup'),
       fileName: fileName,
       bytes: bytes,
     );
@@ -78,7 +78,7 @@ class SystemBackupPicker implements BackupPicker {
   @override
   Future<PickedFile?> pick() async {
     final f = await FilePicker.pickFile(
-      dialogTitle: 'Choose a Tippani backup',
+      dialogTitle: tx('app.harness.choose_a_tippani_backup'),
       type: FileType.custom,
       allowedExtensions: const ['json'],
     );
@@ -282,6 +282,7 @@ class Harness {
     final directory = PairedPeopleDirectory(controller, covers);
     final prefs = PairedPreferences(controller, settings);
     final l10n = L10n()..use(prefs.prefs.locale);
+    Tr.current = l10n; // code with no screen (a service wording an error) speaks in the same language
     prefs.addListener(() => l10n.use(prefs.prefs.locale));
     return Harness(
       files: files,

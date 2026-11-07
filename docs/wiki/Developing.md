@@ -220,6 +220,24 @@ constants (paddings, type sizes and line heights, gaps, palettes, grain sizes an
 and `theme.js`, under the same names where there is one. The grain tiles are in `assets/share`, the fonts (Newsreader, Noto Serif Bengali and
 Devanagari, IBM Plex Mono, Caveat) in `assets/fonts/share` with their licences.
 
+## The words: tokens, in English and Bengali
+
+Nothing a reader sees is written in the code. Every string is a **token**, and the words for it are in two languages.
+
+- The tokens are the server's own. `assets/l10n/en.txt` and `bn.txt` are copies of the files the server embeds (copy them again from
+  `internal/i18n/` when the server's text changes). What the web has no line for is an `app.<screen>.<name>` token in
+  `assets/l10n/app.en.txt`, with its Bengali in `assets/l10n/app.bn.txt` (that file may also carry Bengali for a web token whose own `bn.txt` has none).
+  Prefer a web token whenever one says the same thing.
+- In a widget: `context.tr('token')`, with values for `{place}`s: `context.tr('token', {'n': 3})`. It follows a change of language while
+  the screen is open. Where there is no `BuildContext` (a service wording an error), `tx('token')`. A phrase that depends on a number is
+  `trn('base', n)` (the tokens `base.one` and `base.other`, with `{n}`); "5 quotes" is `countWords('quote', 5)`; a list is `andList([...])`.
+  `tx` and `tr` never go in a `const`; an enum or a const table holds the token as a plain string and the widget that shows it wraps it in `context.tr`.
+- English is compiled in (`lib/l10n/english.g.dart`, written by `dart run tool/gen_l10n.dart` from the two English files; a test fails when it is
+  stale), so it is there with nothing to load. Bengali loads from the bundled files. The server's own `/locales` files override per token, and a
+  token with no Bengali shows its English, never blank.
+- `test/l10n/tokens_test.dart` keeps this true: every token the code asks for has English and Bengali, the two app files agree, a `{place}` in English is in
+  the Bengali, and no widget is handed English words directly.
+
 ## The look
 
 `lib/theme/app_theme.dart` (`buildTheme`) is the one place that sets shape, type and spacing over the phone's Material You colours: Inter for the

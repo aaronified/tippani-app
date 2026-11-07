@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import '../api/server_call.dart';
 import '../app_controller.dart';
+import '../l10n/l10n.dart';
 
 int _int(Object? v) => v is int ? v : (v is num ? v.toInt() : 0);
 String _s(Object? v) => v == null ? '' : '$v';
@@ -215,18 +216,18 @@ class PairedMetadataService implements MetadataService {
   @override
   bool get available => _controller.paired;
 
-  static const _gapNames = <String, String>{
-    'has_cover': 'Cover',
-    'has_poster': 'Poster',
-    'has_author': 'Author',
-    'has_director': 'Director',
-    'has_series': 'Series',
-    'has_year': 'Year',
-    'has_genre': 'Genre',
+  static final _gapNames = <String, String>{
+    'has_cover': tx('common.field.cover.label'),
+    'has_poster': tx('common.field.poster.label'),
+    'has_author': tx('common.field.author.label'),
+    'has_director': tx('common.field.director.label'),
+    'has_series': tx('common.field.series.label'),
+    'has_year': tx('common.field.year.label'),
+    'has_genre': tx('movies.group.genre.label'),
     'has_description': 'Synopsis',
     'has_ids': 'Source',
     'has_source': 'Source',
-    'has_cast': 'Cast',
+    'has_cast': tx('common.field.cast.label'),
   };
 
   @override

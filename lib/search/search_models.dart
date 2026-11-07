@@ -1,11 +1,13 @@
+import '../l10n/l10n.dart';
+
 /// Which part of the library a search covers. Each is a value of the server's `scope` parameter.
 enum SearchScope {
   all('all', 'Everything'),
-  books('books', 'Books'),
-  movies('movies', 'Films and shows'),
-  highlights('annotations', 'Highlights'),
-  lines('dialogues', 'Film lines'),
-  quotes('quotes', 'Quotes');
+  books('books', 'library.group.none.label'),
+  movies('movies', 'app.search_models.films_and_shows'),
+  highlights('annotations', 'bin.kind.annotation.plural'),
+  lines('dialogues', 'bin.kind.dialogue.plural'),
+  quotes('quotes', 'nav.tab.quotes.label');
 
   const SearchScope(this.param, this.label);
   final String param;
@@ -25,17 +27,17 @@ class SearchFacet {
   final String value;
 
   /// The facets the page offers, with the word each is called.
-  static const fields = {
-    'author': 'Author',
-    'director': 'Director',
-    'actor': 'Actor',
-    'character': 'Character',
-    'speaker': 'Speaker',
-    'tag': 'Tag',
-    'genre': 'Genre',
-    'colour': 'Colour',
-    'language': 'Language',
-    'series': 'Series',
+  static final fields = {
+    'author': tx('common.field.author.label'),
+    'director': tx('common.field.director.label'),
+    'actor': tx('common.field.actor.label'),
+    'character': tx('common.field.character.label'),
+    'speaker': tx('common.field.speaker.label'),
+    'tag': tx('common.field.tag.label'),
+    'genre': tx('movies.group.genre.label'),
+    'colour': tx('common.field.colour.label'),
+    'language': tx('common.field.language.label'),
+    'series': tx('common.field.series.label'),
   };
 
   String get label => '${fields[field] ?? field}: $value';

@@ -12,57 +12,42 @@ List<String> describePush(PushResult r) {
       r.alreadyThere == 0 &&
       r.stoppedBy == null &&
       r.refused.isEmpty) {
-    return ['Everything in your library is already on your server.'];
+    return [tx('app.sync.everything_is_already_there')];
   }
   if (r.sent > 0 || r.alreadyThere > 0) {
     final parts = <String>[
-      if (r.worksSent > 0) _count(r.worksSent, 'work'),
-      if (r.quotesSent > 0) _count(r.quotesSent, 'quote'),
+      if (r.worksSent > 0) countWords('work', r.worksSent),
+      if (r.quotesSent > 0) countWords('quote', r.quotesSent),
     ];
     if (parts.isNotEmpty) {
-      lines.add('Sent ${parts.join(' and ')} to your server.');
+      lines.add(tx('app.sync.sent_x_to_your_server', {'x': andList(parts)}));
     }
     if (r.alreadyThere > 0) {
-      lines.add(
-        '${_count(r.alreadyThere, 'quote')} ${r.alreadyThere == 1 ? 'was' : 'were'} '
-        'already on the server and ${r.alreadyThere == 1 ? 'is' : 'are'} now linked, not copied.',
-      );
+      lines.add(trn('app.sync.already_there', r.alreadyThere));
     }
   }
   switch (r.stoppedBy) {
     case null:
       break;
     case ApiFailure.network || ApiFailure.timeout:
-      lines.add(
-        'The server could not be reached, so the rest was not sent. What went up stays there; try again when it answers.',
-      );
+      lines.add(tx('app.sync.unreachable'));
     case ApiFailure.unauthorised:
-      lines.add(
-        'The server does not accept this phone. Pair it again in Settings, then send what is left.',
-      );
+      lines.add(tx('app.sync.the_server_does_not_accept_this'));
     case ApiFailure.rateLimited:
-      lines.add(
-        'The server asked the app to slow down. Try again in a minute.',
-      );
+      lines.add(tx('app.pull.the_server_asked_the_app_to'));
     case ApiFailure.forbidden:
-      lines.add('This account is not allowed to add to the library.');
+      lines.add(tx('app.sync.this_account_is_not_allowed_to'));
     case ApiFailure.server || ApiFailure.badResponse:
-      lines.add(
-        'The server answered with an error, so the rest was not sent. Try again later.',
-      );
+      lines.add(tx('app.sync.the_server_answered_with_an_error'));
   }
   if (r.waiting > 0) {
-    lines.add(
-      '${_count(r.waiting, 'quote')} ${r.waiting == 1 ? 'is' : 'are'} still waiting to be sent.',
-    );
+    lines.add(trn('app.sync.waiting', r.waiting));
   }
   for (final x in r.refused) {
-    lines.add('The server refused ${x.what}: ${x.reason}.');
+    lines.add(tx('app.pull.refused', {'what': x.what, 'reason': x.reason}));
   }
   return lines;
 }
-
-String _count(int n, String noun) => '$n ${n == 1 ? noun : '${noun}s'}';
 
 /// Sends the library to the paired server, once. It only adds: nothing on the server is changed or removed.
 class SyncScreen extends StatefulWidget {
@@ -122,23 +107,24 @@ class _SyncScreenState extends State<SyncScreen> {
     final p = _pending;
     final nothing = p != null && p.works == 0 && p.quotes == 0;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Send library to server'))),
+      appBar: AppBar(
+        title: Text(context.tr('app.settings.send_library_to_server')),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            context.tr(
-              'Sends the works and quotes that are only on this phone to your Tippani server. It only adds: nothing on the server is changed or deleted, and what is already there is not sent again.',
-            ),
-          ),
+          Text(context.tr('app.sync.sends_the_works_and_quotes_that')),
           const SizedBox(height: 16),
           if (p == null)
             const LinearProgressIndicator()
           else
             Text(
               nothing
-                  ? 'Nothing is waiting.'
-                  : 'Waiting to be sent: ${_count(p.works, 'work')} and ${_count(p.quotes, 'quote')}.',
+                  ? context.tr('app.sync.nothing_is_waiting')
+                  : tx('app.sync.waiting_to_be_sent', {
+                      'works': countWords('work', p.works),
+                      'quotes': countWords('quote', p.quotes),
+                    }),
               style: Theme.of(context).textTheme.titleMedium,
             ),
           const SizedBox(height: 16),
@@ -149,7 +135,7 @@ class _SyncScreenState extends State<SyncScreen> {
           ] else
             FilledButton(
               onPressed: p == null || nothing ? null : _send,
-              child: Text(context.tr('Send to server')),
+              child: Text(context.tr('app.sync.send_to_server')),
             ),
           if (_result != null) ...[
             const SizedBox(height: 24),
