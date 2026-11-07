@@ -9,6 +9,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- A work's quotes can be ordered (reading order, newest, oldest) and gathered under headings by chapter, colour, tag, who said it or the month
+  you noted them, with a count on each heading. A quote with two tags or two speakers is under both.
 - Library browsing: the Library and Catalogue lists can be sorted (title, author or maker, year either way, recently added), grouped under
   headings (author or maker, decade, where you are with it, genre, language), filtered by where you are with each work (in progress, not
   started, paused, finished, abandoned), and shown as a list or as a wall of covers whose size you set. The count of works shown is on top, and your
