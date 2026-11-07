@@ -1,3 +1,4 @@
+import 'admin_screen.dart';
 import 'checks_entry.dart';
 import 'conflicts_screen.dart';
 import 'read_aloud_settings_screen.dart';
@@ -290,6 +291,29 @@ class SettingsScreen extends StatelessWidget {
               _Group(
                 children: [
                   ChecksEntry(controller: controller, harness: harness),
+                ],
+              ),
+            ],
+            if (controller.isAdmin && harness.admin != null) ...[
+              const _Section('Server administration'),
+              _Group(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.admin_panel_settings_outlined),
+                    title: const Text('Run the server'),
+                    subtitle: const Text(
+                      'Users, jobs, backups, updates, library folders and metadata sources. Admins only',
+                    ),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => AdminScreen(
+                          service: harness.admin!,
+                          files: harness.serverFiles,
+                          myName: controller.username ?? '',
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],

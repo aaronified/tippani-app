@@ -9,6 +9,11 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Run the server from your phone (admin accounts only, in Settings): add a reader, make an account an admin or step down, and remove an account;
+  watch the server's jobs as they run and wait (with Stop, Run again, each job's log, and the common jobs to start); make a backup of the server, keep
+  it on the phone, and put one back, from the server's own copy or from a file on the phone, after keeping a safety copy of what is there now; see the
+  server's version, choose the stable or pre-release line, and update it where it can update itself (or copy the command where it cannot); add and
+  remove the folders its library is read from and tidy saved files nothing uses; test each source it asks for details and set or clear its keys.
 - Import and checks, in Settings: bring in a file and look over what it holds before it joins your library. Choose a Kindle My Clippings file,
   a Kindle notebook page, Bookcision, Readest, Goodreads, Hardcover, IMDb or Markdown, and your server reads it (it works out the format
   itself, or you name it). The quotes wait in a queue you review: edit a quote's colour, favourite mark and where it came from, shift page
