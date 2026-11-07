@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -32,10 +33,14 @@ class WorkScreen extends StatefulWidget {
     this.anthologies,
     this.lookup,
     this.photos,
+    this.readBytes,
   });
 
   /// Where a chosen cover picture comes from (the gallery); null uses the phone's own.
   final PhotoSource? photos;
+
+  /// Reads a chosen picture's bytes; null reads the file. A function so a test needs no real file.
+  final Future<Uint8List> Function(String path)? readBytes;
 
   final LibraryStore store;
   final int workId;
@@ -130,7 +135,9 @@ class _WorkScreenState extends State<WorkScreen> {
       return;
     }
     if (path == null) return;
-    final bytes = await File(path).readAsBytes();
+    final bytes = await (widget.readBytes ?? (p) => File(p).readAsBytes())(
+      path,
+    );
     final name = await source.upload(
       w,
       bytes,

@@ -298,7 +298,7 @@ class FakeServer {
       if (i < 0) return _json({'error': 'not found'}, 404);
       final type = r.headers['content-type'] ?? '';
       if (!type.startsWith('multipart/form-data') ||
-          !r.body.contains('name="file"')) {
+          !String.fromCharCodes(r.bodyBytes).contains('name="file"')) {
         return _json({'error': 'a picture is needed'}, 400);
       }
       coverUploads.add('${upload[1]}/${upload[2]}/cover');

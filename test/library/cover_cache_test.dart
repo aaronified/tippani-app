@@ -308,6 +308,7 @@ void main() {
                 workId: w.id,
                 picker: _NoPicker(),
                 photos: _Photos(file.path),
+                readBytes: (_) async => Uint8List.fromList(png),
               ),
             ),
           ),
@@ -346,12 +347,7 @@ void main() {
           await open(tester);
           await tester.tap(find.byType(PopupMenuButton<String>));
           await tester.pumpAndSettle();
-          await tester.runAsync(() async {
-            await tester.tap(find.text('Choose a cover'));
-            for (var i = 0; i < 50 && source.uploads == 0; i++) {
-              await Future<void>.delayed(const Duration(milliseconds: 20));
-            }
-          });
+          await tester.tap(find.text('Choose a cover'));
           await tester.pumpAndSettle();
           expect(source.uploads, 1);
           expect((await lib.work(workId))!.cover, '0000000000000009.png');
@@ -365,12 +361,7 @@ void main() {
           source.uploadName = null;
           await tester.tap(find.byType(PopupMenuButton<String>));
           await tester.pumpAndSettle();
-          await tester.runAsync(() async {
-            await tester.tap(find.text('Choose a cover'));
-            for (var i = 0; i < 50 && source.uploads == 0; i++) {
-              await Future<void>.delayed(const Duration(milliseconds: 20));
-            }
-          });
+          await tester.tap(find.text('Choose a cover'));
           await tester.pumpAndSettle();
           expect(
             find.textContaining('did not take that picture'),
