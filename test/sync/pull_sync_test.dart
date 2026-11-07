@@ -86,6 +86,36 @@ Future<({Work work, Quote quote, int bookId, int noteId})> agreed(Rig r) async {
 
 void main() {
   test(
+    'the shelf (status and progress) comes down, and follows the web',
+    () async {
+      final r = await rig();
+      final bookId = r.server.seed('/books', {
+        'title': 'Dune',
+        'author': 'Herbert',
+        'status': 'reading',
+        'progress': 40,
+      });
+      await r.pull.sync();
+      var w = (await r.lib.works()).single;
+      expect(w.details.status, 'reading');
+      expect(w.details.progress, 40);
+
+      // finished on the web
+      final row = r.server.created['/books']!.firstWhere(
+        (x) => x['id'] == bookId,
+      );
+      row['status'] = 'completed';
+      row['progress'] = 100;
+      final again = await r.pull.sync();
+      w = (await r.lib.works()).single;
+      expect(w.details.status, 'completed');
+      expect(w.details.progress, 100);
+      expect(again.conflicts, isEmpty, reason: 'the shelf is never a clash');
+      expect(again.worksUpdated, 0, reason: 'and not an edit of the work');
+    },
+  );
+
+  test(
     'a book and a quote made on the web come down, linked to each other',
     () async {
       final r = await rig();

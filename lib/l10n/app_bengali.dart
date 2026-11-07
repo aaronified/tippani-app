@@ -11,6 +11,11 @@ const Map<String, String> appBengali = {
   "A shade for {name}": "{name}-এর জন্য একটি রং",
   "A test note was sent.": "একটি পরীক্ষামূলক বার্তা পাঠানো হয়েছে।",
   "Add a quote": "উক্তি যোগ করুন",
+  "Finished once.": "একবার শেষ করা হয়েছে।",
+  "Finished {n} times.": "{n} বার শেষ করা হয়েছে।",
+  "Not started": "শুরু হয়নি",
+  "The shelf is kept on your server. Pair this phone and sync this work to change it.": "তাক আপনার সার্ভারে রাখা হয়। বদলাতে এই ফোনটি যুক্ত করুন এবং এই রচনাটি সিঙ্ক করুন।",
+  "in progress": "চলছে",
   "Adds what is only on this phone": "শুধু এই ফোনে যা আছে তা যোগ করে",
   "After": "পরে",
   "An admin chose this password. Choose your own.":

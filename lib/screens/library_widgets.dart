@@ -15,6 +15,7 @@ import '../library/models.dart';
 import '../library/cover_cache.dart' show WorkCover;
 import '../theme/app_theme.dart';
 import 'quote_form_screen.dart';
+import 'shelf_card.dart' show shelfStatusLabel;
 import 'work_form_screen.dart' show workKindLabel;
 import '../l10n/l10n.dart';
 
@@ -243,6 +244,34 @@ class WorkTile extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (work.details.status.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          work.details.progress > 0 &&
+                                  work.details.status != 'completed'
+                              ? '${shelfStatusLabel(context, work.details.status)} · ${work.details.progress}%'
+                              : shelfStatusLabel(context, work.details.status),
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: work.details.status == 'completed'
+                                ? scheme.tertiary
+                                : scheme.secondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (work.details.progress > 0 &&
+                            work.details.status != 'completed' &&
+                            work.details.status != 'abandoned')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(2),
+                              child: LinearProgressIndicator(
+                                value: work.details.progress / 100,
+                                minHeight: 3,
+                              ),
+                            ),
+                          ),
+                      ],
                     ],
                   ),
                 ),

@@ -9,6 +9,9 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- The shelf: on a work's page, say where you are with it: Reading (Watching, Playing), Paused, Abandoned or Finished, with a bar for how far you
+  are, and how many times you have finished it. It is the same shelf the web keeps, so a change on either shows on the other; the library list
+  shows each work's status and bar. Changing it needs your server (it is kept there), and a refusal comes back in the server's own words.
 - Import and checks, in Settings: bring in a file and look over what it holds before it joins your library. Choose a Kindle My Clippings file,
   a Kindle notebook page, Bookcision, Readest, Goodreads, Hardcover, IMDb or Markdown, and your server reads it (it works out the format
   itself, or you name it). The quotes wait in a queue you review: edit a quote's colour, favourite mark and where it came from, shift page
