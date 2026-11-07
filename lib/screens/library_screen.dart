@@ -368,6 +368,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'add-${widget.section.name}',
         onPressed: _mode == _Mode.quotes ? _addQuote : _addWork,
         icon: const Icon(Icons.add),
         label: Text(
