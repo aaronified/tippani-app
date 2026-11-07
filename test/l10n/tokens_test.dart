@@ -15,8 +15,11 @@ void main() {
   final appBn = parseLocale(read('assets/l10n/app.bn.txt')).keys;
 
   const one = r"""(?:'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*")""";
-  // tr('token' ...), context.tr('token' ...), tok('token' ...)
-  final call = RegExp('\\b(?:tr|tok)\\(\\s*($one)');
+  // tr('token' ...), context.tr('token' ...), tx('token' ...)
+  final call = RegExp('\\b(?:tr|tx|tok)\\(\\s*($one)');
+  // trn('base' ...) is the tokens base.one and base.other; countWords('noun' ...) is app.count.noun.one / .other
+  final plural = RegExp('\\btrn\\(\\s*($one)');
+  final counted = RegExp('\\bcountWords\\(\\s*($one)');
   String unquote(String lit) => lit
       .substring(1, lit.length - 1)
       .replaceAll("\\'", "'")
@@ -61,6 +64,16 @@ void main() {
       for (final m in call.allMatches(text)) {
         asked.putIfAbsent(unquote(m.group(1)!), () => f.path);
       }
+      for (final m in plural.allMatches(text)) {
+        final base = unquote(m.group(1)!);
+        asked.putIfAbsent('$base.one', () => f.path);
+        asked.putIfAbsent('$base.other', () => f.path);
+      }
+      for (final m in counted.allMatches(text)) {
+        final noun = unquote(m.group(1)!).replaceAll(' ', '_');
+        asked.putIfAbsent('app.count.$noun.one', () => f.path);
+        asked.putIfAbsent('app.count.$noun.other', () => f.path);
+      }
     }
     expect(asked.length, greaterThan(300), reason: 'the scan found the calls');
 
@@ -93,9 +106,10 @@ void main() {
       for (final t in appEn.keys)
         if (!appBn.containsKey(t)) t,
     ];
+    // app.bn.txt may also carry Bengali for web tokens whose own bn.txt has no line
     final onlyBn = [
       for (final t in appBn.keys)
-        if (!appEn.containsKey(t)) t,
+        if (!appEn.containsKey(t) && !serverEn.containsKey(t)) t,
     ];
     expect(onlyEn, isEmpty, reason: 'English with no Bengali: $onlyEn');
     expect(onlyBn, isEmpty, reason: 'Bengali with no English: $onlyBn');

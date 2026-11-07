@@ -282,6 +282,7 @@ class Harness {
     final directory = PairedPeopleDirectory(controller, covers);
     final prefs = PairedPreferences(controller, settings);
     final l10n = L10n()..use(prefs.prefs.locale);
+    Tr.current = l10n; // code with no screen (a service wording an error) speaks in the same language
     prefs.addListener(() => l10n.use(prefs.prefs.locale));
     return Harness(
       files: files,

@@ -68,6 +68,7 @@ app.admin_backup.bringing_the_safety_copy_to_this = সুরক্ষা কপ
 app.admin_backup.every_reader_s_library_on_the = সার্ভারের প্রত্যেক পাঠকের লাইব্রেরি {name} দিয়ে বদলে যাবে। তার আগে সার্ভারে এখন যা আছে তার একটি কপি আপনি রাখবেন।
 app.admin_backup.every_reader_s_library_on_the_2 = সার্ভারের প্রত্যেক পাঠকের লাইব্রেরি {created} সময়ের ব্যাকআপ দিয়ে বদলে যাবে। তার আগে সার্ভারে এখন যা আছে তার একটি কপি আপনি রাখবেন।
 app.admin_backup.give_the_password_of_the_account = যে অ্যাকাউন্টে এটি বানানো হয়েছিল তার পাসওয়ার্ড দিন, বা এর পাসফ্রেজ দিন।
+app.admin_backup.go_on = এগিয়ে যান
 app.admin_backup.keep_the_safety_copy = সুরক্ষা কপিটি রাখুন
 app.admin_backup.make_the_copy = কপি বানান
 app.admin_backup.making_the_safety_copy = সুরক্ষা কপি বানানো হচ্ছে…
@@ -298,10 +299,14 @@ app.backup.that_file_is_too_big_to = ওই ফাইল টিপ্পনী�
 app.backup.the_backup_could_not_be_written = ব্যাকআপ লেখা যায়নি।
 
 # --- board ---
+app.board.favourites_first = প্রিয়গুলো আগে
 app.board.group = গোষ্ঠী
 app.board.hidden = লুকানো
+app.board.newest_first = নতুন আগে
+app.board.no_groups = ভাগ ছাড়া
 app.board.no_quotes_on_this_board_yet = এই বোর্ডে এখনও কোনো উক্তি নেই। উক্তির ফর্ম থেকে একটি একক উক্তি এতে রাখুন।
 app.board.nobody_named = কারও নাম নেই
+app.board.oldest_first = পুরনো আগে
 app.board.this_board_is_gone = এই বোর্ডটি আর নেই।
 
 # --- board_service ---
@@ -629,9 +634,6 @@ app.library.there_are_no_quotes_to_export = রপ্তানি করার �
 app.library.tippani_quotes = টিপ্পনীর উক্তি
 app.library.try_fewer_words_or_clear_a = কম শব্দ চেষ্টা করুন, বা একটি ছাঁকনি সরান।
 
-# --- list ---
-app.list.and = {a} ও {b}
-
 # --- log ---
 app.log.clear_the_log = লগ খালি করবেন?
 app.log.include_earlier_runs = আগের বারগুলোও রাখুন
@@ -692,6 +694,7 @@ app.people_console.the_server_is_fetching_photos_and = যাদের নেই
 
 # --- people_console_actions ---
 app.people_console_actions.born_in_the_story = জন্ম (গল্পে)
+app.people_console_actions.edit_the_character = চরিত্র সম্পাদনা
 app.people_console_actions.everything_that_points_at_one_points = যা কিছু একটির দিকে নির্দেশ করে তা অন্যটির দিকে নির্দেশ করবে। কোন নামটি থাকবে?
 app.people_console_actions.it_stops_being_a_spelling_of = এটি আর এর একটি বানান থাকে না। যে উক্তিতে এটি আছে সেগুলো এর সঙ্গে যায়।
 app.people_console_actions.make_alias_its_own_record = “{alias}”-কে আলাদা তথ্য-পাতা বানাবেন?
@@ -930,6 +933,7 @@ app.search_models.films_and_shows = ছবি ও ধারাবাহিক
 
 # --- server_files ---
 app.server_files.choose_a_backup_from_the_server = সার্ভার থেকে একটি ব্যাকআপ বেছে নিন
+app.server_files.save_the_backup = আপনার ব্যাকআপ সংরক্ষণ করুন
 
 # --- server_log ---
 app.server_log.could_not_reach_the_server = সার্ভারে পৌঁছানো যায়নি।
@@ -999,6 +1003,7 @@ app.share.you_can_edit_it_before_sending = পাঠানোর আগে এ�
 
 # --- share_format ---
 app.share_format.my_note = আমার নোট
+app.share_format.plain_text = সাধারণ লেখা
 
 # --- share_picture ---
 app.share_picture.quote = “{quote}”
