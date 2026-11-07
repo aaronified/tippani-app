@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'backup.dart';
 import 'harness.dart';
+import '../l10n/l10n.dart';
 
 /// One plain sentence for each reason a file could not be restored. Pure, so the words are tested.
 String backupProblemText(BackupProblem p) => switch (p) {
@@ -109,7 +110,7 @@ class _BackupScreenState extends State<BackupScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Restore this backup?'),
+        title: Text(context.tr('Restore this backup?')),
         content: Text(
           'Made ${doc.createdAt.toLocal().toString().split('.').first}'
           '${doc.appVersion.isEmpty ? '' : ' by version ${doc.appVersion}'}.\n\n'
@@ -118,11 +119,11 @@ class _BackupScreenState extends State<BackupScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Restore'),
+            child: Text(context.tr('Restore')),
           ),
         ],
       ),
@@ -161,7 +162,7 @@ class _BackupScreenState extends State<BackupScreen> {
   Widget build(BuildContext context) {
     final copies = _copies;
     return Scaffold(
-      appBar: AppBar(title: const Text('Backup and restore')),
+      appBar: AppBar(title: Text(context.tr('Backup and restore'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -172,17 +173,17 @@ class _BackupScreenState extends State<BackupScreen> {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _busy ? null : _backUp,
-            child: const Text('Back up now'),
+            child: Text(context.tr('Back up now')),
           ),
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: _busy ? null : _saveAs,
-            child: const Text('Save a copy somewhere…'),
+            child: Text(context.tr('Save a copy somewhere…')),
           ),
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: _busy ? null : _restoreFromFile,
-            child: const Text('Restore from a file…'),
+            child: Text(context.tr('Restore from a file…')),
           ),
           if (_message != null) ...[
             const SizedBox(height: 16),
@@ -190,14 +191,14 @@ class _BackupScreenState extends State<BackupScreen> {
           ],
           const SizedBox(height: 24),
           Text(
-            'Copies on this phone',
+            context.tr('Copies on this phone'),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           if (copies == null)
             const LinearProgressIndicator()
           else if (copies.isEmpty)
-            const Text('None yet.')
+            Text(context.tr('None yet.'))
           else
             for (final name in copies)
               ListTile(
@@ -205,7 +206,7 @@ class _BackupScreenState extends State<BackupScreen> {
                 title: Text(name),
                 trailing: TextButton(
                   onPressed: () => _restoreCopy(name),
-                  child: const Text('Restore'),
+                  child: Text(context.tr('Restore')),
                 ),
               ),
         ],

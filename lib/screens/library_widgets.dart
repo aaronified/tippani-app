@@ -15,6 +15,7 @@ import '../library/cover_cache.dart' show WorkCover;
 import '../theme/app_theme.dart';
 import 'quote_form_screen.dart';
 import 'work_form_screen.dart' show workKindLabel;
+import '../l10n/l10n.dart';
 
 /// One quote in a list: its words in the serif, who and what it is from, a thin edge in the quote's colour,
 /// and a star to favourite it.
@@ -78,7 +79,11 @@ class QuoteTile extends StatelessWidget {
                         quote.text,
                         maxLines: 5,
                         overflow: TextOverflow.ellipsis,
-                        style: quoteStyle(context, size: 17),
+                        style: quoteStyle(
+                          context,
+                          size: 17,
+                          language: quote.language,
+                        ),
                       ),
                       if (from.isNotEmpty) ...[
                         const SizedBox(height: 10),
@@ -349,12 +354,13 @@ Future<void> runExport(
   required ExportKind kind,
   Work? work,
 }) async {
+  final tr = context.tr;
   final md = await markdownFor(store, work: work);
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
   if (md.trim().isEmpty) {
     messenger.showSnackBar(
-      const SnackBar(content: Text('There are no quotes to export yet.')),
+      SnackBar(content: Text(tr('There are no quotes to export yet.'))),
     );
     return;
   }
@@ -367,12 +373,14 @@ Future<void> runExport(
         Uint8List.fromList(utf8.encode(md)),
       );
       messenger.showSnackBar(
-        SnackBar(content: Text(saved ? 'Saved.' : 'Nothing was saved.')),
+        SnackBar(
+          content: Text(saved ? tr('Saved.') : tr('Nothing was saved.')),
+        ),
       );
     }
   } on Object {
     messenger.showSnackBar(
-      const SnackBar(content: Text('The export could not be written.')),
+      SnackBar(content: Text(tr('The export could not be written.'))),
     );
   }
 }

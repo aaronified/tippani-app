@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
+import '../account/preferences.dart';
+
 /// The face for the words of a quote, and for the large display lines: Source Serif 4 (SIL OFL, bundled).
 const String quoteFont = 'SourceSerif4';
 
@@ -213,7 +215,16 @@ TextTheme _text(TextTheme t, ColorScheme scheme) {
   );
 }
 
-/// The style for a quote's words: the serif, at [size], with room between the lines.
+/// The faces the app carries, by the token the server keeps for them.
+const quoteFaces = {
+  'source-serif-4': 'SourceSerif4',
+  'newsreader': 'Newsreader',
+  'noto-serif-bengali': 'NotoSerifBengali',
+  'noto-serif-devanagari': 'NotoSerifDevanagari',
+};
+
+/// The style for a quote's words: the serif, at [size], with room between the lines. What the reader set in
+/// Settings applies: the size of quotes, their line height, and the face chosen for [language].
 TextStyle quoteStyle(
   BuildContext context, {
   double size = 17,
@@ -221,12 +232,31 @@ TextStyle quoteStyle(
   Color? color,
   FontStyle? style,
   FontWeight weight = FontWeight.w400,
-}) => TextStyle(
-  fontFamily: quoteFont,
-  fontSize: size,
-  height: height,
-  fontWeight: weight,
-  fontStyle: style,
-  color: color ?? Theme.of(context).colorScheme.onSurface,
-  letterSpacing: -0.1,
-);
+  String language = '',
+}) {
+  final prefs = PrefsScope.of(context);
+  final leading = prefs.quoteLeading;
+  final token = prefs.fontsByLanguage[language.trim().toLowerCase()];
+  return TextStyle(
+    fontFamily: quoteFaces[token] ?? quoteFont,
+    fontSize: size * prefs.sizeDisplay / 100,
+    height: leading > 0 ? leading / 100 : height,
+    fontWeight: weight,
+    fontStyle: style,
+    color: color ?? Theme.of(context).colorScheme.onSurface,
+    letterSpacing: -0.1,
+  );
+}
+
+/// Keeps a quote's lines to the length the reader chose (45 to 80 characters), or the full width.
+Widget quoteMeasure(BuildContext context, double size, Widget child) {
+  final m = PrefsScope.of(context).quoteMeasure;
+  if (m <= 0) return child;
+  return Align(
+    alignment: Alignment.centerLeft,
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: m * size * 0.52),
+      child: child,
+    ),
+  );
+}

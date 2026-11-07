@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/api_client.dart';
 import '../app_controller.dart';
 import '../pairing/devices.dart';
+import '../l10n/l10n.dart';
 
 /// The devices paired with this account, so a lost phone can be unpaired from another. This phone is
 /// marked and cannot be revoked from here (that is Unpair, in Settings), so a stray tap cannot cut off
@@ -45,18 +46,20 @@ class _DevicesScreenState extends State<DevicesScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Unpair ${d.name}?'),
-        content: const Text(
-          'That device is signed out of Tippani and cannot be used again until it is paired with a new code. This cannot be undone.',
+        title: Text(context.tr('Unpair {name}?', {'name': d.name})),
+        content: Text(
+          context.tr(
+            'That device is signed out of Tippani and cannot be used again until it is paired with a new code. This cannot be undone.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Unpair'),
+            child: Text(context.tr('Unpair')),
           ),
         ],
       ),
@@ -80,7 +83,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
     final scheme = Theme.of(context).colorScheme;
     final anyCurrent = devices?.any((d) => d.current) ?? false;
     return Scaffold(
-      appBar: AppBar(title: const Text('Paired devices')),
+      appBar: AppBar(title: Text(context.tr('Paired devices'))),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
@@ -91,12 +94,14 @@ class _DevicesScreenState extends State<DevicesScreen> {
             if (devices == null && _problem == null)
               const LinearProgressIndicator(),
             if (devices != null && devices.isEmpty)
-              const Text('No devices are paired.'),
+              Text(context.tr('No devices are paired.')),
             if (devices != null && !anyCurrent && devices.isNotEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(
-                  'This server is too old to say which of these is this phone, so be careful which you unpair.',
+                  context.tr(
+                    'This server is too old to say which of these is this phone, so be careful which you unpair.',
+                  ),
                 ),
               ),
             for (final d in devices ?? const <DeviceInfo>[])
@@ -116,7 +121,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
                         ? const Icon(Icons.smartphone)
                         : TextButton(
                             onPressed: () => _revoke(d),
-                            child: const Text('Unpair'),
+                            child: Text(context.tr('Unpair')),
                           ),
                   ),
                 ),

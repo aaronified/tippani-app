@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../anthologies/anthologies.dart';
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import 'quote_form_screen.dart' show quoteColour;
+import '../l10n/l10n.dart';
 
 /// An anthology as plain text to send: its title and introduction, then each passage with where it is from and the
 /// reader's commentary on it.
@@ -40,21 +41,23 @@ Future<({String title, String intro})?> askAnthologyText(
               controller: t,
               autofocus: true,
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(labelText: 'Title'),
+              decoration: InputDecoration(labelText: context.tr('Title')),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: i,
               minLines: 2,
               maxLines: 5,
-              decoration: const InputDecoration(labelText: 'Introduction'),
+              decoration: InputDecoration(
+                labelText: context.tr('Introduction'),
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: t.text.trim().isEmpty
@@ -62,7 +65,7 @@ Future<({String title, String intro})?> askAnthologyText(
                 : () =>
                       Navigator.of(context)
                           .pop((title: t.text.trim(), intro: i.text.trim())),
-            child: const Text('Save'),
+            child: Text(context.tr('Save')),
           ),
         ],
       ),
@@ -137,12 +140,12 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
   Widget build(BuildContext context) {
     final all = _all;
     return Scaffold(
-      appBar: AppBar(title: const Text('Anthologies')),
+      appBar: AppBar(title: Text(context.tr('Anthologies'))),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'add-anthology',
         onPressed: _create,
         icon: const Icon(Icons.add),
-        label: const Text('New anthology'),
+        label: Text(context.tr('New anthology')),
       ),
       body: _problem != null
           ? Center(
@@ -155,7 +158,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _load,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('Try again')),
                     ),
                   ],
                 ),
@@ -164,7 +167,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
           : all == null
           ? const Center(child: CircularProgressIndicator())
           : all.isEmpty
-          ? const Center(child: Text('No anthologies yet.'))
+          ? Center(child: Text(context.tr('No anthologies yet.')))
           : ListView(
               padding: const EdgeInsets.only(top: 8, bottom: 88),
               children: [
@@ -266,18 +269,22 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete ${_detail!.anthology.title}?'),
-        content: const Text(
-          'The anthology is removed from the server. The quotes in it stay in your library.',
+        title: Text(
+          context.tr('Delete {name}?', {'name': _detail!.anthology.title}),
+        ),
+        content: Text(
+          context.tr(
+            'The anthology is removed from the server. The quotes in it stay in your library.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep it'),
+            child: Text(context.tr('Keep it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.tr('Delete')),
           ),
         ],
       ),
@@ -310,18 +317,18 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
         actions: [
           if (d != null) ...[
             IconButton(
-              tooltip: 'Share',
+              tooltip: context.tr('Share'),
               icon: const Icon(Icons.ios_share),
               onPressed: () =>
                   widget.share(anthologyShareText(d), d.anthology.title),
             ),
             IconButton(
-              tooltip: 'Edit',
+              tooltip: context.tr('Edit'),
               icon: const Icon(Icons.edit_outlined),
               onPressed: _edit,
             ),
             IconButton(
-              tooltip: 'Delete',
+              tooltip: context.tr('Delete'),
               icon: const Icon(Icons.delete_outline),
               onPressed: _delete,
             ),
@@ -339,7 +346,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _load,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('Try again')),
                     ),
                   ],
                 ),
@@ -355,8 +362,10 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                   const SizedBox(height: 16),
                 ],
                 if (d.entries.isEmpty)
-                  const Text(
-                    'Nothing in this anthology yet. Open a quote and choose Add to anthology.',
+                  Text(
+                    context.tr(
+                      'Nothing in this anthology yet. Open a quote and choose Add to anthology.',
+                    ),
                   ),
                 for (final e in d.entries)
                   Card(
@@ -405,7 +414,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                             ),
                           ),
                           IconButton(
-                            tooltip: 'Remove from anthology',
+                            tooltip: context.tr('Remove from anthology'),
                             icon: const Icon(Icons.close),
                             onPressed: () => _remove(e),
                           ),
@@ -438,7 +447,7 @@ Future<void> addToAnthologyDialog(
   final chosen = await showDialog<Object>(
     context: context,
     builder: (context) => SimpleDialog(
-      title: const Text('Add to anthology'),
+      title: Text(context.tr('Add to anthology')),
       children: [
         for (final a in all)
           SimpleDialogOption(
@@ -447,7 +456,7 @@ Future<void> addToAnthologyDialog(
           ),
         SimpleDialogOption(
           onPressed: () => Navigator.of(context).pop('new'),
-          child: const Text('A new anthology…'),
+          child: Text(context.tr('A new anthology…')),
         ),
       ],
     ),

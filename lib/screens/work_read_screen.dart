@@ -6,6 +6,7 @@ import '../library/models.dart';
 import '../library/quote_text.dart';
 import '../library/work_order.dart';
 import '../speech/speaker.dart';
+import '../l10n/l10n.dart';
 
 /// A work's quotes as one document to read straight through, by chapter, in reading order. The reader sets
 /// the text size and whether translations and their own notes show, and can send the whole thing as text.
@@ -91,7 +92,7 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
             onPressed: widget.quotes.isEmpty ? null : _toggleReading,
           ),
           IconButton(
-            tooltip: 'Share all',
+            tooltip: context.tr('Share all'),
             icon: const Icon(Icons.ios_share),
             onPressed: () => widget.share(
               workShareText(
@@ -135,12 +136,12 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
                     spacing: 8,
                     children: [
                       FilterChip(
-                        label: const Text('Translations'),
+                        label: Text(context.tr('Translations')),
                         selected: _translations,
                         onSelected: (v) => setState(() => _translations = v),
                       ),
                       FilterChip(
-                        label: const Text('My notes'),
+                        label: Text(context.tr('My notes')),
                         selected: _notes,
                         onSelected: (v) => setState(() => _notes = v),
                       ),
@@ -152,7 +153,9 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
           ),
           Expanded(
             child: widget.quotes.isEmpty
-                ? const Center(child: Text('No quotes from this work yet.'))
+                ? Center(
+                    child: Text(context.tr('No quotes from this work yet.')),
+                  )
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
                     children: [
@@ -177,6 +180,7 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
                                     context,
                                     size: _size,
                                     height: 1.55,
+                                    language: q.language,
                                   ),
                                 ),
                                 if (q.location.trim().isNotEmpty)

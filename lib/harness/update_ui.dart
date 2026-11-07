@@ -6,6 +6,7 @@ import 'harness.dart';
 import 'update_check.dart';
 import 'update_controller.dart';
 import 'version.dart';
+import '../l10n/l10n.dart';
 
 /// One plain sentence for each way an install can fail. Pure, so the words are tested.
 String installFailureText(InstallFailure f) => switch (f) {
@@ -78,10 +79,14 @@ class _UpdateHostState extends State<UpdateHost> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('Version ${release.version} is available'),
+          content: Text(
+            context.tr('Version {version} is available', {
+              'version': release.version,
+            }),
+          ),
           duration: const Duration(seconds: 12),
           action: SnackBarAction(
-            label: 'Download',
+            label: context.tr('Download'),
             onPressed: () =>
                 showUpdateDialog(context, _updates, startNow: true),
           ),
@@ -113,12 +118,12 @@ Future<void> showWhatsNewDialog(BuildContext context, ChangelogEntry entry) {
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text('New in ${entry.version}'),
+      title: Text(context.tr('New in {version}', {'version': entry.version})),
       content: SingleChildScrollView(child: ChangelogBody(entry: entry)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('OK'),
+          child: Text(context.tr('OK')),
         ),
       ],
     ),
@@ -184,7 +189,9 @@ class _UpdateDialog extends StatelessWidget {
         switch (updates.stage) {
           case UpdateStage.downloading:
             return AlertDialog(
-              title: Text('Downloading $version'),
+              title: Text(
+                context.tr('Downloading {version}', {'version': version}),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -198,26 +205,28 @@ class _UpdateDialog extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: updates.cancel,
-                  child: const Text('Cancel'),
+                  child: Text(context.tr('Cancel')),
                 ),
               ],
             );
           case UpdateStage.installing:
             return AlertDialog(
-              title: const Text('Ready to install'),
-              content: const Text(
-                'Android is asking you to install the update. Tippani will close while it does.',
+              title: Text(context.tr('Ready to install')),
+              content: Text(
+                context.tr(
+                  'Android is asking you to install the update. Tippani will close while it does.',
+                ),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
+                  child: Text(context.tr('OK')),
                 ),
               ],
             );
           case UpdateStage.failed:
             return AlertDialog(
-              title: const Text('The update did not install'),
+              title: Text(context.tr('The update did not install')),
               content: Text(
                 installFailureText(
                   updates.installFailure ?? InstallFailure.internal,
@@ -229,17 +238,21 @@ class _UpdateDialog extends StatelessWidget {
                     updates.dismiss();
                     Navigator.pop(context);
                   },
-                  child: const Text('Close'),
+                  child: Text(context.tr('Close')),
                 ),
                 FilledButton(
                   onPressed: updates.download,
-                  child: const Text('Try again'),
+                  child: Text(context.tr('Try again')),
                 ),
               ],
             );
           case UpdateStage.available:
             return AlertDialog(
-              title: Text('Version $version is available'),
+              title: Text(
+                context.tr('Version {version} is available', {
+                  'version': version,
+                }),
+              ),
               content: SingleChildScrollView(
                 child: Text(
                   r == null || r.notes.trim().isEmpty
@@ -250,22 +263,22 @@ class _UpdateDialog extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Later'),
+                  child: Text(context.tr('Later')),
                 ),
                 FilledButton(
                   onPressed: updates.download,
-                  child: const Text('Download'),
+                  child: Text(context.tr('Download')),
                 ),
               ],
             );
           default:
             // Nothing on offer any more (a check since found none): the dialog has nothing to say.
             return AlertDialog(
-              content: const Text('There is no update to install.'),
+              content: Text(context.tr('There is no update to install.')),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
+                  child: Text(context.tr('OK')),
                 ),
               ],
             );

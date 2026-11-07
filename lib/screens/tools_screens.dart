@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/server_call.dart';
 import '../tools/server_tools.dart';
+import '../l10n/l10n.dart';
 
 String _kindWords(String kind) => switch (kind) {
   'annotation' => 'Book quote',
@@ -61,7 +62,7 @@ class _BinScreenState extends State<BinScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -87,11 +88,11 @@ class _BinScreenState extends State<BinScreen> {
     final bin = _bin;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bin'),
+        title: Text(context.tr('Bin')),
         actions: [
           if (bin != null && bin.entries.isNotEmpty)
             IconButton(
-              tooltip: 'Empty the bin',
+              tooltip: context.tr('Empty the bin'),
               icon: const Icon(Icons.delete_sweep_outlined),
               onPressed: () async {
                 if (await _confirm(
@@ -116,7 +117,7 @@ class _BinScreenState extends State<BinScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _load,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('Try again')),
                     ),
                   ],
                 ),
@@ -125,7 +126,7 @@ class _BinScreenState extends State<BinScreen> {
           : bin == null
           ? const Center(child: CircularProgressIndicator())
           : bin.entries.isEmpty
-          ? const Center(child: Text('The bin is empty.'))
+          ? Center(child: Text(context.tr('The bin is empty.')))
           : ListView(
               padding: const EdgeInsets.only(bottom: 24),
               children: [
@@ -161,13 +162,13 @@ class _BinScreenState extends State<BinScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              tooltip: 'Restore',
+                              tooltip: context.tr('Restore'),
                               icon: const Icon(Icons.restore),
                               onPressed: () =>
                                   _act(() => widget.tools.restore(e.id)),
                             ),
                             IconButton(
-                              tooltip: 'Delete for good',
+                              tooltip: context.tr('Delete for good'),
                               icon: const Icon(Icons.delete_forever_outlined),
                               onPressed: () async {
                                 if (await _confirm(
@@ -261,7 +262,7 @@ class _StatsScreenState extends State<StatsScreen> {
       ),
     );
     return Scaffold(
-      appBar: AppBar(title: const Text('Statistics')),
+      appBar: AppBar(title: Text(context.tr('Statistics'))),
       body: _problem != null
           ? Center(
               child: Padding(
@@ -273,7 +274,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _load,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('Try again')),
                     ),
                   ],
                 ),
@@ -329,7 +330,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
                     child: Text(
-                      'Top tags',
+                      context.tr('Top tags'),
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: scheme.primary,
                         fontWeight: FontWeight.w700,

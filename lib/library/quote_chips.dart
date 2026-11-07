@@ -1,3 +1,4 @@
+import '../account/prefs_effects.dart';
 import 'models.dart';
 
 /// What a chip names.
@@ -43,14 +44,19 @@ class ChipFilter {
 String _fold(String s) =>
     s.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
-final _separators = RegExp(r'\s*(?:,|;|/|&|\band\b)\s*', caseSensitive: false);
-
 /// The names in a "who said it" field: one, or several where the reader typed an ensemble ("Rick, Ilsa and Victor"),
 /// in the order typed, each once.
-List<String> speakerNames(String speaker) {
+List<String> speakerNames(String speaker) =>
+    _names(speaker, PrefsEffects.creditPattern(slash: true));
+
+/// The names in a credit such as a book's author ("Pratchett & Gaiman"), split on the separators the reader chose.
+List<String> creditNames(String credit) =>
+    _names(credit, PrefsEffects.creditPattern());
+
+List<String> _names(String s, RegExp pattern) {
   final seen = <String>{};
   return [
-    for (final n in speaker.split(_separators))
+    for (final n in s.split(pattern))
       if (n.trim().isNotEmpty && seen.add(_fold(n))) n.trim(),
   ];
 }
@@ -62,8 +68,10 @@ List<QuoteChip> chipsFor(Quote q, Work? w) {
   final out = <QuoteChip>[];
   final isBook =
       w != null && (w.kind == WorkKind.book || w.kind == WorkKind.other);
-  if (isBook && w.creator.trim().isNotEmpty) {
-    out.add(QuoteChip(ChipKind.author, w.creator.trim()));
+  if (isBook) {
+    for (final n in creditNames(w.creator)) {
+      out.add(QuoteChip(ChipKind.author, n));
+    }
   }
   final screen = w != null && !isBook;
   final cast = {

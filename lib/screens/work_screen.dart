@@ -4,7 +4,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../account/account_service.dart';
 import '../capture/photo_source.dart';
+import '../l10n/l10n.dart';
 import '../library/cover_cache.dart';
 import '../tools/work_details_source.dart';
 import 'work_details_section.dart';
@@ -19,6 +21,7 @@ import '../tools/work_lookup.dart';
 import '../library/work_order.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart';
+import 'prefs_screens.dart' show showWorkContextRule;
 import 'quote_screen.dart';
 import 'work_form_screen.dart';
 import 'work_read_screen.dart';
@@ -126,6 +129,7 @@ class _WorkScreenState extends State<WorkScreen> {
 
   Future<void> _chooseCover() async {
     final source = CoverScope.of(context);
+    final tr = context.tr;
     final w = _work;
     if (source == null || w == null || w.serverId == null) return;
     final messenger = ScaffoldMessenger.of(context);
@@ -134,7 +138,7 @@ class _WorkScreenState extends State<WorkScreen> {
       path = await (widget.photos ?? DevicePhotos()).choose();
     } on Object {
       messenger.showSnackBar(
-        const SnackBar(content: Text('The picture could not be opened.')),
+        SnackBar(content: Text(tr('The picture could not be opened.'))),
       );
       return;
     }
@@ -150,8 +154,8 @@ class _WorkScreenState extends State<WorkScreen> {
     messenger.clearSnackBars();
     if (name == null) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('The server did not take that picture as a cover.'),
+        SnackBar(
+          content: Text(tr('The server did not take that picture as a cover.')),
         ),
       );
       return;
@@ -208,7 +212,7 @@ class _WorkScreenState extends State<WorkScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete ${_work!.title}?'),
+        title: Text(context.tr('Delete {name}?', {'name': _work!.title})),
         content: Text(
           n == 0
               ? 'It is removed from this phone.'
@@ -217,11 +221,11 @@ class _WorkScreenState extends State<WorkScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep it'),
+            child: Text(context.tr('Keep it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.tr('Delete')),
           ),
         ],
       ),
@@ -237,8 +241,8 @@ class _WorkScreenState extends State<WorkScreen> {
     if (_loaded && w == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(
-          child: Text('This work is no longer in the library.'),
+        body: Center(
+          child: Text(context.tr('This work is no longer in the library.')),
         ),
       );
     }
@@ -258,7 +262,7 @@ class _WorkScreenState extends State<WorkScreen> {
         actions: [
           if (w != null) ...[
             IconButton(
-              tooltip: 'Edit',
+              tooltip: context.tr('Edit'),
               icon: const Icon(Icons.edit_outlined),
               onPressed: _edit,
             ),
@@ -277,27 +281,36 @@ class _WorkScreenState extends State<WorkScreen> {
                     );
                   case 'cover':
                     _chooseCover();
+                  case 'context':
+                    final rules = ContextRulesScope.of(context);
+                    if (rules != null) showWorkContextRule(context, rules, w);
                   case 'delete':
                     _delete();
                 }
               },
               itemBuilder: (_) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'share',
-                  child: Text('Share as Markdown'),
+                  child: Text(context.tr('Share as Markdown')),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'save',
-                  child: Text('Save as Markdown file'),
+                  child: Text(context.tr('Save as Markdown file')),
                 ),
                 if (w.serverId != null && CoverScope.of(context) != null)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'cover',
-                    child: Text('Choose a cover'),
+                    child: Text(context.tr('Choose a cover')),
                   ),
-                const PopupMenuItem(
+                if (w.serverId != null &&
+                    ContextRulesScope.of(context)?.available == true)
+                  PopupMenuItem(
+                    value: 'context',
+                    child: Text(context.tr('Context around its quotes')),
+                  ),
+                PopupMenuItem(
                   value: 'delete',
-                  child: Text('Delete work'),
+                  child: Text(context.tr('Delete work')),
                 ),
               ],
             ),
@@ -309,7 +322,7 @@ class _WorkScreenState extends State<WorkScreen> {
           : FloatingActionButton.extended(
               onPressed: _addQuote,
               icon: const Icon(Icons.add),
-              label: const Text('Add a quote'),
+              label: Text(context.tr('Add a quote')),
             ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
@@ -360,16 +373,16 @@ class _WorkScreenState extends State<WorkScreen> {
                             FilledButton.tonalIcon(
                               onPressed: _read,
                               icon: const Icon(Icons.menu_book_outlined),
-                              label: const Text('Read'),
+                              label: Text(context.tr('Read')),
                             ),
                             FilterChip(
-                              label: const Text('Favourites'),
+                              label: Text(context.tr('Favourites')),
                               selected: _onlyFavourites,
                               onSelected: (v) =>
                                   setState(() => _onlyFavourites = v),
                             ),
                             FilterChip(
-                              label: const Text('In reading order'),
+                              label: Text(context.tr('In reading order')),
                               selected: _byChapter,
                               onSelected: (v) => setState(() => _byChapter = v),
                             ),
@@ -381,14 +394,14 @@ class _WorkScreenState extends State<WorkScreen> {
                 ),
                 WorkDetailsSection(work: w),
                 if (_quotes.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(16),
-                    child: Text('No quotes from this work yet.'),
+                    child: Text(context.tr('No quotes from this work yet.')),
                   ),
                 if (_quotes.isNotEmpty && ordered.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(16),
-                    child: Text('No favourites in this work yet.'),
+                    child: Text(context.tr('No favourites in this work yet.')),
                   ),
                 if (_byChapter)
                   for (final g in groupByChapter(ordered)) ...[

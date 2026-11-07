@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../capture/voice_listener.dart';
 import 'capture_screen.dart' show CapturedText;
+import '../l10n/l10n.dart';
 
 /// Turns speech into words: press the microphone, say them, press again, and correct the text. Pops a
 /// [CapturedText] for the quote form to put in the words. The app keeps no audio.
@@ -86,14 +87,14 @@ class _VoiceScreenState extends State<VoiceScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Say a quote')),
+      appBar: AppBar(title: Text(context.tr('Say a quote'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           DropdownButtonFormField<String>(
             initialValue: _locale,
-            decoration: const InputDecoration(
-              labelText: 'Language you will speak',
+            decoration: InputDecoration(
+              labelText: context.tr('Language you will speak'),
             ),
             items: [
               for (final e in voiceLocales.entries)
@@ -117,7 +118,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
           ),
           if (_listening) ...[
             const SizedBox(height: 12),
-            const Center(child: Text('Listening…')),
+            Center(child: Text(context.tr('Listening…'))),
           ],
           if (_problem != null) ...[
             const SizedBox(height: 16),
@@ -129,20 +130,22 @@ class _VoiceScreenState extends State<VoiceScreen> {
             minLines: 4,
             maxLines: 12,
             onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(
-              labelText: 'The words, as heard',
-              helperText: 'Correct anything it got wrong.',
+            decoration: InputDecoration(
+              labelText: context.tr('The words, as heard'),
+              helperText: context.tr('Correct anything it got wrong.'),
               alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _text.text.trim().isEmpty ? null : _use,
-            child: const Text('Use this text'),
+            child: Text(context.tr('Use this text')),
           ),
           const SizedBox(height: 12),
           Text(
-            'Tippani keeps no recording. Your phone’s speech service does the listening, and on some phones that service sends the audio to Google.',
+            context.tr(
+              'Tippani keeps no recording. Your phone’s speech service does the listening, and on some phones that service sends the audio to Google.',
+            ),
             style: theme.textTheme.bodySmall,
           ),
         ],

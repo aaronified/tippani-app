@@ -9,6 +9,19 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Your settings, the same on the phone and the web: Settings now has the account's own preferences, kept on your server so a change on one
+  reaches the other. Text and quotes sets the size of the app's text and of a quote, the line height and length of a quote, a typeface for each
+  language, and which separators split "Pratchett & Gaiman" into two people (a book with two authors now shows a pill for each). Colours names
+  and re-shades the six quote colours and hides the ones you do not use. Sections chooses which of Library, Catalogue, Quotes and Anthologies
+  show at the bottom, and how long the Bin keeps things. Daily review sets cards a day, what they are drawn from, how hard the questions are
+  and the schedule. They work without a server too, and go up when it is reachable.
+- Bengali: the app can be read in Bengali (Settings, Language), or follow the phone's language. It uses the same Bengali as the web app, and
+  any language or correction you add on the server (its Locales folder) reaches the phone. A line with no translation shows in English.
+- Account: a page for your picture and name, changing your password (a wrong current password says so, and does not unpair the phone),
+  Pushover notifications and the widget key (shown once when it is made).
+- Context around a quote: how many lines of the book or film show before and after a quote, for everything (Settings) and for one work (its
+  menu), with the choice of what to do to quotes you had already adjusted.
+
 - Portraits on the people pills: the round pill on a quote (the author of a book, the speaker, the character with the actor under their name) now
   shows the photo your server holds for them, as on the web, in the library, on the quote and on every card. A character shows its own picture,
   or the actor's if it has none. The photos are kept on the phone, so they are there without the server.
