@@ -7,6 +7,22 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Boards stay the same on the phone and on the server: the boards you make here go up, the ones on your server (the Proverbs, Speeches
+  and Others it starts with, and any you made on the web) come down, and a rename, a colour or a delete on one side reaches the other. The
+  board a quote is filed on goes both ways too. When you delete a board here that has quotes, the server moves them to one of its other
+  boards, since it will not leave a quote without one. If you change a board on both sides before a sync, the server's version is kept.
+- Context from your server: a quote that is on the server has a Context section on its screen. Show where it comes from asks the server for what it stored
+  around the quote in its source file (the paragraphs before and after, or a film's subtitle lines), with Show more before and after up to what is stored,
+  and a note where the chapter or scene ends. It is asked for when you press it and is not kept on the phone.
+- Author, actor and character chips: a quote shows the people on it as chips, as the web app does. A book's quote shows its author and who said it; a
+  film's, show's or game's shows each character with the actor who plays them under the name (from the work's cast). They are in the Library list
+  and on the quote screen, and pressing one shows the library for that name.
+- Sync is lighter: it runs a few seconds after you change something, and once a day (when the app opens, comes back to the front, or the phone gets a
+  network again, or once a day passes while it is open). The every-few-minutes timer and the retries are gone. A change that could not be sent waits and
+  goes at the next opening, network or change, even after the app is closed.
+
 ### Changed
 
 - The picture of a quote is drawn as the web app draws it: Newsreader set on a card with a paper grain and a thin border, the Tippani mark and
@@ -18,19 +34,6 @@ version. Write each entry for the person using the app, in plain words. **Start 
   built in so they look the same on every phone. Quotes and works are cards (a work with no cover gets a lettered one in a colour taken from
   its title), the filters sit in one row of chips, Settings is grouped into blocks, empty lists say what to do, and bars, buttons, fields,
   dialogs and sheets share one rounded shape. The colours are still your phone's own.
-
-### Added
-
-- Boards stay the same on the phone and on the server: the boards you make here go up, the ones on your server (the Proverbs, Speeches
-  and Others it starts with, and any you made on the web) come down, and a rename, a colour or a delete on one side reaches the other. The
-  board a quote is filed on goes both ways too. When you delete a board here that has quotes, the server moves them to one of its other
-  boards, since it will not leave a quote without one. If you change a board on both sides before a sync, the server's version is kept.
-- Context from your server: a quote that is on the server has a Context section on its screen. Show where it comes from asks the server for what it stored
-  around the quote in its source file (the paragraphs before and after, or a film's subtitle lines), with Show more before and after up to what is stored,
-  and a note where the chapter or scene ends. It is asked for when you press it and is not kept on the phone.
-
-### Changed
-
 - The app is laid out as the web app is: Library, Catalogue, Quotes and Anthologies, each with the web app's own icon, then Settings. The Library
   is your books, the Catalogue your films, shows and games, Quotes your quotes with their boards, and Anthologies is the collections on your server
   (it is there once the app can reach one). Each section reloads when something changes under it, from another section or from a sync. The
@@ -39,15 +42,6 @@ version. Write each entry for the person using the app, in plain words. **Start 
   same short list is what you see after an update.
 - The server is a section of Settings: the Server tab is gone. Settings now opens with a Server section (the address and whether it answers, Check
   again, pairing, paired devices, sync and the other things that need the server), and the app's own settings come after it, under App.
-
-### Added
-
-- Author, actor and character chips: a quote shows the people on it as chips, as the web app does. A book's quote shows its author and who said it; a
-  film's, show's or game's shows each character with the actor who plays them under the name (from the work's cast). They are in the Library list
-  and on the quote screen, and pressing one shows the library for that name.
-- Sync is lighter: it runs a few seconds after you change something, and once a day (when the app opens, comes back to the front, or the phone gets a
-  network again, or once a day passes while it is open). The every-few-minutes timer and the retries are gone. A change that could not be sent waits and
-  goes at the next opening, network or change, even after the app is closed.
 
 ## [0.4.0] - 2026-11-07
 
