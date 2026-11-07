@@ -150,8 +150,8 @@ void main() {
         ),
       ),
     );
-    // the picture arrives from disk, which a test clock does not wait for
-    for (var i = 0; i < 20 && find.byType(Image).evaluate().isEmpty; i++) {
+    // the picture arrives from disk, which a test clock does not wait for: wait up to five seconds, not a fixed moment
+    for (var i = 0; i < 250 && find.byType(Image).evaluate().isEmpty; i++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 20)),
       );

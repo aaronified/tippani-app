@@ -327,10 +327,12 @@ class PullSync {
         if (w == null) {
           final adopted = await _store.adoptWork(_workDraft(sf, null), id, sfp);
           if (cover.isNotEmpty) await _store.setWorkCover(adopted.id, cover);
+          await _keepShelf(adopted, row);
           t.worksAdded++;
           continue;
         }
         if (w.cover != cover) await _store.setWorkCover(w.id, cover);
+        await _keepShelf(w, row);
         final lf = workFields(w);
         final lfp = fingerprint(lf);
         switch (_decide(w.syncedHash, lfp, sfp)) {
@@ -363,6 +365,20 @@ class PullSync {
         }
       }
     }
+  }
+
+  /// Keeps the shelf status and progress the server holds for a work (read-only here: the server owns the shelf),
+  /// so the library can show them without opening each work. Changes nothing that syncs.
+  Future<void> _keepShelf(Work w, Map row) async {
+    final status = row['status'] is String ? (row['status'] as String) : '';
+    final progress = row['progress'] is int
+        ? (row['progress'] as int).clamp(0, 100)
+        : 0;
+    if (w.details.status == status && w.details.progress == progress) return;
+    await _store.setWorkDetails(
+      w.id,
+      w.details.copyWith(status: status, progress: progress),
+    );
   }
 
   /// The name of the cover (or poster) file the server holds for a work row, or '' for none.
