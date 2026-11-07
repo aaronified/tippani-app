@@ -336,7 +336,7 @@ void main() {
       expect(find.text('Proverbs'), findsOneWidget);
       expect(find.text('Speeches'), findsOneWidget);
       expect(find.text('Not on a board'), findsOneWidget);
-      final y = (String t) => tester.getTopLeft(find.text(t)).dy;
+      double y(String t) => tester.getTopLeft(find.text(t)).dy;
       expect(y('Proverbs'), lessThan(y('A stitch in time.')));
       expect(y('A stitch in time.'), lessThan(y('Speeches')));
       expect(y('I have a dream.'), lessThan(y('Not on a board')));
