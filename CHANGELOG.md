@@ -15,6 +15,17 @@ version. Write each entry for the person using the app, in plain words. **Start 
   server to fetch the photos and details that are missing, and clear out people and characters nothing uses. Press and hold to choose two to merge.
 - A character's page can be edited: its details, its picture (from the phone, or taken away), its spellings (press one to make it a record of its
   own), merging it into another character, and removing it. A person's page gains the same for spellings, merging and removing.
+- Search is a page of its own, like the web's: a search button on the Library, Catalogue and Quotes screens and a search box on Home open it.
+  With your server it forgives typos ("showing results for ..."), and reads names, tags and genres as well as the words; without one it
+  searches what is on the phone, and it says which it did. Results come in sections (titles, people, characters, tags, genres, notes, quotes)
+  with the words you typed marked, portraits beside people, and a press opens the book, the quote or the person. Narrow a search with a
+  Filter (author, director, actor, character, speaker, tag, genre, colour, language, series), by pressing a suggestion that appears as you type, or
+  by typing it (`tag:life`, `author:"Le Guin"`), and with the scope chips (books, films and shows, highlights, film lines, quotes).
+- Select many at once: press and hold a quote or a work in a list (the Library, Catalogue, Quotes and a work's own page), then press others. The
+  bar at the top then favourites them, changes their colour, adds a tag or takes one off, sets one field (who said it, the chapter, the page,
+  the language), moves them to a board, adds them to an anthology or deletes them (with Undo). For works it sets the author or the year,
+  merges several into one (their quotes move onto the one you keep) or deletes them. Every change is an ordinary edit, so it works with no
+  server and syncs afterwards.
 - Run the server from your phone (admin accounts only, in Settings): add a reader, make an account an admin or step down, and remove an account;
   watch the server's jobs as they run and wait (with Stop, Run again, each job's log, and the common jobs to start); make a backup of the server, keep
   it on the phone, and put one back, from the server's own copy or from a file on the phone, after keeping a safety copy of what is there now; see the
