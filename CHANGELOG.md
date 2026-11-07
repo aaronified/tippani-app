@@ -15,6 +15,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
   server to fetch the photos and details that are missing, and clear out people and characters nothing uses. Press and hold to choose two to merge.
 - A character's page can be edited: its details, its picture (from the phone, or taken away), its spellings (press one to make it a record of its
   own), merging it into another character, and removing it. A person's page gains the same for spellings, merging and removing.
+- Quote screen: a Copy button puts the quote and its credit on the clipboard, and after you delete a quote an Undo button brings it back, with
+  its note, tags, colour and place.
+- The quote form suggests as you write: the characters of the work you chose (and who else was already quoted from it) under "Who said it", the
+  chapters you already used, and the tags your library already has. Press one to fill it in.
 - Import and checks, in Settings: bring in a file and look over what it holds before it joins your library. Choose a Kindle My Clippings file,
   a Kindle notebook page, Bookcision, Readest, Goodreads, Hardcover, IMDb or Markdown, and your server reads it (it works out the format
   itself, or you name it). The quotes wait in a queue you review: edit a quote's colour, favourite mark and where it came from, shift page
