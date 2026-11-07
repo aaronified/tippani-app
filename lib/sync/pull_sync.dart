@@ -58,6 +58,10 @@ class PullResult {
     this.refused = const [],
     this.goneOnServer = 0,
     this.skipped = 0,
+    this.deletedThere = 0,
+    this.deletedHere = 0,
+    this.relinked = 0,
+    this.heldBack = 0,
     this.stoppedBy,
   });
 
@@ -69,8 +73,22 @@ class PullResult {
   final List<SyncConflict> conflicts;
   final List<PushRefusal> refused;
 
-  /// Items the phone links to that the server no longer has. They are left alone, never deleted.
+  /// Items a write found already gone from the server (it deleted them between the read and the write).
   final int goneOnServer;
+
+  /// Deleted on the server because the reader deleted them here (they sit in the server's bin).
+  final int deletedThere;
+
+  /// Removed here because they were deleted on the server and had not been changed here since.
+  final int deletedHere;
+
+  /// Gone from the server but changed here since (or holding quotes that are only here): kept, and sent up
+  /// again as new.
+  final int relinked;
+
+  /// Items the server no longer lists that were NOT removed here, because that is so many of them that the
+  /// server itself looks wiped or restored from an old copy.
+  final int heldBack;
 
   /// Server items that could not come down (a quote with no words, a quote whose work is not here).
   final int skipped;
@@ -108,6 +126,7 @@ class _Put {
 class _Tally {
   int worksAdded = 0, quotesAdded = 0, worksUpdated = 0, quotesUpdated = 0;
   int worksSent = 0, quotesSent = 0, gone = 0, skipped = 0;
+  int deletedThere = 0, deletedHere = 0, relinked = 0, heldBack = 0;
   final conflicts = <SyncConflict>[];
   final refused = <PushRefusal>[];
   ApiFailure? stopped;
@@ -123,7 +142,7 @@ class _Tally {
 ///
 /// WHO MOVED is read from a fingerprint of the fields that sync, stored at the last agreement
 /// (`synced_hash`), not from timestamps: the server does not give a work's `updated_at` at all.
-/// It never deletes anything on either side.
+/// Deletes travel both ways ([ADR-0017](docs/wiki/ADR-0017-Deletes-Travel-Both-Ways-With-A-Wipe-Guard.md)).
 class PullSync {
   PullSync(this._store, this._controller, {this._log});
 
@@ -173,20 +192,29 @@ class PullSync {
     if (!_controller.paired) {
       return const PullResult(stoppedBy: ApiFailure.unauthorised);
     }
-    // Everything is read before anything is changed, so a connection that fails half way changes nothing.
+    final t = _Tally();
+    // What the reader deleted goes first, so the lists read next cannot bring it back.
+    await _sendDeletions(t);
+    if (t.stopped != null) return _finish(t);
+    // Everything else is read before anything is changed, so a connection that fails half way changes nothing.
     final _Fetched? got;
     try {
       got = await _fetch();
     } on ApiException catch (e) {
-      return PullResult(stoppedBy: e.failure);
+      t.stopped = e.failure;
+      return _finish(t);
     }
     if (got == null) {
-      return const PullResult(stoppedBy: ApiFailure.unauthorised);
+      t.stopped = ApiFailure.unauthorised;
+      return _finish(t);
     }
-    final t = _Tally();
     await _syncWorks(got, t);
     if (t.stopped == null) await _syncQuotes(got, t);
+    if (t.stopped == null) await _syncGone(got, t);
+    return _finish(t);
+  }
 
+  PullResult _finish(_Tally t) {
     final result = PullResult(
       worksAdded: t.worksAdded,
       quotesAdded: t.quotesAdded,
@@ -198,13 +226,19 @@ class PullSync {
       refused: t.refused,
       goneOnServer: t.gone,
       skipped: t.skipped,
+      deletedThere: t.deletedThere,
+      deletedHere: t.deletedHere,
+      relinked: t.relinked,
+      heldBack: t.heldBack,
       stoppedBy: t.stopped,
     );
     _log?.info(
       'sync: brought down ${result.worksAdded} new and ${result.worksUpdated} changed works, '
       '${result.quotesAdded} new and ${result.quotesUpdated} changed quotes; sent '
       '${result.worksSent} works and ${result.quotesSent} quotes; ${t.conflicts.length} conflicts, '
-      '${t.refused.length} refused, ${t.gone} gone on the server, ${t.skipped} skipped'
+      '${t.refused.length} refused, ${t.gone} gone on the server, ${t.skipped} skipped, '
+      '${t.deletedThere} deleted there, ${t.deletedHere} deleted here, ${t.relinked} relinked, '
+      '${t.heldBack} held back'
       '${t.stopped == null ? '' : ', stopped by ${t.stopped}'}',
     );
     for (final r in t.refused) {
@@ -221,10 +255,8 @@ class PullSync {
         if (w.serverId != null) (realmOfKind(w.kind), w.serverId!): w,
     };
     for (final realm in [Realm.book, Realm.screen]) {
-      final seen = <int>{};
       for (final row in got.works[realm]!) {
         final id = row['id']! as int;
-        seen.add(id);
         final sf = serverWorkFields(row, realm);
         final sfp = fingerprint(sf);
         final w = local[(realm, id)];
@@ -264,9 +296,6 @@ class PullSync {
             );
         }
       }
-      t.gone += local.entries
-          .where((e) => e.key.$1 == realm && !seen.contains(e.key.$2))
-          .length;
     }
   }
 
@@ -327,10 +356,8 @@ class PullSync {
           ): q,
     };
     for (final realm in Realm.values) {
-      final seen = <int>{};
       for (final row in got.quotes[realm]!) {
         final id = row['id']! as int;
-        seen.add(id);
         final sf = serverQuoteFields(row, realm);
         final sfp = fingerprint(sf);
         final q = local[(realm, id)];
@@ -382,9 +409,90 @@ class PullSync {
             );
         }
       }
-      t.gone += local.entries
-          .where((e) => e.key.$1 == realm && !seen.contains(e.key.$2))
-          .length;
+    }
+  }
+
+  /// Tells the server about what the reader deleted here. A 404 means it is gone already; a refusal is
+  /// reported and the item may come back down on the pull that follows; anything else stops the sync.
+  Future<void> _sendDeletions(_Tally t) async {
+    for (final d in await _store.pendingDeletions()) {
+      final p = await _write((c) async {
+        await c.delete('${d.route}/${d.serverId}');
+      });
+      if (p.stopped != null) {
+        t.stopped = p.stopped;
+        return;
+      }
+      if (p.reason != null) {
+        t.refused.add(
+          PushRefusal('deleting ${d.route}/${d.serverId}', p.reason!),
+        );
+      } else if (!p.gone) {
+        t.deletedThere++;
+      }
+      await _store.clearDeletion(d.id);
+    }
+  }
+
+  /// Applies what was deleted on the server. A quote or work the server no longer lists is removed here only
+  /// if it has not been changed here since they last agreed; otherwise it is kept and unlinked, so it goes up
+  /// again as new. A work is removed only when no quote is left under it. And if so many are missing that the
+  /// server looks wiped (ten or more, and over half of everything linked), nothing is removed: that is a
+  /// restore or a mistake, not the reader deleting things.
+  Future<void> _syncGone(_Fetched got, _Tally t) async {
+    final workIds = {
+      for (final r in [Realm.book, Realm.screen])
+        r: {for (final w in got.works[r]!) w['id']! as int},
+    };
+    final quoteIds = {
+      for (final r in Realm.values)
+        r: {for (final q in got.quotes[r]!) q['id']! as int},
+    };
+    final works = {for (final w in await _store.works()) w.id: w};
+    final quotes = await _store.quotes(limit: 1 << 30);
+    final goneQuotes = <(Quote, Realm)>[];
+    var linked = 0;
+    for (final q in quotes) {
+      if (q.serverId == null) continue;
+      linked++;
+      final realm = realmOfQuote(q.workId == null ? null : works[q.workId]);
+      if (!quoteIds[realm]!.contains(q.serverId)) goneQuotes.add((q, realm));
+    }
+    final goneWorks = <Work>[];
+    for (final w in works.values) {
+      if (w.serverId == null) continue;
+      linked++;
+      if (!workIds[realmOfKind(w.kind)]!.contains(w.serverId)) {
+        goneWorks.add(w);
+      }
+    }
+    final gone = goneQuotes.length + goneWorks.length;
+    if (gone == 0) return;
+    if (gone >= 10 && gone * 2 > linked) {
+      t.heldBack += gone;
+      return;
+    }
+    for (final (q, realm) in goneQuotes) {
+      if (q.syncedHash != null &&
+          q.syncedHash == fingerprint(quoteFields(q, realm))) {
+        await _store.dropQuote(q.id);
+        t.deletedHere++;
+      } else {
+        await _store.unlinkQuote(q.id);
+        t.relinked++;
+      }
+    }
+    for (final w in goneWorks) {
+      final left = await _store.quotes(workId: w.id, limit: 1);
+      if (left.isEmpty &&
+          w.syncedHash != null &&
+          w.syncedHash == fingerprint(workFields(w))) {
+        await _store.dropWork(w.id);
+        t.deletedHere++;
+      } else {
+        await _store.unlinkWork(w.id);
+        t.relinked++;
+      }
     }
   }
 

@@ -6,6 +6,13 @@ version. Write each entry for the person using the app, in plain words.
 
 ## [Unreleased]
 
+### Added
+
+- Deleting now syncs both ways. A quote or work you delete here is deleted on your server too (it sits in the server's bin for a while, and
+  you can bring it back from Settings > Bin), and one you delete on the server is removed here at the next sync. If you changed it here after
+  it was deleted there, it is kept and sent up again. If your server suddenly lists far fewer items than the phone knows (it looks wiped or
+  restored from an old copy), nothing is removed here and the sync says so.
+
 ## [0.3.0] - 2026-11-06
 
 ### Added

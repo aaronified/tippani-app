@@ -412,4 +412,56 @@ void main() {
     },
     skip: skip,
   );
+
+  test('deletes: one made here reaches the server and its bin; one made there removes it here', () async {
+    final log = AppLog();
+    final lib = MemoryLibrary();
+    final push = PushSync(lib, controller, log: log);
+    final pull = PullSync(lib, controller, log: log);
+    final w = await lib.addWork(const WorkDraft(title: 'Delete book (live)'));
+    final keep = await lib.addQuote(
+      QuoteDraft(text: 'Delete me here (live).', workId: w.id),
+    );
+    final other = await lib.addQuote(
+      QuoteDraft(text: 'Delete me there (live).', workId: w.id),
+    );
+    await push.push();
+    await pull.sync();
+    final keepServer = (await lib.quote(keep.id))!.serverId!;
+    final otherServer = (await lib.quote(other.id))!.serverId!;
+
+    // deleted on the phone: the server's bin gets it, and it stays gone after the next pull
+    await lib.deleteQuote(keep.id);
+    var r = await pull.sync();
+    expect(r.refused, isEmpty, reason: '${r.refused}');
+    expect(r.deletedThere, 1);
+    final live =
+        ((await raw('GET', '/annotations')) as Map)['annotations'] as List;
+    expect(live.any((a) => (a as Map)['id'] == keepServer), isFalse);
+    final bin = ((await raw('GET', '/trash')) as Map)['trash'] as List;
+    expect(
+      bin.any((e) => (e as Map)['label'] == 'Delete me here (live).'),
+      isTrue,
+    );
+    expect(await lib.quote(keep.id), isNull);
+
+    // deleted on the server: removed here, not sent back
+    await raw('DELETE', '/annotations/$otherServer');
+    r = await pull.sync();
+    expect(r.deletedHere, 1);
+    expect(await lib.quote(other.id), isNull);
+    expect(r.conflicts, isEmpty);
+    expect((await lib.work(w.id)), isNotNull);
+
+    // and the work, deleted on the phone with nothing left in it
+    await lib.deleteWork(w.id);
+    r = await pull.sync();
+    expect(r.refused, isEmpty, reason: '${r.refused}');
+    final books = ((await raw('GET', '/books')) as Map)['books'] as List;
+    expect(
+      books.any((b) => (b as Map)['title'] == 'Delete book (live)'),
+      isFalse,
+    );
+    expect(await lib.pendingDeletions(), isEmpty);
+  }, skip: skip);
 }

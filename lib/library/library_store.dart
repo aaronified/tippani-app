@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 
+import '../sync/fingerprint.dart';
 import 'models.dart';
 
 /// The app's own library of works and quotes, kept on the phone. It is what lets the app work with no
@@ -58,9 +59,31 @@ abstract interface class LibraryStore {
   /// Everything, as JSON-encodable data, for a backup or an export.
   Future<Map<String, Object?>> exportAll();
 
+  /// What the reader deleted here that the server still holds, to be deleted there too (its bin keeps it for
+  /// a while). Written when a linked work or quote is deleted; cleared once the server has been told.
+  Future<List<PendingDeletion>> pendingDeletions();
+  Future<void> clearDeletion(int id);
+
+  /// Forgets that a work or quote is on the server, so the next push sends it as new.
+  Future<void> unlinkWork(int id);
+  Future<void> unlinkQuote(int id);
+
+  /// Removes a work or quote because the server no longer has it. Unlike [deleteWork] and [deleteQuote] it
+  /// leaves no pending deletion behind, which would only tell the server what it already knows.
+  Future<void> dropWork(int id);
+  Future<void> dropQuote(int id);
+
   /// Replaces everything with what [exportAll] gave. Validated first and written in one transaction, so a
   /// damaged file changes nothing.
   Future<void> replaceAll(Map<String, Object?> data);
+}
+
+/// A delete the server has yet to hear of: [route] is the server's collection (`/books`, `/annotations`...).
+class PendingDeletion {
+  const PendingDeletion(this.id, this.route, this.serverId);
+  final int id;
+  final String route;
+  final int serverId;
 }
 
 class LibraryException implements Exception {
@@ -79,7 +102,7 @@ class SqliteLibraryStore implements LibraryStore {
   final Database _db;
   final DateTime Function() _clock;
 
-  static const schemaVersion = 2;
+  static const schemaVersion = 3;
 
   /// The longest a quote's text or a title may be. A pasted book is not a quote.
   static const maxText = 20000;
@@ -105,10 +128,19 @@ class SqliteLibraryStore implements LibraryStore {
           await db.execute('ALTER TABLE works ADD COLUMN synced_hash TEXT');
           await db.execute('ALTER TABLE quotes ADD COLUMN synced_hash TEXT');
         }
+        if (from < 3) await _createDeletions(db);
       },
     );
     return SqliteLibraryStore(db, clock: clock);
   }
+
+  static Future<void> _createDeletions(Database db) => db.execute('''
+      CREATE TABLE deletions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        route TEXT NOT NULL,
+        server_id INTEGER NOT NULL,
+        deleted_at TEXT NOT NULL
+      )''');
 
   static Future<void> _create(Database db) async {
     await db.execute('''
@@ -146,6 +178,7 @@ class SqliteLibraryStore implements LibraryStore {
       )''');
     await db.execute('CREATE INDEX quotes_work ON quotes(work_id)');
     await db.execute('CREATE INDEX quotes_noted ON quotes(noted_at)');
+    await _createDeletions(db);
     await db.execute(
       'CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE COLLATE NOCASE)',
     );
@@ -225,8 +258,80 @@ class SqliteLibraryStore implements LibraryStore {
 
   @override
   Future<void> deleteWork(int id) async {
+    await _db.transaction((tx) async {
+      final rows = await tx.query('works', where: 'id = ?', whereArgs: [id]);
+      if (rows.isNotEmpty) {
+        final w = _work(rows.single);
+        final realm = realmOfKind(w.kind);
+        if (w.serverId != null) {
+          await _note(tx, workRoute(realm), w.serverId!);
+        }
+        for (final q in await tx.query(
+          'quotes',
+          columns: ['server_id'],
+          where: 'work_id = ? AND server_id IS NOT NULL',
+          whereArgs: [id],
+        )) {
+          await _note(tx, quoteRoute(realm), q['server_id']! as int);
+        }
+      }
+      await tx.delete('works', where: 'id = ?', whereArgs: [id]);
+    });
+    await _dropUnusedTags();
+  }
+
+  Future<void> _note(DatabaseExecutor tx, String route, int serverId) =>
+      tx.insert('deletions', {
+        'route': route,
+        'server_id': serverId,
+        'deleted_at': _now(),
+      });
+
+  @override
+  Future<void> dropWork(int id) async {
     await _db.delete('works', where: 'id = ?', whereArgs: [id]);
     await _dropUnusedTags();
+  }
+
+  @override
+  Future<void> dropQuote(int id) async {
+    await _db.delete('quotes', where: 'id = ?', whereArgs: [id]);
+    await _dropUnusedTags();
+  }
+
+  @override
+  Future<List<PendingDeletion>> pendingDeletions() async => [
+    for (final r in await _db.query('deletions', orderBy: 'id'))
+      PendingDeletion(
+        r['id']! as int,
+        r['route']! as String,
+        r['server_id']! as int,
+      ),
+  ];
+
+  @override
+  Future<void> clearDeletion(int id) async {
+    await _db.delete('deletions', where: 'id = ?', whereArgs: [id]);
+  }
+
+  @override
+  Future<void> unlinkWork(int id) async {
+    await _db.update(
+      'works',
+      {'server_id': null, 'synced_hash': null},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
+  Future<void> unlinkQuote(int id) async {
+    await _db.update(
+      'quotes',
+      {'server_id': null, 'synced_hash': null},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   /// A LIKE pattern that matches [raw] literally: a `%` or `_` the reader types is the character they mean.
@@ -398,7 +503,20 @@ class SqliteLibraryStore implements LibraryStore {
 
   @override
   Future<void> deleteQuote(int id) async {
-    await _db.delete('quotes', where: 'id = ?', whereArgs: [id]);
+    await _db.transaction((tx) async {
+      final rows = await tx.rawQuery(
+        'SELECT q.server_id AS sid, w.kind AS kind FROM quotes q LEFT JOIN works w ON w.id = q.work_id WHERE q.id = ?',
+        [id],
+      );
+      if (rows.isNotEmpty && rows.single['sid'] != null) {
+        final kind = rows.single['kind'];
+        final realm = kind == null
+            ? Realm.loose
+            : realmOfKind(workKindOf(kind));
+        await _note(tx, quoteRoute(realm), rows.single['sid']! as int);
+      }
+      await tx.delete('quotes', where: 'id = ?', whereArgs: [id]);
+    });
     await _dropUnusedTags();
   }
 

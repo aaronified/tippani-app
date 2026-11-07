@@ -1,5 +1,6 @@
 import 'package:tippani/library/library_store.dart';
 import 'package:tippani/library/models.dart';
+import 'package:tippani/sync/fingerprint.dart';
 
 /// A [LibraryStore] with no I/O, for widget tests: real SQLite work cannot be driven by a widget test's fake
 /// clock (its futures never complete), so the screens are tested against this and the store itself against
@@ -14,6 +15,8 @@ class MemoryLibrary implements LibraryStore {
   final _works = <int, Work>{};
   final _quotes = <int, Quote>{};
   var _next = 1;
+  final _deletions = <PendingDeletion>[];
+  var _deletionId = 1;
 
   @override
   Future<Work> addWork(WorkDraft d) async {
@@ -58,8 +61,46 @@ class MemoryLibrary implements LibraryStore {
 
   @override
   Future<void> deleteWork(int id) async {
+    final w = _works[id];
+    if (w != null) {
+      final realm = realmOfKind(w.kind);
+      if (w.serverId != null) _remember(workRoute(realm), w.serverId!);
+      for (final q in _quotes.values.where((q) => q.workId == id)) {
+        if (q.serverId != null) _remember(quoteRoute(realm), q.serverId!);
+      }
+    }
+    await dropWork(id);
+  }
+
+  void _remember(String route, int serverId) =>
+      _deletions.add(PendingDeletion(_deletionId++, route, serverId));
+
+  @override
+  Future<void> dropWork(int id) async {
     _works.remove(id);
     _quotes.removeWhere((_, q) => q.workId == id);
+  }
+
+  @override
+  Future<void> dropQuote(int id) async => _quotes.remove(id);
+
+  @override
+  Future<List<PendingDeletion>> pendingDeletions() async => List.of(_deletions);
+
+  @override
+  Future<void> clearDeletion(int id) async =>
+      _deletions.removeWhere((d) => d.id == id);
+
+  @override
+  Future<void> unlinkWork(int id) async {
+    final w = _works[id];
+    if (w != null) _works[id] = w.withServerId(null).withSyncedHash(null);
+  }
+
+  @override
+  Future<void> unlinkQuote(int id) async {
+    final q = _quotes[id];
+    if (q != null) _quotes[id] = q.withServerId(null).withSyncedHash(null);
   }
 
   @override
@@ -129,7 +170,14 @@ class MemoryLibrary implements LibraryStore {
   }
 
   @override
-  Future<void> deleteQuote(int id) async => _quotes.remove(id);
+  Future<void> deleteQuote(int id) async {
+    final q = _quotes[id];
+    if (q != null && q.serverId != null) {
+      final w = q.workId == null ? null : _works[q.workId];
+      _remember(quoteRoute(realmOfQuote(w)), q.serverId!);
+    }
+    _quotes.remove(id);
+  }
 
   @override
   Future<void> setFavorite(int id, bool favorite) async {

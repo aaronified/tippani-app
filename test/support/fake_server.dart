@@ -80,6 +80,12 @@ class FakeServer {
   /// Every PUT answers with this status instead (400, 404...), when set.
   int? failUpdatesWith;
 
+  /// Every DELETE of a work or quote the fake accepted, in order: the route (`/annotations/101`).
+  final deleted = <String>[];
+
+  /// Every DELETE of a work or quote answers with this status instead (409, 500...), when set.
+  int? failDeletesWith;
+
   /// Puts a row on the server as if it had been made on the web, and returns its id. [path] is a create
   /// route (`/books`, `/annotations`...). The row is what the server's list would give back.
   int seed(String path, Map<String, Object?> fields, {int? id}) {
@@ -274,6 +280,27 @@ class FakeServer {
       }
       if (r.method == 'PUT') {
         return _update(route, id, jsonDecode(r.body) as Map);
+      }
+      if (r.method == 'DELETE') {
+        if (failDeletesWith != null) {
+          return _json({'error': 'refused'}, failDeletesWith!);
+        }
+        final rows = created[route] ?? [];
+        if (!rows.any((x) => x['id'] == id)) {
+          return _json({'error': 'not found'}, 404);
+        }
+        rows.removeWhere((x) => x['id'] == id);
+        // a book or film takes its quotes with it, as the real server's bin does
+        final childKey = route == '/books'
+            ? ('/annotations', 'book_id')
+            : route == '/movies'
+            ? ('/dialogues', 'movie_id')
+            : null;
+        if (childKey != null) {
+          created[childKey.$1]?.removeWhere((x) => x[childKey.$2] == id);
+        }
+        deleted.add('$route/$id');
+        return _json({'ok': true});
       }
     }
     if (r.method == 'GET' && path == '/auth/me') {

@@ -39,7 +39,27 @@ List<String> describePull(PullResult r) {
   }
   if (r.goneOnServer > 0) {
     lines.add(
-      '${_count(r.goneOnServer, 'item')} here ${r.goneOnServer == 1 ? 'is' : 'are'} no longer on the server. They were left alone.',
+      '${_count(r.goneOnServer, 'item')} ${r.goneOnServer == 1 ? 'was' : 'were'} removed on the server while syncing, and left alone here.',
+    );
+  }
+  if (r.deletedThere > 0) {
+    lines.add(
+      '${_count(r.deletedThere, 'item')} you deleted here ${r.deletedThere == 1 ? 'was' : 'were'} deleted on the server too (they are in its bin for a while).',
+    );
+  }
+  if (r.deletedHere > 0) {
+    lines.add(
+      '${_count(r.deletedHere, 'item')} deleted on the server ${r.deletedHere == 1 ? 'was' : 'were'} removed here too.',
+    );
+  }
+  if (r.relinked > 0) {
+    lines.add(
+      '${_count(r.relinked, 'item')} deleted on the server but changed here ${r.relinked == 1 ? 'was' : 'were'} kept, and will be sent up again.',
+    );
+  }
+  if (r.heldBack > 0) {
+    lines.add(
+      '${_count(r.heldBack, 'item')} are missing from the server. That is so many that nothing was removed here: check that the server is the right one and has not been restored from an old copy.',
     );
   }
   for (final x in r.refused) {
@@ -162,7 +182,7 @@ class _PullScreenState extends State<PullScreen> {
         children: [
           const Text(
             'Brings down what is new or changed on your server, and sends up what you changed here. '
-            'Nothing is deleted on either side. If the same quote or work changed in both places, you choose which version to keep.',
+            'Deleting follows both ways: what you delete here is deleted on the server (its bin keeps it for a while), and what you delete on the server is removed here. If the same quote or work changed in both places, you choose which version to keep.',
           ),
           const SizedBox(height: 16),
           if (_running)

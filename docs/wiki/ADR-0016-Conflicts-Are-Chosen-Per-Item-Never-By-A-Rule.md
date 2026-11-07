@@ -29,6 +29,6 @@ quote's chapter is left out (the server has nowhere to keep it). For a work: its
 work's language is not compared, because the server's list does not give it. Spacing at the edges and the case and order of tags do not count
 as a change. [ADR-0015](ADR-0015-Sync-Starts-As-A-Push-That-Only-Adds.md) is the push that this builds on.
 
-**Limits.** An item the server no longer has is counted and left alone, never deleted here. A server quote with no words (a note only), or
+**Limits.** An item the server no longer has is handled by [ADR-0017](ADR-0017-Deletes-Travel-Both-Ways-With-A-Wipe-Guard.md). A server quote with no words (a note only), or
 whose work is not on the phone, is counted and not brought down. An item the phone has never pushed and the server holds under the same
 title is brought down as a second copy: the pull matches by the server's id, not by title.
