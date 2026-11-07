@@ -224,9 +224,8 @@ transitions and scrolling feel on iOS):
     flutter create --platforms=web .        # once; web/ is not committed
     flutter build web -t tool/preview/main.dart
 
-`tool/preview/main.dart` runs the real app over made-up books, films, boards and quotes held in memory, with no server. Two things differ from a
-phone: the sync fingerprint's 64-bit constant does not compile for the web (patch it locally for the preview and do not commit that), and `flutter
-build web` adds `web/**` to `analysis_options.yaml` (restore the file).
+`tool/preview/main.dart` runs the real app over made-up books, films, boards and quotes held in memory, with no server. `flutter build web` adds
+`web/**` to `analysis_options.yaml`: restore the file before committing.
 
 ## The sections
 
