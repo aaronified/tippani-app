@@ -12,11 +12,6 @@ version. Write each entry for the person using the app, in plain words.
   you can bring it back from Settings > Bin), and one you delete on the server is removed here at the next sync. If you changed it here after
   it was deleted there, it is kept and sent up again. If your server suddenly lists far fewer items than the phone knows (it looks wiped or
   restored from an old copy), nothing is removed here and the sync says so.
-
-## [0.3.0] - 2026-11-06
-
-### Added
-
 - The app has Tippani's own icon: the rust speech bubble with quote marks, as a normal launcher icon, an adaptive icon for round and
   squircle masks, and a single-colour version for Android's themed icons.
 - One Share screen replaces the three share buttons on a quote. Choose the format (Picture, Plain text, Markdown, WhatsApp or Reddit),
@@ -26,6 +21,10 @@ version. Write each entry for the person using the app, in plain words.
 - Read aloud has settings (Settings > Read aloud): pick the voice, the speed and the pitch, and try them. By default the app now picks the
   best installed voice for each quote's language, preferring higher quality and online voices, which sound far less robotic than the
   basic one. The voices come from Android's own speech service; install more in Android Settings > Text-to-speech.
+
+## [0.3.0] - 2026-11-06
+
+### Added
 
 - Look up details (needs your server): when you add or edit a work, Look up details asks your server what the title most likely is and
   offers the matches; pick one to fill in the title, the author and the year. The app holds no keys of its own: the server does the lookup.
