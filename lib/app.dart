@@ -14,6 +14,7 @@ import 'screens/library_screen.dart';
 import 'screens/settings_screen.dart';
 import 'boards/board_service.dart';
 import 'people/people_directory.dart';
+import 'tags/tag_service.dart';
 import 'share/share_people.dart';
 import 'theme/app_theme.dart';
 
@@ -61,7 +62,13 @@ class TippaniApp extends StatelessWidget {
                   source: harness.people,
                   child: PeopleDirectoryScope(
                     directory: harness.directory,
-                    child: BoardScope(service: harness.boards, child: child!),
+                    child: BoardScope(
+                      service: harness.boards,
+                      child: TagServiceScope(
+                        service: harness.tags,
+                        child: child!,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -173,6 +180,15 @@ class _ShellState extends State<Shell> {
           ),
         ),
         bottomNavigationBar: NavigationBar(
+          // A word like "Anthologies" is cut off when the bar is crowded (many tabs, a narrow phone, large text):
+          // then only the open tab keeps its label, and the others are the icon alone.
+          labelBehavior:
+              MediaQuery.sizeOf(context).width /
+                      tabs.length /
+                      MediaQuery.textScalerOf(context).scale(1) <
+                  66
+              ? NavigationDestinationLabelBehavior.onlyShowSelected
+              : NavigationDestinationLabelBehavior.alwaysShow,
           selectedIndex: _index,
           onDestinationSelected: (i) => setState(() => _index = i),
           destinations: [for (final t in tabs) t.destination],

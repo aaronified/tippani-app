@@ -9,6 +9,15 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Tags page: every tag with its colour, how many quotes wear it and its style, in Settings and under the Tag chip in the library ("Manage
+  tags"). Rename a tag, change its colour and style, make a new one, delete it, or long-press several and merge them into one. A change is made
+  on your server and on every quote on the phone together, so the next sync has nothing to settle; with no server the phone's quotes are still
+  changed, and it says the server was not. Tap a tag to read the quotes that wear it.
+- A fuller Statistics page: an activity calendar of the last half year (what you saved, answered in the quiz and practised, with a tap on any
+  day), where your quotes stand on the forgetting curve, highlight tiles with covers and faces (most annotated, most quoted, most favourited
+  person, best remembered, most forgotten), a timeline by year or decade, a breakdown of authors, books, series, films, shows, directors,
+  actors, characters and speakers with portraits and a bar for how well each is remembered, and a chart of your highlight colours. A name or a
+  tag opens the quotes behind it.
 - Anthologies are complete: drag passages into order (or use Move up and Move down), write your commentary before a passage, add headings with words
   under them, group passages by book, person or character, and choose what each passage shows (who it is by, the book, your commentary, the colour
   edge, where in the work, the date). Give an anthology a cover, an epigraph and a dedication. Fill it from a search: everything, a book, a film, a
@@ -21,13 +30,14 @@ version. Write each entry for the person using the app, in plain words. **Start 
   Everything the web sets on a board now shows here after a sync.
 - Copy picture: the share picture can be copied to the clipboard and pasted into a chat or a note, as well as shared or saved.
 - Add to anthology from any list: a quote in the library has a button for it (and a long press does the same), not only on the quote's own page.
-
 - Portraits on the people pills: the round pill on a quote (the author of a book, the speaker, the character with the actor under their name) now
   shows the photo your server holds for them, as on the web, in the library, on the quote and on every card. A character shows its own picture,
   or the actor's if it has none. The photos are kept on the phone, so they are there without the server.
 
 ### Fixed
 
+- The bottom bar no longer cuts words off: "Anthologies" was clipped on narrower phones or with large text. The labels are a little smaller, and
+  when the bar is crowded only the open tab keeps its label.
 - Signatures on the share picture: a signature your server keeps as a drawn (vector) picture, which is how most are stored, was left off the
   picture. It is drawn now. The share picture also takes the portraits and signature from the phone's own copy, so it can be made without the
   server, and a book's character can show its picture too.

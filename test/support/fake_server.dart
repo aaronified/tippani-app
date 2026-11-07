@@ -93,6 +93,13 @@ class FakeServer {
   /// Every DELETE of a work or quote answers with this status instead (409, 500...), when set.
   int? failDeletesWith;
 
+  /// The server's tags: id, name, color, style, annotations, dialogues. `GET/POST /tags`, `PUT/DELETE /tags/{id}`,
+  /// `POST /tags/merge`, with the real server's rules (a name is unique in any capitals: 409).
+  final tags = <Map<String, Object?>>[];
+
+  /// Every tag write the server took, as `PUT 3`, `DELETE 3`, `MERGE 3<-4,5`, `POST name`.
+  final tagWrites = <String>[];
+
   /// The people the server knows, by kind ('author', 'actor', 'speaker'): rows of name, image_path, signature_path.
   /// `GET /people?kind=` lists one kind.
   final people = <String, List<Map<String, Object?>>>{};
@@ -280,6 +287,72 @@ class FakeServer {
 
   /// The server's boards: `GET/POST /boards`, `PUT/DELETE /boards/{id}`. A board that holds quotes can only be
   /// deleted with `move_to`, as on the real server. Null when [path] is not a board route.
+  http.Response? _tagRoute(http.Request r, String path) {
+    int next() =>
+        tags.fold<int>(0, (a, t) => (t['id'] as int) > a ? t['id'] as int : a) +
+        1;
+    bool clash(String name, int? except) => tags.any(
+      (t) =>
+          t['id'] != except &&
+          (t['name'] as String).toLowerCase() == name.toLowerCase(),
+    );
+    if (path == '/tags/merge' && r.method == 'POST') {
+      final body = jsonDecode(r.body) as Map;
+      final keep = tags.where((t) => t['id'] == body['keep_id']).firstOrNull;
+      if (keep == null) return _json({'error': 'not found'}, 404);
+      final drops = [for (final d in body['drop_ids'] as List) d as int];
+      tags.removeWhere((t) => drops.contains(t['id']));
+      tagWrites.add('MERGE ${keep['id']}<-${drops.join(',')}');
+      return _json({'tag': keep, 'moved': 0});
+    }
+    if (path == '/tags') {
+      if (r.method == 'GET') return _json({'tags': tags});
+      if (r.method == 'POST') {
+        final body = jsonDecode(r.body) as Map;
+        final name = (body['name'] as String? ?? '').trim();
+        if (name.isEmpty) return _json({'error': 'name is required'}, 400);
+        if (clash(name, null)) {
+          return _json({'error': 'tag already exists'}, 409);
+        }
+        final row = <String, Object?>{
+          'id': next(),
+          'name': name,
+          'color': body['color'] ?? 'yellow',
+          'style': 'sticker',
+          'annotations': 0,
+          'dialogues': 0,
+        };
+        tags.add(row);
+        tagWrites.add('POST $name');
+        return _json(row, 201);
+      }
+    }
+    final one = RegExp(r'^/tags/(\d+)$').firstMatch(path);
+    if (one == null) return null;
+    final id = int.parse(one[1]!);
+    final i = tags.indexWhere((t) => t['id'] == id);
+    if (i < 0) return _json({'error': 'tag not found'}, 404);
+    if (r.method == 'PUT') {
+      final body = jsonDecode(r.body) as Map;
+      final name = (body['name'] as String? ?? '').trim();
+      if (clash(name, id)) return _json({'error': 'tag already exists'}, 409);
+      tags[i] = {
+        ...tags[i],
+        'name': name,
+        'color': body['color'],
+        'style': body['style'],
+      };
+      tagWrites.add('PUT $id');
+      return _json(tags[i]);
+    }
+    if (r.method == 'DELETE') {
+      tags.removeAt(i);
+      tagWrites.add('DELETE $id');
+      return _json({'ok': true});
+    }
+    return null;
+  }
+
   http.Response? _boardRoute(http.Request r, String path) {
     if (path == '/boards') {
       if (r.method == 'GET') {
@@ -485,6 +558,8 @@ class FakeServer {
     }
     final board = _boardRoute(r, path);
     if (board != null) return board;
+    final tag = _tagRoute(r, path);
+    if (tag != null) return tag;
     if (r.method == 'POST' && _createRoutes.contains(path)) {
       return _create(path, jsonDecode(r.body) as Map);
     }
