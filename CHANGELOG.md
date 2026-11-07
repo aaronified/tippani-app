@@ -9,6 +9,17 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Search is a page of its own, like the web's: a search button on the Library, Catalogue and Quotes screens and a search box on Home open it.
+  With your server it forgives typos ("showing results for ..."), and reads names, tags and genres as well as the words; without one it
+  searches what is on the phone, and it says which it did. Results come in sections (titles, people, characters, tags, genres, notes, quotes)
+  with the words you typed marked, portraits beside people, and a press opens the book, the quote or the person. Narrow a search with a
+  Filter (author, director, actor, character, speaker, tag, genre, colour, language, series), by pressing a suggestion that appears as you type, or
+  by typing it (`tag:life`, `author:"Le Guin"`), and with the scope chips (books, films and shows, highlights, film lines, quotes).
+- Select many at once: press and hold a quote or a work in a list (the Library, Catalogue, Quotes and a work's own page), then press others. The
+  bar at the top then favourites them, changes their colour, adds a tag or takes one off, sets one field (who said it, the chapter, the page,
+  the language), moves them to a board, adds them to an anthology or deletes them (with Undo). For works it sets the author or the year,
+  merges several into one (their quotes move onto the one you keep) or deletes them. Every change is an ordinary edit, so it works with no
+  server and syncs afterwards.
 - Import and checks, in Settings: bring in a file and look over what it holds before it joins your library. Choose a Kindle My Clippings file,
   a Kindle notebook page, Bookcision, Readest, Goodreads, Hardcover, IMDb or Markdown, and your server reads it (it works out the format
   itself, or you name it). The quotes wait in a queue you review: edit a quote's colour, favourite mark and where it came from, shift page
