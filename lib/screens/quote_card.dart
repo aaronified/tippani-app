@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import '../library/models.dart';
 import '../library/quote_text.dart';
 import '../library/share_format.dart';
+import '../theme/app_theme.dart';
 import 'quote_form_screen.dart' show quoteColour;
 
 /// A quote drawn as a card: the words large, the translation under them, who and what it is from, and an
@@ -41,65 +42,79 @@ class QuoteCard extends StatelessWidget {
     final tags = on != null && on.contains('tags') && quote.tags.isNotEmpty
         ? quote.tags.map((t) => '#$t').join(' ')
         : '';
-    return Container(
-      decoration: BoxDecoration(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
         color: scheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(20),
-        border: Border(
-          left: BorderSide(color: quoteColour(quote.color), width: 8),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(width: 8, color: quoteColour(quote.color)),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (showQuote)
+                        Text(
+                          '“${quote.text.trim()}”',
+                          style: quoteStyle(
+                            context,
+                            size: 24,
+                            height: 1.4,
+                            weight: FontWeight.w500,
+                          ),
+                        ),
+                      if (showTranslation &&
+                          quote.translation.trim().isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          quote.translation.trim(),
+                          style: quoteStyle(
+                            context,
+                            size: 17,
+                            color: scheme.onSurfaceVariant,
+                            style: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                      if (from.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        Text(
+                          '— $from',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                      if (note.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          note,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.primary,
+                          ),
+                        ),
+                      ],
+                      if (tags.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          tags,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (showQuote)
-            Text(
-              '“${quote.text.trim()}”',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: scheme.onSurface,
-                height: 1.35,
-              ),
-            ),
-          if (showTranslation && quote.translation.trim().isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              quote.translation.trim(),
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-          if (from.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            Text(
-              '— $from',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-          if (note.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              note,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: scheme.primary,
-              ),
-            ),
-          ],
-          if (tags.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              tags,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }

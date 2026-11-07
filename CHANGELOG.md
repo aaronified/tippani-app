@@ -7,6 +7,13 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Changed
+
+- A new look: the whole app is redrawn with its own type and shapes. Quotes are set in a serif (Source Serif 4) and the rest in Inter, both
+  built in so they look the same on every phone. Quotes and works are cards (a work with no cover gets a lettered one in a colour taken from
+  its title), the filters sit in one row of chips, Settings is grouped into blocks, empty lists say what to do, and bars, buttons, fields,
+  dialogs and sheets share one rounded shape. The colours are still your phone's own.
+
 ### Added
 
 - Boards stay the same on the phone and on the server: the boards you make here go up, the ones on your server (the Proverbs, Speeches

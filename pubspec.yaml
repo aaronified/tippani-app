@@ -79,6 +79,28 @@ flutter:
     - assets/tessdata_config.json
     - assets/tessdata/
 
+  # Inter for the interface and Source Serif 4 for the words of a quote, both SIL OFL (licences beside them).
+  # They are variable fonts: the weight is set from the axis.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+          weight: 400
+        - asset: assets/fonts/Inter.ttf
+          weight: 500
+        - asset: assets/fonts/Inter.ttf
+          weight: 600
+        - asset: assets/fonts/Inter.ttf
+          weight: 700
+    - family: SourceSerif4
+      fonts:
+        - asset: assets/fonts/SourceSerif4.ttf
+          weight: 400
+        - asset: assets/fonts/SourceSerif4.ttf
+          weight: 600
+        - asset: assets/fonts/SourceSerif4.ttf
+          weight: 700
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

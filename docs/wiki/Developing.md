@@ -212,6 +212,21 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## The look
+
+`lib/theme/app_theme.dart` (`buildTheme`) is the one place that sets shape, type and spacing over the phone's Material You colours: Inter for the
+interface and Source Serif 4 for the words of a quote (`quoteStyle`), both bundled as variable fonts in `assets/fonts` with their SIL OFL licences.
+Colours are never picked there, only taken from the scheme. `QuoteTile`, `WorkTile`, `MonogramCover` and `EmptyState` are in `library_widgets.dart`.
+
+To see every screen without a phone, build the browser preview and open it in a phone-sized window (an iPhone user agent shows how the page
+transitions and scrolling feel on iOS):
+
+    flutter create --platforms=web .        # once; web/ is not committed
+    flutter build web -t tool/preview/main.dart
+
+`tool/preview/main.dart` runs the real app over made-up books, films, boards and quotes held in memory, with no server. `flutter build web` adds
+`web/**` to `analysis_options.yaml`: restore the file before committing.
+
 ## The sections
 
 `Shell` (`lib/app.dart`) builds Library, Catalogue and Quotes from one `LibraryScreen` with a `LibrarySection` each, then Anthologies where the harness has an

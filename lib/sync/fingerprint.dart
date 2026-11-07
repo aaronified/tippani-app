@@ -111,7 +111,9 @@ Fields serverQuoteFields(Map row, Realm realm) {
 String fingerprint(Fields fields) {
   final keys = fields.keys.toList()..sort();
   final text = jsonEncode({for (final k in keys) k: fields[k]});
-  var h = 0xcbf29ce484222325;
+  // The FNV offset basis, written so it also compiles for the browser preview (a 64-bit literal does not); on the
+  // phone it is the same 64 bits as 0xcbf29ce484222325, so every stored fingerprint still matches.
+  var h = BigInt.parse('cbf29ce484222325', radix: 16).toSigned(64).toInt();
   for (final b in utf8.encode(text)) {
     h ^= b;
     h *= 0x100000001b3;
