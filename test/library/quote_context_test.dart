@@ -311,7 +311,14 @@ void main() {
 class _Source implements QuoteContextSource {
   final asked = <(int?, int?)>[];
   ServerException? fail;
-  QuoteContext? next = QuoteContext.fromJson(answer());
+
+  /// When set (even to null), every answer is this; otherwise the answer is the window that was asked for.
+  QuoteContext? _fixed;
+  bool _useFixed = false;
+  set next(QuoteContext? c) {
+    _fixed = c;
+    _useFixed = true;
+  }
 
   @override
   Future<QuoteContext?> fetch(
@@ -323,6 +330,9 @@ class _Source implements QuoteContextSource {
     asked.add((before, after));
     final f = fail;
     if (f != null) throw f;
-    return next;
+    if (_useFixed) return _fixed;
+    return QuoteContext.fromJson(
+      answer(shownBefore: before ?? 1, shownAfter: after ?? 1),
+    );
   }
 }
