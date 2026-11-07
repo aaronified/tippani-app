@@ -15,6 +15,7 @@ import '../library/models.dart';
 import '../library/cover_cache.dart' show WorkCover;
 import '../theme/app_theme.dart';
 import 'quote_form_screen.dart';
+import 'shelf_card.dart' show shelfStatusLabel;
 import 'work_form_screen.dart' show workKindLabel;
 import '../l10n/l10n.dart';
 
@@ -31,6 +32,8 @@ class QuoteTile extends StatelessWidget {
     this.chipWork,
     this.omitAuthor = false,
     this.onAddToAnthology,
+    this.onLongPress,
+    this.selected = false,
   });
 
   final Quote quote;
@@ -50,6 +53,12 @@ class QuoteTile extends StatelessWidget {
   /// not on it yet): there is no button then, and a long press does nothing.
   final VoidCallback? onAddToAnthology;
 
+  /// Starts selecting this quote. When null a long press adds it to an anthology (where that can be done).
+  final VoidCallback? onLongPress;
+
+  /// Whether the quote is one of those selected.
+  final bool selected;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -66,9 +75,16 @@ class QuoteTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: Card(
+        color: selected ? scheme.secondaryContainer : null,
+        shape: selected
+            ? RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: scheme.primary, width: 2),
+              )
+            : null,
         child: InkWell(
           onTap: onTap,
-          onLongPress: onAddToAnthology,
+          onLongPress: onLongPress ?? onAddToAnthology,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(18, 16, 6, 14),
             child: Row(
@@ -173,10 +189,20 @@ class QuoteTile extends StatelessWidget {
 /// A work in a list: its cover (or a monogram on a colour taken from its title, where it has none), the title,
 /// who made it and what kind it is.
 class WorkTile extends StatelessWidget {
-  const WorkTile({super.key, required this.work, required this.onTap});
+  const WorkTile({
+    super.key,
+    required this.work,
+    required this.onTap,
+    this.onLongPress,
+    this.selected = false,
+  });
 
   final Work work;
   final VoidCallback onTap;
+
+  /// Starts selecting this work.
+  final VoidCallback? onLongPress;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -189,8 +215,16 @@ class WorkTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: Card(
+        color: selected ? scheme.secondaryContainer : null,
+        shape: selected
+            ? RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: scheme.primary, width: 2),
+              )
+            : null,
         child: InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -243,6 +277,34 @@ class WorkTile extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (work.details.status.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          work.details.progress > 0 &&
+                                  work.details.status != 'completed'
+                              ? '${shelfStatusLabel(context, work.details.status)} · ${work.details.progress}%'
+                              : shelfStatusLabel(context, work.details.status),
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: work.details.status == 'completed'
+                                ? scheme.tertiary
+                                : scheme.secondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (work.details.progress > 0 &&
+                            work.details.status != 'completed' &&
+                            work.details.status != 'abandoned')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(2),
+                              child: LinearProgressIndicator(
+                                value: work.details.progress / 100,
+                                minHeight: 3,
+                              ),
+                            ),
+                          ),
+                      ],
                     ],
                   ),
                 ),

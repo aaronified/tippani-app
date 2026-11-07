@@ -19,11 +19,13 @@ import '../library/models.dart';
 import '../library/quote_chips.dart';
 import '../tools/work_lookup.dart';
 import '../library/work_order.dart';
+import 'bulk_bar.dart';
 import 'library_widgets.dart';
 import 'quote_chips_row.dart';
 import 'quote_form_screen.dart';
 import 'prefs_screens.dart' show showWorkContextRule;
 import 'quote_screen.dart';
+import 'shelf_card.dart';
 import 'work_form_screen.dart';
 import 'work_read_screen.dart';
 
@@ -67,6 +69,20 @@ class _WorkScreenState extends State<WorkScreen> {
   bool _onlyFavourites = false;
   bool _byChapter = true;
 
+  /// The quotes selected (by id); empty: not selecting.
+  final _picked = <int>{};
+  bool get _selecting => _picked.isNotEmpty;
+
+  void _toggle(int id) => setState(() {
+    if (!_picked.add(id)) _picked.remove(id);
+  });
+
+  void _bulkDone() {
+    if (!mounted) return;
+    setState(_picked.clear);
+    _load();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -96,8 +112,7 @@ class _WorkScreenState extends State<WorkScreen> {
         .getInheritedWidgetOfExactType<DetailsScope>()
         ?.source;
     if (w == null || source == null || w.serverId == null) return;
-    final at = w.details.fetchedAt;
-    if (at != null && DateTime.now().difference(at) < detailsFreshFor) return;
+    // the shelf can change on the web at any time, so a visit always asks (one try per visit)
     _askedDetails = true;
     final d = await source.fetch(w);
     if (d == null || !mounted) return;
@@ -205,7 +220,9 @@ class _WorkScreenState extends State<WorkScreen> {
     omitAuthor: true,
     // the library opens on this name
     onChip: (f) => Navigator.of(context).pop(f),
-    onTap: () => _open(q),
+    selected: _picked.contains(q.id),
+    onLongPress: () => _toggle(q.id),
+    onTap: () => _selecting ? _toggle(q.id) : _open(q),
     onFavourite: () async {
       await widget.store.setFavorite(q.id, !q.favorite);
       await _load();
@@ -242,6 +259,16 @@ class _WorkScreenState extends State<WorkScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      canPop: !_selecting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) setState(_picked.clear);
+      },
+      child: _page(context),
+    );
+  }
+
+  Widget _page(BuildContext context) {
     final w = _work;
     if (_loaded && w == null) {
       return Scaffold(
@@ -261,68 +288,91 @@ class _WorkScreenState extends State<WorkScreen> {
         ? _quotes.where((q) => q.favorite).toList()
         : _quotes;
     final ordered = _byChapter ? readingOrder(shown) : shown;
+    final chosen = [
+      for (final q in _quotes)
+        if (_picked.contains(q.id)) q,
+    ];
     return Scaffold(
-      appBar: AppBar(
-        title: Text(w?.title ?? ''),
-        actions: [
-          if (w != null) ...[
-            IconButton(
-              tooltip: context.tr('Edit'),
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: _edit,
-            ),
-            PopupMenuButton<String>(
-              onSelected: (v) {
-                switch (v) {
-                  case 'share':
-                  case 'save':
-                    runExport(
-                      context,
-                      store: widget.store,
-                      share: widget.share,
-                      picker: widget.picker,
-                      kind: v == 'share' ? ExportKind.share : ExportKind.save,
-                      work: w,
-                    );
-                  case 'cover':
-                    _chooseCover();
-                  case 'context':
-                    final rules = ContextRulesScope.of(context);
-                    if (rules != null) showWorkContextRule(context, rules, w);
-                  case 'delete':
-                    _delete();
-                }
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'share',
-                  child: Text(context.tr('Share as Markdown')),
-                ),
-                PopupMenuItem(
-                  value: 'save',
-                  child: Text(context.tr('Save as Markdown file')),
-                ),
-                if (w.serverId != null && CoverScope.of(context) != null)
-                  PopupMenuItem(
-                    value: 'cover',
-                    child: Text(context.tr('Choose a cover')),
+      appBar: _selecting
+          ? bulkAppBar(
+              context,
+              count: chosen.length,
+              total: _quotes.length,
+              onClose: () => setState(_picked.clear),
+              onAll: () =>
+                  setState(() => _picked.addAll(_quotes.map((q) => q.id))),
+              actions: QuoteBulkActions(
+                store: widget.store,
+                anthologies: widget.anthologies,
+                quotes: chosen,
+                done: _bulkDone,
+              ).bar(context),
+            )
+          : AppBar(
+              title: Text(w?.title ?? ''),
+              actions: [
+                if (w != null) ...[
+                  IconButton(
+                    tooltip: context.tr('Edit'),
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: _edit,
                   ),
-                if (w.serverId != null &&
-                    ContextRulesScope.of(context)?.available == true)
-                  PopupMenuItem(
-                    value: 'context',
-                    child: Text(context.tr('Context around its quotes')),
+                  PopupMenuButton<String>(
+                    onSelected: (v) {
+                      switch (v) {
+                        case 'share':
+                        case 'save':
+                          runExport(
+                            context,
+                            store: widget.store,
+                            share: widget.share,
+                            picker: widget.picker,
+                            kind: v == 'share'
+                                ? ExportKind.share
+                                : ExportKind.save,
+                            work: w,
+                          );
+                        case 'cover':
+                          _chooseCover();
+                        case 'context':
+                          final rules = ContextRulesScope.of(context);
+                          if (rules != null) {
+                            showWorkContextRule(context, rules, w);
+                          }
+                        case 'delete':
+                          _delete();
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'share',
+                        child: Text(context.tr('Share as Markdown')),
+                      ),
+                      PopupMenuItem(
+                        value: 'save',
+                        child: Text(context.tr('Save as Markdown file')),
+                      ),
+                      if (w.serverId != null && CoverScope.of(context) != null)
+                        PopupMenuItem(
+                          value: 'cover',
+                          child: Text(context.tr('Choose a cover')),
+                        ),
+                      if (w.serverId != null &&
+                          ContextRulesScope.of(context)?.available == true)
+                        PopupMenuItem(
+                          value: 'context',
+                          child: Text(context.tr('Context around its quotes')),
+                        ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text(context.tr('Delete work')),
+                      ),
+                    ],
                   ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Text(context.tr('Delete work')),
-                ),
+                ],
               ],
             ),
-          ],
-        ],
-      ),
-      floatingActionButton: w == null
+      floatingActionButton: w == null || _selecting
           ? null
           : FloatingActionButton.extended(
               onPressed: _addQuote,
@@ -404,6 +454,7 @@ class _WorkScreenState extends State<WorkScreen> {
                     ],
                   ),
                 ),
+                ShelfCard(work: w, store: widget.store, onChanged: _load),
                 WorkDetailsSection(
                   work: w,
                   onFilter: (f) => Navigator.of(context).pop(f),
