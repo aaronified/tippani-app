@@ -57,6 +57,11 @@ List<String> describePull(PullResult r) {
       '${_count(r.relinked, 'item')} deleted on the server but changed here ${r.relinked == 1 ? 'was' : 'were'} kept, and will be sent up again.',
     );
   }
+  if (r.linked > 0) {
+    lines.add(
+      '${_count(r.linked, 'item')} here matched ${r.linked == 1 ? 'one' : 'ones'} already on the server, so ${r.linked == 1 ? 'it was' : 'they were'} joined, not copied.',
+    );
+  }
   if (r.heldBack > 0) {
     lines.add(
       '${_count(r.heldBack, 'item')} are missing from the server. That is so many that nothing was removed here: check that the server is the right one and has not been restored from an old copy.',

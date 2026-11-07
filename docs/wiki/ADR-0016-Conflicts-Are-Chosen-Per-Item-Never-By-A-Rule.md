@@ -31,4 +31,5 @@ as a change. [ADR-0015](ADR-0015-Sync-Starts-As-A-Push-That-Only-Adds.md) is the
 
 **Limits.** An item the server no longer has is handled by [ADR-0017](ADR-0017-Deletes-Travel-Both-Ways-With-A-Wipe-Guard.md). A server quote with no words (a note only), or
 whose work is not on the phone, is counted and not brought down. An item the phone has never pushed and the server holds under the same
-title is brought down as a second copy: the pull matches by the server's id, not by title.
+title is linked to it, not copied (the pull and the push both match by title, case and spacing aside, and by creator when both have one);
+any difference then shows as a conflict. The pull otherwise matches by the server's id.

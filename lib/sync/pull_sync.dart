@@ -62,6 +62,7 @@ class PullResult {
     this.deletedHere = 0,
     this.relinked = 0,
     this.heldBack = 0,
+    this.linked = 0,
     this.stoppedBy,
   });
 
@@ -89,6 +90,9 @@ class PullResult {
   /// Items the server no longer lists that were NOT removed here, because that is so many of them that the
   /// server itself looks wiped or restored from an old copy.
   final int heldBack;
+
+  /// Unlinked phone works and quotes matched to the server's copy instead of being copied down a second time.
+  final int linked;
 
   /// Server items that could not come down (a quote with no words, a quote whose work is not here).
   final int skipped;
@@ -126,7 +130,7 @@ class _Put {
 class _Tally {
   int worksAdded = 0, quotesAdded = 0, worksUpdated = 0, quotesUpdated = 0;
   int worksSent = 0, quotesSent = 0, gone = 0, skipped = 0;
-  int deletedThere = 0, deletedHere = 0, relinked = 0, heldBack = 0;
+  int deletedThere = 0, deletedHere = 0, relinked = 0, heldBack = 0, linked = 0;
   final conflicts = <SyncConflict>[];
   final refused = <PushRefusal>[];
   ApiFailure? stopped;
@@ -230,6 +234,7 @@ class PullSync {
       deletedHere: t.deletedHere,
       relinked: t.relinked,
       heldBack: t.heldBack,
+      linked: t.linked,
       stoppedBy: t.stopped,
     );
     _log?.info(
@@ -238,7 +243,7 @@ class PullSync {
       '${result.worksSent} works and ${result.quotesSent} quotes; ${t.conflicts.length} conflicts, '
       '${t.refused.length} refused, ${t.gone} gone on the server, ${t.skipped} skipped, '
       '${t.deletedThere} deleted there, ${t.deletedHere} deleted here, ${t.relinked} relinked, '
-      '${t.heldBack} held back'
+      '${t.heldBack} held back, ${t.linked} linked to a twin'
       '${t.stopped == null ? '' : ', stopped by ${t.stopped}'}',
     );
     for (final r in t.refused) {
@@ -250,16 +255,42 @@ class PullSync {
   // ---- works --------------------------------------------------------------------------------------
 
   Future<void> _syncWorks(_Fetched got, _Tally t) async {
+    final all = await _store.works();
     final local = {
-      for (final w in await _store.works())
+      for (final w in all)
         if (w.serverId != null) (realmOfKind(w.kind), w.serverId!): w,
     };
+    final unlinked = [
+      for (final w in all)
+        if (w.serverId == null) w,
+    ];
     for (final realm in [Realm.book, Realm.screen]) {
       for (final row in got.works[realm]!) {
         final id = row['id']! as int;
         final sf = serverWorkFields(row, realm);
         final sfp = fingerprint(sf);
-        final w = local[(realm, id)];
+        var w = local[(realm, id)];
+        if (w == null) {
+          // A phone work never sent, that the server already has: the same work, not a second one.
+          final twin = unlinked
+              .where(
+                (u) =>
+                    realmOfKind(u.kind) == realm &&
+                    sameWork(
+                      u.title,
+                      u.creator,
+                      sf['title']! as String,
+                      sf['creator']! as String,
+                    ),
+              )
+              .firstOrNull;
+          if (twin != null) {
+            unlinked.remove(twin);
+            await _store.setWorkServerId(twin.id, id);
+            w = twin.withServerId(id);
+            t.linked++;
+          }
+        }
         if (w == null) {
           await _store.adoptWork(_workDraft(sf, null), id, sfp);
           t.worksAdded++;
@@ -347,20 +378,25 @@ class PullSync {
       for (final w in works.values)
         if (w.serverId != null) (realmOfKind(w.kind), w.serverId!): w,
     };
+    final allQuotes = await _store.quotes(limit: 1 << 30);
     final local = {
-      for (final q in await _store.quotes(limit: 1 << 30))
+      for (final q in allQuotes)
         if (q.serverId != null)
           (
             realmOfQuote(q.workId == null ? null : works[q.workId]),
             q.serverId!,
           ): q,
     };
+    final unlinked = [
+      for (final q in allQuotes)
+        if (q.serverId == null) q,
+    ];
     for (final realm in Realm.values) {
       for (final row in got.quotes[realm]!) {
         final id = row['id']! as int;
         final sf = serverQuoteFields(row, realm);
         final sfp = fingerprint(sf);
-        final q = local[(realm, id)];
+        var q = local[(realm, id)];
         if (q == null) {
           final parent = _parent(row, realm);
           final work = parent == null ? null : localWork[(realm, parent)];
@@ -369,13 +405,28 @@ class PullSync {
             t.skipped++;
             continue;
           }
-          await _store.adoptQuote(
-            _quoteDraft(sf, row, work?.id, null),
-            id,
-            sfp,
-          );
-          t.quotesAdded++;
-          continue;
+          // A phone quote never sent, that the server already has (same words, same work): the same quote.
+          final twin = unlinked
+              .where(
+                (u) =>
+                    u.workId == work?.id &&
+                    sameWords(u.text, sf['text']! as String),
+              )
+              .firstOrNull;
+          if (twin != null) {
+            unlinked.remove(twin);
+            await _store.setQuoteServerId(twin.id, id);
+            q = twin.withServerId(id);
+            t.linked++;
+          } else {
+            await _store.adoptQuote(
+              _quoteDraft(sf, row, work?.id, null),
+              id,
+              sfp,
+            );
+            t.quotesAdded++;
+            continue;
+          }
         }
         final lf = quoteFields(q, realm);
         final lfp = fingerprint(lf);
