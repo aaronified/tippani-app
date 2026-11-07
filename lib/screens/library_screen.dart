@@ -6,6 +6,8 @@ import '../library/library_store.dart';
 import '../anthologies/anthologies.dart';
 import '../library/models.dart';
 import '../tools/work_lookup.dart';
+import '../sync/auto_sync.dart';
+import 'conflicts_screen.dart';
 import 'library_widgets.dart';
 import 'capture_screen.dart';
 import 'quote_form_screen.dart';
@@ -27,6 +29,7 @@ class LibraryScreen extends StatefulWidget {
     this.shareImage = shareImageThroughSheet,
     this.anthologies,
     this.lookup,
+    this.auto,
   });
 
   final LibraryStore store;
@@ -35,6 +38,9 @@ class LibraryScreen extends StatefulWidget {
   final ShareImage shareImage;
   final AnthologyService? anthologies;
   final WorkLookup? lookup;
+
+  /// Shows that a sync is running and how many conflicts wait; null hides both.
+  final AutoSync? auto;
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -196,6 +202,39 @@ class _LibraryScreenState extends State<LibraryScreen> {
       appBar: AppBar(
         title: const Text('Library'),
         actions: [
+          if (widget.auto != null)
+            ListenableBuilder(
+              listenable: widget.auto!,
+              builder: (context, _) {
+                final auto = widget.auto!;
+                final n = auto.conflicts.length;
+                if (n > 0) {
+                  return IconButton(
+                    tooltip: n == 1 ? '1 sync conflict' : '$n sync conflicts',
+                    icon: Badge(
+                      label: Text('$n'),
+                      child: const Icon(Icons.sync_problem_outlined),
+                    ),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ConflictsScreen(auto: auto),
+                      ),
+                    ),
+                  );
+                }
+                if (auto.syncing) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
           IconButton(
             tooltip: 'Say a quote',
             icon: const Icon(Icons.mic_none),

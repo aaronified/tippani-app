@@ -60,8 +60,8 @@ class PushSync {
   final AppController _controller;
   final AppLog? _log;
 
-  bool _running = false;
-  bool get running => _running;
+  Future<PushResult>? _current;
+  bool get running => _current != null;
 
   /// How much there is to send.
   Future<({int works, int quotes})> pending() async => (
@@ -71,9 +71,8 @@ class PushSync {
 
   /// Pushes everything not yet on the server. [onProgress] gets (done, total) after each item.
   Future<PushResult> push({void Function(int done, int total)? onProgress}) {
-    if (_running) throw StateError('a push is already running');
-    _running = true;
-    return _push(onProgress).whenComplete(() => _running = false);
+    // A second call while one is running joins it: the reader's tap and the automatic sync never run two at once.
+    return _current ??= _push(onProgress).whenComplete(() => _current = null);
   }
 
   Future<PushResult> _push(void Function(int, int)? onProgress) async {

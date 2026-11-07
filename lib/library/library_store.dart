@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:sqflite/sqflite.dart';
 
 import '../sync/fingerprint.dart';
@@ -73,6 +75,9 @@ abstract interface class LibraryStore {
   Future<void> dropWork(int id);
   Future<void> dropQuote(int id);
 
+  /// Fires after the reader changes the library (add, edit, delete, favourite). Not for what a sync writes.
+  Stream<void> get changes;
+
   /// Replaces everything with what [exportAll] gave. Validated first and written in one transaction, so a
   /// damaged file changes nothing.
   Future<void> replaceAll(Map<String, Object?> data);
@@ -133,6 +138,11 @@ class SqliteLibraryStore implements LibraryStore {
     );
     return SqliteLibraryStore(db, clock: clock);
   }
+
+  final _changes = StreamController<void>.broadcast(sync: true);
+
+  @override
+  Stream<void> get changes => _changes.stream;
 
   static Future<void> _createDeletions(Database db) => db.execute('''
       CREATE TABLE deletions (
@@ -228,6 +238,7 @@ class SqliteLibraryStore implements LibraryStore {
       'created_at': now,
       'updated_at': now,
     });
+    _changes.add(null);
     return (await work(id))!;
   }
 
@@ -253,6 +264,7 @@ class SqliteLibraryStore implements LibraryStore {
       whereArgs: [id],
     );
     if (n == 0) throw const LibraryException('no such work');
+    _changes.add(null);
     return (await work(id))!;
   }
 
@@ -278,6 +290,7 @@ class SqliteLibraryStore implements LibraryStore {
       await tx.delete('works', where: 'id = ?', whereArgs: [id]);
     });
     await _dropUnusedTags();
+    _changes.add(null);
   }
 
   Future<void> _note(DatabaseExecutor tx, String route, int serverId) =>
@@ -474,6 +487,7 @@ class SqliteLibraryStore implements LibraryStore {
       await _writeTags(tx, id, d.tags);
       return id;
     });
+    _changes.add(null);
     return (await quote(id))!;
   }
 
@@ -498,6 +512,7 @@ class SqliteLibraryStore implements LibraryStore {
       await _writeTags(tx, id, d.tags);
     });
     await _dropUnusedTags();
+    _changes.add(null);
     return (await quote(id))!;
   }
 
@@ -518,6 +533,7 @@ class SqliteLibraryStore implements LibraryStore {
       await tx.delete('quotes', where: 'id = ?', whereArgs: [id]);
     });
     await _dropUnusedTags();
+    _changes.add(null);
   }
 
   @override
@@ -528,6 +544,7 @@ class SqliteLibraryStore implements LibraryStore {
       where: 'id = ?',
       whereArgs: [id],
     );
+    _changes.add(null);
   }
 
   @override
@@ -800,5 +817,8 @@ class SqliteLibraryStore implements LibraryStore {
       (v is String ? DateTime.tryParse(v) : null)?.toUtc().toIso8601String() ??
       _now();
 
-  Future<void> close() => _db.close();
+  Future<void> close() async {
+    await _changes.close();
+    await _db.close();
+  }
 }

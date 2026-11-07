@@ -154,14 +154,13 @@ class PullSync {
   final AppController _controller;
   final AppLog? _log;
 
-  bool _running = false;
-  bool get running => _running;
+  Future<PullResult>? _current;
+  bool get running => _current != null;
 
-  Future<PullResult> sync() {
-    if (_running) throw StateError('a sync is already running');
-    _running = true;
-    return _sync().whenComplete(() => _running = false);
-  }
+  /// Runs a sync. A second call while one is running joins it rather than starting another, so the reader's tap
+  /// and the automatic sync never run two at once.
+  Future<PullResult> sync() =>
+      _current ??= _sync().whenComplete(() => _current = null);
 
   Future<_Fetched?> _fetch() => _controller.withClient((c) async {
     Future<List<Map<String, Object?>>> list(String path, String key) async {

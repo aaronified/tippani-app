@@ -782,4 +782,47 @@ void main() {
       },
     );
   });
+
+  group('the change stream', () {
+    test('fires for what the reader does', () async {
+      var n = 0;
+      final sub = store.changes.listen((_) => n++);
+      addTearDown(sub.cancel);
+      final w = await walden();
+      expect(n, 1);
+      final q = await store.addQuote(QuoteDraft(text: 'One.', workId: w.id));
+      expect(n, 2);
+      await store.updateQuote(q.id, QuoteDraft(text: 'One!', workId: w.id));
+      expect(n, 3);
+      await store.setFavorite(q.id, true);
+      expect(n, 4);
+      await store.updateWork(w.id, const WorkDraft(title: 'Walden II'));
+      expect(n, 5);
+      await store.deleteQuote(q.id);
+      expect(n, 6);
+      await store.deleteWork(w.id);
+      expect(n, 7);
+    });
+
+    test('is silent for what a sync writes', () async {
+      var n = 0;
+      final sub = store.changes.listen((_) => n++);
+      addTearDown(sub.cancel);
+      final w = await store.adoptWork(const WorkDraft(title: 'Dune'), 1, 'h');
+      final q = await store.adoptQuote(
+        QuoteDraft(text: 'Fear.', workId: w.id),
+        2,
+        'h',
+      );
+      await store.setWorkServerId(w.id, 3);
+      await store.setQuoteServerId(q.id, 4);
+      await store.markWorkSynced(w.id, 'x');
+      await store.markQuoteSynced(q.id, 'x');
+      await store.unlinkQuote(q.id);
+      await store.unlinkWork(w.id);
+      await store.dropQuote(q.id);
+      await store.dropWork(w.id);
+      expect(n, 0);
+    });
+  });
 }

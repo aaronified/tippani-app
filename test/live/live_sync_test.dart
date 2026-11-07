@@ -16,6 +16,7 @@ import 'package:tippani/app_controller.dart';
 import 'package:tippani/harness/app_log.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/settings/settings_store.dart';
+import 'package:tippani/sync/auto_sync.dart';
 import 'package:tippani/sync/pull_sync.dart';
 import 'package:tippani/sync/push_sync.dart';
 import 'package:tippani/tools/server_tools.dart';
@@ -503,5 +504,67 @@ void main() {
     );
     expect(mine, hasLength(1));
     expect(r.linked, greaterThanOrEqualTo(1));
+  }, skip: skip);
+
+  test('automatic sync: one run sends, brings down, and holds a clash for the reader', () async {
+    final log = AppLog();
+    final lib = MemoryLibrary();
+    final auto = AutoSync(
+      push: PushSync(lib, controller, log: log),
+      pull: PullSync(lib, controller, log: log),
+      controller: controller,
+      log: log,
+    );
+    addTearDown(auto.dispose);
+
+    // a clash: the same quote, agreed once, then edited on both sides
+    final w = await lib.addWork(const WorkDraft(title: 'Auto book (live)'));
+    final q = await lib.addQuote(
+      QuoteDraft(text: 'Auto clash (live).', workId: w.id, note: 'start'),
+    );
+    var r = await auto.syncNow();
+    expect(r!.stoppedBy, isNull);
+    final serverId = (await lib.quote(q.id))!.serverId!;
+    final onServer =
+        ((await raw('GET', '/annotations')) as Map)['annotations'] as List;
+    final row = Map<String, Object?>.from(
+      onServer.firstWhere((a) => (a as Map)['id'] == serverId) as Map,
+    );
+    row['note'] = 'edited there';
+    await raw('PUT', '/annotations/$serverId', row);
+    await lib.updateQuote(
+      q.id,
+      QuoteDraft(text: 'Auto clash (live).', workId: w.id, note: 'edited here'),
+    );
+    // plus new things on each side
+    await lib.addQuote(const QuoteDraft(text: 'New on the phone (live).'));
+    await raw('POST', '/quotes', {'quote': 'New on the server (live).'});
+
+    r = await auto.syncNow();
+
+    expect(r!.stoppedBy, isNull, reason: '${r.refused}');
+    expect(auto.conflicts, hasLength(1));
+    expect((await lib.quote(q.id))!.note, 'edited here');
+    expect(
+      (await lib.quotes()).map((x) => x.text),
+      contains('New on the server (live).'),
+    );
+    final loose = ((await raw('GET', '/quotes')) as Map)['utterances'] as List;
+    expect(
+      loose.any((x) => (x as Map)['quote'] == 'New on the phone (live).'),
+      isTrue,
+    );
+
+    // left alone, it is still waiting after another run; settling it ends it
+    await auto.syncNow();
+    expect(auto.conflicts, hasLength(1));
+    final problem = await auto.resolve(
+      auto.conflicts.single,
+      ConflictSide.phone,
+    );
+    expect(problem, isNull);
+    expect(auto.conflicts, isEmpty);
+    await auto.syncNow();
+    expect(auto.conflicts, isEmpty);
   }, skip: skip);
 }

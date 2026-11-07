@@ -46,5 +46,6 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0015](ADR-0015-Sync-Starts-As-A-Push-That-Only-Adds.md): Sync starts as a push that only adds
 - [ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md): Conflicts are chosen per quote and per work, never by a rule
 - [ADR-0017](ADR-0017-Deletes-Travel-Both-Ways-With-A-Wipe-Guard.md): Deletes travel both ways, with a guard against a wiped server
+- [ADR-0018](ADR-0018-Sync-Runs-By-Itself-And-Never-Stops-For-A-Conflict.md): Sync runs by itself and never stops for a conflict
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)

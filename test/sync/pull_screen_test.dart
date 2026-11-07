@@ -253,6 +253,8 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('Sync now'));
         await tester.pumpAndSettle();
+        await tester.tap(find.textContaining('conflicts waiting'));
+        await tester.pumpAndSettle();
 
         expect(find.text('Changed on both sides'), findsOneWidget);
         expect(find.text('Phone: phone note on First'), findsOneWidget);
@@ -282,6 +284,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sync now'));
       await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('conflicts waiting'));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Keep the phone’s').first);
       await tester.pumpAndSettle();
@@ -298,6 +302,8 @@ void main() {
       await tester.tap(find.text('Sync with server'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sync now'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('conflicts waiting'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Keep the server’s for all'));
@@ -334,6 +340,8 @@ void main() {
       await tester.tap(find.text('Sync with server'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sync now'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('conflicts waiting'));
       await tester.pumpAndSettle();
       server.failUpdatesWith = 400;
 

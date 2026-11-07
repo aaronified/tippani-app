@@ -855,12 +855,24 @@ void main() {
     expect(text, isNot(contains('private words')));
   });
 
-  test('two syncs at once are refused', () async {
-    final r = await rig();
-    final first = r.pull.sync();
-    expect(() => r.pull.sync(), throwsStateError);
-    await first;
-  });
+  test(
+    'a second sync while one runs joins it: one read, one result for both',
+    () async {
+      final r = await rig();
+      r.server.seed('/books', {'title': 'Dune', 'author': 'Herbert'});
+
+      final first = r.pull.sync();
+      final second = r.pull.sync();
+      expect(r.pull.running, isTrue);
+
+      final a = await first;
+      final b = await second;
+      expect(identical(a, b), isTrue);
+      expect(a.worksAdded, 1);
+      expect(r.pull.running, isFalse);
+      expect(r.server.paths.where((x) => x == 'GET /books'), hasLength(1));
+    },
+  );
 
   group('a work or quote on both sides that was never linked is one item, not two', () {
     test(

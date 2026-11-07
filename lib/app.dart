@@ -70,6 +70,10 @@ class _ShellState extends State<Shell> {
     super.initState();
     // The token is read first (a screen builds its client from it), then the server is asked.
     widget.controller.load().then((_) => widget.controller.refresh());
+    // Keeping the library in step with the server starts with the app (and stays off in tests).
+    if (widget.harness.runAutoSync) {
+      widget.harness.auto?.start(widget.harness.library?.changes);
+    }
   }
 
   @override
@@ -85,6 +89,7 @@ class _ShellState extends State<Shell> {
             picker: widget.harness.picker,
             anthologies: widget.harness.anthologies,
             lookup: widget.harness.lookup,
+            auto: widget.harness.auto,
           ),
           destination: const NavigationDestination(
             icon: Icon(Icons.menu_book_outlined),

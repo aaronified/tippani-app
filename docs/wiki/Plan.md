@@ -246,6 +246,11 @@ synced account's theme preferences are ignored here.
       server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
       its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
       Checked against a real server in `test/live`. **Not yet:** reordering, per-passage commentary, sections, grouping, the cover, boards.
+- [x] **Automatic sync, deletes, linked duplicates, a Conflicts menu** (done 7 November 2026, as separate pull requests): `AutoSync` runs a push then a
+      pull on open, resume, after edits and on a timer with back-off ([ADR-0018](ADR-0018-Sync-Runs-By-Itself-And-Never-Stops-For-A-Conflict.md));
+      deletes go both ways with a wipe guard ([ADR-0017](ADR-0017-Deletes-Travel-Both-Ways-With-A-Wipe-Guard.md)); a work or quote on both sides is
+      linked, not copied; conflicts wait in Settings > Sync conflicts. Checked against a real local server. **Not verified on a device.** Not done:
+      sync of boards, a background run with the app closed, reacting to the network returning.
 - [x] **Icon, one Share screen, read-aloud voices** (done 7 November 2026): the web app's icon as launcher, adaptive and monochrome
       (themed) icons; one Share screen with the web dialog's formats and Include toggles and defaults (`lib/library/share_format.dart`,
       `lib/screens/share_screen.dart`); Read aloud picks the best installed voice per language and has a settings screen for voice, speed and
