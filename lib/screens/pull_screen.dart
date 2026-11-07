@@ -128,7 +128,7 @@ class PullScreen extends StatelessWidget {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Sync automatically'),
                 subtitle: const Text(
-                  'When the app opens, after you change something, and every few minutes while it is open',
+                  'A few seconds after you change something, and once a day (when the app opens, or the network comes back)',
                 ),
                 value: auto.enabled,
                 onChanged: auto.setEnabled,

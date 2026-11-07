@@ -256,6 +256,9 @@ synced account's theme preferences are ignored here.
       chip per named speaker; for a film, show or game each speaker is a character chip with the actor from the work's cast under it (the cast comes
       from the work details, so it is there once a work's page has been opened). `QuoteChipsRow` draws them in the Library list and on the quote screen;
       pressing one filters the library by the name. **Not done:** portraits (an initial stands in), and opening a person's or character's own page.
+- [x] **Sync policy: on every change and once a day** (done 8 November 2026, owner's ask, [ADR-0019](ADR-0019-Sync-On-Every-Change-And-Once-A-Day-Nothing-In-Between.md)):
+      a run four seconds after any change; one daily run at opening, coming back, the network returning, or a day passing while open; a change that could
+      not be sent is remembered across restarts and goes at the next of those; no retry timer, no back-off.
 - [x] **Context from the server** (done 8 November 2026, owner's ask): the quote screen's Context section reads `GET /quotes/{annotation|dialogue|utterance}/{id}/context`
       (`lib/tools/quote_context.dart`) on demand, shows the text before, the quote as the file has it and the text after, widens by three with
       `?before=&after=` up to what is stored, and says where the chapter ends. **Not done:** keeping it on the phone for offline, and changing how much

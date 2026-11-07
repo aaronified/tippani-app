@@ -7,7 +7,7 @@
 sends what is only on the phone (works first), then reads the server, brings down and sends changes, and applies deletes
 ([ADR-0017](ADR-0017-Deletes-Travel-Both-Ways-With-A-Wipe-Guard.md)). Search stays local; with the whole library on the phone it needs nothing more.
 
-**When it runs.** When the app opens; when it comes back to the front (unless it ran in the last 20 seconds); five seconds after the library is
+**When it runs: superseded by [ADR-0019](ADR-0019-Sync-On-Every-Change-And-Once-A-Day-Nothing-In-Between.md), which has the timing now.** As first built: When the app opens; when it comes back to the front (unless it ran in the last 20 seconds); five seconds after the library is
 changed (a burst of edits is one run); and about every three minutes while it is open. A switch in Settings > Sync with server turns the automatic
 runs off; Sync now still works. What a sync itself writes does not start another run.
 

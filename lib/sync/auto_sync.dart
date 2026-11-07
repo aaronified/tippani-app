@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart' as plus;
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,58 +10,90 @@ import '../harness/app_log.dart';
 import 'pull_sync.dart';
 import 'push_sync.dart';
 
-/// Keeps the phone and the paired server in step without the reader asking: on open, when the app comes back to
-/// the front, a few seconds after the library is changed, and every few minutes while it is open. Each run sends
-/// what is only here (works first), then brings down and sends changes and applies deletions (see [PullSync]).
+/// Whether the phone has a network, and when that changes. An interface so a test can stand in for the phone.
+abstract class Connectivity {
+  /// True each time the phone gains a network (not each time it loses one).
+  Stream<void> get regained;
+}
+
+/// The phone's own connectivity, through `connectivity_plus`.
+class DeviceConnectivity implements Connectivity {
+  DeviceConnectivity();
+
+  @override
+  Stream<void> get regained {
+    var online = true;
+    return plus.Connectivity().onConnectivityChanged
+        .map((r) => r.any((x) => x != plus.ConnectivityResult.none))
+        .where((now) {
+          final gained = now && !online;
+          online = now;
+          return gained;
+        })
+        .map((_) {});
+  }
+}
+
+/// Keeps the phone and the paired server in step without the reader asking, with as little traffic as will do
+/// (ADR-0019):
 ///
-/// It never stops to ask. A quote or work changed on both sides is left alone and counted in [conflicts]; the
-/// reader settles those from the Sync conflicts screen whenever they like, and the next run finds any that are
-/// still open again.
+/// - **On every change** to the library: a few seconds after it (so a burst of edits is one run), the change is
+///   sent and the server is read.
+/// - **Once a day**: when the app opens, when it comes back to the front, when the phone gets a network again, or
+///   (if the app is simply left on) once a day passes, a run is made if none has finished in the last day.
+/// - A change that could not be sent (no network, a sleeping server) is remembered, and goes at the next of
+///   those: the next change, the app opening or coming back, or the network returning. There is no timer that
+///   retries.
 ///
-/// A run that fails (no network, a sleeping server) is tried again after 30 seconds, then 1, 2 and 5 minutes. A
-/// server that no longer accepts the phone is not retried until the pairing changes.
+/// A run sends what is only here (works first), then reads the server, brings down and sends changes and applies
+/// deletions (see [PullSync]). It never stops to ask: a quote or work changed on both sides is left alone and
+/// counted in [conflicts] for the Sync conflicts screen.
 class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
   AutoSync({
     required this._push,
     required this._pull,
     required this._controller,
     this._log,
-    this.interval = const Duration(minutes: 3),
-    this.debounce = const Duration(seconds: 5),
-    this.firstRetry = const Duration(seconds: 30),
-    this.longestRetry = const Duration(minutes: 5),
+    this.debounce = const Duration(seconds: 4),
+    this.dailyEvery = const Duration(hours: 24),
+    this.checkEvery = const Duration(minutes: 30),
+    Connectivity? connectivity,
     DateTime Function()? clock,
-  }) : _clock = clock ?? DateTime.now;
+  }) : _connectivity = connectivity ?? DeviceConnectivity(),
+       _clock = clock ?? DateTime.now;
 
   final PushSync _push;
   final PullSync _pull;
   final AppController _controller;
   final AppLog? _log;
+  final Connectivity _connectivity;
   final DateTime Function() _clock;
 
-  /// How often a run is started while the app is open and nothing else has triggered one.
-  final Duration interval;
-
-  /// How long after a change to the library the run starts (so a burst of edits is one run).
+  /// How long after a change to the library the run starts.
   final Duration debounce;
-  final Duration firstRetry;
-  final Duration longestRetry;
 
-  static const _prefKey = 'auto_sync';
+  /// How long a finished run holds off the daily run.
+  final Duration dailyEvery;
+
+  /// How often an app left open looks at whether a day has passed (this makes no request).
+  final Duration checkEvery;
+
+  static const _enabledKey = 'auto_sync';
+  static const _lastKey = 'auto_sync_last';
+  static const _dirtyKey = 'auto_sync_dirty';
 
   bool _enabled = true;
   bool _syncing = false;
   bool _started = false;
+  bool _dirty = false;
   DateTime? _lastSynced;
   PullResult? _lastResult;
   ApiFailure? _failure;
-  int _failures = 0;
-  DateTime? _nextAllowed;
-  DateTime? _lastAttempt;
   List<SyncConflict> _conflicts = const [];
   Timer? _ticker;
   Timer? _soon;
   StreamSubscription<void>? _changes;
+  StreamSubscription<void>? _network;
   bool _wasPaired = false;
 
   /// Whether runs start by themselves. The reader can still sync by hand.
@@ -69,29 +102,46 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
   DateTime? get lastSynced => _lastSynced;
   PullResult? get lastResult => _lastResult;
 
+  /// Whether a change is waiting to be sent.
+  bool get dirty => _dirty;
+
   /// Why the last run stopped early, or null if it finished.
   ApiFailure? get failure => _failure;
 
   /// What changed on both sides and still waits for the reader.
   List<SyncConflict> get conflicts => List.unmodifiable(_conflicts);
 
-  /// Begins watching. [changes] is the library's change stream. Reads whether the reader turned this off.
+  /// Whether a day has passed since a run last finished (or none ever has).
+  bool get dailyDue {
+    final last = _lastSynced;
+    return last == null || _clock().difference(last) >= dailyEvery;
+  }
+
+  /// Begins watching. [changes] is the library's change stream. Reads what was kept of the last run.
   Future<void> start(Stream<void>? changes) async {
     if (_started) return;
     _started = true;
     try {
       final p = await SharedPreferences.getInstance();
-      _enabled = p.getBool(_prefKey) ?? true;
+      _enabled = p.getBool(_enabledKey) ?? true;
+      _dirty = p.getBool(_dirtyKey) ?? false;
+      final ms = p.getInt(_lastKey);
+      if (ms != null) _lastSynced = DateTime.fromMillisecondsSinceEpoch(ms);
     } on Object {
-      // keep the default
+      // keep the defaults
     }
-    _changes = changes?.listen((_) => scheduleSoon());
-    _ticker = Timer.periodic(const Duration(seconds: 30), (_) => _tick());
+    _changes = changes?.listen((_) => _changed());
+    _network = _connectivity.regained.listen((_) => _opportunity());
+    _ticker = Timer.periodic(checkEvery, (_) {
+      // Only a day after a run that finished: a phone that has never managed one waits for a change, the app
+      // opening or coming back, or the network, rather than trying every half hour.
+      if (_lastSynced != null && dailyDue) _opportunity();
+    });
     WidgetsBinding.instance.addObserver(this);
     _wasPaired = _controller.paired;
     _controller.addListener(_pairingChanged);
     notifyListeners();
-    scheduleSoon();
+    _opportunity();
   }
 
   Future<void> setEnabled(bool on) async {
@@ -99,18 +149,18 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
     try {
       final p = await SharedPreferences.getInstance();
-      await p.setBool(_prefKey, on);
+      await p.setBool(_enabledKey, on);
     } on Object {
       // the choice holds for this run
     }
-    if (on) scheduleSoon();
+    if (on) _opportunity();
   }
 
   void _pairingChanged() {
     final now = _controller.paired;
     if (now && !_wasPaired) {
-      _failures = 0;
-      _nextAllowed = null;
+      _failure = null;
+      _markDirty(true);
       scheduleSoon();
     }
     _wasPaired = now;
@@ -118,14 +168,29 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      final last = _lastAttempt;
-      if (last == null ||
-          _clock().difference(last) > const Duration(seconds: 20)) {
-        _nextAllowed = null;
-        scheduleSoon();
-      }
+    if (state == AppLifecycleState.resumed) _opportunity();
+  }
+
+  void _changed() {
+    _markDirty(true);
+    scheduleSoon();
+  }
+
+  Future<void> _markDirty(bool v) async {
+    if (_dirty == v) return;
+    _dirty = v;
+    try {
+      final p = await SharedPreferences.getInstance();
+      await p.setBool(_dirtyKey, v);
+    } on Object {
+      // remembered for this run
     }
+  }
+
+  /// A moment when a run may be due: the app opening or coming back, the network returning, or a day passing while
+  /// it is open. Runs if a day has passed or a change is waiting; otherwise does nothing.
+  void _opportunity() {
+    if (dailyDue || _dirty) scheduleSoon();
   }
 
   /// Asks for a run shortly, folding repeated asks into one.
@@ -138,16 +203,10 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     });
   }
 
-  void _tick() {
-    final last = _lastAttempt;
-    if (last == null || _clock().difference(last) >= interval) _maybe();
-  }
-
   void _maybe() {
     if (!_enabled || _syncing || !_controller.paired) return;
+    // A server that no longer accepts the phone is not asked again until the pairing changes.
     if (_failure == ApiFailure.unauthorised) return;
-    final next = _nextAllowed;
-    if (next != null && _clock().isBefore(next)) return;
     syncNow();
   }
 
@@ -157,7 +216,6 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     if (!_controller.paired) return null;
     if (_syncing) return _pull.sync();
     _syncing = true;
-    _lastAttempt = _clock();
     notifyListeners();
     PullResult result;
     try {
@@ -173,17 +231,17 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     _failure = result.stoppedBy;
     if (result.stoppedBy == null) {
       _lastSynced = _clock();
-      _failures = 0;
-      _nextAllowed = null;
       _conflicts = result.conflicts;
-    } else {
-      _failures++;
-      var wait = firstRetry;
-      for (var i = 1; i < _failures && wait < longestRetry; i++) {
-        wait *= 2;
+      await _markDirty(false);
+      try {
+        final p = await SharedPreferences.getInstance();
+        await p.setInt(_lastKey, _lastSynced!.millisecondsSinceEpoch);
+      } on Object {
+        // remembered for this run
       }
-      if (wait > longestRetry) wait = longestRetry;
-      _nextAllowed = _clock().add(wait);
+    } else {
+      // Whatever was waiting is still waiting: it goes at the next change, opening, or network.
+      await _markDirty(true);
       // What the run found before it stopped still counts.
       if (result.conflicts.isNotEmpty) _conflicts = result.conflicts;
     }
@@ -214,6 +272,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     _ticker?.cancel();
     _soon?.cancel();
     _changes?.cancel();
+    _network?.cancel();
     if (_started) {
       WidgetsBinding.instance.removeObserver(this);
       _controller.removeListener(_pairingChanged);

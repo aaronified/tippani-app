@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,12 +18,21 @@ import '../support/fake_server.dart';
 import '../support/memory_library.dart';
 
 class Rig {
-  Rig(this.server, this.lib, this.controller, this.auto, this.clock);
+  Rig(this.server, this.lib, this.controller, this.auto, this.clock, this.net);
   final FakeServer server;
   final MemoryLibrary lib;
   final AppController controller;
   final AutoSync auto;
   final Clock clock;
+  final FakeNet net;
+}
+
+/// A phone's network that the test can bring back.
+class FakeNet implements Connectivity {
+  final _c = StreamController<void>.broadcast();
+  @override
+  Stream<void> get regained => _c.stream;
+  void regain() => _c.add(null);
 }
 
 class Clock {
@@ -30,9 +41,17 @@ class Clock {
   void advance(Duration d) => now = now.add(d);
 }
 
-Future<Rig> rig({bool paired = true}) async {
+Future<Rig> rig({
+  bool paired = true,
+  Duration? lastRunAgo,
+  bool waiting = false,
+}) async {
+  final clock = Clock();
   SharedPreferences.setMockInitialValues({
     'server_url': 'https://q.example.org',
+    if (lastRunAgo != null)
+      'auto_sync_last': clock.now.subtract(lastRunAgo).millisecondsSinceEpoch,
+    if (waiting) 'auto_sync_dirty': true,
   });
   final server = FakeServer();
   final store = SettingsStore(
@@ -48,15 +67,16 @@ Future<Rig> rig({bool paired = true}) async {
   await controller.load();
   if (paired) await controller.pair('ABCD2345', 'My Android phone');
   final lib = MemoryLibrary();
-  final clock = Clock();
+  final net = FakeNet();
   final auto = AutoSync(
     push: PushSync(lib, controller, log: log),
     pull: PullSync(lib, controller, log: log),
     controller: controller,
     log: log,
     clock: clock.call,
+    connectivity: net,
   );
-  return Rig(server, lib, controller, auto, clock);
+  return Rig(server, lib, controller, auto, clock, net);
 }
 
 /// A widget test with a started [AutoSync], stopped again before the test ends (a timer left running fails it).
@@ -64,9 +84,15 @@ void testAuto(
   String name,
   Future<void> Function(WidgetTester tester, Rig r) body, {
   bool paired = true,
+  Duration? lastRunAgo,
+  bool waiting = false,
 }) {
   testWidgets(name, (tester) async {
-    final r = await rig(paired: paired);
+    final r = await rig(
+      paired: paired,
+      lastRunAgo: lastRunAgo,
+      waiting: waiting,
+    );
     try {
       await body(tester, r);
     } finally {
@@ -235,17 +261,68 @@ void main() {
   });
 
   group('when it runs', () {
-    testAuto('starting it, with a server paired, syncs on open', (
+    testAuto('on open, with no run ever made, it makes one', (tester, r) async {
+      r.server.seed('/books', {'title': 'Dune', 'author': 'Herbert'});
+      await r.auto.start(r.lib.changes);
+      await settle(tester, const Duration(seconds: 6));
+      expect((await r.lib.works()).map((w) => w.title), ['Dune']);
+      expect(r.auto.lastSynced, r.clock.now);
+    });
+
+    testAuto('on open, a day after the last run, it makes one', (
       tester,
       r,
     ) async {
       r.server.seed('/books', {'title': 'Dune', 'author': 'Herbert'});
-
       await r.auto.start(r.lib.changes);
       await settle(tester, const Duration(seconds: 6));
+      expect(await r.lib.works(), hasLength(1));
+    }, lastRunAgo: const Duration(hours: 25));
 
-      expect((await r.lib.works()).map((w) => w.title), ['Dune']);
-    });
+    testAuto(
+      'on open, within a day of the last run and nothing waiting, it asks nothing',
+      (tester, r) async {
+        await r.auto.start(r.lib.changes);
+        await settle(tester, const Duration(seconds: 6));
+        expect(r.server.paths.where((p) => p == 'GET /books'), isEmpty);
+        expect(r.auto.lastSynced, isNotNull);
+      },
+      lastRunAgo: const Duration(hours: 2),
+    );
+
+    testAuto(
+      'on open, a change left waiting from last time goes, even within the day',
+      (tester, r) async {
+        await r.lib.addQuote(const QuoteDraft(text: 'Left waiting.'));
+        await r.auto.start(r.lib.changes);
+        await settle(tester, const Duration(seconds: 6));
+        expect(r.server.created['/quotes'], hasLength(1));
+        expect(r.auto.dirty, isFalse);
+      },
+      lastRunAgo: const Duration(hours: 2),
+      waiting: true,
+    );
+
+    testAuto(
+      'coming back to the front makes a run only if a day has passed or a change waits',
+      (tester, r) async {
+        await r.auto.start(r.lib.changes);
+        await settle(tester, const Duration(seconds: 6));
+        expect(reads(r), 0);
+        r.clock.advance(const Duration(hours: 25));
+        r.auto.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        await settle(tester, const Duration(seconds: 6));
+        expect(reads(r), 1);
+        r.auto.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        await settle(tester, const Duration(seconds: 6));
+        expect(
+          reads(r),
+          1,
+          reason: 'a second coming back the same day asks nothing',
+        );
+      },
+      lastRunAgo: const Duration(hours: 1),
+    );
 
     testAuto(
       'a change to the library starts a run after a short wait; a burst is one run',
@@ -268,7 +345,9 @@ void main() {
 
         expect(reads(r), before + 1);
         expect(r.server.created['/quotes'], hasLength(3));
+        expect(r.auto.dirty, isFalse);
       },
+      lastRunAgo: const Duration(hours: 1),
     );
 
     testAuto('what a sync itself writes does not start another sync', (
@@ -279,22 +358,40 @@ void main() {
       await r.auto.start(r.lib.changes);
       await settle(tester, const Duration(seconds: 6));
       final done = reads(r);
-
-      await settle(tester, const Duration(seconds: 10));
-
+      await settle(tester, const Duration(seconds: 20));
       expect(reads(r), done);
     });
 
-    testAuto('every few minutes while open', (tester, r) async {
+    testAuto(
+      'left on, it makes the daily run when the day is up, and not before',
+      (tester, r) async {
+        await r.auto.start(r.lib.changes);
+        await settle(tester, const Duration(seconds: 6));
+        r.clock.advance(const Duration(hours: 2));
+        await tester.pump(const Duration(minutes: 31));
+        await settle(tester, const Duration(seconds: 6));
+        expect(reads(r), 0, reason: 'two hours on is not a day');
+        r.clock.advance(const Duration(hours: 22));
+        await tester.pump(const Duration(minutes: 31));
+        await settle(tester, const Duration(seconds: 6));
+        expect(reads(r), 1);
+      },
+      lastRunAgo: const Duration(hours: 1),
+    );
+
+    testAuto('there is no timer in between: hours pass with nothing asked', (
+      tester,
+      r,
+    ) async {
       await r.auto.start(r.lib.changes);
       await settle(tester, const Duration(seconds: 6));
-      final first = reads(r);
-
-      r.clock.advance(const Duration(minutes: 4));
-      await settle(tester, const Duration(seconds: 31));
-
-      expect(reads(r), greaterThan(first));
-    });
+      for (var i = 0; i < 8; i++) {
+        r.clock.advance(const Duration(hours: 2));
+        await tester.pump(const Duration(minutes: 31));
+        await tester.pump(const Duration(minutes: 31));
+      }
+      expect(reads(r), 0);
+    }, lastRunAgo: const Duration(minutes: 5));
 
     testAuto(
       'turned off: it does not run by itself, but Sync now still works, and the choice is kept',
@@ -305,8 +402,9 @@ void main() {
         final before = reads(r);
 
         await r.lib.addQuote(const QuoteDraft(text: 'Not yet.'));
-        r.clock.advance(const Duration(minutes: 10));
-        await settle(tester, const Duration(minutes: 1));
+        r.clock.advance(const Duration(days: 3));
+        r.net.regain();
+        await settle(tester, const Duration(minutes: 31));
         expect(reads(r), before);
         expect(r.server.created['/quotes'], isNull);
 
@@ -329,54 +427,104 @@ void main() {
     });
   });
 
-  group('when the server cannot be reached', () {
+  group('when the network comes back', () {
+    testAuto('it makes the daily run if one is due', (tester, r) async {
+      await r.auto.start(r.lib.changes);
+      await settle(tester, const Duration(seconds: 6));
+      expect(reads(r), 0);
+      r.clock.advance(const Duration(hours: 25));
+      r.net.regain();
+      await settle(tester, const Duration(seconds: 6));
+      expect(reads(r), 1);
+    }, lastRunAgo: const Duration(hours: 1));
+
+    testAuto('it asks nothing if the day is not up and nothing waits', (
+      tester,
+      r,
+    ) async {
+      await r.auto.start(r.lib.changes);
+      await settle(tester, const Duration(seconds: 6));
+      r.net.regain();
+      await settle(tester, const Duration(seconds: 6));
+      expect(reads(r), 0);
+    }, lastRunAgo: const Duration(hours: 1));
+
     testAuto(
-      'it says so, and tries again after 30 seconds, then 60, never faster',
+      'it sends a change that could not be sent while the phone was offline',
       (tester, r) async {
         r.server.failReadsWith = 500;
         await r.auto.start(r.lib.changes);
         await settle(tester, const Duration(seconds: 6));
-        expect(r.auto.failure, ApiFailure.server);
-        var n = reads(r);
-        expect(n, 1);
-
-        // 29 seconds on: too soon
-        r.clock.advance(const Duration(seconds: 29));
-        r.auto.scheduleSoon();
+        await r.lib.addQuote(const QuoteDraft(text: 'Made offline.'));
         await settle(tester, const Duration(seconds: 6));
-        expect(reads(r), n);
-
-        // past 30: tried (and fails again)
-        r.clock.advance(const Duration(seconds: 2));
-        r.auto.scheduleSoon();
+        expect(r.auto.dirty, isTrue);
+        expect(r.auto.failure, isNotNull);
+        r.server.failReadsWith = null;
+        r.net.regain();
         await settle(tester, const Duration(seconds: 6));
-        expect(reads(r), n + 1);
-        n = reads(r);
-
-        // the second wait is a minute
-        r.clock.advance(const Duration(seconds: 40));
-        r.auto.scheduleSoon();
-        await settle(tester, const Duration(seconds: 6));
-        expect(reads(r), n);
-        r.clock.advance(const Duration(seconds: 25));
-        r.auto.scheduleSoon();
-        await settle(tester, const Duration(seconds: 6));
-        expect(reads(r), n + 1);
+        expect(r.server.created['/quotes'], hasLength(1));
+        expect(r.auto.dirty, isFalse);
+        expect(r.auto.failure, isNull);
       },
+      lastRunAgo: const Duration(hours: 1),
+    );
+  });
+
+  group('when the server cannot be reached', () {
+    testAuto(
+      'the change is kept and not retried on a timer; the next opening sends it',
+      (tester, r) async {
+        r.server.failReadsWith = 500;
+        await r.lib.addQuote(const QuoteDraft(text: 'Made while it was down.'));
+        await r.auto.start(r.lib.changes);
+        await settle(tester, const Duration(seconds: 6));
+        expect(r.auto.failure, ApiFailure.server);
+        expect(r.auto.dirty, isTrue);
+        final n = r.server.requests.length;
+
+        for (var i = 0; i < 6; i++) {
+          r.clock.advance(const Duration(hours: 3));
+          await tester.pump(const Duration(minutes: 31));
+          await tester.pump(const Duration(minutes: 31));
+        }
+        expect(r.server.requests.length, n, reason: 'no timer asks again');
+
+        r.server.failReadsWith = null;
+        r.auto.didChangeAppLifecycleState(AppLifecycleState.resumed);
+        await settle(tester, const Duration(seconds: 6));
+        expect(r.auto.failure, isNull);
+        expect(r.auto.dirty, isFalse);
+        expect(r.server.created['/quotes'], hasLength(1));
+      },
+      lastRunAgo: const Duration(hours: 1),
+      waiting: true,
     );
 
-    testAuto('and goes back to normal when it answers', (tester, r) async {
+    testAuto('the next change tries again', (tester, r) async {
       r.server.failReadsWith = 500;
       await r.auto.start(r.lib.changes);
       await settle(tester, const Duration(seconds: 6));
       r.server.failReadsWith = null;
-      r.clock.advance(const Duration(seconds: 31));
-      r.auto.scheduleSoon();
+      await r.lib.addQuote(const QuoteDraft(text: 'Next.'));
       await settle(tester, const Duration(seconds: 6));
-
       expect(r.auto.failure, isNull);
-      expect(r.auto.lastSynced, isNotNull);
+      expect(r.server.created['/quotes'], hasLength(1));
     });
+
+    testAuto(
+      'the time of the last finished run and the waiting flag are kept for next time',
+      (tester, r) async {
+        await r.auto.start(r.lib.changes);
+        await settle(tester, const Duration(seconds: 6));
+        final p = await SharedPreferences.getInstance();
+        expect(p.getInt('auto_sync_last'), r.clock.now.millisecondsSinceEpoch);
+        expect(p.getBool('auto_sync_dirty') ?? false, isFalse);
+        r.server.failReadsWith = 500;
+        await r.lib.addQuote(const QuoteDraft(text: 'Fails.'));
+        await settle(tester, const Duration(seconds: 6));
+        expect(p.getBool('auto_sync_dirty'), isTrue);
+      },
+    );
 
     testAuto('a server that refuses this phone is not asked again', (
       tester,
@@ -388,8 +536,9 @@ void main() {
       expect(r.auto.failure, ApiFailure.unauthorised);
       final n = r.server.requests.length;
 
-      r.clock.advance(const Duration(minutes: 30));
-      r.auto.scheduleSoon();
+      r.clock.advance(const Duration(days: 3));
+      r.net.regain();
+      r.auto.didChangeAppLifecycleState(AppLifecycleState.resumed);
       await settle(tester, const Duration(seconds: 6));
 
       expect(r.server.requests.length, n);
