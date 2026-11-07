@@ -1,0 +1,745 @@
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../anthologies/anthologies.dart';
+import '../capture/photo_source.dart';
+import '../library/cover_cache.dart';
+
+/// Sends a file through Android's share sheet. A function so a test can stand in for it.
+typedef ShareFile = Future<void> Function(Uint8List bytes, String fileName);
+
+Future<void> shareFileThroughSheet(Uint8List bytes, String fileName) async {
+  final epub = fileName.toLowerCase().endsWith('.epub');
+  await SharePlus.instance.share(
+    ShareParams(
+      files: [
+        XFile.fromData(
+          bytes,
+          mimeType: epub ? 'application/epub+zip' : 'text/markdown',
+          name: fileName,
+        ),
+      ],
+      fileNameOverrides: [fileName],
+    ),
+  );
+}
+
+/// A cover picture of an anthology, or [fallback] while there is none (and while it loads).
+class AnthologyCover extends StatelessWidget {
+  const AnthologyCover({
+    super.key,
+    required this.name,
+    required this.width,
+    required this.height,
+    required this.fallback,
+  });
+
+  final String name;
+  final double width, height;
+  final Widget fallback;
+
+  @override
+  Widget build(BuildContext context) {
+    final source = CoverScope.of(context);
+    if (name.isEmpty || source == null) return fallback;
+    return FutureBuilder<File?>(
+      future: source.fileFor(name),
+      builder: (context, snap) {
+        final f = snap.data;
+        if (f == null) return fallback;
+        return Image.file(
+          f,
+          width: width,
+          height: height,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+          errorBuilder: (_, _, _) => fallback,
+        );
+      },
+    );
+  }
+}
+
+/// Asks for a heading and the words under it. Null if the reader backs out.
+Future<({String title, String prose})?> askSection(
+  BuildContext context, {
+  String title = '',
+  String prose = '',
+  required String heading,
+}) {
+  final t = TextEditingController(text: title);
+  final p = TextEditingController(text: prose);
+  return showDialog<({String title, String prose})>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: Text(heading),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: t,
+                autofocus: true,
+                maxLength: 200,
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(labelText: 'Heading'),
+              ),
+              TextField(
+                controller: p,
+                minLines: 2,
+                maxLines: 6,
+                decoration: const InputDecoration(
+                  labelText: 'Words under it (optional)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: t.text.trim().isEmpty
+                ? null
+                : () =>
+                      Navigator.of(context)
+                          .pop((title: t.text.trim(), prose: p.text.trim())),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Asks for the reader's commentary on one passage. Null if the reader backs out; '' clears it.
+Future<String?> askCommentary(BuildContext context, String note) {
+  final c = TextEditingController(text: note);
+  return showDialog<String>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Commentary'),
+      content: TextField(
+        controller: c,
+        autofocus: true,
+        minLines: 3,
+        maxLines: 8,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(
+          hintText: 'Your words for this passage, shown before it.',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(c.text.trim()),
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+}
+
+/// How passages are grouped under headings.
+Future<String?> askGrouping(BuildContext context, String current) =>
+    showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Group passages by'),
+        children: [
+          RadioGroup<String>(
+            groupValue: current,
+            onChanged: (v) => Navigator.of(context).pop(v ?? ''),
+            child: Column(
+              children: [
+                for (final (value, label) in const [
+                  ('', 'Nothing'),
+                  ('work', 'Book or film'),
+                  ('person', 'Person'),
+                  ('character', 'Character'),
+                ])
+                  RadioListTile<String>(value: value, title: Text(label)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+/// Which parts of each passage the anthology shows. Null if the reader backs out.
+Future<Map<String, bool>?> askSwitches(BuildContext context, Anthology a) {
+  // on = shown; the server stores a "hide" switch the other way up
+  final shown = {
+    for (final s in anthologySwitches)
+      s.key: s.hide ? !a.flag(s.key) : a.flag(s.key),
+  };
+  return showDialog<Map<String, bool>>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('What it shows'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final s in anthologySwitches)
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(s.label),
+                value: shown[s.key]!,
+                onChanged: (v) => setState(() => shown[s.key] = v),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop({
+              for (final s in anthologySwitches)
+                s.key: s.hide ? !shown[s.key]! : shown[s.key]!,
+            }),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// The epigraph, the dedication and the cover. The cover is changed at once; the words when the reader saves.
+/// True when anything changed.
+Future<bool> editFrontMatter(
+  BuildContext context,
+  AnthologyService service,
+  Anthology a, {
+  PhotoSource? photos,
+}) async {
+  final epigraph = TextEditingController(text: a.epigraph);
+  final dedication = TextEditingController(text: a.dedication);
+  var cover = a.coverPath;
+  var changed = false;
+  String? problem;
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Front of the book'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: AnthologyCover(
+                      name: cover,
+                      width: 64,
+                      height: 88,
+                      fallback: Container(
+                        width: 64,
+                        height: 88,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHigh,
+                        child: const Icon(Icons.image_outlined),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () async {
+                            try {
+                              final path = await (photos ?? DevicePhotos())
+                                  .choose();
+                              if (path == null) return;
+                              final bytes = await File(path).readAsBytes();
+                              final name = path.split(RegExp(r'[\\/]')).last;
+                              final made = await service.setCover(
+                                a.id,
+                                bytes,
+                                name,
+                              );
+                              setState(() {
+                                cover = made;
+                                changed = true;
+                                problem = null;
+                              });
+                            } on AnthologyException catch (e) {
+                              setState(() => problem = e.message);
+                            }
+                          },
+                          child: Text(
+                            cover.isEmpty ? 'Add a cover' : 'Change cover',
+                          ),
+                        ),
+                        if (cover.isNotEmpty)
+                          TextButton(
+                            onPressed: () async {
+                              try {
+                                await service.removeCover(a.id);
+                                setState(() {
+                                  cover = '';
+                                  changed = true;
+                                  problem = null;
+                                });
+                              } on AnthologyException catch (e) {
+                                setState(() => problem = e.message);
+                              }
+                            },
+                            child: const Text('Remove cover'),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (problem != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    problem!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: epigraph,
+                minLines: 2,
+                maxLines: 4,
+                maxLength: 1000,
+                decoration: const InputDecoration(labelText: 'Epigraph'),
+              ),
+              TextField(
+                controller: dedication,
+                minLines: 1,
+                maxLines: 3,
+                maxLength: 1000,
+                decoration: const InputDecoration(labelText: 'Dedication'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (saved == true &&
+      (epigraph.text.trim() != a.epigraph ||
+          dedication.text.trim() != a.dedication)) {
+    try {
+      await service.setFront(
+        a.id,
+        epigraph.text.trim(),
+        dedication.text.trim(),
+      );
+      changed = true;
+    } on AnthologyException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+  return changed;
+}
+
+/// What the reader chooses to do with an exported file.
+enum ExportAction { save, send }
+
+/// Asks what to export and what to do with it. Null if the reader backs out.
+Future<({bool epub, ExportAction action})?> askExport(BuildContext context) =>
+    showModalBottomSheet<({bool epub, ExportAction action})>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final (epub, label) in const [
+              (false, 'Markdown'),
+              (true, 'EPUB book'),
+            ]) ...[
+              ListTile(
+                leading: const Icon(Icons.save_alt),
+                title: Text('Save as $label'),
+                onTap: () =>
+                    Navigator.of(context)
+                        .pop((epub: epub, action: ExportAction.save)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.ios_share),
+                title: Text('Send as $label'),
+                onTap: () =>
+                    Navigator.of(context)
+                        .pop((epub: epub, action: ExportAction.send)),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+
+/// The passages the reader took out, each with a button to put it back where it was.
+class RemovedScreen extends StatefulWidget {
+  const RemovedScreen({super.key, required this.service, required this.id});
+
+  final AnthologyService service;
+  final int id;
+
+  @override
+  State<RemovedScreen> createState() => _RemovedScreenState();
+}
+
+class _RemovedScreenState extends State<RemovedScreen> {
+  List<RemovedPassage>? _all;
+  String? _problem;
+  bool _restored = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final r = await widget.service.removed(widget.id);
+      if (mounted) {
+        setState(() {
+          _all = r;
+          _problem = null;
+        });
+      }
+    } on AnthologyException catch (e) {
+      if (mounted) setState(() => _problem = e.message);
+    }
+  }
+
+  Future<void> _put(RemovedPassage p) async {
+    try {
+      await widget.service.restore(widget.id, p.kind, p.itemId);
+      _restored = true;
+      await _load();
+    } on AnthologyException catch (e) {
+      if (mounted) setState(() => _problem = e.message);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final all = _all;
+    final theme = Theme.of(context);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Navigator.of(context).pop(_restored);
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Taken out')),
+        body: _problem != null
+            ? Center(child: Text(_problem!))
+            : all == null
+            ? const Center(child: CircularProgressIndicator())
+            : all.isEmpty
+            ? const Center(
+                child: Text('Nothing was taken out of this anthology.'),
+              )
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'A passage you take out stays out when the anthology fills again. Put one back here.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                  for (final p in all)
+                    Card(
+                      child: ListTile(
+                        title: Text(
+                          '“${p.quote.trim()}”',
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          [
+                            p.credit,
+                            p.source,
+                          ].where((s) => s.trim().isNotEmpty).join(', '),
+                        ),
+                        trailing: TextButton(
+                          onPressed: () => _put(p),
+                          child: const Text('Put back'),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+/// Chooses a search that fills the anthology, shows what it would take, and fills it. Pops true after a fill.
+class FillScreen extends StatefulWidget {
+  const FillScreen({super.key, required this.service, required this.anthology});
+
+  final AnthologyService service;
+  final Anthology anthology;
+
+  @override
+  State<FillScreen> createState() => _FillScreenState();
+}
+
+class _FillScreenState extends State<FillScreen> {
+  FillVocabulary _vocab = const FillVocabulary();
+  FillSource _source = FillSource.all;
+  String _value = '';
+  String _from = '', _to = '';
+  bool _auto = false;
+  bool _busy = false;
+  String? _problem;
+  FillResult? _preview;
+  bool _filled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _auto = widget.anthology.ruleAuto;
+    widget.service.vocabulary().then(
+      (v) {
+        if (mounted) setState(() => _vocab = v);
+      },
+      onError: (_) {
+        // the lists are a convenience; "everything", favourites and dates still work without them
+      },
+    );
+  }
+
+  String get _rule => fillRule(_source, value: _value, from: _from, to: _to);
+
+  List<({String key, String name})> get _options => switch (_source) {
+    FillSource.book => _vocab.books,
+    FillSource.movie => _vocab.movies,
+    FillSource.colour => _vocab.colours,
+    FillSource.tag => [for (final t in _vocab.tags) (key: t, name: t)],
+    FillSource.author => [for (final t in _vocab.authors) (key: t, name: t)],
+    FillSource.shelf => [for (final t in _vocab.shelves) (key: t, name: t)],
+    _ => const [],
+  };
+
+  Future<void> _run({required bool preview}) async {
+    setState(() {
+      _busy = true;
+      _problem = null;
+    });
+    try {
+      final r = await widget.service.fill(
+        widget.anthology.id,
+        _rule,
+        preview: preview,
+        auto: _auto,
+      );
+      if (!mounted) return;
+      if (preview) {
+        setState(() => _preview = r);
+      } else {
+        _filled = true;
+        Navigator.of(context).pop(r);
+      }
+    } on AnthologyException catch (e) {
+      if (mounted) setState(() => _problem = e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _pickDate(bool from) async {
+    final now = DateTime.now();
+    final d = await showDatePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: now,
+      initialDate: now,
+    );
+    if (d == null) return;
+    final s =
+        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    setState(() {
+      if (from) {
+        _from = s;
+      } else {
+        _to = s;
+      }
+      _preview = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final options = _options;
+    final ready = _rule.isNotEmpty;
+    return PopScope(
+      canPop: !_busy,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Fill from')),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            Text(
+              'Choose where the passages come from. They are added now, after any that are already in it.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final s in FillSource.values)
+                  ChoiceChip(
+                    label: Text(s.label),
+                    selected: _source == s,
+                    onSelected: (_) => setState(() {
+                      _source = s;
+                      _value = '';
+                      _preview = null;
+                    }),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_source.field != null)
+              DropdownMenu<String>(
+                key: ValueKey(_source),
+                expandedInsets: EdgeInsets.zero,
+                enableFilter: true,
+                requestFocusOnTap: true,
+                label: Text(_source.label),
+                dropdownMenuEntries: [
+                  for (final o in options)
+                    DropdownMenuEntry(value: o.key, label: o.name),
+                ],
+                onSelected: (v) => setState(() {
+                  _value = v ?? '';
+                  _preview = null;
+                }),
+              ),
+            if (_source == FillSource.dates)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _pickDate(true),
+                      child: Text(_from.isEmpty ? 'From' : 'From $_from'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _pickDate(false),
+                      child: Text(_to.isEmpty ? 'To' : 'To $_to'),
+                    ),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Keep adding as new quotes arrive'),
+              value: _auto,
+              onChanged: (v) => setState(() {
+                _auto = v;
+                _preview = null;
+              }),
+            ),
+            if (_problem != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  _problem!,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+              ),
+            if (_preview != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _preview!.matched == 0
+                    ? 'Nothing matches.'
+                    : '${_preview!.matched} ${_preview!.matched == 1 ? 'passage matches' : 'passages match'}. '
+                          'It would add ${_preview!.matched - _preview!.skipped}.',
+                style: theme.textTheme.titleSmall,
+              ),
+              for (final e in _preview!.items.take(5))
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    '“${e.quote.trim()}”',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: ready && !_busy
+                        ? () => _run(preview: true)
+                        : null,
+                    child: const Text('Preview'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: ready && !_busy
+                        ? () => _run(preview: false)
+                        : null,
+                    child: _busy && !_filled
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Fill now'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
