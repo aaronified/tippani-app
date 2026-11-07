@@ -98,6 +98,15 @@ class FakeServer {
   /// Cover reads and uploads answer with this status instead, when set.
   int? failCoversWith;
 
+  /// The context the server stored, by kind and id (`annotation/3`): the answer to `GET /quotes/{kind}/{id}/context`.
+  final contexts = <String, Map<String, Object?>>{};
+
+  /// Every context read asked for, in order: the path with its query (`/quotes/annotation/3/context?before=4`).
+  final contextReads = <String>[];
+
+  /// A context read answers with this status instead, when set.
+  int? failContextWith;
+
   /// The cast the server holds, by route and id (`/books/3`, `/movies/4`): `{character, actor}` rows.
   final casts = <String, List<Map<String, Object?>>>{};
 
@@ -282,6 +291,19 @@ class FakeServer {
       return _json({'token': claimedToken, 'username': username}, 201);
     }
     if (!_authed(r)) return _json({'error': 'not logged in'}, 401);
+    final ctx = RegExp(
+      r'^/quotes/(annotation|dialogue|utterance)/(\d+)/context$',
+    ).firstMatch(path);
+    if (r.method == 'GET' && ctx != null) {
+      contextReads.add(r.url.hasQuery ? '$path?${r.url.query}' : path);
+      if (failContextWith != null) {
+        return _json({'error': 'try later'}, failContextWith!);
+      }
+      final c = contexts['${ctx[1]}/${ctx[2]}'];
+      return c == null
+          ? _json({'error': 'this quote has no context'}, 404)
+          : _json(c);
+    }
     final castRoute = RegExp(r'^(/books|/movies)/(\d+)/cast$').firstMatch(path);
     if (r.method == 'GET' && castRoute != null) {
       castReads.add('${castRoute[1]}/${castRoute[2]}');
