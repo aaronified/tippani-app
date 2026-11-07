@@ -249,6 +249,10 @@ synced account's theme preferences are ignored here.
 - [x] **The server is a section of Settings** (done 8 November 2026, owner's ask): the Server tab is removed; Settings opens with a Server section (address
       and status via `serverStatusLine`, Check again, the unpaired warning, pairing, and everything that needs a paired server) followed by App. Only
       the test-only harness with no library keeps a Home tab.
+- [x] **Author, actor and character chips** (done 8 November 2026, owner's ask): `chipsFor` (`lib/library/quote_chips.dart`) gives a book's author chip and a
+      chip per named speaker; for a film, show or game each speaker is a character chip with the actor from the work's cast under it (the cast comes
+      from the work details, so it is there once a work's page has been opened). `QuoteChipsRow` draws them in the Library list and on the quote screen;
+      pressing one filters the library by the name. **Not done:** portraits (an initial stands in), and opening a person's or character's own page.
 - [x] **Scan: choose words on the picture** (done 7 November 2026): Tesseract's hOCR (`extractHocr`) is parsed (`lib/capture/recognised_page.dart`,
       `parseHocr`) into lines and words with boxes; `PageSelector` draws them over the page and `PageSelection` turns the chosen words into text (reading
       order, hyphens mended, a gap kept as a paragraph break). Falls back to plain `read` text when hOCR gives no words. **Not done:** proposing a page
