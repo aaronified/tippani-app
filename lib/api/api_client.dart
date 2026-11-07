@@ -119,6 +119,15 @@ class ApiClient {
     ),
   );
 
+  /// PATCH [body] as JSON to [path] and decode the JSON answer (null for an empty one).
+  Future<Object?> patchJson(String path, Map<String, Object?> body) => _send(
+    () => _client.patch(
+      _uri(path),
+      headers: {..._headers, 'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    ),
+  );
+
   /// DELETE [path], with [body] as JSON when there is one. A 204 is an empty answer, so this returns null on
   /// success.
   Future<Object?> delete(String path, {Map<String, Object?>? body}) => _send(
@@ -147,8 +156,19 @@ class ApiClient {
     Uint8List bytes,
     String fileName, {
     Map<String, String> fields = const {},
+  }) => sendFile('POST', path, field, bytes, fileName, fields: fields);
+
+  /// Sends one file to [path] with [method] (POST or PUT) as a multipart form, in the form field [field], and
+  /// decode the JSON answer.
+  Future<Object?> sendFile(
+    String method,
+    String path,
+    String field,
+    Uint8List bytes,
+    String fileName, {
+    Map<String, String> fields = const {},
   }) => _send(() async {
-    final req = http.MultipartRequest('POST', _uri(path))
+    final req = http.MultipartRequest(method, _uri(path))
       ..headers.addAll(_headers)
       ..fields.addAll(fields)
       ..files.add(

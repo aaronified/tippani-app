@@ -327,10 +327,12 @@ class PullSync {
         if (w == null) {
           final adopted = await _store.adoptWork(_workDraft(sf, null), id, sfp);
           if (cover.isNotEmpty) await _store.setWorkCover(adopted.id, cover);
+          await _keepShelf(adopted, row);
           t.worksAdded++;
           continue;
         }
         if (w.cover != cover) await _store.setWorkCover(w.id, cover);
+        await _keepShelf(w, row);
         final lf = workFields(w);
         final lfp = fingerprint(lf);
         switch (_decide(w.syncedHash, lfp, sfp)) {
@@ -363,6 +365,36 @@ class PullSync {
         }
       }
     }
+  }
+
+  /// Keeps the shelf status and progress, and the genres, the server holds for a work (read-only here), so the
+  /// library can show, group and filter by them without opening each work. Changes nothing that syncs.
+  Future<void> _keepShelf(Work w, Map row) async {
+    final status = row['status'] is String ? (row['status'] as String) : '';
+    final progress = row['progress'] is int
+        ? (row['progress'] as int).clamp(0, 100)
+        : 0;
+    final g = row['genres'];
+    final genres = [
+      if (g is List)
+        for (final x in g)
+          if (x is String && x.trim().isNotEmpty) x.trim(),
+    ];
+    final sameGenres =
+        genres.length == w.details.genres.length &&
+        [
+          for (var i = 0; i < genres.length; i++)
+            genres[i] == w.details.genres[i],
+        ].every((b) => b);
+    if (w.details.status == status &&
+        w.details.progress == progress &&
+        sameGenres) {
+      return;
+    }
+    await _store.setWorkDetails(
+      w.id,
+      w.details.copyWith(status: status, progress: progress, genres: genres),
+    );
   }
 
   /// The name of the cover (or poster) file the server holds for a work row, or '' for none.

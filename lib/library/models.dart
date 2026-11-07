@@ -151,6 +151,36 @@ class CastMember {
 }
 
 /// The server's extra facts about a work. Every part may be empty.
+/// One time a work was read, watched or played, as the server's read log keeps it: when it was started and ended
+/// (dates, possibly only a year or a month), and how it ended: 'open', 'finished' or 'abandoned'.
+class ReadEntry {
+  const ReadEntry({
+    this.startedAt = '',
+    this.finishedAt = '',
+    this.outcome = '',
+  });
+
+  final String startedAt;
+  final String finishedAt;
+  final String outcome;
+
+  Map<String, Object?> toJson() => {
+    'started_at': startedAt,
+    'finished_at': finishedAt,
+    'outcome': outcome,
+  };
+
+  static ReadEntry? fromJson(Object? j) {
+    if (j is! Map) return null;
+    String s(String k) => j[k] is String ? (j[k] as String).trim() : '';
+    return ReadEntry(
+      startedAt: s('started_at'),
+      finishedAt: s('finished_at'),
+      outcome: s('outcome'),
+    );
+  }
+}
+
 class WorkDetails {
   const WorkDetails({
     this.description = '',
@@ -161,8 +191,24 @@ class WorkDetails {
     this.subtitle = '',
     this.series = '',
     this.cast = const [],
+    this.status = '',
+    this.progress = 0,
+    this.reads = const [],
     this.fetchedAt,
   });
+
+  /// Where the reader is with the work: '' (not started), 'reading' / 'watching' / 'playing', 'paused',
+  /// 'abandoned' or 'completed'. Owned by the server (the web's shelf), read here and changed through it.
+  final String status;
+
+  /// How far along, 0 to 100, while the work is in progress.
+  final int progress;
+
+  /// The read log: every time it was started, and how each ended.
+  final List<ReadEntry> reads;
+
+  /// How many times it was finished.
+  int get timesFinished => reads.where((r) => r.outcome == 'finished').length;
 
   final String description;
   final List<String> genres;
@@ -184,20 +230,31 @@ class WorkDetails {
       isbn.isEmpty &&
       subtitle.isEmpty &&
       series.isEmpty &&
-      cast.isEmpty;
+      cast.isEmpty &&
+      status.isEmpty &&
+      reads.isEmpty;
 
-  WorkDetails copyWith({List<CastMember>? cast, DateTime? fetchedAt}) =>
-      WorkDetails(
-        description: description,
-        genres: genres,
-        publisher: publisher,
-        pages: pages,
-        isbn: isbn,
-        subtitle: subtitle,
-        series: series,
-        cast: cast ?? this.cast,
-        fetchedAt: fetchedAt ?? this.fetchedAt,
-      );
+  WorkDetails copyWith({
+    List<CastMember>? cast,
+    DateTime? fetchedAt,
+    String? status,
+    int? progress,
+    List<ReadEntry>? reads,
+    List<String>? genres,
+  }) => WorkDetails(
+    description: description,
+    genres: genres ?? this.genres,
+    publisher: publisher,
+    pages: pages,
+    isbn: isbn,
+    subtitle: subtitle,
+    series: series,
+    cast: cast ?? this.cast,
+    status: status ?? this.status,
+    progress: progress ?? this.progress,
+    reads: reads ?? this.reads,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
 
   Map<String, Object?> toJson() => {
     'description': description,
@@ -208,6 +265,9 @@ class WorkDetails {
     'subtitle': subtitle,
     'series': series,
     'cast': [for (final c in cast) c.toJson()],
+    'status': status,
+    'progress': progress,
+    'reads': [for (final r in reads) r.toJson()],
     'fetched_at': fetchedAt?.toUtc().toIso8601String(),
   };
 
@@ -219,7 +279,15 @@ class WorkDetails {
     final g = j['genres'];
     final c = j['cast'];
     final at = j['fetched_at'];
+    final rd = j['reads'];
     return WorkDetails(
+      status: s('status'),
+      progress: j['progress'] is int ? (j['progress'] as int).clamp(0, 100) : 0,
+      reads: [
+        if (rd is List)
+          for (final x in rd)
+            if (ReadEntry.fromJson(x) != null) ReadEntry.fromJson(x)!,
+      ],
       description: s('description'),
       genres: [
         if (g is List)

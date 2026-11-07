@@ -321,9 +321,7 @@ void main() {
       },
     );
 
-    testWidgets('does not ask again while what it has is under a day old', (
-      tester,
-    ) async {
+    testWidgets('asks on every visit, so the shelf is current', (tester) async {
       await open(
         tester,
         held: WorkDetails(
@@ -331,8 +329,7 @@ void main() {
           fetchedAt: DateTime.now().subtract(const Duration(hours: 2)),
         ),
       );
-      expect(source.asked, 0);
-      expect(find.text('Kept.'), findsOneWidget);
+      expect(source.asked, 1);
     });
 
     testWidgets('asks again when it is older, and replaces it', (tester) async {
@@ -394,6 +391,13 @@ class _Source implements WorkDetailsSource {
     asked++;
     return answer?.copyWith(fetchedAt: DateTime.now());
   }
+
+  @override
+  Future<WorkDetails?> setStatus(
+    Work work,
+    String status, {
+    int progress = 0,
+  }) async => null;
 }
 
 class _NoPicker implements BackupPicker {

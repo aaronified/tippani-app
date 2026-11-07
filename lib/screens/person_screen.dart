@@ -7,10 +7,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../api/server_call.dart';
 import '../capture/photo_source.dart';
 import '../library/quote_chips.dart';
+import '../people/people_console.dart';
 import '../people/people_directory.dart';
 import '../people/people_service.dart';
 import '../people/picture.dart';
 import '../theme/app_theme.dart';
+import 'people_console_actions.dart';
 
 /// Opens the page of whoever a pill names: a person's, or (for a character in a film, show or game) the character's.
 /// A name the server holds no record of still gets a page (their picture, the quotes), with a note saying so.
@@ -155,7 +157,12 @@ class _Parts {
     );
   }
 
-  static Widget aliases(BuildContext context, List<String> aliases) {
+  /// The other spellings. With [onSplit] each is pressable, to make it a record of its own.
+  static Widget aliases(
+    BuildContext context,
+    List<String> aliases, {
+    ValueChanged<String>? onSplit,
+  }) {
     if (aliases.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +173,16 @@ class _Parts {
           child: Wrap(
             spacing: 8,
             runSpacing: 4,
-            children: [for (final a in aliases) Chip(label: Text(a))],
+            children: [
+              for (final a in aliases)
+                onSplit == null
+                    ? Chip(label: Text(a))
+                    : ActionChip(
+                        label: Text(a),
+                        tooltip: 'Make this its own record',
+                        onPressed: () => onSplit(a),
+                      ),
+            ],
           ),
         ),
       ],
@@ -351,6 +367,97 @@ class _PersonScreenState extends State<PersonScreen> {
     );
   }
 
+  PeopleConsole? get _console {
+    final c = PeopleConsoleScope.of(context);
+    return c != null && c.available ? c : null;
+  }
+
+  Future<void> _names() async {
+    final c = _console, p = _p;
+    if (c == null || p == null) return;
+    if (await editSpellings(
+      context,
+      c,
+      character: false,
+      id: p.id,
+      names: [p.name, ...p.aliases],
+    )) {
+      await _dir?.refresh();
+      await _load();
+    }
+  }
+
+  Future<void> _split(String alias) async {
+    final c = _console, p = _p;
+    if (c == null || p == null) return;
+    if (await splitSpelling(
+      context,
+      c,
+      character: false,
+      id: p.id,
+      alias: alias,
+    )) {
+      await _dir?.refresh();
+      await _load();
+    }
+  }
+
+  Future<void> _mergeInto() async {
+    final c = _console, p = _p;
+    if (c == null || p == null) return;
+    final List<PersonRecord> all;
+    try {
+      all = await c.people();
+    } on ServerException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+      return;
+    }
+    if (!mounted) return;
+    final target = await pickRecord(
+      context,
+      title: 'Merge ${p.name} into…',
+      rows: [
+        for (final r in all)
+          if (r.id != p.id)
+            PickRow(
+              id: r.id,
+              name: r.name,
+              hint: countsHint(r.works, r.quotes),
+              spellings: r.spellings,
+            ),
+      ],
+    );
+    if (target == null || !mounted) return;
+    if (await mergeTwo(
+      context,
+      c,
+      character: false,
+      a: PickRow(id: p.id, name: p.name),
+      b: target,
+    )) {
+      await _dir?.refresh();
+      if (mounted) Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _remove() async {
+    final c = _console, p = _p;
+    if (c == null || p == null) return;
+    if (await removeRecord(
+      context,
+      c,
+      character: false,
+      id: p.id,
+      name: p.name,
+    )) {
+      await _dir?.refresh();
+      if (mounted) Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _edit() async {
     final p = _p;
     if (p == null) return;
@@ -480,6 +587,12 @@ class _PersonScreenState extends State<PersonScreen> {
                     _choose(signature: true);
                   case 'nosignature':
                     _run((s) => s.clearSignature(widget.id));
+                  case 'names':
+                    _names();
+                  case 'merge':
+                    _mergeInto();
+                  case 'remove':
+                    _remove();
                 }
               },
               itemBuilder: (_) => [
@@ -506,6 +619,21 @@ class _PersonScreenState extends State<PersonScreen> {
                     value: 'nosignature',
                     child: Text('Remove the signature'),
                   ),
+                if (_console != null) ...const [
+                  PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: 'names',
+                    child: Text('Names and spellings'),
+                  ),
+                  PopupMenuItem(
+                    value: 'merge',
+                    child: Text('Merge into another person'),
+                  ),
+                  PopupMenuItem(
+                    value: 'remove',
+                    child: Text('Remove this person'),
+                  ),
+                ],
               ],
             ),
         ],
@@ -629,7 +757,12 @@ class _PersonScreenState extends State<PersonScreen> {
                     ),
                   ),
                 ],
-                if (p != null) _Parts.aliases(context, p.aliases),
+                if (p != null)
+                  _Parts.aliases(
+                    context,
+                    p.aliases,
+                    onSplit: _console == null ? null : _split,
+                  ),
                 if (credits.isNotEmpty) ...[
                   _Parts.heading(context, 'Works'),
                   SizedBox(
@@ -832,6 +965,147 @@ class _CharacterScreenState extends State<CharacterScreen> {
     }
   }
 
+  PeopleConsole? get _console {
+    final c = PeopleConsoleScope.of(context);
+    return c != null && c.available ? c : null;
+  }
+
+  Future<void> _afterChange() async {
+    await _dir?.refresh();
+    await _load();
+  }
+
+  Future<void> _editDetails() async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    final e = await characterForm(
+      context,
+      name: ch.name,
+      description: ch.description,
+      born: ch.born,
+      links: ch.links,
+      note: ch.note,
+    );
+    if (e == null || !mounted) return;
+    if (await consoleCall(context, () => c.saveCharacter(ch.id, e))) {
+      await _afterChange();
+    }
+  }
+
+  Future<void> _names() async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    if (await editSpellings(
+      context,
+      c,
+      character: true,
+      id: ch.id,
+      names: [ch.name, ...ch.aliases],
+    )) {
+      await _afterChange();
+    }
+  }
+
+  Future<void> _split(String alias) async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    if (await splitSpelling(
+      context,
+      c,
+      character: true,
+      id: ch.id,
+      alias: alias,
+    )) {
+      await _afterChange();
+    }
+  }
+
+  Future<void> _picture() async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    final path = await (widget.photos ?? DevicePhotos()).choose();
+    if (path == null || !mounted) return;
+    final bytes = await File(path).readAsBytes();
+    if (!mounted) return;
+    if (await consoleCall(
+      context,
+      () => c.uploadCharacterImage(
+        ch.id,
+        bytes,
+        path.split(RegExp(r'[\\/]')).last,
+      ),
+    )) {
+      await _afterChange();
+    }
+  }
+
+  Future<void> _noPicture() async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    if (await consoleCall(context, () => c.clearCharacterImage(ch.id))) {
+      await _afterChange();
+    }
+  }
+
+  Future<void> _mergeInto() async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    final List<CharacterRecord> all;
+    try {
+      all = await c.characters();
+    } on ServerException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+      return;
+    }
+    if (!mounted) return;
+    final target = await pickRecord(
+      context,
+      title: 'Merge ${ch.name} into…',
+      rows: [
+        for (final r in all)
+          if (r.id != ch.id)
+            PickRow(
+              id: r.id,
+              name: r.name,
+              hint: [
+                if (r.worksIn.isNotEmpty)
+                  r.worksIn.take(2).map((w) => w.title).join(', '),
+                countsHint(r.works, r.quotes),
+              ].where((s) => s.isNotEmpty).join(' · '),
+            ),
+      ],
+    );
+    if (target == null || !mounted) return;
+    if (await mergeTwo(
+      context,
+      c,
+      character: true,
+      a: PickRow(id: ch.id, name: ch.name),
+      b: target,
+    )) {
+      await _dir?.refresh();
+      if (mounted) Navigator.of(context).pop();
+    }
+  }
+
+  Future<void> _remove() async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    if (await removeRecord(
+      context,
+      c,
+      character: true,
+      id: ch.id,
+      name: ch.name,
+    )) {
+      await _dir?.refresh();
+      if (mounted) Navigator.of(context).pop();
+    }
+  }
+
   void _openActor(String actor) {
     final info = _dir?.person('actor', actor) ?? _dir?.anyPerson(actor);
     Navigator.of(context).push<void>(
@@ -863,7 +1137,55 @@ class _CharacterScreenState extends State<CharacterScreen> {
     }
     if (actors.isEmpty && widget.actor.isNotEmpty) actors.add(widget.actor);
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        actions: [
+          if (c != null && _console != null)
+            PopupMenuButton<String>(
+              tooltip: 'More',
+              onSelected: (v) {
+                switch (v) {
+                  case 'edit':
+                    _editDetails();
+                  case 'names':
+                    _names();
+                  case 'picture':
+                    _picture();
+                  case 'nopicture':
+                    _noPicture();
+                  case 'merge':
+                    _mergeInto();
+                  case 'remove':
+                    _remove();
+                }
+              },
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: 'edit', child: Text('Edit details')),
+                const PopupMenuItem(
+                  value: 'names',
+                  child: Text('Names and spellings'),
+                ),
+                const PopupMenuItem(
+                  value: 'picture',
+                  child: Text('Choose a picture'),
+                ),
+                if (c.image.isNotEmpty)
+                  const PopupMenuItem(
+                    value: 'nopicture',
+                    child: Text('Remove the picture'),
+                  ),
+                const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: 'merge',
+                  child: Text('Merge into another character'),
+                ),
+                const PopupMenuItem(
+                  value: 'remove',
+                  child: Text('Remove this character'),
+                ),
+              ],
+            ),
+        ],
+      ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -995,7 +1317,12 @@ class _CharacterScreenState extends State<CharacterScreen> {
                   _Parts.heading(context, 'Links'),
                   _Parts.links(context, c.links),
                 ],
-                if (c != null) _Parts.aliases(context, c.aliases),
+                if (c != null)
+                  _Parts.aliases(
+                    context,
+                    c.aliases,
+                    onSplit: _console == null ? null : _split,
+                  ),
                 if (c != null && c.appearances.isNotEmpty) ...[
                   _Parts.heading(context, 'Appears in'),
                   for (final a in c.appearances)

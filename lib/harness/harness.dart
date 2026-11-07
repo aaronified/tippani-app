@@ -3,13 +3,20 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../admin/admin_service.dart';
+import '../admin/server_files.dart';
 import '../checks/checks_service.dart';
 import '../imports/import_picker.dart';
 import '../imports/import_service.dart';
 import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
+import '../metadata/metadata_service.dart';
+import '../people/people_console.dart';
 import '../people/people_directory.dart';
+import '../tools/cover_search.dart';
+import '../sources/source_picker.dart';
+import '../sources/sources_service.dart';
 import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
@@ -18,6 +25,7 @@ import '../boards/board_service.dart';
 import '../library/cover_cache.dart';
 import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
+import '../search/search_service.dart';
 import '../tags/tag_service.dart';
 import '../tools/server_tools.dart';
 import '../tools/work_lookup.dart';
@@ -111,12 +119,20 @@ class Harness {
     this.account,
     this.contextRules,
     this.peopleService,
+    this.coverSearch,
+    this.metadata,
+    this.sources,
+    this.sourcePicker = const SystemSourcePicker(),
+    this.peopleConsole,
+    this.admin,
+    this.serverFiles = const SystemServerFiles(),
     this.quiz,
     this.details,
     this.contexts,
     this.anthologies,
     this.tools,
     this.tags,
+    this.search,
     this.lookup,
     this.boards,
     Future<List<ChangelogEntry>> Function()? changelogLoader,
@@ -186,6 +202,30 @@ class Harness {
   /// The pages of people and characters (and edits to a person) from the paired server.
   final PeopleService? peopleService;
 
+  /// Finds pictures that could be a work's cover or poster, online. Null in a test about something else.
+  final CoverSearch? coverSearch;
+
+  /// What the server could still find out about the library's works, and the works saved twice. Null in a test
+  /// about something else.
+  final MetadataService? metadata;
+
+  /// The source files (ebooks, subtitles) works' quotes were found in, on the paired server. Null in a test about
+  /// something else.
+  final SourcesService? sources;
+
+  /// Choosing a source file from the phone.
+  final SourcePicker sourcePicker;
+
+  /// Every person and character the server keeps, for the metadata console and the editing on their pages.
+  final PeopleConsole? peopleConsole;
+
+  /// Running the server (users, jobs, backups, updates, folders, sources), for an admin account. Null in a test about
+  /// something else.
+  final AdminService? admin;
+
+  /// The system's file pickers for the server's big backup files.
+  final ServerFiles serverFiles;
+
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
 
@@ -204,6 +244,9 @@ class Harness {
 
   /// The server's tags (their colours and styles) for the Tags page. Null in a test about something else.
   final TagService? tags;
+
+  /// The server's search (it forgives typos). Null in a test about something else: the page then searches the phone.
+  final ServerSearch? search;
 
   /// Finds a work's details through the paired server. Null in a test that is about something else.
   final WorkLookup? lookup;
@@ -281,12 +324,18 @@ class Harness {
       account: PairedAccount(controller),
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
+      coverSearch: PairedCoverSearch(controller),
+      metadata: PairedMetadataService(controller),
+      sources: PairedSourcesService(controller),
+      peopleConsole: PairedPeopleConsole(controller),
+      admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
       anthologies: ServerAnthologies(controller),
       tools: PairedServerTools(controller),
       tags: PairedTagService(controller),
+      search: PairedSearch(controller),
       lookup: PairedWorkLookup(controller),
       boards: library == null ? null : ServerBoards(controller, library),
     );
@@ -314,12 +363,20 @@ class Harness {
     AccountService? account,
     ContextRules? contextRules,
     PeopleService? peopleService,
+    CoverSearch? coverSearch,
+    MetadataService? metadata,
+    SourcesService? sources,
+    SourcePicker? sourcePicker,
+    PeopleConsole? peopleConsole,
+    AdminService? admin,
+    ServerFiles? serverFiles,
     QuizService? quiz,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
     AnthologyService? anthologies,
     ServerTools? tools,
     TagService? tags,
+    ServerSearch? search,
     WorkLookup? lookup,
     BoardService? boards,
     List<ChangelogEntry>? changelog,
@@ -367,12 +424,20 @@ class Harness {
       account: account,
       contextRules: contextRules,
       peopleService: peopleService,
+      coverSearch: coverSearch,
+      metadata: metadata,
+      sources: sources,
+      sourcePicker: sourcePicker ?? const SystemSourcePicker(),
+      peopleConsole: peopleConsole,
+      admin: admin,
+      serverFiles: serverFiles ?? const SystemServerFiles(),
       quiz: quiz,
       details: details,
       contexts: contexts,
       anthologies: anthologies,
       tools: tools,
       tags: tags,
+      search: search,
       lookup: lookup,
       boards: boards,
       changelogLoader: () async => changelog ?? const [],

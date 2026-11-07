@@ -1,4 +1,9 @@
+import 'admin_screen.dart';
 import 'checks_entry.dart';
+import 'metadata_tools_screen.dart';
+import 'source_files_screen.dart';
+import 'filtered_quotes_screen.dart';
+import 'people_console_screen.dart';
 import 'conflicts_screen.dart';
 import 'read_aloud_settings_screen.dart';
 import 'tools_screens.dart';
@@ -290,6 +295,89 @@ class SettingsScreen extends StatelessWidget {
               _Group(
                 children: [
                   ChecksEntry(controller: controller, harness: harness),
+                  if (harness.sources != null && harness.library != null)
+                    ListTile(
+                      leading: const Icon(Icons.description_outlined),
+                      title: const Text('Source files'),
+                      subtitle: const Text(
+                        'The ebooks and subtitles your quotes came from: attach, find, free space',
+                      ),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => SourceFilesScreen(
+                            service: harness.sources!,
+                            library: harness.library!,
+                            picker: harness.sourcePicker,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (harness.peopleConsole != null && harness.library != null)
+                    ListTile(
+                      leading: const Icon(Icons.groups_2_outlined),
+                      title: const Text('People and characters'),
+                      subtitle: const Text(
+                        'Authors, actors, speakers and characters: spellings, photos, merging',
+                      ),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (context) => PeopleConsoleScreen(
+                            console: harness.peopleConsole!,
+                            onFilter: (f) => Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (_) => FilteredQuotesScreen(
+                                  store: harness.library!,
+                                  picker: harness.picker,
+                                  title: f.name,
+                                  query: f.name,
+                                  anthologies: harness.anthologies,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (harness.metadata != null && harness.library != null)
+                    ListTile(
+                      leading: const Icon(Icons.travel_explore_rounded),
+                      title: const Text('Details and duplicates'),
+                      subtitle: const Text(
+                        'Works that lack a cover or details, checked against the web; works saved twice',
+                      ),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => MetadataToolsScreen(
+                            service: harness.metadata!,
+                            admin: controller.isAdmin,
+                            onChanged: () => harness.auto?.scheduleSoon(),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+            if (controller.isAdmin && harness.admin != null) ...[
+              const _Section('Server administration'),
+              _Group(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.admin_panel_settings_outlined),
+                    title: const Text('Run the server'),
+                    subtitle: const Text(
+                      'Users, jobs, backups, updates, library folders and metadata sources. Admins only',
+                    ),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => AdminScreen(
+                          service: harness.admin!,
+                          files: harness.serverFiles,
+                          myName: controller.username ?? '',
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
