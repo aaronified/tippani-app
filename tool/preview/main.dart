@@ -4,6 +4,9 @@
 //
 // Nothing here is the real app's storage. The library is the in-memory one the tests use, filled with a few
 // books, films and quotes, and nothing talks to a server. See docs/wiki/Developing.md.
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/app.dart';
@@ -11,6 +14,7 @@ import 'package:tippani/app_controller.dart';
 import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/settings/settings_store.dart';
+import 'package:tippani/share/share_people.dart';
 
 import '../../test/support/fake_anthologies.dart';
 import '../../test/support/fake_server.dart';
@@ -47,6 +51,7 @@ Future<void> main() async {
     library: lib,
     anthologies: anthologies,
     tools: tools,
+    people: _PreviewPeople(),
   );
   runApp(TippaniApp(controller: controller, harness: harness));
 }
@@ -190,4 +195,73 @@ Future<void> _seed(MemoryLibrary lib) async {
   );
   await q('A rolling stone gathers no moss.', board: proverbs.id);
   await q('Be water, my friend.', speaker: 'Bruce Lee');
+}
+
+/// Pictures of people drawn on the spot, so the share picture's portraits, backdrop and signature can be looked at.
+class _PreviewPeople implements SharePeopleSource {
+  @override
+  bool get available => true;
+
+  @override
+  Future<SharePeople> forQuote(Quote quote, Work? work) async {
+    final name = quote.speaker.isNotEmpty
+        ? quote.speaker
+        : (work?.creator ?? 'Someone');
+    final names = [name, 'Second Person'];
+    return SharePeople(
+      faces: [
+        for (var i = 0; i < names.length; i++)
+          ShareFace(names[i], await _portrait(names[i], i)),
+      ],
+      signature: ShareFace(name, await _signature()),
+    );
+  }
+
+  Future<Uint8List> _portrait(String name, int i) async {
+    const s = 300.0;
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec);
+    final hues = [24.0, 200.0];
+    c.drawRect(
+      const Rect.fromLTWH(0, 0, s, s),
+      Paint()
+        ..shader = ui.Gradient.linear(const Offset(0, 0), const Offset(s, s), [
+          HSLColor.fromAHSL(1, hues[i], 0.45, 0.62).toColor(),
+          HSLColor.fromAHSL(1, hues[i] + 30, 0.5, 0.30).toColor(),
+        ]),
+    );
+    c.drawCircle(
+      const Offset(s / 2, s * 0.40),
+      s * 0.17,
+      Paint()..color = const Color(0x66FFFFFF),
+    );
+    c.drawOval(
+      const Rect.fromLTWH(s * 0.22, s * 0.62, s * 0.56, s * 0.5),
+      Paint()..color = const Color(0x66FFFFFF),
+    );
+    final img = await rec.endRecording().toImage(s.toInt(), s.toInt());
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    return data!.buffer.asUint8List();
+  }
+
+  Future<Uint8List> _signature() async {
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec);
+    final path = Path()
+      ..moveTo(4, 50)
+      ..cubicTo(30, -10, 50, 90, 80, 30)
+      ..cubicTo(100, 0, 110, 70, 150, 25)
+      ..cubicTo(170, 10, 180, 40, 196, 28);
+    c.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0xFF000000)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5
+        ..strokeCap = StrokeCap.round,
+    );
+    final img = await rec.endRecording().toImage(200, 80);
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    return data!.buffer.asUint8List();
+  }
 }

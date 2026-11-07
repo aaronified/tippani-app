@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../library/models.dart';
 import '../library/share_format.dart';
+import 'share_people.dart' show ShareFace;
 
 // THE PICTURE OF A QUOTE, drawn the way the web app draws it (web/frontend/src/quoteImage.js): one fixed width of
 // 640 logical pixels exported at twice that, a height that follows the content, fixed type sizes (a long quote makes
@@ -178,7 +181,9 @@ TextStyle _serif(
   Color color, {
   FontWeight weight = FontWeight.w400,
   FontStyle style = FontStyle.normal,
+  List<Shadow>? shadows,
 }) => TextStyle(
+  shadows: shadows,
   fontFamily: 'Newsreader',
   fontFamilyFallback: _serifFallback,
   fontSize: size,
@@ -195,7 +200,9 @@ TextStyle _mono(
   Color color, {
   FontWeight weight = FontWeight.w500,
   double spacing = 0,
+  List<Shadow>? shadows,
 }) => TextStyle(
+  shadows: shadows,
   fontFamily: 'IBMPlexMono',
   fontFamilyFallback: const ['monospace'],
   fontSize: size,
@@ -217,6 +224,11 @@ class SharePicture extends StatefulWidget {
     this.dark = false,
     this.material = ShareMaterial.manuscript,
     this.tint = false,
+    this.faces = const [],
+    this.facesInMeta = false,
+    this.backdrop = false,
+    this.swap = false,
+    this.signature,
   });
 
   final Quote quote;
@@ -227,8 +239,24 @@ class SharePicture extends StatefulWidget {
   final bool dark;
   final ShareMaterial material;
 
-  /// Whether the quote's own colour is drawn as a stripe beside the words.
+  /// Whether the quote's own colour is drawn: a stripe beside the words, or a tint on a backdrop portrait.
   final bool tint;
+
+  /// The pictures of the people credited, first credited first. Drawn as small round portraits beside the name,
+  /// or (with [backdrop]) as faded portraits behind the words. Empty draws none.
+  final List<ShareFace> faces;
+
+  /// Put the portraits at the start of the small line (an actor's credit) and not beside the name in the credit.
+  final bool facesInMeta;
+
+  /// Draw the portraits big and faded behind the words, from the edge, instead of as small chips.
+  final bool backdrop;
+
+  /// Which credited person comes first: on chips it changes whose face is in front, on a backdrop it swaps sides.
+  final bool swap;
+
+  /// The credited person's signature, drawn in the footer's right corner.
+  final ShareFace? signature;
 
   @override
   State<SharePicture> createState() => _SharePictureState();
@@ -272,8 +300,32 @@ class _SharePictureState extends State<SharePicture> {
   Widget build(BuildContext context) {
     final p = widget.dark ? SharePalette.dark : SharePalette.light;
     final m = SharePictureModel(widget.quote, widget.work, widget.on);
-    final bar = widget.tint && m.colour != null;
+    final backdrop = widget.backdrop && widget.faces.isNotEmpty;
+    // A backdrop is busy, so every line takes the one ink colour and a soft halo of the card's own colour; size
+    // and weight carry the hierarchy.
+    final soft = backdrop ? p.ink : p.soft;
+    final faint = backdrop ? p.ink : p.faint;
+    final bar = widget.tint && m.colour != null && !backdrop;
     final inset = bar ? 8.0 : 0.0;
+
+    List<Shadow>? halo(double size) {
+      if (!backdrop) return null;
+      final r = math.max(4, (size * 0.5 / 6).round() * 6).toDouble();
+      final c = p.cardTop.withValues(alpha: 0.7);
+      return [
+        Shadow(color: c, blurRadius: r),
+        Shadow(color: c, blurRadius: r),
+        Shadow(color: c, blurRadius: r),
+      ];
+    }
+
+    // Chips: at most five, the first credited on top; swap reverses them.
+    final chipFaces = (widget.swap ? widget.faces.reversed : widget.faces)
+        .take(5)
+        .toList();
+    final chips = !backdrop && chipFaces.isNotEmpty
+        ? _Cluster(faces: chipFaces, palette: p)
+        : null;
 
     final blocks = <Widget>[];
     void add(Widget w, double gapBefore) {
@@ -284,7 +336,13 @@ class _SharePictureState extends State<SharePicture> {
     if (m.quote.isNotEmpty) {
       final words = Text(
         '“${m.quote}”',
-        style: _serif(27, 38, p.ink, style: FontStyle.italic),
+        style: _serif(
+          27,
+          38,
+          p.ink,
+          style: FontStyle.italic,
+          shadows: halo(27),
+        ),
       );
       add(
         bar
@@ -311,39 +369,81 @@ class _SharePictureState extends State<SharePicture> {
       );
     }
     if (m.translation.isNotEmpty) {
-      add(Text(m.translation, style: _serif(21, 28, p.soft)), 12);
+      add(
+        Text(m.translation, style: _serif(21, 28, soft, shadows: halo(21))),
+        12,
+      );
     }
     if (m.attribution.isNotEmpty) {
       TextStyle s(ShareStyle x) => switch (x) {
-        ShareStyle.bold => _serif(15, 23, p.soft, weight: FontWeight.w600),
-        ShareStyle.italic => _serif(15, 23, p.soft, style: FontStyle.italic),
-        ShareStyle.plain => _serif(15, 23, p.soft),
-      };
-      add(
-        Text.rich(
-          TextSpan(
-            style: s(ShareStyle.plain),
-            children: [
-              const TextSpan(text: '— '),
-              for (var i = 0; i < m.attribution.length; i++) ...[
-                if (i > 0) const TextSpan(text: ', '),
-                TextSpan(
-                  text: m.attribution[i].text,
-                  style: s(m.attribution[i].style),
-                ),
-              ],
-            ],
-          ),
+        ShareStyle.bold => _serif(
+          15,
+          23,
+          soft,
+          weight: FontWeight.w600,
+          shadows: halo(15),
         ),
+        ShareStyle.italic => _serif(
+          15,
+          23,
+          soft,
+          style: FontStyle.italic,
+          shadows: halo(15),
+        ),
+        ShareStyle.plain => _serif(15, 23, soft, shadows: halo(15)),
+      };
+      final names = TextSpan(
+        style: s(ShareStyle.plain),
+        children: [
+          for (var i = 0; i < m.attribution.length; i++) ...[
+            if (i > 0) const TextSpan(text: ', '),
+            TextSpan(
+              text: m.attribution[i].text,
+              style: s(m.attribution[i].style),
+            ),
+          ],
+        ],
+      );
+      final dash = Text('— ', style: s(ShareStyle.plain));
+      add(
+        chips != null && !widget.facesInMeta
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  dash,
+                  chips,
+                  const SizedBox(width: 10),
+                  Flexible(child: Text.rich(names)),
+                ],
+              )
+            : Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(text: '— '),
+                    names,
+                  ],
+                ),
+              ),
         14,
       );
     }
-    if (m.meta.isNotEmpty) {
+    final metaText = m.meta.map((e) => e.toUpperCase()).join('  ·  ');
+    if (m.meta.isNotEmpty || (chips != null && widget.facesInMeta)) {
+      final meta = Text(
+        metaText,
+        style: _mono(11.5, 19, soft, spacing: 1, shadows: halo(11.5)),
+      );
       add(
-        Text(
-          m.meta.map((e) => e.toUpperCase()).join('  ·  '),
-          style: _mono(11.5, 19, p.soft, spacing: 1),
-        ),
+        chips != null && widget.facesInMeta
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  chips,
+                  const SizedBox(width: 10),
+                  Flexible(child: meta),
+                ],
+              )
+            : meta,
         6,
       );
     }
@@ -364,6 +464,7 @@ class _SharePictureState extends State<SharePicture> {
               height: 28 / 22,
               leadingDistribution: TextLeadingDistribution.even,
               color: p.ink,
+              shadows: halo(22),
             ),
           ),
         ),
@@ -428,22 +529,45 @@ class _SharePictureState extends State<SharePicture> {
         borderRadius: BorderRadius.circular(14),
         child: CustomPaint(
           painter: _GrainPainter(widget.material.tile, _tile),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              _cardPad + inset,
-              _cardPad,
-              _cardPad,
-              _cardPad,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ...blocks,
-                if (blocks.isNotEmpty) const SizedBox(height: 20),
-                _Footer(palette: p),
-              ],
-            ),
+          child: Stack(
+            children: [
+              if (backdrop)
+                Positioned.fill(
+                  child: LayoutBuilder(
+                    builder: (context, box) => _Backdrop(
+                      faces: widget.faces,
+                      swap: widget.swap,
+                      palette: p,
+                      dark: widget.dark,
+                      tint: widget.tint ? m.colour : null,
+                      size: box.biggest,
+                    ),
+                  ),
+                ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  _cardPad + inset,
+                  _cardPad,
+                  _cardPad,
+                  _cardPad,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...blocks,
+                    if (blocks.isNotEmpty) const SizedBox(height: 20),
+                    _Footer(
+                      palette: p,
+                      faint: faint,
+                      ink: p.ink,
+                      signature: widget.signature,
+                      shadows: halo(11),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -459,11 +583,307 @@ class _SharePictureState extends State<SharePicture> {
   }
 }
 
-/// The hairline, the Tippani mark and "made with tippani", all on one baseline.
+/// Small round portraits, overlapping, the first credited in front: 34 across, each overlapping the last by 12.
+class _Cluster extends StatelessWidget {
+  const _Cluster({required this.faces, required this.palette});
+
+  final List<ShareFace> faces;
+  final SharePalette palette;
+
+  static const double size = 34;
+  static const double step = 22;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = palette;
+    return SizedBox(
+      width: size + (faces.length - 1) * step,
+      height: size,
+      child: Stack(
+        children: [
+          // drawn last to first so the first credited lands on top
+          for (var i = faces.length - 1; i >= 0; i--)
+            Positioned(
+              left: i * step,
+              child: SizedBox(
+                width: size,
+                height: size,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipOval(
+                      child: ColoredBox(
+                        color: p.ink.withValues(alpha: 0.08),
+                        child: Image.memory(
+                          faces[i].bytes,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: p.cardTop, width: 3),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(0.5),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: p.ink.withValues(alpha: 0.22),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The credited people's pictures big and faded behind the words. One or two: a portrait from each edge, 46% of the
+/// card wide, fading inward. Three or more (a team shot): a band along the bottom, one cell each, fading upward.
+class _Backdrop extends StatelessWidget {
+  const _Backdrop({
+    required this.faces,
+    required this.swap,
+    required this.palette,
+    required this.dark,
+    required this.tint,
+    required this.size,
+  });
+
+  final List<ShareFace> faces;
+  final bool swap;
+  final SharePalette palette;
+  final bool dark;
+  final Color? tint;
+  final Size size;
+
+  // How much of the picture shows, from its outer edge inward (the web's mask, as what is kept).
+  static const _stops = [0.0, 0.12, 0.34, 0.62, 0.97, 1.0];
+  static const _keep = [1.0, 1.0, 0.45, 0.14, 0.0, 0.0];
+
+  Widget _portrait(
+    ShareFace f,
+    Alignment from,
+    Alignment to,
+    double w,
+    double h,
+  ) => _FadedPortrait(
+    bytes: f.bytes,
+    width: w,
+    height: h,
+    from: from,
+    to: to,
+    strength: dark ? 0.5 : 0.8,
+    wash: palette.cardTop.withValues(alpha: dark ? 0.3 : 0.08),
+    tint: tint,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final w = size.width, h = size.height;
+    if (faces.length <= 2) {
+      final pw = (w * 0.46).roundToDouble();
+      final first = faces.first;
+      final second = faces.length == 2 ? faces[1] : null;
+      final left = swap ? second : first;
+      final right = swap ? first : second;
+      return Stack(
+        children: [
+          if (left != null)
+            Positioned(
+              left: 0,
+              top: 0,
+              child: _portrait(
+                left,
+                Alignment.centerLeft,
+                Alignment.centerRight,
+                pw,
+                h,
+              ),
+            ),
+          if (right != null)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: _portrait(
+                right,
+                Alignment.centerRight,
+                Alignment.centerLeft,
+                pw,
+                h,
+              ),
+            ),
+        ],
+      );
+    }
+    final line = (swap ? faces.reversed : faces).take(5).toList();
+    final cell = (w / line.length).ceilToDouble();
+    final band = (h * 0.52).roundToDouble();
+    return Stack(
+      children: [
+        for (var i = 0; i < line.length; i++)
+          Positioned(
+            left: i * cell,
+            bottom: 0,
+            child: _portrait(
+              line[i],
+              Alignment.bottomCenter,
+              Alignment.topCenter,
+              i == line.length - 1 ? w - i * cell : cell,
+              band,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// One portrait, faded and washed as the web does it, baked into a plain image once (cover-cropped, tinted, washed,
+/// then masked from its outer edge inward) and drawn as that. Painting a finished picture, not a masked layer, keeps
+/// its edges clean at any scale and makes the saved file the same as the screen.
+class _FadedPortrait extends StatefulWidget {
+  const _FadedPortrait({
+    required this.bytes,
+    required this.width,
+    required this.height,
+    required this.from,
+    required this.to,
+    required this.strength,
+    required this.wash,
+    required this.tint,
+  });
+
+  final Uint8List bytes;
+  final double width, height;
+  final Alignment from, to;
+  final double strength;
+  final Color wash;
+  final Color? tint;
+
+  @override
+  State<_FadedPortrait> createState() => _FadedPortraitState();
+}
+
+class _FadedPortraitState extends State<_FadedPortrait> {
+  ui.Image? _image;
+  Object? _key;
+
+  @override
+  void initState() {
+    super.initState();
+    _bake();
+  }
+
+  @override
+  void didUpdateWidget(_FadedPortrait old) {
+    super.didUpdateWidget(old);
+    _bake();
+  }
+
+  Future<void> _bake() async {
+    final w = widget;
+    final key = Object.hash(
+      w.bytes,
+      w.width,
+      w.height,
+      w.from,
+      w.strength,
+      w.wash,
+      w.tint,
+    );
+    if (key == _key) return;
+    _key = key;
+    try {
+      const px = shareScale;
+      final pw = (w.width * px).round(), ph = (w.height * px).round();
+      if (pw <= 0 || ph <= 0) return;
+      final codec = await ui.instantiateImageCodec(w.bytes);
+      final src = (await codec.getNextFrame()).image;
+      final rec = ui.PictureRecorder();
+      final canvas = Canvas(rec);
+      final out = Rect.fromLTWH(0, 0, pw.toDouble(), ph.toDouble());
+      canvas.saveLayer(out, Paint());
+      // cover-crop: the biggest centred part of the picture with the box's shape
+      final scale = math.max(pw / src.width, ph / src.height);
+      final cw = pw / scale, ch = ph / scale;
+      final crop = Rect.fromLTWH(
+        (src.width - cw) / 2,
+        (src.height - ch) / 2,
+        cw,
+        ch,
+      );
+      final paint = Paint()..filterQuality = FilterQuality.medium;
+      if (w.tint != null) {
+        paint.colorFilter = ColorFilter.mode(
+          w.tint!.withValues(alpha: 0.55),
+          BlendMode.color,
+        );
+      }
+      canvas.drawImageRect(src, crop, out, paint);
+      canvas.drawRect(out, Paint()..color = w.wash);
+      // the mask: how much of the picture is kept, from its outer edge inward
+      final keep = [
+        for (final k in _Backdrop._keep)
+          Color.fromRGBO(255, 255, 255, k * w.strength),
+      ];
+      final begin = Offset((w.from.x + 1) / 2 * pw, (w.from.y + 1) / 2 * ph);
+      final end = Offset((w.to.x + 1) / 2 * pw, (w.to.y + 1) / 2 * ph);
+      canvas.drawRect(
+        out,
+        Paint()
+          ..blendMode = BlendMode.dstIn
+          ..shader = ui.Gradient.linear(begin, end, keep, _Backdrop._stops),
+      );
+      canvas.restore();
+      final baked = await rec.endRecording().toImage(pw, ph);
+      if (mounted && _key == key) setState(() => _image = baked);
+    } on Object {
+      // no portrait: the card is drawn without it
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final img = _image;
+    return SizedBox(
+      width: widget.width,
+      height: widget.height,
+      child: img == null
+          ? null
+          : RawImage(
+              image: img,
+              fit: BoxFit.fill,
+              filterQuality: FilterQuality.medium,
+            ),
+    );
+  }
+}
+
+/// The hairline, the Tippani mark and "made with tippani", all on one baseline, and the signature at the right.
 class _Footer extends StatelessWidget {
-  const _Footer({required this.palette});
+  const _Footer({
+    required this.palette,
+    required this.faint,
+    required this.ink,
+    this.signature,
+    this.shadows,
+  });
 
   final SharePalette palette;
+  final Color faint, ink;
+  final ShareFace? signature;
+  final List<Shadow>? shadows;
 
   @override
   Widget build(BuildContext context) {
@@ -476,12 +896,13 @@ class _Footer extends StatelessWidget {
             left: 0,
             right: 0,
             top: 10,
-            child: Container(height: 1, color: p.ink.withValues(alpha: 0.12)),
+            child: Container(height: 1, color: ink.withValues(alpha: 0.12)),
           ),
           Positioned(
             left: 0,
-            top: 10 + 8,
+            top: 10 + 7,
             right: 0,
+            height: 24,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -490,11 +911,20 @@ class _Footer extends StatelessWidget {
                   painter: _MarkPainter(p.mark),
                 ),
                 const SizedBox(width: 7),
-                Text('made with', style: _mono(11, 16, p.faint)),
+                Text(
+                  'made with',
+                  style: _mono(11, 16, faint, shadows: shadows),
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'tippani',
-                  style: _serif(14, 18, p.ink, weight: FontWeight.w600),
+                  style: _serif(
+                    14,
+                    18,
+                    ink,
+                    weight: FontWeight.w600,
+                    shadows: shadows,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -503,9 +933,34 @@ class _Footer extends StatelessWidget {
                     fontFamily: 'NotoSerifBengali',
                     fontSize: 12,
                     height: 16 / 12,
-                    color: p.faint,
+                    color: faint,
+                    shadows: shadows,
                   ),
                 ),
+                if (signature != null) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: SizedBox(
+                        height: 20,
+                        child: ColorFiltered(
+                          colorFilter: ColorFilter.mode(
+                            ink.withValues(alpha: 0.88),
+                            BlendMode.srcIn,
+                          ),
+                          child: Image.memory(
+                            signature!.bytes,
+                            fit: BoxFit.contain,
+                            alignment: Alignment.centerRight,
+                            gaplessPlayback: true,
+                            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
