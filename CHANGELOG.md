@@ -22,6 +22,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Fixed
 
+- The Quotes tab is the quote board again: it showed every quote, including the ones from your books and films. It now shows only quotes that
+  belong to no work (a line from a speech, a proverb, something someone said), as on the web; the quotes of a book are in that book.
 - Signatures on the share picture: a signature your server keeps as a drawn (vector) picture, which is how most are stored, was left off the
   picture. It is drawn now. The share picture also takes the portraits and signature from the phone's own copy, so it can be made without the
   server, and a book's character can show its picture too.

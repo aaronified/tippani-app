@@ -146,6 +146,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ? _boardFilter
                 : null,
             unfiled: _boardFilter == _noBoard,
+            standalone: widget.section == LibrarySection.quotes,
           )
         : const <Quote>[];
     final works = _mode == _Mode.works
