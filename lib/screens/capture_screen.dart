@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../capture/page_adjuster.dart';
 import '../capture/photo_source.dart';
 import '../capture/text_recogniser.dart';
+import 'adjust_screen.dart';
 
 /// Text read from a page, handed back to the quote form: [text] as the reader corrected it, and how it was
 /// captured ([source]: "ocr").
@@ -20,10 +22,18 @@ class CaptureScreen extends StatefulWidget {
     super.key,
     this.photos,
     this.recogniser = const TesseractRecogniser(),
+    this.adjuster,
+    this.adjust = true,
   });
 
   final PhotoSource? photos;
   final TextRecogniser recogniser;
+
+  /// Straightens and crops the picture; null uses the phone's own.
+  final PageAdjuster? adjuster;
+
+  /// Whether the picture is straightened and cropped before it is read. A test turns it off.
+  final bool adjust;
 
   @override
   State<CaptureScreen> createState() => _CaptureScreenState();
@@ -61,6 +71,18 @@ class _CaptureScreenState extends State<CaptureScreen> {
       return;
     }
     if (path == null) return;
+    if (widget.adjust) {
+      if (!mounted) return;
+      // The reader straightens and crops the page first; backing out of that drops the picture.
+      final original = path;
+      path = await Navigator.of(context).push<String>(
+        MaterialPageRoute(
+          builder: (_) =>
+              AdjustScreen(imagePath: original, adjuster: widget.adjuster),
+        ),
+      );
+      if (path == null) return;
+    }
     await _recognise(path);
   }
 

@@ -86,8 +86,11 @@ void main() {
                   onPressed: () async {
                     result = await Navigator.of(context).push<CapturedText>(
                       MaterialPageRoute(
-                        builder: (_) =>
-                            CaptureScreen(photos: photos, recogniser: reader),
+                        builder: (_) => CaptureScreen(
+                          photos: photos,
+                          recogniser: reader,
+                          adjust: false,
+                        ),
                       ),
                     );
                   },
@@ -220,6 +223,7 @@ void main() {
             quote: quote,
             photos: photos,
             recogniser: reader,
+            adjustPage: false,
           ),
         ),
       );

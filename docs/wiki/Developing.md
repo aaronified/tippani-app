@@ -212,6 +212,14 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## Straighten and crop
+
+`page_geometry.dart` is plain Dart over a `Luma` (brightness bytes), so it is tested with drawn pages: `estimateSkewDegrees` projects the ink onto rows for each
+angle and takes the angle that piles it up most (coarse at a degree, then a tenth), and `textBounds` is the ink's 1st to 99th percentile box once
+turned. `PageAdjuster` is the seam to the picture work: `DevicePageAdjuster` decodes at 480 px to look and at up to 3000 px to make the picture
+(`dart:ui` canvas: white ground, turn about the centre, draw, cut), and `AdjustScreen` previews with Flutter's own rotation so what is shown is what is made.
+The preview rotates about the picture's centre and the crop is in fractions of the picture's own box, which is exactly how `render` draws it.
+
 ## Capture
 
 `CaptureScreen` (a photographed page, read by Tesseract) and `VoiceScreen` (speech to text through the phone's recogniser) each pop a `CapturedText`;

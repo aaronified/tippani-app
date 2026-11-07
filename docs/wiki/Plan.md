@@ -246,6 +246,10 @@ synced account's theme preferences are ignored here.
       server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
       its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
       Checked against a real server in `test/live`. **Not yet:** reordering, per-passage commentary, sections, grouping, the cover, boards.
+- [x] **Scan: straighten and crop** (done 7 November 2026): before a photographed page is read, `AdjustScreen` shows it with the tilt and the text's
+      area the app worked out (`lib/capture/page_geometry.dart`: `estimateSkewDegrees` by row projection, `textBounds` by the ink's 1st to 99th
+      percentile) and lets the reader turn it (-15 to 15 degrees) and drag the frame's corners; `DevicePageAdjuster` renders the turned and cut picture
+      with `dart:ui`, no extra package. **Not done:** selecting words on the picture before reading (next), and perspective correction.
 - [x] **Capture on the Add screen** (done 7 November 2026): Scan a page and Speak are buttons on the quote form; `CaptureScreen` and `VoiceScreen`
       return a `CapturedText` to the form instead of opening a form of their own; the separate Library and work-page entries are removed. Scanned text
       marks the quote `ocr`; spoken text is `manual` (the server accepts only those two).

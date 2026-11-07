@@ -8,6 +8,9 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Changed
 
+- Scanning a page now starts with Straighten and crop. The app works out how the page is tilted and where the text is, and shows both: turn the
+  picture with the slider or the nudge buttons (up to 15 degrees either way), and drag the corners of the frame to keep only the text. Auto
+  works it out again, Reset starts over, and Use as is skips it. The page is read after it is straightened and cropped, which reads better.
 - Scanning a page and speaking a quote are now on the Add a quote screen itself, under the words: Scan a page and Speak. What you scan or say
   goes into the words (after what is already there, so a second page does not wipe the first), where you can correct it before saving. The
   separate scan and microphone buttons on the Library and on a work's page are gone.
