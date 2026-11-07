@@ -59,13 +59,18 @@ class QuoteCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (showQuote)
-                        Text(
-                          '“${quote.text.trim()}”',
-                          style: quoteStyle(
-                            context,
-                            size: 24,
-                            height: 1.4,
-                            weight: FontWeight.w500,
+                        quoteMeasure(
+                          context,
+                          24,
+                          Text(
+                            '“${quote.text.trim()}”',
+                            style: quoteStyle(
+                              context,
+                              size: 24,
+                              height: 1.4,
+                              weight: FontWeight.w500,
+                              language: quote.language,
+                            ),
                           ),
                         ),
                       if (showTranslation &&

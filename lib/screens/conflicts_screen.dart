@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../sync/auto_sync.dart';
 import 'library_widgets.dart' show EmptyState;
 import '../sync/pull_sync.dart';
+import '../l10n/l10n.dart';
 
 /// What changed on both the phone and the server, waiting for the reader. Nothing here is urgent and nothing has
 /// been overwritten: they settle one, several or none, whenever they like, and the next sync keeps the rest here.
@@ -49,7 +50,7 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -69,7 +70,7 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Sync conflicts')),
+      appBar: AppBar(title: Text(context.tr('Sync conflicts'))),
       body: ListenableBuilder(
         listenable: widget.auto,
         builder: (context, _) {
@@ -84,10 +85,15 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text('Changed on both sides', style: theme.textTheme.titleMedium),
+              Text(
+                context.tr('Changed on both sides'),
+                style: theme.textTheme.titleMedium,
+              ),
               const SizedBox(height: 4),
-              const Text(
-                'No hurry: nothing has been changed on either side, and what you leave here stays until you choose. For each, keep the version on the phone or the one on the server.',
+              Text(
+                context.tr(
+                  'No hurry: nothing has been changed on either side, and what you leave here stays until you choose. For each, keep the version on the phone or the one on the server.',
+                ),
               ),
               const SizedBox(height: 8),
               if (conflicts.length > 1)
@@ -96,11 +102,11 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
                   children: [
                     OutlinedButton(
                       onPressed: () => _chooseAll(ConflictSide.phone),
-                      child: const Text('Keep the phone’s for all'),
+                      child: Text(context.tr('Keep the phone’s for all')),
                     ),
                     OutlinedButton(
                       onPressed: () => _chooseAll(ConflictSide.server),
-                      child: const Text('Keep the server’s for all'),
+                      child: Text(context.tr('Keep the server’s for all')),
                     ),
                   ],
                 ),
@@ -151,8 +157,8 @@ class ConflictCard extends StatelessWidget {
             for (final d in conflict.diffs) ...[
               const SizedBox(height: 10),
               Text(d.label, style: theme.textTheme.labelLarge),
-              Text('Phone: ${d.phone}'),
-              Text('Server: ${d.server}'),
+              Text(context.tr('Phone: {value}', {'value': d.phone})),
+              Text(context.tr('Server: {value}', {'value': d.server})),
             ],
             if (problem != null) ...[
               const SizedBox(height: 8),
@@ -167,11 +173,11 @@ class ConflictCard extends StatelessWidget {
                 children: [
                   FilledButton.tonal(
                     onPressed: () => onChoose(ConflictSide.phone),
-                    child: const Text('Keep the phone’s'),
+                    child: Text(context.tr('Keep the phone’s')),
                   ),
                   FilledButton.tonal(
                     onPressed: () => onChoose(ConflictSide.server),
-                    child: const Text('Keep the server’s'),
+                    child: Text(context.tr('Keep the server’s')),
                   ),
                 ],
               ),

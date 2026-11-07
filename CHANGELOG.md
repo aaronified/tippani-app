@@ -20,6 +20,18 @@ version. Write each entry for the person using the app, in plain words. **Start 
   spaces and hidden characters in your quotes, shows the fix beside the problem, and lets you fix or ignore each (and bring an ignored one
   back). Corrections offers the words from a work's own file where your quote differs, a bucket at a time. Times and places offers the time a
   subtitle file gives a line, or the chapter and place a book's file gives a highlight.
+- Your settings, the same on the phone and the web: Settings now has the account's own preferences, kept on your server so a change on one
+  reaches the other. Text and quotes sets the size of the app's text and of a quote, the line height and length of a quote, a typeface for each
+  language, and which separators split "Pratchett & Gaiman" into two people (a book with two authors now shows a pill for each). Colours names
+  and re-shades the six quote colours and hides the ones you do not use. Sections chooses which of Library, Catalogue, Quotes and Anthologies
+  show at the bottom, and how long the Bin keeps things. Daily review sets cards a day, what they are drawn from, how hard the questions are
+  and the schedule. They work without a server too, and go up when it is reachable.
+- Bengali: the app can be read in Bengali (Settings, Language), or follow the phone's language. It uses the same Bengali as the web app, and
+  any language or correction you add on the server (its Locales folder) reaches the phone. A line with no translation shows in English.
+- Account: a page for your picture and name, changing your password (a wrong current password says so, and does not unpair the phone),
+  Pushover notifications and the widget key (shown once when it is made).
+- Context around a quote: how many lines of the book or film show before and after a quote, for everything (Settings) and for one work (its
+  menu), with the choice of what to do to quotes you had already adjusted.
 - A page for every person and character: press a pill on a quote, a work's author in its header, or a row of a film's cast, and their page opens
   with the portrait (press it to see it big), dates, bio, links by provider (IMDb, Wikipedia and the rest), signature, other spellings, the
   works they are credited on, the parts they played and the quotes that name them. A character's page names who played them in each adaptation

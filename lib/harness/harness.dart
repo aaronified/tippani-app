@@ -6,6 +6,9 @@ import 'package:http/http.dart' as http;
 import '../checks/checks_service.dart';
 import '../imports/import_picker.dart';
 import '../imports/import_service.dart';
+import '../account/account_service.dart';
+import '../account/preferences.dart';
+import '../l10n/l10n.dart';
 import '../people/people_directory.dart';
 import '../people/people_service.dart';
 import '../quiz/quiz.dart';
@@ -101,6 +104,11 @@ class Harness {
     this.imports,
     this.checks,
     this.importPicker = const SystemImportPicker(),
+    this.prefs,
+    this.l10n,
+    this.localeFetch,
+    this.account,
+    this.contextRules,
     this.peopleService,
     this.quiz,
     this.details,
@@ -157,6 +165,22 @@ class Harness {
   /// Choosing a file to import with the system's picker.
   final ImportPicker importPicker;
 
+  /// The account's preferences (text size, colours, sections, language...), kept in step with the server's. Null
+  /// in a test about something else.
+  final PreferencesSource? prefs;
+
+  /// The app's words in the language the reader chose. Null in a test about something else (English).
+  final L10n? l10n;
+
+  /// Reads the server's language files (`GET /locales`).
+  final Future<Object?> Function()? localeFetch;
+
+  /// The reader's account on the server: avatar, password, notifications, widget key.
+  final AccountService? account;
+
+  /// How much of a quote's source is shown around it, for everything and for one work.
+  final ContextRules? contextRules;
+
   /// The pages of people and characters (and edits to a person) from the paired server.
   final PeopleService? peopleService;
 
@@ -207,6 +231,9 @@ class Harness {
         : PullSync(library, controller, log: appLog);
     final covers = CoverCache(controller);
     final directory = PairedPeopleDirectory(controller, covers);
+    final prefs = PairedPreferences(controller, settings);
+    final l10n = L10n()..use(prefs.prefs.locale);
+    prefs.addListener(() => l10n.use(prefs.prefs.locale));
     return Harness(
       files: files,
       log: appLog,
@@ -241,6 +268,12 @@ class Harness {
       directory: directory,
       imports: PairedImportService(controller),
       checks: PairedChecksService(controller),
+      prefs: prefs,
+      l10n: l10n,
+      localeFetch: () =>
+          controller.withClient<Object?>((c) => c.getJson('/locales')),
+      account: PairedAccount(controller),
+      contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
@@ -269,6 +302,10 @@ class Harness {
     ImportService? imports,
     ChecksService? checks,
     ImportPicker? importPicker,
+    PreferencesSource? prefs,
+    L10n? l10n,
+    AccountService? account,
+    ContextRules? contextRules,
     PeopleService? peopleService,
     QuizService? quiz,
     WorkDetailsSource? details,
@@ -317,6 +354,10 @@ class Harness {
       imports: imports,
       checks: checks,
       importPicker: importPicker ?? const SystemImportPicker(),
+      prefs: prefs,
+      l10n: l10n,
+      account: account,
+      contextRules: contextRules,
       peopleService: peopleService,
       quiz: quiz,
       details: details,
@@ -332,6 +373,20 @@ class Harness {
 
   /// Opens the log's run and notes the version; called once from `main`.
   Future<void> start() => log.start(version: appVersion, files: files);
+
+  /// Reads the account's preferences and the server's language files again (the app does this as it opens, and
+  /// after pairing). A server that cannot be reached leaves what the phone holds.
+  Future<void> refreshAccountSettings() async {
+    await prefs?.refresh();
+    final fetch = localeFetch;
+    if (l10n != null && fetch != null) {
+      try {
+        l10n!.useServerFiles(await fetch());
+      } on Object {
+        // the languages the app ships are enough
+      }
+    }
+  }
 }
 
 class _NoPicker implements BackupPicker {

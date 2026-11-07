@@ -93,6 +93,38 @@ class FakeServer {
   /// Every DELETE of a work or quote answers with this status instead (409, 500...), when set.
   int? failDeletesWith;
 
+  /// The account's preferences as `GET /auth/me` answers them. `PUT /auth/me/preferences` merges into it.
+  final prefs = <String, Object?>{};
+
+  /// Every `PUT /auth/me/preferences` body accepted, in order.
+  final prefWrites = <Map<String, Object?>>[];
+
+  /// Times the preferences were reset.
+  int prefResets = 0;
+
+  /// The avatar file name ('' for none), the password, and the last widget key made.
+  String avatar = '';
+  String password = 'oldpassword';
+  String? widgetKeyAt;
+  final notify = <String, Object?>{
+    'pushover_user': '',
+    'on_daily': false,
+    'on_import': false,
+    'on_fetch': false,
+    'on_backup': false,
+  };
+  bool hasAppToken = false;
+  int notifyTests = 0;
+
+  /// The files `GET /locales` serves: code to `{keys, reserved}`.
+  final localeFiles = <String, Map<String, Object?>>{};
+
+  /// The reader's context rules: the global pair, and per work (`book/3`).
+  final contextRules = <String, Map<String, int?>>{
+    'global': {'before': null, 'after': null},
+  };
+  final contextWrites = <String>[];
+
   /// What `GET /review/daily` answers (the whole body).
   Map<String, Object?> reviewDaily = {'items': <Object?>[]};
 
@@ -674,7 +706,132 @@ class FakeServer {
       }
     }
     if (r.method == 'GET' && path == '/auth/me') {
-      return _json({'id': 1, 'username': username, 'is_admin': admin});
+      return _json({
+        'id': 1,
+        'username': username,
+        'is_admin': admin,
+        'preferences': prefs,
+        'avatar_path': avatar,
+        'must_change_password': false,
+      });
+    }
+    if (r.method == 'PUT' && path == '/auth/me') {
+      final body = jsonDecode(r.body) as Map;
+      username = '${body['username']}';
+      return _json({'username': username});
+    }
+    if (r.method == 'PUT' && path == '/auth/me/preferences') {
+      final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+      final daily = body['srDaily'];
+      if (daily is int && daily != 0 && (daily < 5 || daily > 20)) {
+        return _json({'error': 'srDaily must be between 5 and 20'}, 400);
+      }
+      final merged = {...prefs, ...body};
+      if (merged['hideLibrary'] == true &&
+          merged['hideCatalogue'] == true &&
+          merged['hideQuotes'] == true) {
+        return _json({
+          'error': 'at least one of the Library, the Catalogue or Quotes has to stay visible — turn another one on first',
+        }, 400);
+      }
+      prefWrites.add(body);
+      prefs.addAll(body);
+      return _json({'ok': true});
+    }
+    if (r.method == 'POST' && path == '/auth/me/preferences/reset') {
+      final keys = (jsonDecode(r.body) as Map)['keys'];
+      if (keys is! List || keys.isEmpty || keys.length > 100) {
+        return _json({
+          'error': 'keys must name between 1 and 100 preferences',
+        }, 400);
+      }
+      prefResets++;
+      prefs.removeWhere((k, _) => keys.contains(k));
+      return _json({'ok': true});
+    }
+    if (r.method == 'POST' && path == '/auth/me/avatar') {
+      avatar = '00000000000000a1.png';
+      return _json({'avatar_path': avatar});
+    }
+    if (r.method == 'DELETE' && path == '/auth/me/avatar') {
+      avatar = '';
+      return _json({'avatar_path': ''});
+    }
+    if (r.method == 'POST' && path == '/auth/password') {
+      final body = jsonDecode(r.body) as Map;
+      // like the real route, a wrong current password is a 401
+      if (body['current'] != password) {
+        return _json({'error': 'current password is incorrect'}, 401);
+      }
+      if ('${body['new']}'.length < 8) {
+        return _json({
+          'error': 'new password must be at least 8 characters',
+        }, 400);
+      }
+      password = '${body['new']}';
+      return _json({'ok': true});
+    }
+    if (r.method == 'GET' && path == '/auth/notifications') {
+      return _json({
+        'settings': notify,
+        'has_app_token': hasAppToken,
+        'server_app_token': false,
+      });
+    }
+    if (r.method == 'PUT' && path == '/auth/notifications') {
+      final body = jsonDecode(r.body) as Map;
+      for (final e in body.entries) {
+        if (e.key == 'app_token') {
+          hasAppToken = '${e.value}'.isNotEmpty;
+        } else {
+          notify['${e.key}'] = e.value;
+        }
+      }
+      return _json({'ok': true});
+    }
+    if (r.method == 'POST' && path == '/auth/notifications/test') {
+      notifyTests++;
+      return _json({'ok': true});
+    }
+    if (path == '/auth/widget-key') {
+      if (r.method == 'GET') {
+        return _json(
+          widgetKeyAt == null
+              ? {'exists': false}
+              : {'exists': true, 'created_at': widgetKeyAt},
+        );
+      }
+      if (r.method == 'POST') {
+        widgetKeyAt = '2026-11-07 12:00:00';
+        return _json({'key': 'wk_live_abc123'});
+      }
+      if (r.method == 'DELETE') {
+        widgetKeyAt = null;
+        return _json({'ok': true});
+      }
+    }
+    if (r.method == 'GET' && path == '/locales') {
+      return _json({
+        'builtin': ['en', 'bn'],
+        'files': localeFiles,
+      });
+    }
+    final rule = RegExp(r'^/context-rules/(global|(book|movie)/(\d+))$')
+        .firstMatch(path);
+    if (rule != null) {
+      final key = rule[1]!;
+      if (r.method == 'GET') {
+        return _json(contextRules[key] ?? {'before': null, 'after': null});
+      }
+      if (r.method == 'PUT') {
+        final body = jsonDecode(r.body) as Map;
+        contextRules[key] = {
+          'before': body['before'] as int?,
+          'after': body['after'] as int?,
+        };
+        contextWrites.add('$key ${r.body}');
+        return _json(key == 'global' ? {} : {'changed': 2});
+      }
     }
     if (r.method == 'GET' && path == '/auth/devices') {
       return _json({

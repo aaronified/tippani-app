@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../account/prefs_effects.dart';
 import '../capture/page_adjuster.dart';
 import '../capture/photo_source.dart';
 import '../capture/text_recogniser.dart';
@@ -9,16 +10,30 @@ import '../library/models.dart';
 import 'capture_screen.dart';
 import 'voice_screen.dart';
 import 'work_form_screen.dart';
+import '../l10n/l10n.dart';
 
 /// The colour a quote's name stands for, drawn in the theme's own tone so it works in light and dark.
-Color quoteColour(String name) => switch (name) {
-  'green' => const Color(0xFF6BAA75),
-  'blue' => const Color(0xFF5B8FD6),
-  'pink' => const Color(0xFFD97BA6),
-  'orange' => const Color(0xFFE59A4A),
-  'purple' => const Color(0xFF9A7BD6),
-  _ => const Color(0xFFE5C34A),
-};
+Color quoteColour(String name) {
+  final own = PrefsEffects.current.colourHex(name);
+  final parsed = own.length == 7 && own.startsWith('#')
+      ? int.tryParse(own.substring(1), radix: 16)
+      : null;
+  if (parsed != null) return Color(0xFF000000 | parsed);
+  return switch (name) {
+    'green' => const Color(0xFF6BAA75),
+    'blue' => const Color(0xFF5B8FD6),
+    'pink' => const Color(0xFFD97BA6),
+    'orange' => const Color(0xFFE59A4A),
+    'purple' => const Color(0xFF9A7BD6),
+    _ => const Color(0xFFE5C34A),
+  };
+}
+
+/// What a colour is called: the name the reader gave it in Settings, or its own.
+String quoteColourName(String token) {
+  final own = PrefsEffects.current.colourName(token);
+  return own.isNotEmpty ? own : token;
+}
 
 /// Adds a quote, or changes one. Pops `true` when something was saved or deleted.
 class QuoteFormScreen extends StatefulWidget {
@@ -207,18 +222,18 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete this quote?'),
-        content: const Text(
-          'It is removed from this phone. This cannot be undone.',
+        title: Text(context.tr('Delete this quote?')),
+        content: Text(
+          context.tr('It is removed from this phone. This cannot be undone.'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep it'),
+            child: Text(context.tr('Keep it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.tr('Delete')),
           ),
         ],
       ),
@@ -237,13 +252,13 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
         actions: [
           if (editing)
             IconButton(
-              tooltip: 'Delete',
+              tooltip: context.tr('Delete'),
               icon: const Icon(Icons.delete_outline),
               onPressed: _delete,
             ),
           TextButton(
             onPressed: _saving ? null : _save,
-            child: const Text('Save'),
+            child: Text(context.tr('Save')),
           ),
         ],
       ),
@@ -262,8 +277,8 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             minLines: 3,
             maxLines: 10,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'The words',
+            decoration: InputDecoration(
+              labelText: context.tr('The words'),
               alignLabelWithHint: true,
             ),
           ),
@@ -275,12 +290,12 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
               OutlinedButton.icon(
                 onPressed: _scan,
                 icon: const Icon(Icons.document_scanner_outlined),
-                label: const Text('Scan a page'),
+                label: Text(context.tr('Scan a page')),
               ),
               OutlinedButton.icon(
                 onPressed: _speak,
                 icon: const Icon(Icons.mic_none),
-                label: const Text('Speak'),
+                label: Text(context.tr('Speak')),
               ),
             ],
           ),
@@ -288,11 +303,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           DropdownButtonFormField<int?>(
             initialValue: _works.any((w) => w.id == _workId) ? _workId : null,
             isExpanded: true,
-            decoration: const InputDecoration(labelText: 'From'),
+            decoration: InputDecoration(labelText: context.tr('From')),
             items: [
-              const DropdownMenuItem<int?>(
+              DropdownMenuItem<int?>(
                 value: null,
-                child: Text('No work (a standalone quote)'),
+                child: Text(context.tr('No work (a standalone quote)')),
               ),
               for (final w in _works)
                 DropdownMenuItem<int?>(
@@ -310,7 +325,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             child: TextButton.icon(
               onPressed: _newWork,
               icon: const Icon(Icons.add),
-              label: const Text('New work'),
+              label: Text(context.tr('New work')),
             ),
           ),
           if (_workId == null && _boards.isNotEmpty) ...[
@@ -319,11 +334,11 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   ? _boardId
                   : null,
               isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Board'),
+              decoration: InputDecoration(labelText: context.tr('Board')),
               items: [
-                const DropdownMenuItem<int?>(
+                DropdownMenuItem<int?>(
                   value: null,
-                  child: Text('No board'),
+                  child: Text(context.tr('No board')),
                 ),
                 for (final b in _boards)
                   DropdownMenuItem<int?>(value: b.id, child: Text(b.name)),
@@ -335,7 +350,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           TextField(
             controller: _speaker,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(labelText: 'Who said it'),
+            decoration: InputDecoration(labelText: context.tr('Who said it')),
           ),
           const SizedBox(height: 12),
           Row(
@@ -364,13 +379,13 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             controller: _translation,
             minLines: 1,
             maxLines: 6,
-            decoration: const InputDecoration(labelText: 'Translation'),
+            decoration: InputDecoration(labelText: context.tr('Translation')),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _language,
-            decoration: const InputDecoration(
-              labelText: 'Language of the words',
+            decoration: InputDecoration(
+              labelText: context.tr('Language of the words'),
             ),
           ),
           const SizedBox(height: 12),
@@ -379,14 +394,14 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             minLines: 1,
             maxLines: 6,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(labelText: 'Your note'),
+            decoration: InputDecoration(labelText: context.tr('Your note')),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _tags,
-            decoration: const InputDecoration(
-              labelText: 'Tags',
-              helperText: 'Separated by commas.',
+            decoration: InputDecoration(
+              labelText: context.tr('Tags'),
+              helperText: context.tr('Separated by commas.'),
             ),
           ),
           const SizedBox(height: 16),
@@ -394,18 +409,19 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             spacing: 8,
             children: [
               for (final c in quoteColors)
-                ChoiceChip(
-                  key: ValueKey('colour-$c'),
-                  label: Text(c),
-                  avatar: CircleAvatar(backgroundColor: quoteColour(c)),
-                  selected: _color == c,
-                  onSelected: (_) => setState(() => _color = c),
-                ),
+                if (c == _color || !PrefsEffects.current.colourHidden(c))
+                  ChoiceChip(
+                    key: ValueKey('colour-$c'),
+                    label: Text(quoteColourName(c)),
+                    avatar: CircleAvatar(backgroundColor: quoteColour(c)),
+                    selected: _color == c,
+                    onSelected: (_) => setState(() => _color = c),
+                  ),
             ],
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Favourite'),
+            title: Text(context.tr('Favourite')),
             value: _favourite,
             onChanged: (v) => setState(() => _favourite = v),
           ),

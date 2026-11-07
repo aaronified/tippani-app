@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 
 import '../api/api_client.dart';
+import '../account/prefs_effects.dart';
 import '../app_controller.dart';
 import '../library/models.dart';
 import '../library/quote_chips.dart';
@@ -49,7 +50,7 @@ abstract class SharePeopleSource {
 List<String> splitCredits(String credit) {
   final seen = <String>{};
   final out = <String>[];
-  for (final part in credit.split(RegExp(r'\s*(?:,|;|&|\band\b)\s*'))) {
+  for (final part in credit.split(PrefsEffects.creditPattern())) {
     final n = part.trim();
     if (n.isNotEmpty && seen.add(n.toLowerCase())) out.add(n);
   }

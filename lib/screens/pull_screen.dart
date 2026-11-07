@@ -4,6 +4,7 @@ import '../api/api_client.dart';
 import '../sync/auto_sync.dart';
 import '../sync/pull_sync.dart';
 import 'conflicts_screen.dart';
+import '../l10n/l10n.dart';
 
 String _count(int n, String noun) => '$n ${n == 1 ? noun : '${noun}s'}';
 
@@ -111,7 +112,7 @@ class PullScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sync with server')),
+      appBar: AppBar(title: Text(context.tr('Sync with server'))),
       body: ListenableBuilder(
         listenable: auto,
         builder: (context, _) {
@@ -126,9 +127,11 @@ class PullScreen extends StatelessWidget {
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Sync automatically'),
-                subtitle: const Text(
-                  'A few seconds after you change something, and once a day (when the app opens, or the network comes back)',
+                title: Text(context.tr('Sync automatically')),
+                subtitle: Text(
+                  context.tr(
+                    'A few seconds after you change something, and once a day (when the app opens, or the network comes back)',
+                  ),
                 ),
                 value: auto.enabled,
                 onChanged: auto.setEnabled,
@@ -139,11 +142,15 @@ class PullScreen extends StatelessWidget {
               else
                 FilledButton(
                   onPressed: auto.syncNow,
-                  child: const Text('Sync now'),
+                  child: Text(context.tr('Sync now')),
                 ),
               const SizedBox(height: 16),
               if (auto.lastSynced != null)
-                Text('Last synced ${_when(auto.lastSynced!)}.'),
+                Text(
+                  context.tr('Last synced {when}.', {
+                    'when': _when(auto.lastSynced!),
+                  }),
+                ),
               if (n > 0) ...[
                 const SizedBox(height: 8),
                 FilledButton.tonal(

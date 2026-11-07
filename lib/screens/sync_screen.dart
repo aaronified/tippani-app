@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
 import '../sync/push_sync.dart';
+import '../l10n/l10n.dart';
 
 /// What a push did, in plain words, for the screen. Counts and the phone's own item numbers only: it never
 /// repeats what anything said.
@@ -121,12 +122,14 @@ class _SyncScreenState extends State<SyncScreen> {
     final p = _pending;
     final nothing = p != null && p.works == 0 && p.quotes == 0;
     return Scaffold(
-      appBar: AppBar(title: const Text('Send library to server')),
+      appBar: AppBar(title: Text(context.tr('Send library to server'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Sends the works and quotes that are only on this phone to your Tippani server. It only adds: nothing on the server is changed or deleted, and what is already there is not sent again.',
+          Text(
+            context.tr(
+              'Sends the works and quotes that are only on this phone to your Tippani server. It only adds: nothing on the server is changed or deleted, and what is already there is not sent again.',
+            ),
           ),
           const SizedBox(height: 16),
           if (p == null)
@@ -146,7 +149,7 @@ class _SyncScreenState extends State<SyncScreen> {
           ] else
             FilledButton(
               onPressed: p == null || nothing ? null : _send,
-              child: const Text('Send to server'),
+              child: Text(context.tr('Send to server')),
             ),
           if (_result != null) ...[
             const SizedBox(height: 24),

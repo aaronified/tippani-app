@@ -79,6 +79,7 @@ flutter:
     - assets/tessdata_config.json
     - assets/tessdata/
     - assets/share/
+    - assets/l10n/
 
   # Inter for the interface and Source Serif 4 for the words of a quote, both SIL OFL (licences beside them).
   # They are variable fonts: the weight is set from the axis.

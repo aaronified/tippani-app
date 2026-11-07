@@ -8,6 +8,7 @@ import '../capture/recognised_page.dart';
 import '../capture/text_recogniser.dart';
 import 'adjust_screen.dart';
 import 'page_selector.dart';
+import '../l10n/l10n.dart';
 
 /// Text read from a page, handed back to the quote form: [text] as the reader corrected it, and how it was
 /// captured ([source]: "ocr").
@@ -137,14 +138,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan a page')),
+      appBar: AppBar(title: Text(context.tr('Scan a page'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           DropdownButtonFormField<String>(
             initialValue: _language,
-            decoration: const InputDecoration(
-              labelText: 'Language of the page',
+            decoration: InputDecoration(
+              labelText: context.tr('Language of the page'),
             ),
             items: [
               for (final e in captureLanguages.entries)
@@ -162,12 +163,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
               FilledButton.icon(
                 onPressed: _busy ? null : () => _get(_photos.take),
                 icon: const Icon(Icons.photo_camera_outlined),
-                label: const Text('Take a photo'),
+                label: Text(context.tr('Take a photo')),
               ),
               FilledButton.tonalIcon(
                 onPressed: _busy ? null : () => _get(_photos.choose),
                 icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Choose a picture'),
+                label: Text(context.tr('Choose a picture')),
               ),
             ],
           ),
@@ -189,7 +190,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
             const SizedBox(height: 16),
             const LinearProgressIndicator(),
             const SizedBox(height: 8),
-            const Text('Reading the page on this phone…'),
+            Text(context.tr('Reading the page on this phone…')),
           ],
           if (_problem != null) ...[
             const SizedBox(height: 16),
@@ -211,16 +212,18 @@ class _CaptureScreenState extends State<CaptureScreen> {
               minLines: 5,
               maxLines: 14,
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                labelText: 'The text, as read',
-                helperText: 'Correct anything it got wrong, and delete what you do not want to keep.',
+              decoration: InputDecoration(
+                labelText: context.tr('The text, as read'),
+                helperText: context.tr(
+                  'Correct anything it got wrong, and delete what you do not want to keep.',
+                ),
                 alignLabelWithHint: true,
               ),
             ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _text.text.trim().isEmpty ? null : _use,
-              child: const Text('Use this text'),
+              child: Text(context.tr('Use this text')),
             ),
           ],
         ],
