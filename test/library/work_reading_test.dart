@@ -186,15 +186,14 @@ void main() {
       );
     });
 
-    testWidgets(
-      'switching reading order off keeps the newest first and drops the headings',
-      (tester) async {
-        await open(tester);
-        await tester.tap(find.text('In reading order'));
-        await tester.pumpAndSettle();
-        expect(heading('Ch 2'), findsNothing);
-      },
-    );
+    testWidgets('choosing no grouping drops the headings', (tester) async {
+      await open(tester);
+      await tester.tap(find.byKey(const ValueKey('work-group')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('No grouping').last);
+      await tester.pumpAndSettle();
+      expect(heading('Ch 2'), findsNothing);
+    });
 
     testWidgets('the favourites chip hides the rest', (tester) async {
       await open(tester);

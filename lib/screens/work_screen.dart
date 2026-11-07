@@ -69,7 +69,8 @@ class _WorkScreenState extends State<WorkScreen> {
   List<Quote> _quotes = const [];
   bool _loaded = false;
   bool _onlyFavourites = false;
-  bool _byChapter = true;
+  QuoteOrder _order = QuoteOrder.reading;
+  QuoteGroup _group = QuoteGroup.chapter;
 
   /// The quotes selected (by id); empty: not selecting.
   final _picked = <int>{};
@@ -165,15 +166,13 @@ class _WorkScreenState extends State<WorkScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
-                title: Text(context.tr('app.work.from_my_photos')),
+                title: const Text('From my photos'),
                 onTap: () => Navigator.pop(context, 'photos'),
               ),
               ListTile(
                 leading: const Icon(Icons.travel_explore_rounded),
-                title: Text(context.tr('app.work.find_one_online')),
-                subtitle: Text(
-                  context.tr('app.work.search_by_title_author_or_isbn'),
-                ),
+                title: const Text('Find one online'),
+                subtitle: const Text('Search by title, author or ISBN'),
                 onTap: () => Navigator.pop(context, 'online'),
               ),
             ],
@@ -199,9 +198,7 @@ class _WorkScreenState extends State<WorkScreen> {
         path = await (widget.photos ?? DevicePhotos()).choose();
       } on Object {
         messenger.showSnackBar(
-          SnackBar(
-            content: Text(tr('app.work.the_picture_could_not_be_opened')),
-          ),
+          SnackBar(content: Text(tr('The picture could not be opened.'))),
         );
         return;
       }
@@ -213,7 +210,9 @@ class _WorkScreenState extends State<WorkScreen> {
     messenger.clearSnackBars();
     if (name == null) {
       messenger.showSnackBar(
-        SnackBar(content: Text(tr('app.work.the_server_did_not_take_that'))),
+        SnackBar(
+          content: Text(tr('The server did not take that picture as a cover.')),
+        ),
       );
       return;
     }
@@ -275,24 +274,20 @@ class _WorkScreenState extends State<WorkScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(
-          context.tr('quotes.board.delete.confirm.title', {
-            'name': _work!.title,
-          }),
-        ),
+        title: Text(context.tr('Delete {name}?', {'name': _work!.title})),
         content: Text(
           n == 0
-              ? context.tr('app.work.it_is_removed_from_this_phone')
+              ? 'It is removed from this phone.'
               : 'Its $n ${n == 1 ? 'quote is' : 'quotes are'} deleted with it. This cannot be undone.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('app.anthologies.keep_it')),
+            child: Text(context.tr('Keep it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('common.action.delete.label')),
+            child: Text(context.tr('Delete')),
           ),
         ],
       ),
@@ -301,6 +296,50 @@ class _WorkScreenState extends State<WorkScreen> {
     await widget.store.deleteWork(widget.workId);
     if (mounted) Navigator.of(context).pop(true);
   }
+
+  /// What a section is called: a chapter by its name, a colour by the reader's name for it, and the "none" of the
+  /// rest in words. An unnamed chapter has no heading.
+  String _heading(String key) {
+    switch (_group) {
+      case QuoteGroup.chapter || QuoteGroup.none:
+        return key;
+      case QuoteGroup.colour:
+        return quoteColourName(key);
+      case QuoteGroup.tag:
+        return key.isEmpty ? context.tr('No tag') : '#$key';
+      case QuoteGroup.speaker:
+        return key.isEmpty ? context.tr('Nobody named') : key;
+      case QuoteGroup.month:
+        return MaterialLocalizations.of(context).formatMonthYear(
+          DateTime(int.parse(key.substring(0, 4)), int.parse(key.substring(5))),
+        );
+    }
+  }
+
+  Widget _menuChip<T extends Enum>({
+    required Key key,
+    required String title,
+    required List<T> values,
+    required T value,
+    required String Function(T) label,
+    required ValueChanged<T> onPicked,
+  }) => PopupMenuButton<T>(
+    key: key,
+    tooltip: title,
+    onSelected: onPicked,
+    itemBuilder: (_) => [
+      for (final v in values)
+        CheckedPopupMenuItem<T>(
+          value: v,
+          checked: v == value,
+          child: Text(label(v)),
+        ),
+    ],
+    child: Chip(
+      label: Text('$title: ${label(value)}'),
+      visualDensity: VisualDensity.compact,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -319,7 +358,7 @@ class _WorkScreenState extends State<WorkScreen> {
       return Scaffold(
         appBar: AppBar(),
         body: Center(
-          child: Text(context.tr('app.work.this_work_is_no_longer_in')),
+          child: Text(context.tr('This work is no longer in the library.')),
         ),
       );
     }
@@ -332,7 +371,8 @@ class _WorkScreenState extends State<WorkScreen> {
     final shown = _onlyFavourites
         ? _quotes.where((q) => q.favorite).toList()
         : _quotes;
-    final ordered = _byChapter ? readingOrder(shown) : shown;
+    final ordered = orderQuotes(shown, _order);
+    final sections = sectionQuotes(ordered, _group);
     final chosen = [
       for (final q in _quotes)
         if (_picked.contains(q.id)) q,
@@ -358,7 +398,7 @@ class _WorkScreenState extends State<WorkScreen> {
               actions: [
                 if (w != null) ...[
                   IconButton(
-                    tooltip: context.tr('common.action.edit.label'),
+                    tooltip: context.tr('Edit'),
                     icon: const Icon(Icons.edit_outlined),
                     onPressed: _edit,
                   ),
@@ -391,32 +431,26 @@ class _WorkScreenState extends State<WorkScreen> {
                     itemBuilder: (_) => [
                       PopupMenuItem(
                         value: 'share',
-                        child: Text(
-                          context.tr('app.library.share_as_markdown'),
-                        ),
+                        child: Text(context.tr('Share as Markdown')),
                       ),
                       PopupMenuItem(
                         value: 'save',
-                        child: Text(
-                          context.tr('app.library.save_as_markdown_file'),
-                        ),
+                        child: Text(context.tr('Save as Markdown file')),
                       ),
                       if (w.serverId != null && CoverScope.of(context) != null)
                         PopupMenuItem(
                           value: 'cover',
-                          child: Text(context.tr('app.work.choose_a_cover')),
+                          child: Text(context.tr('Choose a cover')),
                         ),
                       if (w.serverId != null &&
                           ContextRulesScope.of(context)?.available == true)
                         PopupMenuItem(
                           value: 'context',
-                          child: Text(
-                            context.tr('app.work.context_around_its_quotes'),
-                          ),
+                          child: Text(context.tr('Context around its quotes')),
                         ),
                       PopupMenuItem(
                         value: 'delete',
-                        child: Text(context.tr('app.work.delete_work')),
+                        child: Text(context.tr('Delete work')),
                       ),
                     ],
                   ),
@@ -428,7 +462,7 @@ class _WorkScreenState extends State<WorkScreen> {
           : FloatingActionButton.extended(
               onPressed: _addQuote,
               icon: const Icon(Icons.add),
-              label: Text(context.tr('app.work.add_a_quote')),
+              label: Text(context.tr('Add a quote')),
             ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
@@ -473,15 +507,9 @@ class _WorkScreenState extends State<WorkScreen> {
                       ],
                       const SizedBox(height: 4),
                       Text(
-                        context.tr('app.work.n_x_x2_favourites_x3', {
-                          'n': _quotes.length,
-                          'x': _quotes.length == 1 ? 'quote' : 'quotes',
-                          'x2': chapters > 0
-                              ? ' · $chapters ${chapters == 1 ? 'chapter' : 'chapters'}'
-                              : '',
-                          'favourites': favourites,
-                          'x3': favourites == 1 ? 'favourite' : 'favourites',
-                        }),
+                        '${_quotes.length} ${_quotes.length == 1 ? 'quote' : 'quotes'}'
+                        '${chapters > 0 ? ' · $chapters ${chapters == 1 ? 'chapter' : 'chapters'}' : ''}'
+                        ' · $favourites ${favourites == 1 ? 'favourite' : 'favourites'}',
                         style: text.bodySmall,
                       ),
                       if (_quotes.isNotEmpty) ...[
@@ -492,24 +520,29 @@ class _WorkScreenState extends State<WorkScreen> {
                             FilledButton.tonalIcon(
                               onPressed: _read,
                               icon: const Icon(Icons.menu_book_outlined),
-                              label: Text(
-                                context.tr('anthologies.reader.label'),
-                              ),
+                              label: Text(context.tr('Read')),
                             ),
                             FilterChip(
-                              label: Text(
-                                context.tr('stats.overview.favourites.label'),
-                              ),
+                              label: Text(context.tr('Favourites')),
                               selected: _onlyFavourites,
                               onSelected: (v) =>
                                   setState(() => _onlyFavourites = v),
                             ),
-                            FilterChip(
-                              label: Text(
-                                context.tr('app.work.in_reading_order'),
-                              ),
-                              selected: _byChapter,
-                              onSelected: (v) => setState(() => _byChapter = v),
+                            _menuChip<QuoteOrder>(
+                              key: const ValueKey('work-order'),
+                              title: context.tr('Order'),
+                              values: QuoteOrder.values,
+                              value: _order,
+                              label: (v) => context.tr(v.label),
+                              onPicked: (v) => setState(() => _order = v),
+                            ),
+                            _menuChip<QuoteGroup>(
+                              key: const ValueKey('work-group'),
+                              title: context.tr('Group'),
+                              values: QuoteGroup.values,
+                              value: _group,
+                              label: (v) => context.tr(v.label),
+                              onPicked: (v) => setState(() => _group = v),
                             ),
                           ],
                         ),
@@ -525,28 +558,39 @@ class _WorkScreenState extends State<WorkScreen> {
                 if (_quotes.isEmpty)
                   Padding(
                     padding: EdgeInsets.all(16),
-                    child: Text(
-                      context.tr('app.work_read.no_quotes_from_this_work_yet'),
-                    ),
+                    child: Text(context.tr('No quotes from this work yet.')),
                   ),
                 if (_quotes.isNotEmpty && ordered.isEmpty)
                   Padding(
                     padding: EdgeInsets.all(16),
-                    child: Text(
-                      context.tr('app.work.no_favourites_in_this_work_yet'),
-                    ),
+                    child: Text(context.tr('No favourites in this work yet.')),
                   ),
-                if (_byChapter)
-                  for (final g in groupByChapter(ordered)) ...[
-                    if (g.name.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                        child: Text(g.name, style: text.titleMedium),
+                for (final s in sections) ...[
+                  if (_heading(s.key).isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                      child: Row(
+                        children: [
+                          if (_group == QuoteGroup.colour) ...[
+                            CircleAvatar(
+                              radius: 6,
+                              backgroundColor: quoteColour(s.key),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          Expanded(
+                            child: Text(
+                              _heading(s.key),
+                              style: text.titleMedium,
+                            ),
+                          ),
+                          if (_group != QuoteGroup.chapter)
+                            Text('${s.quotes.length}', style: text.labelMedium),
+                        ],
                       ),
-                    for (final q in g.quotes) _tile(q),
-                  ]
-                else
-                  for (final q in ordered) _tile(q),
+                    ),
+                  for (final q in s.quotes) _tile(q),
+                ],
               ],
             ),
     );
