@@ -22,10 +22,10 @@ class HomeScreen extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(context.tr('Tippani'), style: text.headlineMedium),
+            Text('Tippani', style: text.headlineMedium),
             const SizedBox(height: 8),
             if (url == null) ...[
-              Text(context.tr('Not connected to a server yet.')),
+              Text(context.tr('app.home.not_connected_to_a_server_yet')),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => Navigator.of(context).push(
@@ -33,7 +33,7 @@ class HomeScreen extends StatelessWidget {
                     builder: (_) => ConnectScreen(controller: controller),
                   ),
                 ),
-                child: Text(context.tr('Connect to your server')),
+                child: Text(context.tr('app.home.connect_to_your_server')),
               ),
             ] else ...[
               Text(url, style: text.titleMedium),
@@ -43,16 +43,14 @@ class HomeScreen extends StatelessWidget {
               if (controller.revoked) ...[
                 const SizedBox(height: 8),
                 Text(
-                  context.tr(
-                    'This phone was unpaired from the server. Pair it again to use your library.',
-                  ),
+                  context.tr('app.home.this_phone_was_unpaired_from_the'),
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
               const SizedBox(height: 8),
               if (controller.paired)
                 Text(
-                  context.tr('Paired as {name}.', {
+                  context.tr('app.home.paired_as_name', {
                     'name': controller.username ?? '',
                   }),
                 )
@@ -63,12 +61,12 @@ class HomeScreen extends StatelessWidget {
                       builder: (_) => PairScreen(controller: controller),
                     ),
                   ),
-                  child: Text(context.tr('Pair this phone')),
+                  child: Text(context.tr('app.home.pair_this_phone')),
                 ),
               const SizedBox(height: 8),
               OutlinedButton(
                 onPressed: controller.checking ? null : controller.refresh,
-                child: Text(context.tr('Check again')),
+                child: Text(context.tr('app.admin_update.check_again')),
               ),
             ],
           ],

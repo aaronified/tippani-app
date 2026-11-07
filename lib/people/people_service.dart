@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../api/server_call.dart';
 import '../app_controller.dart';
+import '../l10n/l10n.dart';
 
 /// One work a person is credited on (a book they wrote, a film they directed).
 class PersonCredit {
@@ -121,19 +122,19 @@ class PageLink {
 }
 
 /// The providers a link is recognised by, in the order the web lists them: a name for the chip.
-const _providers = <(String, String)>[
+final _providers = <(String, String)>[
   (r'(^|\.)imdb\.com$', 'IMDb'),
   (r'(^|\.)themoviedb\.org$', 'TMDB'),
   (r'(^|\.)thetvdb\.com$', 'TheTVDB'),
-  (r'(^|\.)letterboxd\.com$', 'Letterboxd'),
+  (r'(^|\.)letterboxd\.com$', tx('vocab.source.letterboxd.label')),
   (r'(^|\.)igdb\.com$', 'IGDB'),
-  (r'(^|\.)wikipedia\.org$', 'Wikipedia'),
-  (r'(^|\.)(fandom|wikia)\.com$', 'Fandom'),
-  (r'(^|\.)wikidata\.org$', 'Wikidata'),
-  (r'(^|\.)wikimedia\.org$', 'Wikimedia'),
-  (r'(^|\.)openlibrary\.org$', 'Open Library'),
-  (r'^books\.google\.[a-z.]+$', 'Google Books'),
-  (r'(^|\.)amazon\.[a-z.]+$', 'Amazon'),
+  (r'(^|\.)wikipedia\.org$', tx('vocab.source.wikipedia.label')),
+  (r'(^|\.)(fandom|wikia)\.com$', tx('vocab.source.fandom.label')),
+  (r'(^|\.)wikidata\.org$', tx('vocab.source.wikidata.label')),
+  (r'(^|\.)wikimedia\.org$', tx('vocab.source.wikimedia.label')),
+  (r'(^|\.)openlibrary\.org$', tx('vocab.source.openlibrary.label')),
+  (r'^books\.google\.[a-z.]+$', tx('vocab.source.google.label')),
+  (r'(^|\.)amazon\.[a-z.]+$', tx('vocab.source.amazon.label')),
 ];
 
 /// The stored links field (free text, an address per line, an optional ` | name` after it) as chips: a recognised
@@ -397,7 +398,9 @@ class PairedPeopleService implements PeopleService {
   Future<String> fetch(int id) => serverCall<String>(_controller, (c) async {
     final r = await c.postJson('/people/id/$id/fetch', const {});
     final p = r is Map ? r['person'] : null;
-    return p is Map ? 'Fetched what the server could find.' : 'Done.';
+    return p is Map
+        ? tx('app.people_service.fetched_what_the_server_could_find')
+        : 'Done.';
   });
 
   @override

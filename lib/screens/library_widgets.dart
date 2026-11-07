@@ -152,8 +152,8 @@ class QuoteTile extends StatelessWidget {
                   children: [
                     IconButton(
                       tooltip: quote.favorite
-                          ? 'Remove from favourites'
-                          : 'Favourite',
+                          ? context.tr('common.action.favourite.off.label')
+                          : context.tr('common.field.favourite.label'),
                       visualDensity: VisualDensity.compact,
                       icon: Icon(
                         quote.favorite
@@ -167,7 +167,7 @@ class QuoteTile extends StatelessWidget {
                     ),
                     if (onAddToAnthology != null)
                       IconButton(
-                        tooltip: 'Add to anthology',
+                        tooltip: context.tr('common.action.anthology.label'),
                         visualDensity: VisualDensity.compact,
                         icon: Icon(
                           Icons.collections_bookmark_outlined,
@@ -465,13 +465,13 @@ Future<void> runExport(
   final messenger = ScaffoldMessenger.of(context);
   if (md.trim().isEmpty) {
     messenger.showSnackBar(
-      SnackBar(content: Text(tr('There are no quotes to export yet.'))),
+      SnackBar(content: Text(tr('app.library.there_are_no_quotes_to_export'))),
     );
     return;
   }
   try {
     if (kind == ExportKind.share) {
-      await share(md, 'Tippani quotes');
+      await share(md, context.tr('app.library.tippani_quotes'));
     } else {
       final saved = await picker.save(
         exportFileName(work),
@@ -479,13 +479,19 @@ Future<void> runExport(
       );
       messenger.showSnackBar(
         SnackBar(
-          content: Text(saved ? tr('Saved.') : tr('Nothing was saved.')),
+          content: Text(
+            saved
+                ? tr('account.notify.saved')
+                : tr('app.library.nothing_was_saved'),
+          ),
         ),
       );
     }
   } on Object {
     messenger.showSnackBar(
-      SnackBar(content: Text(tr('The export could not be written.'))),
+      SnackBar(
+        content: Text(tr('app.library.the_export_could_not_be_written')),
+      ),
     );
   }
 }

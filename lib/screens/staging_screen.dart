@@ -5,6 +5,7 @@ import '../imports/import_service.dart';
 import '../library/models.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
+import '../l10n/l10n.dart';
 
 String _kindWord(String kind) => switch (kind) {
   'book' => 'book',
@@ -25,9 +26,9 @@ String sourceName(String source) {
     }
   }
   return switch (source) {
-    'kindle_clippings' => 'My Clippings',
+    'kindle_clippings' => tx('import.source.kindle-clippings.title'),
     'readest_json' => 'Readest',
-    'kindle_notebook' => 'Kindle notebook',
+    'kindle_notebook' => tx('import.source.kindle-notebook.title'),
     'imdb' => 'IMDb quotes',
     _ => source.isEmpty ? 'Import' : source.replaceAll('_', ' '),
   };
@@ -127,7 +128,7 @@ class _StagingScreenState extends State<StagingScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
@@ -155,7 +156,7 @@ class _StagingScreenState extends State<StagingScreen> {
       builder: (context) => PopScope(
         canPop: false,
         child: AlertDialog(
-          title: const Text('Approving'),
+          title: Text(context.tr('app.staging.approving')),
           content: ValueListenableBuilder<(int, int)>(
             valueListenable: progress,
             builder: (context, p, _) => Column(
@@ -166,8 +167,8 @@ class _StagingScreenState extends State<StagingScreen> {
                 const SizedBox(height: 12),
                 Text(
                   p.$2 == 0
-                      ? 'Waiting for the server…'
-                      : 'Done ${p.$1} of ${p.$2}',
+                      ? context.tr('app.staging.waiting_for_the_server')
+                      : tx('app.staging.done_x_of_x2', {'x': p.$1, 'x2': p.$2}),
                 ),
               ],
             ),
@@ -187,7 +188,11 @@ class _StagingScreenState extends State<StagingScreen> {
     if (mounted) Navigator.of(context, rootNavigator: true).pop();
     if (!mounted) return;
     if (error != null || out == null || !out.ok) {
-      _say(error ?? out?.message ?? 'The server could not add those quotes.');
+      _say(
+        error ??
+            out?.message ??
+            context.tr('app.staging.the_server_could_not_add_those'),
+      );
       await _load();
       return;
     }
@@ -207,15 +212,15 @@ class _StagingScreenState extends State<StagingScreen> {
   Future<void> _discard(StagedSelector sel, int n) async {
     if (!await _confirm(
       n == 1 ? 'Discard this quote?' : 'Discard $n quotes?',
-      'They leave the queue without ever entering your library.',
-      'Discard',
+      context.tr('staging.discard.confirm.body'),
+      context.tr('common.unsaved.discard.label'),
     )) {
       return;
     }
     await _run(() async {
       final gone = await widget.service.discard(sel);
       _picked.clear();
-      if (mounted) _say('Discarded $gone');
+      if (mounted) _say(tx('app.staging.discarded_gone', {'gone': gone}));
       await _load();
     });
   }
@@ -302,11 +307,11 @@ class _StagingScreenState extends State<StagingScreen> {
     final shown = _quotes.length;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pending import'),
+        title: Text(context.tr('shell.drawer.pending.label')),
         actions: [
           if (pending > 0)
             PopupMenuButton<String>(
-              tooltip: 'More',
+              tooltip: context.tr('settings.appearance.contrast.more.label'),
               onSelected: (v) async {
                 if (v == 'approve') {
                   await _approve(
@@ -329,12 +334,20 @@ class _StagingScreenState extends State<StagingScreen> {
                 PopupMenuItem(
                   value: 'approve',
                   child: Text(
-                    _batch > 0 ? 'Approve this file' : 'Approve all $pending',
+                    _batch > 0
+                        ? context.tr('app.staging.approve_this_file')
+                        : tx('app.staging.approve_all_pending', {
+                            'pending': pending,
+                          }),
                   ),
                 ),
                 PopupMenuItem(
                   value: 'discard',
-                  child: Text(_batch > 0 ? 'Discard this file' : 'Discard all'),
+                  child: Text(
+                    _batch > 0
+                        ? context.tr('app.staging.discard_this_file')
+                        : context.tr('staging.discard-all.label'),
+                  ),
                 ),
               ],
             ),
@@ -357,7 +370,7 @@ class _StagingScreenState extends State<StagingScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _load,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('common.source.retry')),
                     ),
                   ],
                 ),
@@ -366,10 +379,10 @@ class _StagingScreenState extends State<StagingScreen> {
           : _loading
           ? const Center(child: CircularProgressIndicator())
           : pending == 0 && groups.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.inbox_outlined,
-              title: 'Nothing waiting.',
-              hint: 'An import lands here first and stays until you say yes to it.',
+              title: context.tr('app.staging.nothing_waiting'),
+              hint: context.tr('app.staging.an_import_lands_here_first_and'),
             )
           : ListView(
               padding: EdgeInsets.fromLTRB(16, 8, 16, hasSelection ? 96 : 32),
@@ -383,7 +396,11 @@ class _StagingScreenState extends State<StagingScreen> {
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ChoiceChip(
-                            label: Text('All files ($pending)'),
+                            label: Text(
+                              context.tr('app.staging.all_files_pending', {
+                                'pending': pending,
+                              }),
+                            ),
                             selected: _batch == 0,
                             onSelected: (_) {
                               _batch = 0;
@@ -397,7 +414,12 @@ class _StagingScreenState extends State<StagingScreen> {
                             padding: const EdgeInsets.only(right: 8),
                             child: ChoiceChip(
                               label: Text(
-                                '${b.filename.isEmpty ? sourceName(b.source) : b.filename} · ${b.quotes}',
+                                context.tr('app.staging.filename_quotes', {
+                                  'filename': b.filename.isEmpty
+                                      ? sourceName(b.source)
+                                      : b.filename,
+                                  'quotes': b.quotes,
+                                }),
                               ),
                               selected: _batch == b.id,
                               onSelected: (_) {
@@ -451,7 +473,12 @@ class _StagingScreenState extends State<StagingScreen> {
                     padding: const EdgeInsets.only(top: 8),
                     child: OutlinedButton(
                       onPressed: () => _load(more: true),
-                      child: Text('Show more ($shown of ${_staging.total})'),
+                      child: Text(
+                        context.tr('app.staging.show_more_shown_of_total', {
+                          'shown': shown,
+                          'total': _staging.total,
+                        }),
+                      ),
                     ),
                   ),
               ],
@@ -462,12 +489,17 @@ class _StagingScreenState extends State<StagingScreen> {
               onClear: () => setState(_picked.clear),
               onApprove: () => _approve(_selection),
               onDiscard: () => _discard(_selection, _picked.length),
-              onColour: (c) =>
-                  _edit(_selection, StagedEdit(color: c), 'Colour changed'),
+              onColour: (c) => _edit(
+                _selection,
+                StagedEdit(color: c),
+                context.tr('app.staging.colour_changed'),
+              ),
               onFavourite: (on) => _edit(
                 _selection,
                 StagedEdit(favorite: on),
-                on ? 'Favourited' : 'Un-favourited',
+                on
+                    ? context.tr('quiz.card.favourite.on.label')
+                    : 'Un-favourited',
               ),
               onFields: () => _bulkFields(_selection, _picked.length),
               onShift: () => _shift(_selection, _picked.length),
@@ -507,10 +539,13 @@ class _GroupCard extends StatelessWidget {
     final allPicked =
         quotes.isNotEmpty && quotes.every((q) => picked.contains(q.id));
     final destination = standalone
-        ? 'Will be saved as quotes of their own, from no book or film'
+        ? context.tr('app.staging.will_be_saved_as_quotes_of')
         : work.targetId > 0
-        ? 'Joins your ${work.targetTitle}${work.targetYear > 0 ? ' (${work.targetYear})' : ''}'
-        : 'Will be added as a new ${_kindWord(work.kind)}';
+        ? tx('app.staging.joins_your_target_titlex', {
+            'target_title': work.targetTitle,
+            'x': work.targetYear > 0 ? ' (${work.targetYear})' : '',
+          })
+        : tx('app.staging.will_be_added_as_a_new', {'x': _kindWord(work.kind)});
     final who = [
       if (work.author.isNotEmpty) work.author,
       if (work.year > 0) '${work.year}',
@@ -539,7 +574,9 @@ class _GroupCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          standalone ? 'Quotes of their own' : work.title,
+                          standalone
+                              ? context.tr('app.staging.quotes_of_their_own')
+                              : work.title,
                           style: theme.textTheme.titleMedium,
                         ),
                         if (who.isNotEmpty)
@@ -560,7 +597,9 @@ class _GroupCard extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              'You have more than one title with this name. Check it joined the right one.',
+                              context.tr(
+                                'app.staging.you_have_more_than_one_title',
+                              ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: scheme.error,
                               ),
@@ -568,7 +607,9 @@ class _GroupCard extends StatelessWidget {
                           ),
                         if (work.pinned)
                           Text(
-                            'You chose this destination',
+                            context.tr(
+                              'app.staging.you_chose_this_destination',
+                            ),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),
@@ -578,24 +619,26 @@ class _GroupCard extends StatelessWidget {
                   ),
                 ),
                 PopupMenuButton<String>(
-                  tooltip: 'This group',
+                  tooltip: context.tr('app.staging.this_group'),
                   onSelected: (v) => switch (v) {
                     'approve' => onApprove(),
                     'discard' => onDiscard(),
                     _ => onMove(),
                   },
-                  itemBuilder: (context) => const [
+                  itemBuilder: (context) => [
                     PopupMenuItem(
                       value: 'approve',
-                      child: Text('Approve this group'),
+                      child: Text(context.tr('app.staging.approve_this_group')),
                     ),
                     PopupMenuItem(
                       value: 'move',
-                      child: Text('Move to another work…'),
+                      child: Text(
+                        context.tr('app.staging.move_to_another_work'),
+                      ),
                     ),
                     PopupMenuItem(
                       value: 'discard',
-                      child: Text('Discard this group'),
+                      child: Text(context.tr('app.staging.discard_this_group')),
                     ),
                   ],
                 ),
@@ -607,8 +650,10 @@ class _GroupCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
               child: Text(
                 standalone
-                    ? 'No quotes left in this group.'
-                    : 'No quotes. Approving adds the ${_kindWord(work.kind)} itself.',
+                    ? context.tr('app.staging.no_quotes_left_in_this_group')
+                    : tx('app.staging.no_quotes_approving_adds_the_x', {
+                        'x': _kindWord(work.kind),
+                      }),
                 style: theme.textTheme.bodySmall,
               ),
             ),
@@ -684,7 +729,9 @@ class _QuoteRow extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          'Note: ${quote.note}',
+                          context.tr('app.staging.note_note', {
+                            'note': quote.note,
+                          }),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -769,23 +816,27 @@ class _SelectionBar extends StatelessWidget {
               Row(
                 children: [
                   IconButton(
-                    tooltip: 'Clear the selection',
+                    tooltip: context.tr('common.selection.clear.aria'),
                     icon: const Icon(Icons.close),
                     onPressed: onClear,
                   ),
                   Expanded(
                     child: Text(
-                      '$count selected',
+                      context.tr('app.staging.count_selected', {
+                        'count': count,
+                      }),
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ),
                   TextButton(
                     onPressed: onDiscard,
-                    child: const Text('Discard'),
+                    child: Text(context.tr('common.unsaved.discard.label')),
                   ),
                   FilledButton(
                     onPressed: onApprove,
-                    child: Text('Approve $count'),
+                    child: Text(
+                      context.tr('app.staging.approve_count', {'count': count}),
+                    ),
                   ),
                 ],
               ),
@@ -795,7 +846,7 @@ class _SelectionBar extends StatelessWidget {
                   children: [
                     for (final c in quoteColors)
                       IconButton(
-                        tooltip: 'Make it $c',
+                        tooltip: context.tr('app.staging.make_it_c', {'c': c}),
                         icon: CircleAvatar(
                           radius: 9,
                           backgroundColor: quoteColour(c),
@@ -803,29 +854,29 @@ class _SelectionBar extends StatelessWidget {
                         onPressed: () => onColour(c),
                       ),
                     IconButton(
-                      tooltip: 'Favourite',
+                      tooltip: context.tr('common.field.favourite.label'),
                       icon: const Icon(Icons.favorite_border),
                       onPressed: () => onFavourite(true),
                     ),
                     IconButton(
-                      tooltip: 'Remove the favourite mark',
+                      tooltip: context.tr('staging.bulk.unfavourite.tip'),
                       icon: const Icon(Icons.heart_broken_outlined),
                       onPressed: () => onFavourite(false),
                     ),
                     TextButton.icon(
                       onPressed: onFields,
                       icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Edit fields'),
+                      label: Text(context.tr('app.staging.edit_fields')),
                     ),
                     TextButton.icon(
                       onPressed: onShift,
                       icon: const Icon(Icons.swap_vert),
-                      label: const Text('Locations'),
+                      label: Text(context.tr('app.staging.locations')),
                     ),
                     TextButton.icon(
                       onPressed: onMove,
                       icon: const Icon(Icons.drive_file_move_outlined),
-                      label: const Text('Move to…'),
+                      label: Text(context.tr('staging.bulk.move.label')),
                     ),
                   ],
                 ),
@@ -897,16 +948,16 @@ class _QuoteSheetState extends State<_QuoteSheet> {
         ),
       ),
     );
-    return _sheet(context, 'Edit staged quote', [
+    return _sheet(context, context.tr('staging.form.title'), [
       Text(
-        '“${q.text}”',
+        context.tr('staging.form.quoted', {'text': q.text}),
         maxLines: 4,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodyMedium,
       ),
       const SizedBox(height: 12),
       Text(
-        'A staged quote keeps both kinds of location. Approval uses the one its destination needs.',
+        context.tr('app.staging.a_staged_quote_keeps_both_kinds'),
         style: Theme.of(context).textTheme.bodySmall,
       ),
       const SizedBox(height: 12),
@@ -925,15 +976,23 @@ class _QuoteSheetState extends State<_QuoteSheet> {
       ),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
-        title: const Text('Favourite'),
+        title: Text(context.tr('common.field.favourite.label')),
         value: _fav,
         onChanged: (v) => setState(() => _fav = v),
       ),
-      field('Chapter', _chapter, 'optional'),
-      field('Location', _location, 'p.142'),
-      field('Character', _character, 'Philip Marlowe'),
-      field('Actor', _actor, 'Elliott Gould'),
-      field('Timestamp', _timestamp, '01:02:03'),
+      field(context.tr('board.sort.chapter.label'), _chapter, 'optional'),
+      field(context.tr('common.field.location.label'), _location, 'p.142'),
+      field(
+        context.tr('common.field.character.label'),
+        _character,
+        context.tr('staging.form.character.placeholder'),
+      ),
+      field(
+        context.tr('common.field.actor.label'),
+        _actor,
+        context.tr('staging.form.actor.placeholder'),
+      ),
+      field(context.tr('common.field.timestamp.label'), _timestamp, '01:02:03'),
       Align(
         alignment: Alignment.centerRight,
         child: FilledButton(
@@ -952,7 +1011,7 @@ class _QuoteSheetState extends State<_QuoteSheet> {
               ),
             );
           },
-          child: const Text('Save'),
+          child: Text(context.tr('common.action.save.label')),
         ),
       ),
     ]);
@@ -995,63 +1054,72 @@ class _FieldsSheetState extends State<_FieldsSheet> {
   @override
   Widget build(BuildContext context) {
     String? v(String k) => _touched.contains(k) ? _c[k]!.text.trim() : null;
-    return _sheet(context, 'Edit ${widget.count} selected', [
-      Text(
-        'Only the boxes you type in change. Empty a box you have touched to clear that field.',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      const SizedBox(height: 12),
-      for (final e in _c.entries)
+    return _sheet(
+      context,
+      tx('app.staging.edit_count_selected', {'count': widget.count}),
+      [
+        Text(
+          context.tr('app.staging.only_the_boxes_you_type_in'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        for (final e in _c.entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: TextField(
+              controller: e.value,
+              onChanged: (_) => _touched.add(e.key),
+              decoration: InputDecoration(
+                labelText: context.tr('app.staging.to_upper_casex', {
+                  'to_upper_case': e.key[0].toUpperCase(),
+                  'x': e.key.substring(1),
+                }),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: TextField(
-            controller: e.value,
-            onChanged: (_) => _touched.add(e.key),
+            controller: _add,
             decoration: InputDecoration(
-              labelText: '${e.key[0].toUpperCase()}${e.key.substring(1)}',
-              border: const OutlineInputBorder(),
+              labelText: context.tr('common.action.add-tags.label'),
+              helperText: context.tr('app.staging.separate_with_commas'),
+              border: OutlineInputBorder(),
             ),
           ),
         ),
-      Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: TextField(
-          controller: _add,
-          decoration: const InputDecoration(
-            labelText: 'Add tags',
-            helperText: 'Separate with commas',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ),
-      Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: TextField(
-          controller: _remove,
-          decoration: const InputDecoration(
-            labelText: 'Remove tags',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ),
-      Align(
-        alignment: Alignment.centerRight,
-        child: FilledButton(
-          onPressed: () => Navigator.of(context).pop(
-            StagedEdit(
-              chapter: v('chapter'),
-              location: v('location'),
-              character: v('character'),
-              actor: v('actor'),
-              timestamp: v('timestamp'),
-              addTags: _tags(_add),
-              removeTags: _tags(_remove),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: TextField(
+            controller: _remove,
+            decoration: InputDecoration(
+              labelText: context.tr('staging.fields.remove-tags.label'),
+              border: OutlineInputBorder(),
             ),
           ),
-          child: Text('Apply to ${widget.count}'),
         ),
-      ),
-    ]);
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton(
+            onPressed: () => Navigator.of(context).pop(
+              StagedEdit(
+                chapter: v('chapter'),
+                location: v('location'),
+                character: v('character'),
+                actor: v('actor'),
+                timestamp: v('timestamp'),
+                addTags: _tags(_add),
+                removeTags: _tags(_remove),
+              ),
+            ),
+            child: Text(
+              context.tr('app.staging.apply_to_count', {'count': widget.count}),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1088,74 +1156,86 @@ class _ShiftSheetState extends State<_ShiftSheet> {
     final ready =
         _op == 'reset' ||
         (needsNumber ? number != null : _by.text.trim().isNotEmpty);
-    return _sheet(context, 'Shift locations on ${widget.count} selected', [
-      SegmentedButton<String>(
-        segments: const [
-          ButtonSegment(value: 'location', label: Text('Page / location')),
-          ButtonSegment(value: 'timestamp', label: Text('Timestamp')),
-        ],
-        selected: {_field},
-        onSelectionChanged: (s) => setState(() => _field = s.single),
-      ),
-      const SizedBox(height: 12),
-      Wrap(
-        spacing: 8,
-        children: [
-          for (final o in const [
-            'add',
-            'subtract',
-            'multiply',
-            'divide',
-            'set',
-            'reset',
-          ])
-            ChoiceChip(
-              label: Text(switch (o) {
-                'set' => 'set to',
-                _ => o,
-              }),
-              selected: _op == o,
-              onSelected: (_) => setState(() => _op = o),
+    return _sheet(
+      context,
+      tx('app.staging.shift_locations_on_count_selected', {
+        'count': widget.count,
+      }),
+      [
+        SegmentedButton<String>(
+          segments: [
+            ButtonSegment(
+              value: 'location',
+              label: Text(context.tr('app.staging.page_location')),
             ),
-        ],
-      ),
-      const SizedBox(height: 12),
-      if (_op != 'reset')
-        TextField(
-          controller: _by,
-          onChanged: (_) => setState(() {}),
-          keyboardType: needsNumber
-              ? const TextInputType.numberWithOptions(decimal: true)
-              : TextInputType.text,
-          decoration: InputDecoration(
-            labelText: needsNumber ? 'By' : 'To',
-            hintText: needsNumber ? '5' : 'p.1',
-            border: const OutlineInputBorder(),
+            ButtonSegment(
+              value: 'timestamp',
+              label: Text(context.tr('common.field.timestamp.label')),
+            ),
+          ],
+          selected: {_field},
+          onSelectionChanged: (s) => setState(() => _field = s.single),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final o in const [
+              'add',
+              'subtract',
+              'multiply',
+              'divide',
+              'set',
+              'reset',
+            ])
+              ChoiceChip(
+                label: Text(switch (o) {
+                  'set' => 'set to',
+                  _ => o,
+                }),
+                selected: _op == o,
+                onSelected: (_) => setState(() => _op = o),
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_op != 'reset')
+          TextField(
+            controller: _by,
+            onChanged: (_) => setState(() {}),
+            keyboardType: needsNumber
+                ? const TextInputType.numberWithOptions(decimal: true)
+                : TextInputType.text,
+            decoration: InputDecoration(
+              labelText: needsNumber ? 'By' : 'To',
+              hintText: needsNumber ? '5' : 'p.1',
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        const SizedBox(height: 8),
+        Text(
+          context.tr('app.staging.only_the_numbers_in_the_text'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton(
+            onPressed: !ready
+                ? null
+                : () => Navigator.of(context).pop(
+                    StagedEdit(
+                      shiftField: _field,
+                      shiftOp: _op,
+                      shiftValue: needsNumber ? number : null,
+                      shiftText: _op == 'set' ? _by.text.trim() : null,
+                    ),
+                  ),
+            child: Text(context.tr('common.action.apply.label')),
           ),
         ),
-      const SizedBox(height: 8),
-      Text(
-        'Only the numbers in the text change: p.142 minus 5 is p.137, and a range like 610-612 moves at both ends. Timestamps shift in seconds. Reset puts back what the file said.',
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      const SizedBox(height: 12),
-      Align(
-        alignment: Alignment.centerRight,
-        child: FilledButton(
-          onPressed: !ready
-              ? null
-              : () => Navigator.of(context).pop(
-                  StagedEdit(
-                    shiftField: _field,
-                    shiftOp: _op,
-                    shiftValue: needsNumber ? number : null,
-                    shiftText: _op == 'set' ? _by.text.trim() : null,
-                  ),
-                ),
-          child: const Text('Apply'),
-        ),
-      ),
-    ]);
+      ],
+    );
   }
 }
 
@@ -1186,7 +1266,7 @@ class _MoveSheetState extends State<_MoveSheet> {
           setState(
             () => _problem = e is ServerException
                 ? e.message
-                : 'Could not read your library.',
+                : context.tr('app.staging.could_not_read_your_library'),
           );
         }
       },
@@ -1206,12 +1286,12 @@ class _MoveSheetState extends State<_MoveSheet> {
                   w.creator.toLowerCase().contains(needle))
                 w,
           ].take(60).toList();
-    return _sheet(context, 'Move to…', [
+    return _sheet(context, context.tr('staging.bulk.move.label'), [
       TextField(
         onChanged: (v) => setState(() => _q = v),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           prefixIcon: Icon(Icons.search),
-          hintText: 'Find a book or film in your library',
+          hintText: context.tr('app.staging.find_a_book_or_film_in'),
           border: OutlineInputBorder(),
         ),
       ),
@@ -1240,15 +1320,21 @@ class _MoveSheetState extends State<_MoveSheet> {
       if (widget.groups.isNotEmpty) ...[
         const Divider(),
         Text(
-          'Or merge into another group in this queue',
+          context.tr('staging.move.merge.label'),
           style: Theme.of(context).textTheme.labelLarge,
         ),
         for (final g in widget.groups)
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.merge_type),
-            title: Text(g.title.isEmpty ? 'Quotes of their own' : g.title),
-            subtitle: Text('${g.quotes} quotes'),
+            title: Text(
+              g.title.isEmpty
+                  ? context.tr('app.staging.quotes_of_their_own')
+                  : g.title,
+            ),
+            subtitle: Text(
+              context.tr('app.staging.quotes_quotes', {'quotes': g.quotes}),
+            ),
             onTap: () => Navigator.of(context).pop(g),
           ),
       ],

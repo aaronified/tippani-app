@@ -9,13 +9,15 @@ import '../l10n/l10n.dart';
 
 /// One plain sentence for each reason a file could not be restored. Pure, so the words are tested.
 String backupProblemText(BackupProblem p) => switch (p) {
-  BackupProblem.tooBig => 'That file is too big to be a Tippani backup.',
+  BackupProblem.tooBig => tx('app.backup.that_file_is_too_big_to'),
   BackupProblem.notJson =>
     'That file is not a Tippani backup (it is not readable as one).',
-  BackupProblem.notOurs => 'That file is not a Tippani backup.',
-  BackupProblem.tooNew => 'That backup was made by a newer version of the app. Update the app, then restore it.',
-  BackupProblem.noSections => 'That backup holds nothing to restore.',
-  BackupProblem.damaged => 'Part of that backup is damaged, so none of it was restored. Nothing on this phone has changed.',
+  BackupProblem.notOurs => tx('app.backup.that_file_is_not_a_tippani'),
+  BackupProblem.tooNew => tx('app.backup.that_backup_was_made_by_a'),
+  BackupProblem.noSections => tx(
+    'app.backup.that_backup_holds_nothing_to_restore',
+  ),
+  BackupProblem.damaged => tx('app.backup.part_of_that_backup_is_damaged'),
 };
 
 /// Back up what the app keeps, and restore it. A backup is written to the app's own storage and to the
@@ -63,10 +65,10 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() {
       _busy = false;
       _message = r == null
-          ? 'The backup could not be written.'
+          ? context.tr('app.backup.the_backup_could_not_be_written')
           : r.inDownloads
-          ? 'Backed up as ${r.name}, here and in your Downloads folder.'
-          : 'Backed up as ${r.name}. This phone could not also copy it to Downloads.';
+          ? tx('app.backup.backed_up_as_name_here_and', {'name': r.name})
+          : tx('app.backup.backed_up_as_name_this_phone', {'name': r.name});
     });
     await _load();
   }
@@ -82,7 +84,7 @@ class _BackupScreenState extends State<BackupScreen> {
       saved ? 'backup saved to a chosen place' : 'save backup cancelled',
     );
     if (!mounted || !saved) return;
-    setState(() => _message = 'Backup saved.');
+    setState(() => _message = context.tr('app.backup.backup_saved'));
   }
 
   Future<void> _restoreFromFile() async {
@@ -110,20 +112,26 @@ class _BackupScreenState extends State<BackupScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Restore this backup?')),
+        title: Text(context.tr('app.backup.restore_this_backup')),
         content: Text(
-          'Made ${doc.createdAt.toLocal().toString().split('.').first}'
-          '${doc.appVersion.isEmpty ? '' : ' by version ${doc.appVersion}'}.\n\n'
-          'It replaces the settings and the library on this phone with the ones in the file, whatever is there now. You will need to pair this phone again.',
+          context.tr(
+            doc.appVersion.isEmpty
+                ? 'app.backup.made_it_replaces_the_settings'
+                : 'app.backup.made_by_version_it_replaces_the_settings',
+            {
+              'first': doc.createdAt.toLocal().toString().split('.').first,
+              'version': doc.appVersion,
+            },
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(context.tr('Restore')),
+            child: Text(context.tr('common.action.restore.label')),
           ),
         ],
       ),
@@ -144,15 +152,19 @@ class _BackupScreenState extends State<BackupScreen> {
     if (!mounted) return;
     setState(() {
       _message = r.ignored.isEmpty
-          ? 'Restored. Pair this phone again to use it.'
-          : 'Restored. The file also held ${r.ignored.length} part${r.ignored.length == 1 ? '' : 's'} this version of the app does not know, which were left out.';
+          ? context.tr('app.backup.restored_pair_this_phone_again_to')
+          : trn('app.backup.restored_with_ignored', r.ignored.length);
     });
   }
 
   Future<void> _restoreCopy(String name) async {
     final bytes = await _service.readCopy(name);
     if (bytes == null) {
-      if (mounted) setState(() => _message = 'That copy could not be read.');
+      if (mounted) {
+        setState(
+          () => _message = context.tr('app.backup.that_copy_could_not_be_read'),
+        );
+      }
       return;
     }
     await _restore(bytes);
@@ -162,28 +174,25 @@ class _BackupScreenState extends State<BackupScreen> {
   Widget build(BuildContext context) {
     final copies = _copies;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Backup and restore'))),
+      appBar: AppBar(title: Text(context.tr('app.backup.backup_and_restore'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'A backup keeps the app\'s settings. It does not hold the key that pairs this phone with your server, '
-            'so after a restore you pair again.',
-          ),
+          Text(context.tr('app.backup.a_backup_keeps_the_app_s')),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _busy ? null : _backUp,
-            child: Text(context.tr('Back up now')),
+            child: Text(context.tr('settings.backup.now.label')),
           ),
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: _busy ? null : _saveAs,
-            child: Text(context.tr('Save a copy somewhere…')),
+            child: Text(context.tr('app.backup.save_a_copy_somewhere')),
           ),
           const SizedBox(height: 8),
           OutlinedButton(
             onPressed: _busy ? null : _restoreFromFile,
-            child: Text(context.tr('Restore from a file…')),
+            child: Text(context.tr('app.backup.restore_from_a_file')),
           ),
           if (_message != null) ...[
             const SizedBox(height: 16),
@@ -191,14 +200,14 @@ class _BackupScreenState extends State<BackupScreen> {
           ],
           const SizedBox(height: 24),
           Text(
-            context.tr('Copies on this phone'),
+            context.tr('app.backup.copies_on_this_phone'),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
           if (copies == null)
             const LinearProgressIndicator()
           else if (copies.isEmpty)
-            Text(context.tr('None yet.'))
+            Text(context.tr('app.backup.none_yet'))
           else
             for (final name in copies)
               ListTile(
@@ -206,7 +215,7 @@ class _BackupScreenState extends State<BackupScreen> {
                 title: Text(name),
                 trailing: TextButton(
                   onPressed: () => _restoreCopy(name),
-                  child: Text(context.tr('Restore')),
+                  child: Text(context.tr('common.action.restore.label')),
                 ),
               ),
         ],

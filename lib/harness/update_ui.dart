@@ -10,32 +10,42 @@ import '../l10n/l10n.dart';
 
 /// One plain sentence for each way an install can fail. Pure, so the words are tested.
 String installFailureText(InstallFailure f) => switch (f) {
-  InstallFailure.download =>
-    'The download did not finish. Check your connection and try again.',
-  InstallFailure.checksum => 'The downloaded file is not the one that was published, so it was not installed. Try again.',
+  InstallFailure.download => tx(
+    'app.update_ui.the_download_did_not_finish_check',
+  ),
+  InstallFailure.checksum => tx('app.update_ui.the_downloaded_file_is_not_the'),
   InstallFailure.notAllowed => 'Android will not let Tippani install updates yet. Allow "Install unknown apps" for Tippani in the phone\'s settings, then try again.',
-  InstallFailure.install => 'Android\'s installer would not open. Try again, or download the update from the project\'s releases page.',
-  InstallFailure.cancelled => 'The update was cancelled.',
-  InstallFailure.internal => 'Something went wrong while updating. Try again.',
+  InstallFailure.install => tx(
+    'app.update_ui.android_s_installer_would_not_open',
+  ),
+  InstallFailure.cancelled => tx('app.update_ui.the_update_was_cancelled'),
+  InstallFailure.internal => tx(
+    'app.update_ui.something_went_wrong_while_updating_try',
+  ),
 };
 
 /// What a reader asked for by pressing "Check for updates", in a sentence.
 String checkResultText(UpdateController u) {
   switch (u.stage) {
     case UpdateStage.available:
-      return 'Version ${u.release?.version} is available.';
+      return tx('app.update_ui.version_version_is_available_2', {
+        'version': u.release?.version,
+      });
     case UpdateStage.upToDate:
-      return 'You have the latest version ($appVersion).';
+      return tx('app.update_ui.latest_version', {'version': appVersion});
     case UpdateStage.checking:
-      return 'Checking…';
+      return tx('app.update_ui.checking');
     default:
       return switch (u.checkFailure) {
-        CheckFailure.offline =>
-          'Could not reach GitHub. Check your connection.',
+        CheckFailure.offline => tx(
+          'app.update_ui.could_not_reach_github_check_your',
+        ),
         CheckFailure.rateLimited => 'GitHub is limiting requests from this network. Try again in a while.',
         CheckFailure.badReply =>
           'GitHub answered, but not in a way this app understands.',
-        null => 'Version $appVersion.',
+        null => tx('app.update_ui.version_app_version', {
+          'app_version': appVersion,
+        }),
       };
   }
 }
@@ -80,13 +90,13 @@ class _UpdateHostState extends State<UpdateHost> {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            context.tr('Version {version} is available', {
+            context.tr('app.update_ui.version_version_is_available', {
               'version': release.version,
             }),
           ),
           duration: const Duration(seconds: 12),
           action: SnackBarAction(
-            label: context.tr('Download'),
+            label: context.tr('common.action.download.label'),
             onPressed: () =>
                 showUpdateDialog(context, _updates, startNow: true),
           ),
@@ -118,12 +128,14 @@ Future<void> showWhatsNewDialog(BuildContext context, ChangelogEntry entry) {
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text(context.tr('New in {version}', {'version': entry.version})),
+      title: Text(
+        context.tr('app.update_ui.new_in_version', {'version': entry.version}),
+      ),
       content: SingleChildScrollView(child: ChangelogBody(entry: entry)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(context.tr('OK')),
+          child: Text(context.tr('app.common.ok')),
         ),
       ],
     ),
@@ -190,7 +202,9 @@ class _UpdateDialog extends StatelessWidget {
           case UpdateStage.downloading:
             return AlertDialog(
               title: Text(
-                context.tr('Downloading {version}', {'version': version}),
+                context.tr('app.update_ui.downloading_version', {
+                  'version': version,
+                }),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -199,34 +213,38 @@ class _UpdateDialog extends StatelessWidget {
                     value: updates.percent == 0 ? null : updates.percent / 100,
                   ),
                   const SizedBox(height: 8),
-                  Text('${updates.percent}%'),
+                  Text(
+                    context.tr('app.update_ui.percent', {
+                      'percent': updates.percent,
+                    }),
+                  ),
                 ],
               ),
               actions: [
                 TextButton(
                   onPressed: updates.cancel,
-                  child: Text(context.tr('Cancel')),
+                  child: Text(context.tr('common.action.cancel.label')),
                 ),
               ],
             );
           case UpdateStage.installing:
             return AlertDialog(
-              title: Text(context.tr('Ready to install')),
+              title: Text(context.tr('app.update_ui.ready_to_install')),
               content: Text(
-                context.tr(
-                  'Android is asking you to install the update. Tippani will close while it does.',
-                ),
+                context.tr('app.update_ui.android_is_asking_you_to_install'),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(context.tr('OK')),
+                  child: Text(context.tr('app.common.ok')),
                 ),
               ],
             );
           case UpdateStage.failed:
             return AlertDialog(
-              title: Text(context.tr('The update did not install')),
+              title: Text(
+                context.tr('app.update_ui.the_update_did_not_install'),
+              ),
               content: Text(
                 installFailureText(
                   updates.installFailure ?? InstallFailure.internal,
@@ -238,18 +256,18 @@ class _UpdateDialog extends StatelessWidget {
                     updates.dismiss();
                     Navigator.pop(context);
                   },
-                  child: Text(context.tr('Close')),
+                  child: Text(context.tr('common.action.close.label')),
                 ),
                 FilledButton(
                   onPressed: updates.download,
-                  child: Text(context.tr('Try again')),
+                  child: Text(context.tr('common.source.retry')),
                 ),
               ],
             );
           case UpdateStage.available:
             return AlertDialog(
               title: Text(
-                context.tr('Version {version} is available', {
+                context.tr('app.update_ui.version_version_is_available', {
                   'version': version,
                 }),
               ),
@@ -263,22 +281,24 @@ class _UpdateDialog extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(context.tr('Later')),
+                  child: Text(context.tr('app.update_ui.later')),
                 ),
                 FilledButton(
                   onPressed: updates.download,
-                  child: Text(context.tr('Download')),
+                  child: Text(context.tr('common.action.download.label')),
                 ),
               ],
             );
           default:
             // Nothing on offer any more (a check since found none): the dialog has nothing to say.
             return AlertDialog(
-              content: Text(context.tr('There is no update to install.')),
+              content: Text(
+                context.tr('app.update_ui.there_is_no_update_to_install'),
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(context.tr('OK')),
+                  child: Text(context.tr('app.common.ok')),
                 ),
               ],
             );

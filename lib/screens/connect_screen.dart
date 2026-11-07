@@ -62,7 +62,9 @@ class _ConnectScreenState extends State<ConnectScreen> {
       // anyone on the path can read it.
       setState(() {
         _busy = false;
-        _warning = 'Connected, but this address uses plain http outside your own network. Anyone on the way can read what the app sends. Use https if you can.';
+        _warning = context.tr(
+          'app.connect.connected_but_this_address_uses_plain',
+        );
       });
       return;
     }
@@ -73,14 +75,14 @@ class _ConnectScreenState extends State<ConnectScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Your Tippani server'))),
+      appBar: AppBar(
+        title: Text(context.tr('app.connect.your_tippani_server')),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            context.tr(
-              'Tippani runs on a server you own. Enter its address, the one you open in a browser.',
-            ),
+            context.tr('app.connect.tippani_runs_on_a_server_you'),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 16),
@@ -92,7 +94,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
             textInputAction: TextInputAction.go,
             onSubmitted: (_) => _check(),
             decoration: InputDecoration(
-              labelText: context.tr('Server address'),
+              labelText: context.tr('app.connect.server_address'),
               hintText: '192.168.1.20:8124',
               border: OutlineInputBorder(),
             ),
@@ -106,7 +108,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(context.tr('Check and connect')),
+                : Text(context.tr('app.connect.check_and_connect')),
           ),
           if (_problem != null) ...[
             const SizedBox(height: 16),
@@ -118,7 +120,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(context.tr('Continue')),
+              child: Text(context.tr('home.daily.resume.label')),
             ),
           ],
         ],
@@ -130,7 +132,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
 /// One plain sentence for each way asking a server can go wrong. Pure, so the words are tested.
 /// One line on how the server is: being asked, not asked yet, connected (and its version), or why it is not.
 String serverStatusLine(AppController c) {
-  if (c.checking) return 'Asking the server…';
+  if (c.checking) return tx('app.connect.asking_the_server');
   final check = c.check;
   if (check == null) return 'Not checked yet.';
   final caps = check.capabilities;
@@ -142,9 +144,9 @@ String serverStatusLine(AppController c) {
 String describeCheck(ServerCheck check) {
   switch (check.verdict) {
     case Compatibility.serverTooOld:
-      return 'This Tippani server is older than this app needs. Update the server, then try again.';
+      return tx('app.connect.this_tippani_server_is_older_than');
     case Compatibility.appTooOld:
-      return 'This Tippani server is newer than this app understands. Update the app, then try again.';
+      return tx('app.connect.this_tippani_server_is_newer_than');
     case Compatibility.ok:
       return '';
     case null:
@@ -152,18 +154,22 @@ String describeCheck(ServerCheck check) {
   }
   switch (check.failure) {
     case ApiFailure.timeout:
-      return 'The server did not answer in time. If it was asleep, wait a moment and try again.';
+      return tx('app.connect.the_server_did_not_answer_in');
     case ApiFailure.network:
       return 'Could not reach that address. Check it, and that your phone can see the server (the same Wi-Fi, or your VPN).';
     case ApiFailure.badResponse:
-      return 'Something answered, but it is not a Tippani server. Check the address and the port.';
+      return tx('app.connect.something_answered_but_it_is_not');
     case ApiFailure.rateLimited:
-      return 'The server is asking you to slow down. Wait a moment and try again.';
+      return tx('app.connect.the_server_is_asking_you_to');
     case ApiFailure.unauthorised:
     case ApiFailure.forbidden:
     case ApiFailure.server:
-      return 'The server refused the question${check.detail.isEmpty ? '' : ': ${check.detail}'}.';
+      return check.detail.isEmpty
+          ? tx('app.connect.the_server_refused_the_question')
+          : tx('app.connect.the_server_refused_the_question_why', {
+              'detail': check.detail,
+            });
     case null:
-      return 'Could not ask the server.';
+      return tx('app.connect.could_not_ask_the_server');
   }
 }

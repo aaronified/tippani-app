@@ -71,7 +71,7 @@ class SearchPill extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    context.tr('Search words, names, tags and titles'),
+                    context.tr('app.search.search_words_names_tags_and_titles'),
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -297,7 +297,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _openWork(WorkHit h) async {
     final w = _workFor(h);
     if (w == null) {
-      _say(context.tr('That is on the server only. Sync to bring it here.'));
+      _say(context.tr('app.search.that_is_on_the_server_only'));
       return;
     }
     final result = await Navigator.of(context).push<Object?>(
@@ -342,7 +342,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  context.tr('On the server only. Sync to bring it here.'),
+                  context.tr('app.search.on_the_server_only_sync_to'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -468,17 +468,13 @@ class _SearchScreenState extends State<SearchScreen> {
     final String text;
     if (r != null && r.fellBack) {
       icon = Icons.cloud_off_outlined;
-      text = context.tr(
-        'The server could not be reached, so this searched the phone.',
-      );
+      text = context.tr('app.search.the_server_could_not_be_reached');
     } else if (server) {
       icon = Icons.cloud_done_outlined;
-      text = context.tr('Searching your server · forgives typos');
+      text = context.tr('app.search.searching_your_server_forgives_typos');
     } else {
       icon = Icons.smartphone_outlined;
-      text = context.tr(
-        'Searching this phone · exact words. Pair with a server to forgive typos.',
-      );
+      text = context.tr('app.search.searching_this_phone_exact_words_pair');
     }
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
@@ -515,7 +511,9 @@ class _SearchScreenState extends State<SearchScreen> {
           onChanged: (_) => _changed(),
           onSubmitted: (_) => _run(),
           decoration: InputDecoration(
-            hintText: context.tr('Search words, names, tags and titles'),
+            hintText: context.tr(
+              'app.search.search_words_names_tags_and_titles',
+            ),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
@@ -525,7 +523,7 @@ class _SearchScreenState extends State<SearchScreen> {
         actions: [
           if (_text.text.isNotEmpty)
             IconButton(
-              tooltip: context.tr('Clear'),
+              tooltip: context.tr('common.selection.shelf.clear.label'),
               icon: const Icon(Icons.close),
               onPressed: () {
                 _text.clear();
@@ -549,7 +547,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: InputChip(
-                      label: Text(f.label),
+                      label: Text(context.tr(f.label)),
                       onDeleted: () => _removeFacet(f),
                     ),
                   ),
@@ -557,7 +555,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(
                     avatar: const Icon(Icons.filter_list, size: 18),
-                    label: Text(context.tr('Filter')),
+                    label: Text(context.tr('app.search.filter')),
                     onPressed: _vocab.byField.isEmpty ? null : _pickFilter,
                   ),
                 ),
@@ -601,7 +599,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           size: 16,
                           color: theme.colorScheme.primary,
                         ),
-                        label: Text(s.label),
+                        label: Text(context.tr(s.label)),
                         onPressed: () => _useSuggestion(s),
                       ),
                     ),
@@ -618,17 +616,15 @@ class _SearchScreenState extends State<SearchScreen> {
     if (r == null) {
       return EmptyState(
         icon: Icons.search_rounded,
-        title: context.tr('Search your library'),
-        hint: context.tr(
-          'Words from a quote, a title, a name or a tag. Narrow it with a filter, or type author:, tag: or colour:.',
-        ),
+        title: context.tr('app.search.search_your_library'),
+        hint: context.tr('app.search.words_from_a_quote_a_title'),
       );
     }
     if (r.isEmpty) {
       return EmptyState(
         icon: Icons.search_off_rounded,
-        title: context.tr('Nothing matches.'),
-        hint: context.tr('Try fewer words, or take a filter off.'),
+        title: context.tr('app.search.nothing_matches'),
+        hint: context.tr('app.search.try_fewer_words_or_take_a'),
       );
     }
     final words = queryWords(
@@ -644,7 +640,7 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Text.rich(
             TextSpan(
               children: [
-                TextSpan(text: context.tr('Showing results for ')),
+                TextSpan(text: context.tr('app.search.showing_results_for')),
                 TextSpan(
                   text: r.corrected,
                   style: const TextStyle(fontWeight: FontWeight.w700),
@@ -676,31 +672,36 @@ class _SearchScreenState extends State<SearchScreen> {
     );
 
     if (r.works.isNotEmpty) {
-      heading(context.tr('Titles'), r.works.length);
+      heading(context.tr('movies.group.none.label'), r.works.length);
       for (final w in r.works) {
         out.add(_workTile(context, w, words));
       }
     }
     if (r.people.isNotEmpty) {
-      heading(context.tr('People'), r.people.length);
+      heading(context.tr('common.field.people.label'), r.people.length);
       for (final p in r.people) {
         out.add(_personTile(context, p));
       }
     }
     if (r.characters.isNotEmpty) {
-      heading(context.tr('Characters'), r.characters.length);
+      heading(
+        context.tr('stats.breakdown.characters.label'),
+        r.characters.length,
+      );
       for (final c in r.characters) {
         out.add(_personTile(context, c));
       }
     }
     if (r.tags.isNotEmpty) {
-      heading(context.tr('Tags'), r.tags.length);
+      heading(context.tr('common.field.tags.label'), r.tags.length);
       for (final t in r.tags) {
         out.add(
           ListTile(
             leading: const Icon(Icons.sell_outlined),
-            title: Text('#${t.name}'),
-            subtitle: Text(context.tr('{n} quotes', {'n': t.count})),
+            title: Text(context.tr('app.search.name', {'name': t.name})),
+            subtitle: Text(
+              context.tr('common.work-card.count.quote.other', {'n': t.count}),
+            ),
             trailing: const Icon(Icons.filter_alt_outlined),
             onTap: () => _addFacet(SearchFacet('tag', t.name), replaceText: ''),
           ),
@@ -708,13 +709,15 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     }
     if (r.genres.isNotEmpty) {
-      heading(context.tr('Genres'), r.genres.length);
+      heading(context.tr('common.field.genres.label'), r.genres.length);
       for (final g in r.genres) {
         out.add(
           ListTile(
             leading: const Icon(Icons.category_outlined),
             title: Text(g.name),
-            subtitle: Text(context.tr('{n} titles', {'n': g.works.length})),
+            subtitle: Text(
+              context.tr('app.search.n_titles', {'n': g.works.length}),
+            ),
             trailing: const Icon(Icons.filter_alt_outlined),
             onTap: () =>
                 _addFacet(SearchFacet('genre', g.name), replaceText: ''),
@@ -723,13 +726,13 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     }
     if (r.notes.isNotEmpty) {
-      heading(context.tr('Notes'), r.notes.length);
+      heading(context.tr('vocab.font-role.hand.label'), r.notes.length);
       for (final q in r.notes) {
         out.add(_quoteTile(context, q, words, showNote: true));
       }
     }
     if (r.quotes.isNotEmpty) {
-      heading(context.tr('Quotes'), r.quotes.length);
+      heading(context.tr('nav.tab.quotes.label'), r.quotes.length);
       for (final q in r.quotes) {
         out.add(_quoteTile(context, q, words));
       }
@@ -816,11 +819,11 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _personTile(BuildContext context, PersonGroup p) {
     final theme = Theme.of(context);
     final what = switch (p.role) {
-      'author' => context.tr('Author'),
-      'director' => context.tr('Director'),
-      'actor' => context.tr('Actor'),
-      'character' => context.tr('Character'),
-      _ => context.tr('Said by'),
+      'author' => context.tr('common.field.author.label'),
+      'director' => context.tr('common.field.director.label'),
+      'actor' => context.tr('common.field.actor.label'),
+      'character' => context.tr('common.field.character.label'),
+      _ => context.tr('app.search.said_by'),
     };
     final n = p.works.length + p.quotes.length;
     return ListTile(
@@ -839,8 +842,8 @@ class _SearchScreenState extends State<SearchScreen> {
       title: Text(p.name),
       subtitle: Text(
         p.works.isNotEmpty
-            ? '$what · ${context.tr('{n} titles', {'n': p.works.length})}'
-            : '$what · ${context.tr('{n} quotes', {'n': n})}',
+            ? '$what · ${context.tr('app.search.n_titles', {'n': p.works.length})}'
+            : '$what · ${context.tr('common.work-card.count.quote.other', {'n': n})}',
       ),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: () => _openPerson(p),

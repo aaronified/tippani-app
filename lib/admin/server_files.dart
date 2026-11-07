@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 
+import '../l10n/l10n.dart';
+
 /// A file the reader chose.
 class ChosenFile {
   const ChosenFile(this.name, this.bytes);
@@ -35,10 +37,10 @@ class SystemServerFiles implements ServerFiles {
   Future<bool> save(
     String fileName,
     Uint8List bytes, {
-    String title = 'Save the backup',
+    String title = 'app.server_files.save_the_backup',
   }) async {
     final saved = await FilePicker.saveFile(
-      dialogTitle: title,
+      dialogTitle: tx(title),
       fileName: fileName,
       bytes: bytes,
     );
@@ -48,7 +50,7 @@ class SystemServerFiles implements ServerFiles {
   @override
   Future<ChosenFile?> pick() async {
     final f = await FilePicker.pickFile(
-      dialogTitle: 'Choose a backup from the server',
+      dialogTitle: tx('app.server_files.choose_a_backup_from_the_server'),
       type: FileType.any,
     );
     if (f == null) return null;

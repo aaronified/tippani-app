@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../api/server_call.dart';
 import '../library/models.dart';
 import '../tools/cover_search.dart';
+import '../l10n/l10n.dart';
 
 /// Finds a cover or poster online: search by title, creator or ISBN (the work's own are filled in), see what the
 /// catalogues and picture suppliers have with the name of each, and press one to use it. Pops the chosen picture's
@@ -74,7 +75,7 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Use this cover?'),
+        title: Text(context.tr('app.cover_search.use_this_cover')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -88,17 +89,19 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Text('From ${o.source}'),
+            Text(
+              context.tr('app.cover_search.from_source', {'source': o.source}),
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Use it'),
+            child: Text(context.tr('app.cover_search.use_it')),
           ),
         ],
       ),
@@ -133,7 +136,9 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
         if (_source.isEmpty || o.source == _source) o,
     ];
     return Scaffold(
-      appBar: AppBar(title: const Text('Find a cover online')),
+      appBar: AppBar(
+        title: Text(context.tr('app.cover_search.find_a_cover_online')),
+      ),
       body: Column(
         children: [
           Padding(
@@ -142,7 +147,9 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
               children: [
                 TextField(
                   controller: _title,
-                  decoration: const InputDecoration(labelText: 'Title'),
+                  decoration: InputDecoration(
+                    labelText: context.tr('common.field.title.label'),
+                  ),
                   onSubmitted: (_) => _go(),
                 ),
                 if (_book) ...[
@@ -151,8 +158,8 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
                       Expanded(
                         child: TextField(
                           controller: _creator,
-                          decoration: const InputDecoration(
-                            labelText: 'Author',
+                          decoration: InputDecoration(
+                            labelText: context.tr('common.field.author.label'),
                           ),
                           onSubmitted: (_) => _go(),
                         ),
@@ -162,7 +169,9 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
                         child: TextField(
                           controller: _isbn,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'ISBN'),
+                          decoration: InputDecoration(
+                            labelText: context.tr('common.field.isbn.label'),
+                          ),
                           onSubmitted: (_) => _go(),
                         ),
                       ),
@@ -174,7 +183,7 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
                   child: TextButton.icon(
                     onPressed: _busy ? null : _go,
                     icon: const Icon(Icons.search),
-                    label: const Text('Search'),
+                    label: Text(context.tr('common.help.topbar.search.term')),
                   ),
                 ),
               ],
@@ -205,11 +214,13 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
                 : found == null
                 ? const SizedBox.shrink()
                 : shown.isEmpty
-                ? const Center(
+                ? Center(
                     child: Padding(
                       padding: EdgeInsets.all(32),
                       child: Text(
-                        'No cover found. Try the ISBN, or another spelling of the title.',
+                        context.tr(
+                          'app.cover_search.no_cover_found_try_the_isbn',
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),

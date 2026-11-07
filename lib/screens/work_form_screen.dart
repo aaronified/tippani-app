@@ -70,7 +70,9 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
   Future<void> _lookUp() async {
     final title = _title.text.trim();
     if (title.isEmpty) {
-      setState(() => _error = 'Type a title to look up.');
+      setState(
+        () => _error = context.tr('app.work_form.type_a_title_to_look_up'),
+      );
       return;
     }
     setState(() {
@@ -87,14 +89,16 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
     setState(() => _looking = false);
     if (found.isEmpty) {
       if (_error == null) {
-        setState(() => _error = 'Nothing matched that title.');
+        setState(
+          () => _error = context.tr('app.work_form.nothing_matched_that_title'),
+        );
       }
       return;
     }
     final chosen = await showDialog<WorkMatch>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text(context.tr('Which one?')),
+        title: Text(context.tr('app.work_form.which_one')),
         children: [
           for (final m in found.take(8))
             SimpleDialogOption(
@@ -120,7 +124,9 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
     final yearText = _year.text.trim();
     final year = yearText.isEmpty ? null : int.tryParse(yearText);
     if (yearText.isNotEmpty && year == null) {
-      setState(() => _error = 'The year must be a number.');
+      setState(
+        () => _error = context.tr('app.work_form.the_year_must_be_a_number'),
+      );
       return;
     }
     setState(() {
@@ -157,7 +163,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
-            child: Text(context.tr('Save')),
+            child: Text(context.tr('common.action.save.label')),
           ),
         ],
       ),
@@ -184,7 +190,9 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
           TextField(
             controller: _title,
             textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(labelText: context.tr('Title')),
+            decoration: InputDecoration(
+              labelText: context.tr('common.field.title.label'),
+            ),
           ),
           if (widget.lookup?.available == true) ...[
             const SizedBox(height: 8),
@@ -199,7 +207,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.travel_explore),
-                label: Text(context.tr('Look up details')),
+                label: Text(context.tr('app.work_form.look_up_details')),
               ),
             ),
           ],
@@ -213,15 +221,17 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
           TextField(
             controller: _year,
             keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: context.tr('Year')),
+            decoration: InputDecoration(
+              labelText: context.tr('common.field.year.label'),
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _language,
             decoration: InputDecoration(
-              labelText: context.tr('Language'),
+              labelText: context.tr('common.field.language.label'),
               helperText: context.tr(
-                'What it is written or spoken in, if you want to say.',
+                'app.work_form.what_it_is_written_or_spoken',
               ),
             ),
           ),

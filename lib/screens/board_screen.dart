@@ -11,15 +11,16 @@ import 'boards_screen.dart' show BoardPicture;
 import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import 'quote_screen.dart';
+import '../l10n/l10n.dart';
 
 /// How the quotes of a board are put in order.
 enum BoardSort {
-  newest('Newest first'),
-  oldest('Oldest first'),
+  newest('app.board.newest_first'),
+  oldest('app.board.oldest_first'),
   text('A to Z'),
-  speaker('Who said it'),
+  speaker('anthologies.form.fields.credit.label'),
   colour('Colour'),
-  favourites('Favourites first');
+  favourites('app.board.favourites_first');
 
   const BoardSort(this.label);
   final String label;
@@ -27,8 +28,8 @@ enum BoardSort {
 
 /// How the quotes of a board are gathered under headings.
 enum BoardGroup {
-  none('No groups'),
-  speaker('Who said it'),
+  none('app.board.no_groups'),
+  speaker('anthologies.form.fields.credit.label'),
   language('Language'),
   colour('Colour');
 
@@ -169,9 +170,11 @@ class _BoardScreenState extends State<BoardScreen> {
   String _headingOf(String key) {
     if (key.isEmpty) {
       return switch (_group) {
-        BoardGroup.speaker => 'Nobody named',
-        BoardGroup.language => 'No language',
-        _ => 'Other',
+        BoardGroup.speaker => context.tr('app.board.nobody_named'),
+        BoardGroup.language => context.tr(
+          'quotes.group.residual.language.label',
+        ),
+        _ => context.tr('vocab.quote-kind.other.label'),
       };
     }
     return _group == BoardGroup.colour
@@ -225,10 +228,10 @@ class _BoardScreenState extends State<BoardScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(b?.name ?? 'Board'),
+        title: Text(b?.name ?? context.tr('common.field.board.label')),
         actions: [
           PopupMenuButton<BoardSort>(
-            tooltip: 'Sort',
+            tooltip: context.tr('common.filters.sort.aria'),
             icon: const Icon(Icons.sort_rounded),
             initialValue: _sort,
             onSelected: (s) => setState(() => _sort = s),
@@ -237,12 +240,12 @@ class _BoardScreenState extends State<BoardScreen> {
                 CheckedPopupMenuItem(
                   value: s,
                   checked: s == _sort,
-                  child: Text(s.label),
+                  child: Text(context.tr(s.label)),
                 ),
             ],
           ),
           PopupMenuButton<BoardGroup>(
-            tooltip: 'Group',
+            tooltip: context.tr('app.board.group'),
             icon: const Icon(Icons.segment_rounded),
             initialValue: _group,
             onSelected: (g) => setState(() => _group = g),
@@ -251,7 +254,7 @@ class _BoardScreenState extends State<BoardScreen> {
                 CheckedPopupMenuItem(
                   value: g,
                   checked: g == _group,
-                  child: Text(g.label),
+                  child: Text(context.tr(g.label)),
                 ),
             ],
           ),
@@ -260,7 +263,7 @@ class _BoardScreenState extends State<BoardScreen> {
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
           : b == null
-          ? const Center(child: Text('This board is gone.'))
+          ? Center(child: Text(context.tr('app.board.this_board_is_gone')))
           : ListView(
               padding: const EdgeInsets.only(bottom: 32),
               children: [
@@ -299,8 +302,8 @@ class _BoardScreenState extends State<BoardScreen> {
                           visualDensity: VisualDensity.compact,
                         ),
                       if (b.hidden)
-                        const Chip(
-                          label: Text('Hidden'),
+                        Chip(
+                          label: Text(context.tr('app.board.hidden')),
                           visualDensity: VisualDensity.compact,
                         ),
                     ],
@@ -315,10 +318,10 @@ class _BoardScreenState extends State<BoardScreen> {
                     ),
                   ),
                 if (_quotes.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(24),
                     child: Text(
-                      'No quotes on this board yet. File a standalone quote on it from the quote form.',
+                      context.tr('app.board.no_quotes_on_this_board_yet'),
                       textAlign: TextAlign.center,
                     ),
                   ),

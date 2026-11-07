@@ -7,11 +7,11 @@ import 'log_screen.dart' show ShareText, shareThroughSheet;
 import 'server_log.dart';
 import '../l10n/l10n.dart';
 
-const _windows = <(String, Duration)>[
-  ('Last hour', Duration(hours: 1)),
-  ('Last 24 hours', Duration(days: 1)),
-  ('Last 7 days', Duration(days: 7)),
-  ('Last 30 days', Duration(days: 30)),
+final _windows = <(String, Duration)>[
+  (tx('settings.logs.range.hour.label'), Duration(hours: 1)),
+  (tx('settings.logs.range.day.label'), Duration(days: 1)),
+  (tx('settings.logs.range.week.label'), Duration(days: 7)),
+  (tx('settings.logs.range.month.label'), Duration(days: 30)),
 ];
 
 /// The Tippani SERVER's log, for an admin. It is not the app's log (that is this phone's own record, and
@@ -77,7 +77,7 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
       setState(() {
         _loading = false;
         if (page == null) {
-          _problem = 'This phone is not paired with a server.';
+          _problem = context.tr('app.server_log.this_phone_is_not_paired_with');
           return;
         }
         _lines.addAll(page.lines);
@@ -91,10 +91,12 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
         _loading = false;
         _problem = switch (e.failure) {
           ApiFailure.forbidden => "Only an admin can read the server's log. This phone is paired as someone who is not one.",
-          ApiFailure.unauthorised =>
-            'The server no longer accepts this phone. Pair it again.',
-          ApiFailure.network ||
-          ApiFailure.timeout => 'Could not reach the server.',
+          ApiFailure.unauthorised => context.tr(
+            'app.board_service.the_server_no_longer_accepts_this',
+          ),
+          ApiFailure.network || ApiFailure.timeout => context.tr(
+            'app.server_log.could_not_reach_the_server',
+          ),
           _ =>
             'The server could not give its log (${e.detail.isEmpty ? e.failure.name : e.detail}).',
         };
@@ -110,8 +112,9 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
   Future<void> _copy() async {
     await Clipboard.setData(ClipboardData(text: serverLogText(_lines)));
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Server log copied")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(context.tr('app.server_log.server_log_copied'))),
+    );
   }
 
   @override
@@ -119,20 +122,20 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('Server log')),
+        title: Text(context.tr('app.server_log.server_log')),
         actions: [
           IconButton(
-            tooltip: context.tr('Refresh'),
+            tooltip: context.tr('app.server_log.refresh'),
             icon: const Icon(Icons.refresh),
             onPressed: _loading ? null : () => _load(reset: true),
           ),
           IconButton(
-            tooltip: context.tr('Copy'),
+            tooltip: context.tr('common.action.copy.label'),
             icon: const Icon(Icons.copy),
             onPressed: _lines.isEmpty ? null : _copy,
           ),
           IconButton(
-            tooltip: context.tr('Share'),
+            tooltip: context.tr('common.action.share.label'),
             icon: const Icon(Icons.share),
             onPressed: _lines.isEmpty
                 ? null
@@ -146,7 +149,7 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
             child: Text(
-              "The server's own log, not this phone's. The app's log is under App log.",
+              context.tr('app.server_log.the_server_s_own_log_not'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
@@ -158,10 +161,10 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
               onSubmitted: (v) => _apply(_filter.copyWith(query: v)),
               decoration: InputDecoration(
                 isDense: true,
-                labelText: context.tr('Search the log'),
+                labelText: context.tr('app.server_log.search_the_log'),
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
-                  tooltip: context.tr('Search'),
+                  tooltip: context.tr('common.help.topbar.search.term'),
                   icon: const Icon(Icons.search),
                   onPressed: () => _apply(_filter.copyWith(query: _query.text)),
                 ),
@@ -218,7 +221,7 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
             ),
           Expanded(
             child: _lines.isEmpty && !_loading && _problem == null
-                ? Center(child: Text(context.tr('No lines match.')))
+                ? Center(child: Text(context.tr('settings.logs.empty')))
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemCount: _lines.length + 1,
@@ -233,7 +236,9 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
                         if (!_more) return const SizedBox.shrink();
                         return TextButton(
                           onPressed: () => _load(reset: false),
-                          child: Text(context.tr('Load older lines')),
+                          child: Text(
+                            context.tr('app.server_log.load_older_lines'),
+                          ),
                         );
                       }
                       final l = _lines[i];

@@ -43,19 +43,18 @@ class SettingsScreen extends StatelessWidget {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Forget this server?')),
-        content: const Text(
-          'The app forgets the server address and the credential it holds for it. Nothing on the server changes; '
-          'you can pair this phone again later.',
+        title: Text(context.tr('app.settings.forget_this_server')),
+        content: Text(
+          context.tr('app.settings.the_app_forgets_the_server_address'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(context.tr('Forget')),
+            child: Text(context.tr('app.settings.forget')),
           ),
         ],
       ),
@@ -67,20 +66,16 @@ class SettingsScreen extends StatelessWidget {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Unpair this phone?')),
-        content: Text(
-          context.tr(
-            'The server is told to forget this phone, and the app forgets its key. The server address stays, so you can pair again with a new code.',
-          ),
-        ),
+        title: Text(context.tr('app.settings.unpair_this_phone')),
+        content: Text(context.tr('app.settings.the_server_is_told_to_forget')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(context.tr('Unpair')),
+            child: Text(context.tr('app.devices.unpair')),
           ),
         ],
       ),
@@ -100,7 +95,7 @@ class SettingsScreen extends StatelessWidget {
             bottom: 24,
           ),
           children: [
-            const _Section('Server'),
+            _Section(context.tr('settings.section.server.label')),
             _Group(
               children: [
                 ListTile(
@@ -110,7 +105,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   subtitle: Text(
                     url == null
-                        ? 'Not connected to a server yet.'
+                        ? context.tr('app.home.not_connected_to_a_server_yet')
                         : '$url\n${serverStatusLine(controller)}',
                   ),
                   isThreeLine: url != null,
@@ -127,10 +122,12 @@ class SettingsScreen extends StatelessWidget {
                       color: Theme.of(context).colorScheme.error,
                     ),
                     title: Text(
-                      context.tr('This phone was unpaired from the server'),
+                      context.tr(
+                        'app.settings.this_phone_was_unpaired_from_the',
+                      ),
                     ),
                     subtitle: Text(
-                      context.tr('Pair it again to use your library.'),
+                      context.tr('app.settings.pair_it_again_to_use_your'),
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -141,15 +138,17 @@ class SettingsScreen extends StatelessWidget {
                 if (url != null)
                   ListTile(
                     leading: const Icon(Icons.refresh),
-                    title: Text(context.tr('Check again')),
+                    title: Text(context.tr('app.admin_update.check_again')),
                     enabled: !controller.checking,
                     onTap: controller.refresh,
                   ),
                 if (url != null && !controller.paired)
                   ListTile(
                     leading: const Icon(Icons.phonelink_lock_outlined),
-                    title: Text(context.tr('Pair this phone')),
-                    subtitle: Text(context.tr('Needed to use your library')),
+                    title: Text(context.tr('app.home.pair_this_phone')),
+                    subtitle: Text(
+                      context.tr('app.settings.needed_to_use_your_library'),
+                    ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => PairScreen(controller: controller),
@@ -159,9 +158,9 @@ class SettingsScreen extends StatelessWidget {
                 if (controller.paired) ...[
                   ListTile(
                     leading: const Icon(Icons.devices_outlined),
-                    title: Text(context.tr('Paired devices')),
+                    title: Text(context.tr('app.devices.paired_devices')),
                     subtitle: Text(
-                      context.tr('Paired as {name}', {
+                      context.tr('app.settings.paired_as_name', {
                         'name': controller.username ?? '',
                       }),
                     ),
@@ -174,10 +173,10 @@ class SettingsScreen extends StatelessWidget {
                   if (harness.tools != null) ...[
                     ListTile(
                       leading: const Icon(Icons.bar_chart_outlined),
-                      title: Text(context.tr('Statistics')),
+                      title: Text(context.tr('app.settings.statistics')),
                       subtitle: Text(
                         context.tr(
-                          'The numbers the server keeps about your library',
+                          'app.settings.the_numbers_the_server_keeps_about',
                         ),
                       ),
                       onTap: () => Navigator.of(context).push(
@@ -193,9 +192,11 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     ListTile(
                       leading: const Icon(Icons.delete_outline),
-                      title: Text(context.tr('Bin')),
+                      title: Text(context.tr('bin.title')),
                       subtitle: Text(
-                        context.tr('What you deleted lately, to bring back'),
+                        context.tr(
+                          'app.settings.what_you_deleted_lately_to_bring',
+                        ),
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -222,17 +223,25 @@ class SettingsScreen extends StatelessWidget {
                                       ),
                                     )
                                   : const Icon(Icons.sync),
-                              title: Text(context.tr('Sync with server')),
+                              title: Text(
+                                context.tr('app.pull.sync_with_server'),
+                              ),
                               subtitle: Text(
                                 auto.failure != null
-                                    ? 'The last try did not finish'
+                                    ? context.tr(
+                                        'app.settings.the_last_try_did_not_finish',
+                                      )
                                     : auto.lastSynced != null
                                     ? (auto.enabled
                                           ? 'Automatic · up to date'
-                                          : 'Automatic sync is off')
+                                          : context.tr(
+                                              'app.settings.automatic_sync_is_off',
+                                            ))
                                     : (auto.enabled
                                           ? 'Automatic'
-                                          : 'Automatic sync is off'),
+                                          : context.tr(
+                                              'app.settings.automatic_sync_is_off',
+                                            )),
                               ),
                               onTap: () => Navigator.of(context).push(
                                 MaterialPageRoute<void>(
@@ -242,10 +251,14 @@ class SettingsScreen extends StatelessWidget {
                             ),
                             ListTile(
                               leading: const Icon(Icons.sync_problem_outlined),
-                              title: Text(context.tr('Sync conflicts')),
+                              title: Text(
+                                context.tr('app.conflicts.sync_conflicts'),
+                              ),
                               subtitle: Text(
                                 n == 0
-                                    ? 'Nothing to settle'
+                                    ? context.tr(
+                                        'app.settings.nothing_to_settle',
+                                      )
                                     : n == 1
                                     ? '1 waiting for you'
                                     : '$n waiting for you',
@@ -266,9 +279,11 @@ class SettingsScreen extends StatelessWidget {
                   if (harness.sync != null)
                     ListTile(
                       leading: const Icon(Icons.cloud_upload_outlined),
-                      title: Text(context.tr('Send library to server')),
+                      title: Text(
+                        context.tr('app.settings.send_library_to_server'),
+                      ),
                       subtitle: Text(
-                        context.tr('Adds what is only on this phone'),
+                        context.tr('app.settings.adds_what_is_only_on_this'),
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -278,29 +293,33 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ListTile(
                     leading: const Icon(Icons.phonelink_erase_outlined),
-                    title: Text(context.tr('Unpair this phone')),
+                    title: Text(context.tr('app.settings.unpair_this_phone_2')),
                     onTap: () => _unpair(context),
                   ),
                 ],
                 if (url != null)
                   ListTile(
                     leading: const Icon(Icons.link_off),
-                    title: Text(context.tr('Forget this server')),
+                    title: Text(
+                      context.tr('app.settings.forget_this_server_2'),
+                    ),
                     onTap: () => _forget(context),
                   ),
               ],
             ),
             if (harness.library != null || harness.imports != null) ...[
-              const _Section('Your library'),
+              _Section(context.tr('app.settings.your_library')),
               _Group(
                 children: [
                   ChecksEntry(controller: controller, harness: harness),
                   if (harness.sources != null && harness.library != null)
                     ListTile(
                       leading: const Icon(Icons.description_outlined),
-                      title: const Text('Source files'),
-                      subtitle: const Text(
-                        'The ebooks and subtitles your quotes came from: attach, find, free space',
+                      title: Text(context.tr('metadata.section.files.label')),
+                      subtitle: Text(
+                        context.tr(
+                          'app.settings.the_ebooks_and_subtitles_your_quotes',
+                        ),
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -315,9 +334,13 @@ class SettingsScreen extends StatelessWidget {
                   if (harness.peopleConsole != null && harness.library != null)
                     ListTile(
                       leading: const Icon(Icons.groups_2_outlined),
-                      title: const Text('People and characters'),
-                      subtitle: const Text(
-                        'Authors, actors, speakers and characters: spellings, photos, merging',
+                      title: Text(
+                        context.tr('app.settings.people_and_characters'),
+                      ),
+                      subtitle: Text(
+                        context.tr(
+                          'app.settings.authors_actors_speakers_and_characters_spellings',
+                        ),
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -341,9 +364,11 @@ class SettingsScreen extends StatelessWidget {
                   if (harness.metadata != null && harness.library != null)
                     ListTile(
                       leading: const Icon(Icons.travel_explore_rounded),
-                      title: const Text('Details and duplicates'),
-                      subtitle: const Text(
-                        'Works that lack a cover or details, checked against the web; works saved twice',
+                      title: Text(
+                        context.tr('app.settings.details_and_duplicates'),
+                      ),
+                      subtitle: Text(
+                        context.tr('app.settings.works_that_lack_a_cover_or'),
                       ),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -359,14 +384,16 @@ class SettingsScreen extends StatelessWidget {
               ),
             ],
             if (controller.isAdmin && harness.admin != null) ...[
-              const _Section('Server administration'),
+              _Section(context.tr('app.admin.server_administration')),
               _Group(
                 children: [
                   ListTile(
                     leading: const Icon(Icons.admin_panel_settings_outlined),
-                    title: const Text('Run the server'),
-                    subtitle: const Text(
-                      'Users, jobs, backups, updates, library folders and metadata sources. Admins only',
+                    title: Text(context.tr('app.settings.run_the_server')),
+                    subtitle: Text(
+                      context.tr(
+                        'app.settings.users_jobs_backups_updates_library_folders',
+                      ),
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -388,9 +415,11 @@ class SettingsScreen extends StatelessWidget {
                 if (harness.library != null)
                   ListTile(
                     leading: const Icon(Icons.sell_outlined),
-                    title: const Text('Tags'),
-                    subtitle: const Text(
-                      'Rename, colour, merge and delete your tags',
+                    title: Text(context.tr('common.field.tags.label')),
+                    subtitle: Text(
+                      context.tr(
+                        'app.settings.rename_colour_merge_and_delete_your',
+                      ),
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -405,8 +434,10 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ListTile(
                   leading: const Icon(Icons.record_voice_over_outlined),
-                  title: Text(context.tr('Read aloud')),
-                  subtitle: Text(context.tr('Voice, speed and pitch')),
+                  title: Text(context.tr('speech.play.aria')),
+                  subtitle: Text(
+                    context.tr('app.settings.voice_speed_and_pitch'),
+                  ),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => const ReadAloudSettingsScreen(),
@@ -421,8 +452,8 @@ class SettingsScreen extends StatelessWidget {
                       leading: const Icon(Icons.system_update_outlined),
                       title: Text(
                         u.stage == UpdateStage.available
-                            ? 'Update available'
-                            : 'Check for updates',
+                            ? context.tr('app.settings.update_available')
+                            : context.tr('settings.updates.check.label'),
                       ),
                       subtitle: Text(checkResultText(u)),
                       onTap: u.stage == UpdateStage.checking
@@ -441,7 +472,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.new_releases_outlined),
-                  title: const Text("What's new"),
+                  title: Text(context.tr('app.changelog.what_s_new')),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => ChangelogScreen(harness: harness),
@@ -450,7 +481,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.backup_outlined),
-                  title: Text(context.tr('Backup and restore')),
+                  title: Text(context.tr('app.backup.backup_and_restore')),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => BackupScreen(harness: harness),
@@ -462,8 +493,10 @@ class SettingsScreen extends StatelessWidget {
                 // screen, a copy or a file.
                 ListTile(
                   leading: const Icon(Icons.receipt_long_outlined),
-                  title: Text(context.tr('App log')),
-                  subtitle: const Text("What this app did on this phone"),
+                  title: Text(context.tr('app.settings.app_log')),
+                  subtitle: Text(
+                    context.tr('app.settings.what_this_app_did_on_this'),
+                  ),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => LogScreen(log: harness.log),
@@ -473,9 +506,9 @@ class SettingsScreen extends StatelessWidget {
                 if (controller.isAdmin)
                   ListTile(
                     leading: const Icon(Icons.dns_outlined),
-                    title: Text(context.tr('Server log')),
-                    subtitle: const Text(
-                      "The Tippani server's own log. Admins only",
+                    title: Text(context.tr('app.server_log.server_log')),
+                    subtitle: Text(
+                      context.tr('app.settings.the_tippani_server_s_own_log'),
                     ),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -490,11 +523,13 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 ListTile(
                   leading: Icon(Icons.info_outline),
-                  title: Text('Tippani for Android $appVersion'),
+                  title: Text(
+                    context.tr('app.settings.tippani_for_android_app_version', {
+                      'app_version': appVersion,
+                    }),
+                  ),
                   subtitle: Text(
-                    context.tr(
-                      'Free software, GPL-3.0. Source: github.com/aaronified/tippani-app',
-                    ),
+                    context.tr('app.settings.free_software_gpl_3_0_source'),
                   ),
                 ),
               ],

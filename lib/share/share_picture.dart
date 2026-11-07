@@ -8,6 +8,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import '../library/models.dart';
 import '../library/share_format.dart';
 import 'share_people.dart' show ShareFace;
+import '../l10n/l10n.dart';
 
 // THE PICTURE OF A QUOTE, drawn the way the web app draws it (web/frontend/src/quoteImage.js): one fixed width of
 // 640 logical pixels exported at twice that, a height that follows the content, fixed type sizes (a long quote makes
@@ -335,7 +336,7 @@ class _SharePictureState extends State<SharePicture> {
 
     if (m.quote.isNotEmpty) {
       final words = Text(
-        '“${m.quote}”',
+        context.tr('app.share_picture.quote', {'quote': m.quote}),
         style: _serif(
           27,
           38,
@@ -454,7 +455,7 @@ class _SharePictureState extends State<SharePicture> {
           child: Text(
             m.note,
             style: TextStyle(
-              fontFamily: 'Caveat',
+              fontFamily: context.tr('vocab.face.caveat.name'),
               fontFamilyFallback: const [
                 'NotoSerifBengali',
                 'NotoSerifDevanagari',
@@ -912,12 +913,12 @@ class _Footer extends StatelessWidget {
                 ),
                 const SizedBox(width: 7),
                 Text(
-                  'made with',
+                  context.tr('share.image.footer.credit.label'),
                   style: _mono(11, 16, faint, shadows: shadows),
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'tippani',
+                  context.tr('shell.wordmark.label'),
                   style: _serif(
                     14,
                     18,

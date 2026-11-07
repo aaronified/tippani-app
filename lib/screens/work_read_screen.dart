@@ -52,6 +52,7 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
       return;
     }
     setState(() => _reading = true);
+    final couldNotRead = context.tr('app.work_read.the_work_could_not_be_read');
     String? problem;
     try {
       for (final q in widget.quotes) {
@@ -65,7 +66,7 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
         }
       }
     } on Object {
-      problem = 'The work could not be read aloud.';
+      problem = couldNotRead;
     }
     if (!mounted) return;
     setState(() => _reading = false);
@@ -85,14 +86,16 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
         title: Text(widget.work.title),
         actions: [
           IconButton(
-            tooltip: _reading ? 'Stop reading' : 'Read aloud',
+            tooltip: _reading
+                ? context.tr('speech.stop.aria')
+                : context.tr('speech.play.aria'),
             icon: Icon(
               _reading ? Icons.stop_circle_outlined : Icons.volume_up_outlined,
             ),
             onPressed: widget.quotes.isEmpty ? null : _toggleReading,
           ),
           IconButton(
-            tooltip: context.tr('Share all'),
+            tooltip: context.tr('app.work_read.share_all'),
             icon: const Icon(Icons.ios_share),
             onPressed: () => widget.share(
               workShareText(
@@ -123,9 +126,13 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
                           min: 14,
                           max: 32,
                           divisions: 9,
-                          label: '${_size.round()}',
-                          semanticFormatterCallback: (v) =>
-                              'Text size ${v.round()}',
+                          label: context.tr('app.work_read.round', {
+                            'round': _size.round(),
+                          }),
+                          semanticFormatterCallback: (v) => context.tr(
+                            'app.work_read.text_size_round',
+                            {'round': v.round()},
+                          ),
                           onChanged: (v) => setState(() => _size = v),
                         ),
                       ),
@@ -136,12 +143,12 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
                     spacing: 8,
                     children: [
                       FilterChip(
-                        label: Text(context.tr('Translations')),
+                        label: Text(context.tr('app.work_read.translations')),
                         selected: _translations,
                         onSelected: (v) => setState(() => _translations = v),
                       ),
                       FilterChip(
-                        label: Text(context.tr('My notes')),
+                        label: Text(context.tr('app.work_read.my_notes')),
                         selected: _notes,
                         onSelected: (v) => setState(() => _notes = v),
                       ),
@@ -154,7 +161,9 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
           Expanded(
             child: widget.quotes.isEmpty
                 ? Center(
-                    child: Text(context.tr('No quotes from this work yet.')),
+                    child: Text(
+                      context.tr('app.work_read.no_quotes_from_this_work_yet'),
+                    ),
                   )
                 : ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),

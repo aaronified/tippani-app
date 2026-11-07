@@ -10,10 +10,10 @@ import 'shelf_card.dart';
 /// How the works are ordered.
 enum WorkSort {
   title('Title'),
-  creator('Author or maker'),
-  yearNewest('Year, newest first'),
-  yearOldest('Year, oldest first'),
-  added('Recently added');
+  creator('app.works_view.author_or_maker'),
+  yearNewest('app.works_view.year_newest_first'),
+  yearOldest('app.works_view.year_oldest_first'),
+  added('app.works_view.recently_added');
 
   const WorkSort(this.label);
   final String label;
@@ -21,10 +21,10 @@ enum WorkSort {
 
 /// What the works are gathered under.
 enum WorkGroup {
-  none('No grouping'),
-  creator('Author or maker'),
+  none('app.works_view.no_grouping'),
+  creator('app.works_view.author_or_maker'),
   decade('Decade'),
-  status('Where I am with it'),
+  status('app.works_view.where_i_am_with_it'),
   genre('Genre'),
   language('Language');
 
@@ -35,8 +35,8 @@ enum WorkGroup {
 /// Which works to keep, by where the reader is with them.
 enum WorkShelfFilter {
   all('All'),
-  inProgress('In progress'),
-  notStarted('Not started'),
+  inProgress('app.works_view.in_progress'),
+  notStarted('app.shelf.not_started'),
   paused('Paused'),
   finished('Finished'),
   abandoned('Abandoned');
@@ -253,18 +253,22 @@ class _WorksViewState extends State<WorksView> {
     switch (_group) {
       case WorkGroup.status:
         return key == 'inprogress'
-            ? context.tr('In progress')
+            ? context.tr('app.works_view.in_progress')
             : key.isEmpty
-            ? context.tr('Not started')
+            ? context.tr('app.shelf.not_started')
             : shelfStatusLabel(context, key);
       case WorkGroup.decade:
-        return key.isEmpty ? context.tr('Year unknown') : '${key}s';
+        return key.isEmpty
+            ? context.tr('app.works_view.year_unknown')
+            : '${key}s';
       case WorkGroup.creator:
-        return key.isEmpty ? context.tr('Creator unknown') : key;
+        return key.isEmpty ? context.tr('app.works_view.creator_unknown') : key;
       case WorkGroup.genre:
-        return key.isEmpty ? context.tr('No genre') : key;
+        return key.isEmpty ? context.tr('common.group.no-genre.label') : key;
       case WorkGroup.language:
-        return key.isEmpty ? context.tr('Language unknown') : key;
+        return key.isEmpty
+            ? context.tr('app.works_view.language_unknown')
+            : key;
       case WorkGroup.none:
         return '';
     }
@@ -293,7 +297,12 @@ class _WorksViewState extends State<WorksView> {
       ],
       child: Chip(
         avatar: Icon(icon, size: 18),
-        label: Text('$title: ${label(value)}'),
+        label: Text(
+          context.tr('app.works_view.title_x', {
+            'title': title,
+            'x': label(value),
+          }),
+        ),
         visualDensity: VisualDensity.compact,
       ),
     );
@@ -318,7 +327,7 @@ class _WorksViewState extends State<WorksView> {
               children: [
                 _menu<WorkSort>(
                   key: const ValueKey('works-sort'),
-                  title: context.tr('Sort'),
+                  title: context.tr('common.filters.sort.aria'),
                   icon: Icons.sort_rounded,
                   values: WorkSort.values,
                   value: _sort,
@@ -330,7 +339,7 @@ class _WorksViewState extends State<WorksView> {
                 ),
                 _menu<WorkGroup>(
                   key: const ValueKey('works-group'),
-                  title: context.tr('Group'),
+                  title: context.tr('app.board.group'),
                   icon: Icons.view_agenda_outlined,
                   values: WorkGroup.values,
                   value: _group,
@@ -343,8 +352,8 @@ class _WorksViewState extends State<WorksView> {
                 IconButton.filledTonal(
                   key: const ValueKey('works-view'),
                   tooltip: _grid
-                      ? context.tr('Show as a list')
-                      : context.tr('Show as covers'),
+                      ? context.tr('app.works_view.show_as_a_list')
+                      : context.tr('app.works_view.show_as_covers'),
                   icon: Icon(
                     _grid ? Icons.view_list_rounded : Icons.grid_view_rounded,
                   ),
@@ -401,8 +410,8 @@ class _WorksViewState extends State<WorksView> {
             padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
             child: Text(
               kept.length == widget.works.length
-                  ? context.tr('{n} works', {'n': kept.length})
-                  : context.tr('{n} of {total} works', {
+                  ? context.tr('identity.crumb.works.other', {'n': kept.length})
+                  : context.tr('app.works_view.n_of_total_works', {
                       'n': kept.length,
                       'total': widget.works.length,
                     }),
@@ -423,7 +432,7 @@ class _WorksViewState extends State<WorksView> {
           Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              context.tr('No works match. Choose All to see everything.'),
+              context.tr('app.works_view.no_works_match_choose_all_to'),
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),

@@ -40,21 +40,31 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text(
-          phone ? 'Keep the phone’s for all?' : 'Keep the server’s for all?',
+          phone
+              ? context.tr('app.conflicts.keep_the_phone_s_for_all_2')
+              : context.tr('app.conflicts.keep_the_server_s_for_all_2'),
         ),
         content: Text(
           phone
-              ? 'The server’s version of all $n will be replaced by what is on this phone.'
-              : 'This phone’s version of all $n will be replaced by what is on the server.',
+              ? context.tr('app.conflicts.the_server_s_version_of_all', {
+                  'n': n,
+                })
+              : context.tr('app.conflicts.this_phone_s_version_of_all', {
+                  'n': n,
+                }),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(phone ? 'Keep the phone’s' : 'Keep the server’s'),
+            child: Text(
+              phone
+                  ? context.tr('app.conflicts.keep_the_phone_s')
+                  : context.tr('app.conflicts.keep_the_server_s'),
+            ),
           ),
         ],
       ),
@@ -70,30 +80,28 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Sync conflicts'))),
+      appBar: AppBar(title: Text(context.tr('app.conflicts.sync_conflicts'))),
       body: ListenableBuilder(
         listenable: widget.auto,
         builder: (context, _) {
           final conflicts = widget.auto.conflicts;
           if (conflicts.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.task_alt_rounded,
-              title: 'Nothing to settle.',
-              hint: 'If the same quote or work is changed here and on the server, it will wait here for you.',
+              title: context.tr('app.conflicts.nothing_to_settle'),
+              hint: context.tr('app.conflicts.if_the_same_quote_or_work'),
             );
           }
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               Text(
-                context.tr('Changed on both sides'),
+                context.tr('app.conflicts.changed_on_both_sides'),
                 style: theme.textTheme.titleMedium,
               ),
               const SizedBox(height: 4),
               Text(
-                context.tr(
-                  'No hurry: nothing has been changed on either side, and what you leave here stays until you choose. For each, keep the version on the phone or the one on the server.',
-                ),
+                context.tr('app.conflicts.no_hurry_nothing_has_been_changed'),
               ),
               const SizedBox(height: 8),
               if (conflicts.length > 1)
@@ -102,11 +110,15 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
                   children: [
                     OutlinedButton(
                       onPressed: () => _chooseAll(ConflictSide.phone),
-                      child: Text(context.tr('Keep the phone’s for all')),
+                      child: Text(
+                        context.tr('app.conflicts.keep_the_phone_s_for_all'),
+                      ),
                     ),
                     OutlinedButton(
                       onPressed: () => _chooseAll(ConflictSide.server),
-                      child: Text(context.tr('Keep the server’s for all')),
+                      child: Text(
+                        context.tr('app.conflicts.keep_the_server_s_for_all'),
+                      ),
                     ),
                   ],
                 ),
@@ -150,15 +162,19 @@ class ConflictCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              conflict.isWork ? 'Work' : 'Quote',
+              conflict.isWork
+                  ? context.tr('anthologies.group.work')
+                  : context.tr('common.field.quote.label'),
               style: theme.textTheme.labelMedium,
             ),
             Text(conflict.title, style: theme.textTheme.titleSmall),
             for (final d in conflict.diffs) ...[
               const SizedBox(height: 10),
               Text(d.label, style: theme.textTheme.labelLarge),
-              Text(context.tr('Phone: {value}', {'value': d.phone})),
-              Text(context.tr('Server: {value}', {'value': d.server})),
+              Text(context.tr('app.conflicts.phone_value', {'value': d.phone})),
+              Text(
+                context.tr('app.conflicts.server_value', {'value': d.server}),
+              ),
             ],
             if (problem != null) ...[
               const SizedBox(height: 8),
@@ -173,11 +189,11 @@ class ConflictCard extends StatelessWidget {
                 children: [
                   FilledButton.tonal(
                     onPressed: () => onChoose(ConflictSide.phone),
-                    child: Text(context.tr('Keep the phone’s')),
+                    child: Text(context.tr('app.conflicts.keep_the_phone_s')),
                   ),
                   FilledButton.tonal(
                     onPressed: () => onChoose(ConflictSide.server),
-                    child: Text(context.tr('Keep the server’s')),
+                    child: Text(context.tr('app.conflicts.keep_the_server_s')),
                   ),
                 ],
               ),

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 
 import '../api/api_client.dart';
 import '../app_controller.dart';
+import '../l10n/l10n.dart';
 
 /// The answer to a call: the [value], or the server's [error] in its own words.
 class Outcome<T> {
@@ -85,8 +86,7 @@ class PairedAccount implements AccountService {
   @override
   bool get available => _controller.paired;
 
-  static const _offline =
-      'The server could not be reached. Check your connection and try again.';
+  static const _offline = 'app.account_service.the_server_could_not_be_reached';
 
   /// Runs [run] with the device's client. Every failure becomes an [Outcome] with words for the reader.
   /// [wrong401] says a 401 here means "that was wrong" (a wrong password), not "this phone was unpaired",
@@ -107,7 +107,7 @@ class PairedAccount implements AccountService {
       }
       final v = await _controller.withClient(run);
       if (v == null && !_controller.paired) {
-        return const Outcome.fail('This phone is not paired.');
+        return Outcome.fail(tx('app.account_service.this_phone_is_not_paired'));
       }
       return Outcome.ok(v);
     } on ApiException catch (e) {
@@ -115,13 +115,14 @@ class PairedAccount implements AccountService {
         return Outcome.fail(wrong401);
       }
       return switch (e.failure) {
-        ApiFailure.network ||
-        ApiFailure.timeout => const Outcome.fail(_offline),
-        ApiFailure.forbidden => const Outcome.fail(
-          'The server does not allow that.',
+        ApiFailure.network || ApiFailure.timeout => Outcome.fail(tx(_offline)),
+        ApiFailure.forbidden => Outcome.fail(
+          tx('app.account_service.the_server_does_not_allow_that'),
         ),
         _ => Outcome.fail(
-          e.detail.isEmpty ? 'The server refused that.' : e.detail,
+          e.detail.isEmpty
+              ? tx('app.account_service.the_server_refused_that')
+              : e.detail,
         ),
       };
     }
@@ -263,14 +264,16 @@ class PairedContextRules implements ContextRules {
     try {
       final v = await _controller.withClient(run);
       if (v == null && !_controller.paired) {
-        return const Outcome.fail('This phone is not paired.');
+        return Outcome.fail(tx('app.account_service.this_phone_is_not_paired'));
       }
       return Outcome.ok(v);
     } on ApiException catch (e) {
       return Outcome.fail(
         e.failure == ApiFailure.network || e.failure == ApiFailure.timeout
-            ? 'The server could not be reached. Check your connection and try again.'
-            : (e.detail.isEmpty ? 'The server refused that.' : e.detail),
+            ? tx('app.account_service.the_server_could_not_be_reached')
+            : (e.detail.isEmpty
+                  ? tx('app.account_service.the_server_refused_that')
+                  : e.detail),
       );
     }
   }

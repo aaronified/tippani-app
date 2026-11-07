@@ -13,6 +13,7 @@ import '../people/people_service.dart';
 import '../people/picture.dart';
 import '../theme/app_theme.dart';
 import 'people_console_actions.dart';
+import '../l10n/l10n.dart';
 
 /// Opens the page of whoever a pill names: a person's, or (for a character in a film, show or game) the character's.
 /// A name the server holds no record of still gets a page (their picture, the quotes), with a note saying so.
@@ -60,13 +61,11 @@ Future<void> openPersonPage(
   if (f != null) onFilter(f);
 }
 
-String _years(String born, String died) {
+String _years(BuildContext context, String born, String died) {
   if (born.isEmpty && died.isEmpty) return '';
-  if (died.isEmpty) return 'Born $born';
+  if (died.isEmpty) return context.tr('app.person.born_born', {'born': born});
   return '${born.isEmpty ? '?' : born} – $died';
 }
-
-String _plural(int n, String one, String many) => '$n ${n == 1 ? one : many}';
 
 /// What the people pages share: the big round picture, a section heading, the quotes and the links.
 class _Parts {
@@ -111,7 +110,7 @@ class _Parts {
     if (image.isEmpty) return fallback;
     return Semantics(
       button: true,
-      label: 'Show the picture of $name',
+      label: context.tr('app.person.show_the_picture_of_name', {'name': name}),
       child: GestureDetector(
         onTap: () => showDialog<void>(
           context: context,
@@ -167,7 +166,7 @@ class _Parts {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        heading(context, 'Also written as'),
+        heading(context, context.tr('app.person.also_written_as')),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Wrap(
@@ -179,7 +178,9 @@ class _Parts {
                     ? Chip(label: Text(a))
                     : ActionChip(
                         label: Text(a),
-                        tooltip: 'Make this its own record',
+                        tooltip: context.tr(
+                          'app.person.make_this_its_own_record',
+                        ),
                         onPressed: () => onSplit(a),
                       ),
             ],
@@ -201,7 +202,7 @@ class _Parts {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        heading(context, 'Quotes'),
+        heading(context, context.tr('nav.tab.quotes.label')),
         for (final l in lines)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -252,7 +253,10 @@ class _Parts {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
             child: Text(
-              'Showing ${lines.length} of $total. "Show their quotes" lists them all.',
+              context.tr('app.person.showing_n_of_total_show_their', {
+                'n': lines.length,
+                'total': total,
+              }),
               style: theme.textTheme.bodySmall,
             ),
           ),
@@ -260,7 +264,7 @@ class _Parts {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
             child: Text(
-              '$shared more ${shared == 1 ? 'quote names' : 'quotes name'} them alongside someone else, so ${shared == 1 ? 'it is' : 'they are'} not listed here.',
+              trn('app.person.shared_more', shared),
               style: theme.textTheme.bodySmall,
             ),
           ),
@@ -418,7 +422,7 @@ class _PersonScreenState extends State<PersonScreen> {
     if (!mounted) return;
     final target = await pickRecord(
       context,
-      title: 'Merge ${p.name} into…',
+      title: context.tr('app.person.merge_name_into', {'name': p.name}),
       rows: [
         for (final r in all)
           if (r.id != p.id)
@@ -470,28 +474,34 @@ class _PersonScreenState extends State<PersonScreen> {
     final go = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit details'),
+        title: Text(context.tr('app.person.edit_details')),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: name,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(
+                  labelText: context.tr('common.field.name.label'),
+                ),
               ),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: born,
-                      decoration: const InputDecoration(labelText: 'Born'),
+                      decoration: InputDecoration(
+                        labelText: context.tr('common.field.born.label'),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: died,
-                      decoration: const InputDecoration(labelText: 'Died'),
+                      decoration: InputDecoration(
+                        labelText: context.tr('common.field.died.label'),
+                      ),
                     ),
                   ),
                 ],
@@ -500,23 +510,29 @@ class _PersonScreenState extends State<PersonScreen> {
                 controller: bio,
                 minLines: 3,
                 maxLines: 8,
-                decoration: const InputDecoration(labelText: 'About'),
+                decoration: InputDecoration(
+                  labelText: context.tr('app.person.about'),
+                ),
               ),
               TextField(
                 controller: links,
                 minLines: 2,
                 maxLines: 5,
                 keyboardType: TextInputType.url,
-                decoration: const InputDecoration(
-                  labelText: 'Links',
-                  helperText: 'One address per line',
+                decoration: InputDecoration(
+                  labelText: context.tr('common.field.links.label'),
+                  helperText: context.tr(
+                    'app.people_console_actions.one_address_per_line',
+                  ),
                 ),
               ),
               TextField(
                 controller: note,
                 minLines: 1,
                 maxLines: 4,
-                decoration: const InputDecoration(labelText: 'Your note'),
+                decoration: InputDecoration(
+                  labelText: context.tr('identity.field.note'),
+                ),
               ),
             ],
           ),
@@ -524,11 +540,11 @@ class _PersonScreenState extends State<PersonScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save'),
+            child: Text(context.tr('common.action.save.label')),
           ),
         ],
       ),
@@ -557,7 +573,7 @@ class _PersonScreenState extends State<PersonScreen> {
     final name = p?.name.isNotEmpty == true ? p!.name : widget.name;
     final image = p?.image ?? _dir?.anyPerson(widget.name)?.image ?? '';
     final canEdit = p != null && (_service?.available ?? false);
-    final years = _years(p?.born ?? '', p?.died ?? '');
+    final years = _years(context, p?.born ?? '', p?.died ?? '');
     final credits = [...?p?.credits]
       ..sort((a, b) {
         if (a.year == 0 || b.year == 0) return b.year.compareTo(a.year);
@@ -568,7 +584,7 @@ class _PersonScreenState extends State<PersonScreen> {
         actions: [
           if (canEdit)
             PopupMenuButton<String>(
-              tooltip: 'More',
+              tooltip: context.tr('settings.appearance.contrast.more.label'),
               onSelected: (v) {
                 switch (v) {
                   case 'edit':
@@ -596,42 +612,53 @@ class _PersonScreenState extends State<PersonScreen> {
                 }
               },
               itemBuilder: (_) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit details')),
-                const PopupMenuItem(
-                  value: 'fetch',
-                  child: Text('Look up portrait and details'),
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Text(context.tr('app.person.edit_details')),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
+                  value: 'fetch',
+                  child: Text(
+                    context.tr('app.person.look_up_portrait_and_details'),
+                  ),
+                ),
+                PopupMenuItem(
                   value: 'portrait',
-                  child: Text('Choose a portrait'),
+                  child: Text(context.tr('app.person.choose_a_portrait')),
                 ),
                 if (p.image.isNotEmpty)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'noportrait',
-                    child: Text('Remove the portrait'),
+                    child: Text(context.tr('app.person.remove_the_portrait')),
                   ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'signature',
-                  child: Text('Choose a signature'),
+                  child: Text(context.tr('app.person.choose_a_signature')),
                 ),
                 if (p.signature.isNotEmpty)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'nosignature',
-                    child: Text('Remove the signature'),
+                    child: Text(context.tr('app.person.remove_the_signature')),
                   ),
-                if (_console != null) ...const [
+                if (_console != null) ...[
                   PopupMenuDivider(),
                   PopupMenuItem(
                     value: 'names',
-                    child: Text('Names and spellings'),
+                    child: Text(
+                      context.tr(
+                        'app.people_console_actions.names_and_spellings',
+                      ),
+                    ),
                   ),
                   PopupMenuItem(
                     value: 'merge',
-                    child: Text('Merge into another person'),
+                    child: Text(
+                      context.tr('app.person.merge_into_another_person'),
+                    ),
                   ),
                   PopupMenuItem(
                     value: 'remove',
-                    child: Text('Remove this person'),
+                    child: Text(context.tr('app.person.remove_this_person')),
                   ),
                 ],
               ],
@@ -681,8 +708,11 @@ class _PersonScreenState extends State<PersonScreen> {
                             if (p != null) ...[
                               const SizedBox(height: 4),
                               Text(
-                                '${_plural(p.quotes + p.sharedLines, 'quote', 'quotes')}'
-                                '${p.favourites > 0 ? ' · ${p.favourites} favourite${p.favourites == 1 ? '' : 's'}' : ''}',
+                                [
+                                  countWords('quote', p.quotes + p.sharedLines),
+                                  if (p.favourites > 0)
+                                    countWords('favourite', p.favourites),
+                                ].join(' · '),
                                 style: theme.textTheme.bodySmall,
                               ),
                             ],
@@ -702,7 +732,7 @@ class _PersonScreenState extends State<PersonScreen> {
                         Navigator.of(context).pop();
                       },
                       icon: const Icon(Icons.format_quote_rounded),
-                      label: const Text('Show their quotes'),
+                      label: Text(context.tr('app.person.show_their_quotes')),
                     ),
                   ),
                 ),
@@ -712,8 +742,13 @@ class _PersonScreenState extends State<PersonScreen> {
                     child: Text(
                       _error ??
                           (widget.id == 0
-                              ? 'Your server has no page for $name yet, or this phone is not paired with it.'
-                              : 'The server could not be reached, so only what the phone holds is shown.'),
+                              ? context.tr(
+                                  'app.person.your_server_has_no_page_for',
+                                  {'name': name},
+                                )
+                              : context.tr(
+                                  'app.person.the_server_could_not_be_reached',
+                                )),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -736,17 +771,27 @@ class _PersonScreenState extends State<PersonScreen> {
                         alignment: Alignment.centerLeft,
                         child: TextButton(
                           onPressed: () => setState(() => _moreBio = !_moreBio),
-                          child: Text(_moreBio ? 'Show less' : 'Show more'),
+                          child: Text(
+                            _moreBio
+                                ? context.tr('common.action.show-less.label')
+                                : context.tr('context.more'),
+                          ),
                         ),
                       ),
                     ),
                 ],
                 if (p != null && p.links.isNotEmpty) ...[
-                  _Parts.heading(context, 'Links'),
+                  _Parts.heading(
+                    context,
+                    context.tr('common.field.links.label'),
+                  ),
                   _Parts.links(context, p.links),
                 ],
                 if (p != null && p.signature.isNotEmpty) ...[
-                  _Parts.heading(context, 'Signature'),
+                  _Parts.heading(
+                    context,
+                    context.tr('common.field.signature.label'),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: StoredPicture(
@@ -764,7 +809,10 @@ class _PersonScreenState extends State<PersonScreen> {
                     onSplit: _console == null ? null : _split,
                   ),
                 if (credits.isNotEmpty) ...[
-                  _Parts.heading(context, 'Works'),
+                  _Parts.heading(
+                    context,
+                    context.tr('metadata.section.works.label'),
+                  ),
                   SizedBox(
                     height: 216,
                     child: ListView(
@@ -789,7 +837,10 @@ class _PersonScreenState extends State<PersonScreen> {
                   ),
                 ],
                 if (p != null && p.roles.isNotEmpty) ...[
-                  _Parts.heading(context, 'Parts played'),
+                  _Parts.heading(
+                    context,
+                    context.tr('app.person.parts_played'),
+                  ),
                   for (final r in p.roles)
                     ListTile(
                       leading: StoredPicture(
@@ -815,7 +866,7 @@ class _PersonScreenState extends State<PersonScreen> {
                     ),
                 ],
                 if (p != null && p.note.isNotEmpty) ...[
-                  _Parts.heading(context, 'Your note'),
+                  _Parts.heading(context, context.tr('identity.field.note')),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(p.note),
@@ -1063,7 +1114,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
     if (!mounted) return;
     final target = await pickRecord(
       context,
-      title: 'Merge ${ch.name} into…',
+      title: context.tr('app.person.merge_name_into', {'name': ch.name}),
       rows: [
         for (final r in all)
           if (r.id != ch.id)
@@ -1141,7 +1192,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
         actions: [
           if (c != null && _console != null)
             PopupMenuButton<String>(
-              tooltip: 'More',
+              tooltip: context.tr('settings.appearance.contrast.more.label'),
               onSelected: (v) {
                 switch (v) {
                   case 'edit':
@@ -1159,28 +1210,37 @@ class _CharacterScreenState extends State<CharacterScreen> {
                 }
               },
               itemBuilder: (_) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit details')),
-                const PopupMenuItem(
-                  value: 'names',
-                  child: Text('Names and spellings'),
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Text(context.tr('app.person.edit_details')),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
+                  value: 'names',
+                  child: Text(
+                    context.tr(
+                      'app.people_console_actions.names_and_spellings',
+                    ),
+                  ),
+                ),
+                PopupMenuItem(
                   value: 'picture',
-                  child: Text('Choose a picture'),
+                  child: Text(context.tr('anthologies.front.cover.choose')),
                 ),
                 if (c.image.isNotEmpty)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'nopicture',
-                    child: Text('Remove the picture'),
+                    child: Text(context.tr('anthologies.front.cover.remove')),
                   ),
                 const PopupMenuDivider(),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'merge',
-                  child: Text('Merge into another character'),
+                  child: Text(
+                    context.tr('app.person.merge_into_another_character'),
+                  ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'remove',
-                  child: Text('Remove this character'),
+                  child: Text(context.tr('app.person.remove_this_character')),
                 ),
               ],
             ),
@@ -1208,21 +1268,26 @@ class _CharacterScreenState extends State<CharacterScreen> {
                               ),
                             ),
                             Text(
-                              'Character',
+                              context.tr('common.field.character.label'),
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: scheme.primary,
                               ),
                             ),
                             if (c != null && c.born.isNotEmpty)
                               Text(
-                                'Born ${c.born}',
+                                context.tr('app.person.born_born', {
+                                  'born': c.born,
+                                }),
                                 style: theme.textTheme.bodyMedium,
                               ),
                             if (c != null) ...[
                               const SizedBox(height: 4),
                               Text(
-                                '${_plural(c.quotes + c.sharedLines, 'quote', 'quotes')}'
-                                '${c.favourites > 0 ? ' · ${c.favourites} favourite${c.favourites == 1 ? '' : 's'}' : ''}',
+                                [
+                                  countWords('quote', c.quotes + c.sharedLines),
+                                  if (c.favourites > 0)
+                                    countWords('favourite', c.favourites),
+                                ].join(' · '),
                                 style: theme.textTheme.bodySmall,
                               ),
                             ],
@@ -1242,7 +1307,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
                         Navigator.of(context).pop();
                       },
                       icon: const Icon(Icons.format_quote_rounded),
-                      label: const Text('Show their quotes'),
+                      label: Text(context.tr('app.person.show_their_quotes')),
                     ),
                   ),
                 ),
@@ -1252,8 +1317,13 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     child: Text(
                       _error ??
                           (widget.id == 0
-                              ? 'Your server has no page for $name yet, or this phone is not paired with it.'
-                              : 'The server could not be reached, so only what the phone holds is shown.'),
+                              ? context.tr(
+                                  'app.person.your_server_has_no_page_for',
+                                  {'name': name},
+                                )
+                              : context.tr(
+                                  'app.person.the_server_could_not_be_reached',
+                                )),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -1277,7 +1347,11 @@ class _CharacterScreenState extends State<CharacterScreen> {
                         child: TextButton(
                           onPressed: () =>
                               setState(() => _moreText = !_moreText),
-                          child: Text(_moreText ? 'Show less' : 'Show more'),
+                          child: Text(
+                            _moreText
+                                ? context.tr('common.action.show-less.label')
+                                : context.tr('context.more'),
+                          ),
                         ),
                       ),
                     ),
@@ -1286,8 +1360,8 @@ class _CharacterScreenState extends State<CharacterScreen> {
                   _Parts.heading(
                     context,
                     actors.length == 1
-                        ? 'Played by'
-                        : 'Played by, across adaptations',
+                        ? context.tr('identity.seg.played')
+                        : context.tr('app.person.played_by_across_adaptations'),
                   ),
                   for (final a in actors)
                     ListTile(
@@ -1314,7 +1388,10 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     ),
                 ],
                 if (c != null && c.links.isNotEmpty) ...[
-                  _Parts.heading(context, 'Links'),
+                  _Parts.heading(
+                    context,
+                    context.tr('common.field.links.label'),
+                  ),
                   _Parts.links(context, c.links),
                 ],
                 if (c != null)
@@ -1324,13 +1401,17 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     onSplit: _console == null ? null : _split,
                   ),
                 if (c != null && c.appearances.isNotEmpty) ...[
-                  _Parts.heading(context, 'Appears in'),
+                  _Parts.heading(context, context.tr('app.person.appears_in')),
                   for (final a in c.appearances)
                     ListTile(
                       title: Text(a.workTitle),
                       subtitle: a.actor.isEmpty
                           ? null
-                          : Text('Played by ${a.actor}'),
+                          : Text(
+                              context.tr('app.person.played_by_actor', {
+                                'actor': a.actor,
+                              }),
+                            ),
                       onTap: () {
                         widget.onFilter(ChipFilter(a.workTitle));
                         Navigator.of(context).pop();
@@ -1338,7 +1419,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     ),
                 ],
                 if (c != null && c.note.isNotEmpty) ...[
-                  _Parts.heading(context, 'Your note'),
+                  _Parts.heading(context, context.tr('identity.field.note')),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(c.note),

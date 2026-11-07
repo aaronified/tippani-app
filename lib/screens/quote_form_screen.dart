@@ -318,18 +318,18 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Delete this quote?')),
+        title: Text(context.tr('quotes.delete.confirm')),
         content: Text(
-          context.tr('It is removed from this phone. This cannot be undone.'),
+          context.tr('app.quote_form.it_is_removed_from_this_phone'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('Keep it')),
+            child: Text(context.tr('app.anthologies.keep_it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('Delete')),
+            child: Text(context.tr('common.action.delete.label')),
           ),
         ],
       ),
@@ -344,17 +344,21 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     final editing = widget.quote != null;
     return Scaffold(
       appBar: AppBar(
-        title: Text(editing ? 'Edit quote' : 'Add a quote'),
+        title: Text(
+          editing
+              ? context.tr('common.quote.edit.title')
+              : context.tr('app.work.add_a_quote'),
+        ),
         actions: [
           if (editing)
             IconButton(
-              tooltip: context.tr('Delete'),
+              tooltip: context.tr('common.action.delete.label'),
               icon: const Icon(Icons.delete_outline),
               onPressed: _delete,
             ),
           TextButton(
             onPressed: _saving ? null : _save,
-            child: Text(context.tr('Save')),
+            child: Text(context.tr('common.action.save.label')),
           ),
         ],
       ),
@@ -374,7 +378,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             maxLines: 10,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
-              labelText: context.tr('The words'),
+              labelText: context.tr('app.quote_form.the_words'),
               alignLabelWithHint: true,
             ),
           ),
@@ -386,12 +390,12 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
               OutlinedButton.icon(
                 onPressed: _scan,
                 icon: const Icon(Icons.document_scanner_outlined),
-                label: Text(context.tr('Scan a page')),
+                label: Text(context.tr('app.capture.scan_a_page')),
               ),
               OutlinedButton.icon(
                 onPressed: _speak,
                 icon: const Icon(Icons.mic_none),
-                label: Text(context.tr('Speak')),
+                label: Text(context.tr('app.quote_form.speak')),
               ),
             ],
           ),
@@ -399,17 +403,26 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           DropdownButtonFormField<int?>(
             initialValue: _works.any((w) => w.id == _workId) ? _workId : null,
             isExpanded: true,
-            decoration: InputDecoration(labelText: context.tr('From')),
+            decoration: InputDecoration(
+              labelText: context.tr('anthologies.fill.from.label'),
+            ),
             items: [
               DropdownMenuItem<int?>(
                 value: null,
-                child: Text(context.tr('No work (a standalone quote)')),
+                child: Text(
+                  context.tr('app.quote_form.no_work_a_standalone_quote'),
+                ),
               ),
               for (final w in _works)
                 DropdownMenuItem<int?>(
                   value: w.id,
                   child: Text(
-                    w.creator.isEmpty ? w.title : '${w.title} · ${w.creator}',
+                    w.creator.isEmpty
+                        ? w.title
+                        : context.tr('app.quote_form.title_creator', {
+                            'title': w.title,
+                            'creator': w.creator,
+                          }),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -424,7 +437,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             child: TextButton.icon(
               onPressed: _newWork,
               icon: const Icon(Icons.add),
-              label: Text(context.tr('New work')),
+              label: Text(context.tr('app.quote_form.new_work')),
             ),
           ),
           if (_workId == null && _boards.isNotEmpty) ...[
@@ -433,11 +446,13 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   ? _boardId
                   : null,
               isExpanded: true,
-              decoration: InputDecoration(labelText: context.tr('Board')),
+              decoration: InputDecoration(
+                labelText: context.tr('common.field.board.label'),
+              ),
               items: [
                 DropdownMenuItem<int?>(
                   value: null,
-                  child: Text(context.tr('No board')),
+                  child: Text(context.tr('app.bulk_bar.no_board')),
                 ),
                 for (final b in _boards.where(
                   (b) => !b.hidden || b.id == _boardId,
@@ -451,10 +466,12 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           TextField(
             controller: _speaker,
             textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(labelText: context.tr('Who said it')),
+            decoration: InputDecoration(
+              labelText: context.tr('anthologies.form.fields.credit.label'),
+            ),
           ),
           _hints(
-            context.tr('In this work'),
+            context.tr('app.quote_form.in_this_work'),
             _speakerHints,
             (n) => _append(_speaker, n),
           ),
@@ -481,7 +498,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             ],
           ),
           _hints(
-            context.tr('Chapters you used'),
+            context.tr('app.quote_form.chapters_you_used'),
             _chapterHints,
             (n) => setState(() => _chapter.text = n),
           ),
@@ -490,13 +507,15 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             controller: _translation,
             minLines: 1,
             maxLines: 6,
-            decoration: InputDecoration(labelText: context.tr('Translation')),
+            decoration: InputDecoration(
+              labelText: context.tr('common.field.translation.label'),
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _language,
             decoration: InputDecoration(
-              labelText: context.tr('Language of the words'),
+              labelText: context.tr('app.quote_form.language_of_the_words'),
             ),
           ),
           const SizedBox(height: 12),
@@ -505,18 +524,20 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             minLines: 1,
             maxLines: 6,
             textCapitalization: TextCapitalization.sentences,
-            decoration: InputDecoration(labelText: context.tr('Your note')),
+            decoration: InputDecoration(
+              labelText: context.tr('identity.field.note'),
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _tags,
             decoration: InputDecoration(
-              labelText: context.tr('Tags'),
-              helperText: context.tr('Separated by commas.'),
+              labelText: context.tr('common.field.tags.label'),
+              helperText: context.tr('app.quote_form.separated_by_commas'),
             ),
           ),
           _hints(
-            context.tr('Your tags'),
+            context.tr('app.quote_form.your_tags'),
             [
               for (final t in _knownTags)
                 if (!_tags.text
@@ -543,7 +564,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(context.tr('Favourite')),
+            title: Text(context.tr('common.field.favourite.label')),
             value: _favourite,
             onChanged: (v) => setState(() => _favourite = v),
           ),

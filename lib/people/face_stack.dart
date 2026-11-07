@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../library/quote_chips.dart';
 import 'people_directory.dart';
+import '../l10n/l10n.dart';
 
 /// Round faces laid over one another, the first on top (as the web's face cluster), each ringed in the card's colour
 /// so they read apart. Shows only the people the server has a picture for; draws nothing when there is none.
@@ -75,7 +76,9 @@ class FaceStack extends StatelessWidget {
                     bottom: 0,
                     child: Center(
                       child: Text(
-                        '+${faced.length - max}',
+                        context.tr('app.face_stack.max', {
+                          'max': faced.length - max,
+                        }),
                         style: Theme.of(context).textTheme.labelSmall,
                       ),
                     ),

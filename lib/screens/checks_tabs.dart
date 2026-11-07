@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/server_call.dart';
 import '../checks/checks_service.dart';
 import 'library_widgets.dart';
+import '../l10n/l10n.dart';
 
 /// Reads something from the server and draws it, with the same loading, failure and retry for every tab.
 class _Loader<T> extends StatefulWidget {
@@ -68,7 +69,7 @@ class _LoaderState<T> extends State<_Loader<T>> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              _problem ?? 'Something went wrong.',
+              _problem ?? context.tr('app.checks_tabs.something_went_wrong'),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -77,7 +78,7 @@ class _LoaderState<T> extends State<_Loader<T>> {
                 setState(() => _loading = true);
                 _reload();
               },
-              child: const Text('Try again'),
+              child: Text(context.tr('common.source.retry')),
             ),
           ],
         ),
@@ -177,7 +178,7 @@ Future<bool> _confirm(
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
+          child: Text(context.tr('common.action.cancel.label')),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
@@ -197,9 +198,9 @@ List<List<T>> _chunks<T>(List<T> all, int n) => [
 ];
 
 String _kindLabel(String kind) => switch (kind) {
-  'book' => 'Book quote',
-  'screen' => 'Film or show quote',
-  _ => 'Quote on its own',
+  'book' => tx('app.checks_tabs.book_quote'),
+  'screen' => tx('app.checks_tabs.film_or_show_quote'),
+  _ => tx('app.checks_tabs.quote_on_its_own'),
 };
 
 // ============================================================ stray marks
@@ -301,8 +302,8 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                   duplicates: dup,
                 ).words
               : ignore!
-              ? 'Ignored ${ts.length}'
-              : 'Restored ${ts.length}',
+              ? tx('app.checks_tabs.ignored_n', {'n': ts.length})
+              : tx('app.checks_tabs.restored_n', {'n': ts.length}),
         );
         setState(() => _nonce++);
         if (fix) await widget.onChanged();
@@ -334,11 +335,19 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                     segments: [
                       ButtonSegment(
                         value: false,
-                        label: Text('To look at (${scan.open})'),
+                        label: Text(
+                          context.tr('app.checks_tabs.to_look_at_open', {
+                            'open': scan.open,
+                          }),
+                        ),
                       ),
                       ButtonSegment(
                         value: true,
-                        label: Text('Ignored (${scan.ignored})'),
+                        label: Text(
+                          context.tr('app.checks_tabs.ignored_ignored', {
+                            'ignored': scan.ignored,
+                          }),
+                        ),
                       ),
                     ],
                     selected: {_ignored},
@@ -354,7 +363,7 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Quotes can carry things that came from the page rather than the writer. They are invisible on a card but still in the search index, so a phrase you can see may not be found.',
+              context.tr('app.checks_tabs.quotes_can_carry_things_that_came'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -363,7 +372,7 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Your library is large, so only the first of these are listed. Answer them and look again for the rest.',
+                  context.tr('app.checks_tabs.your_library_is_large_so_only'),
                   style: theme.textTheme.bodySmall,
                 ),
               ),
@@ -378,7 +387,9 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
                         label: Text(
-                          'All (${hits.values.fold<int>(0, (a, b) => a + b)})',
+                          context.tr('app.checks_tabs.all_x', {
+                            'x': hits.values.fold<int>(0, (a, b) => a + b),
+                          }),
                         ),
                         selected: rule == 'all',
                         onSelected: (_) => setState(() => _rule = 'all'),
@@ -410,15 +421,23 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                         : () async {
                             if (await _confirm(
                               context,
-                              'Fix all ${fixable.length}?',
-                              'Each is rewritten as shown. The quotes change on your server and then on this phone.',
-                              'Fix all',
+                              tx('app.checks_tabs.fix_all_n_2', {
+                                'n': fixable.length,
+                              }),
+                              context.tr(
+                                'app.checks_tabs.each_is_rewritten_as_shown_the',
+                              ),
+                              context.tr('app.checks_tabs.fix_all'),
                             )) {
                               await answer(fixable, fix: true);
                             }
                           },
                     icon: const Icon(Icons.auto_fix_high),
-                    label: Text('Fix all ${fixable.length}'),
+                    label: Text(
+                      context.tr('app.checks_tabs.fix_all_n', {
+                        'n': fixable.length,
+                      }),
+                    ),
                   ),
                 ),
               ),
@@ -427,10 +446,16 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                 height: 360,
                 child: EmptyState(
                   icon: Icons.task_alt_rounded,
-                  title: _ignored ? 'Nothing ignored.' : 'No stray marks.',
+                  title: _ignored
+                      ? context.tr('app.checks_tabs.nothing_ignored')
+                      : context.tr('app.checks_tabs.no_stray_marks'),
                   hint: _ignored
-                      ? 'Marks you say are meant stay listed here, so you can bring them back.'
-                      : 'Nothing in your quotes looks like it came from the page.',
+                      ? context.tr(
+                          'app.checks_tabs.marks_you_say_are_meant_stay',
+                        )
+                      : context.tr(
+                          'app.checks_tabs.nothing_in_your_quotes_looks_like',
+                        ),
                 ),
               ),
             for (final g in groups.values) ...[
@@ -438,7 +463,7 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                 padding: const EdgeInsets.fromLTRB(4, 16, 4, 6),
                 child: Text(
                   g.first.kind == 'quote'
-                      ? 'Quotes on their own'
+                      ? context.tr('app.checks_tabs.quotes_on_their_own')
                       : g.first.workTitle,
                   style: theme.textTheme.titleSmall,
                 ),
@@ -500,17 +525,27 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                   child: Row(
                     children: [
                       IconButton(
-                        tooltip: 'Clear the selection',
+                        tooltip: context.tr('common.selection.clear.aria'),
                         icon: const Icon(Icons.close),
                         onPressed: () => setState(_picked.clear),
                       ),
-                      Expanded(child: Text('${chosen.length} selected')),
+                      Expanded(
+                        child: Text(
+                          context.tr('common.selection.count.one', {
+                            'n': chosen.length,
+                          }),
+                        ),
+                      ),
                       TextButton(
                         onPressed: _busy
                             ? null
                             : () =>
                                   answer(chosen, fix: false, ignore: !_ignored),
-                        child: Text(_ignored ? 'Restore' : 'Ignore'),
+                        child: Text(
+                          _ignored
+                              ? context.tr('common.action.restore.label')
+                              : context.tr('cleanup.ignore.label'),
+                        ),
                       ),
                       if (!_ignored)
                         FilledButton(
@@ -521,7 +556,7 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                                   for (final t in chosen)
                                     if (t.finding.fixable) t,
                                 ], fix: true),
-                          child: const Text('Fix'),
+                          child: Text(context.tr('app.checks_tabs.fix')),
                         ),
                     ],
                   ),
@@ -582,7 +617,16 @@ class _FindingRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${words?.$1 ?? finding.rule} · $field${finding.count > 1 ? ' · ${finding.count} places' : ''}',
+                  finding.count > 1
+                      ? context.tr('app.checks_tabs.rule_field_places', {
+                          'rule': words?.$1 ?? finding.rule,
+                          'field': field,
+                          'places': countWords('place', finding.count),
+                        })
+                      : context.tr('app.checks_tabs.rule_field', {
+                          'rule': words?.$1 ?? finding.rule,
+                          'field': field,
+                        }),
                   style: theme.textTheme.labelLarge,
                 ),
                 if (words != null)
@@ -616,11 +660,15 @@ class _FindingRow extends StatelessWidget {
                     if (finding.fixable && !finding.ignored)
                       TextButton(
                         onPressed: busy ? null : onFix,
-                        child: const Text('Fix'),
+                        child: Text(context.tr('app.checks_tabs.fix')),
                       ),
                     TextButton(
                       onPressed: busy ? null : () => onIgnore(!finding.ignored),
-                      child: Text(finding.ignored ? 'Restore' : 'Ignore'),
+                      child: Text(
+                        finding.ignored
+                            ? context.tr('common.action.restore.label')
+                            : context.tr('cleanup.ignore.label'),
+                      ),
                     ),
                   ],
                 ),
@@ -691,7 +739,7 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                 skippedEdited: edited,
                 duplicates: dup,
               ).words
-            : 'Ignored ${items.length}',
+            : context.tr('app.checks_tabs.ignored_n', {'n': items.length}),
       );
       setState(() => _nonce++);
       if (accept) await widget.onChanged();
@@ -712,10 +760,10 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
       load: widget.service.corrections,
       builder: (context, scan, reload) {
         if (scan.proposals.isEmpty && scan.wrongFile.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.task_alt_rounded,
-            title: 'Nothing differs.',
-            hint: 'Where a quote differs from the file attached to its work, the file’s version is offered here.',
+            title: context.tr('app.checks_tabs.nothing_differs'),
+            hint: context.tr('app.checks_tabs.where_a_quote_differs_from_the'),
           );
         }
         final byBucket = <String, List<Correction>>{};
@@ -736,7 +784,7 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
               children: [
                 Text(
-                  'A work’s attached file knows its own words. Where your quote differs, its version is offered. Nothing changes until you accept.',
+                  context.tr('app.checks_tabs.a_work_s_attached_file_knows'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -751,11 +799,20 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                         color: scheme.onErrorContainer,
                       ),
                       title: Text(
-                        '${w.workTitle}: ${w.differing} of ${w.total} quotes differ',
+                        context.tr(
+                          'app.checks_tabs.work_title_differing_of_total_quotes',
+                          {
+                            'work_title': w.workTitle,
+                            'differing': w.differing,
+                            'total': w.total,
+                          },
+                        ),
                         style: TextStyle(color: scheme.onErrorContainer),
                       ),
                       subtitle: Text(
-                        'The attached file is probably not this book’s. Check it on the server.',
+                        context.tr(
+                          'app.checks_tabs.the_attached_file_is_probably_not',
+                        ),
                         style: TextStyle(color: scheme.onErrorContainer),
                       ),
                     ),
@@ -770,7 +827,11 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                         Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ChoiceChip(
-                            label: Text('All (${scan.proposals.length})'),
+                            label: Text(
+                              context.tr('app.checks_tabs.all_n', {
+                                'n': scan.proposals.length,
+                              }),
+                            ),
                             selected: bucket == 'all',
                             onSelected: (_) => setState(() => _bucket = 'all'),
                           ),
@@ -811,9 +872,11 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                                       .length;
                                   if (await _confirm(
                                     context,
-                                    'Accept all ${rows.length}?',
+                                    tx('app.checks_tabs.accept_all_n', {
+                                      'n': rows.length,
+                                    }),
                                     '${correctionBuckets[b]?.$2 ?? ''}\n\nEach quote takes the file’s words.${edited > 0 ? ' $edited you edited yourself are left alone.' : ''}',
-                                    'Accept all',
+                                    context.tr('app.checks_tabs.accept_all'),
                                   )) {
                                     await _answer(
                                       rows,
@@ -823,7 +886,11 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                                     );
                                   }
                                 },
-                          child: Text('Accept all ${byBucket[b]!.length}'),
+                          child: Text(
+                            context.tr('found.accept.all', {
+                              'n': byBucket[b]!.length,
+                            }),
+                          ),
                         ),
                       ],
                     ),
@@ -853,11 +920,14 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                                 ),
                               ),
                             const SizedBox(height: 4),
-                            Text('Yours', style: theme.textTheme.labelSmall),
+                            Text(
+                              context.tr('corrections.yours'),
+                              style: theme.textTheme.labelSmall,
+                            ),
                             markedText(context, p.quote, p.from, maxLines: 6),
                             const SizedBox(height: 8),
                             Text(
-                              'The file’s',
+                              context.tr('app.checks_tabs.the_file_s'),
                               style: theme.textTheme.labelSmall,
                             ),
                             markedText(context, p.proposed, p.to, maxLines: 6),
@@ -865,7 +935,9 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                               Padding(
                                 padding: const EdgeInsets.only(top: 6),
                                 child: Text(
-                                  'You edited this quote yourself.',
+                                  context.tr(
+                                    'app.checks_tabs.you_edited_this_quote_yourself',
+                                  ),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: scheme.onSurfaceVariant,
                                   ),
@@ -878,13 +950,19 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                                   onPressed: _busy
                                       ? null
                                       : () => _answer([p], accept: false),
-                                  child: const Text('Ignore'),
+                                  child: Text(
+                                    context.tr('cleanup.ignore.label'),
+                                  ),
                                 ),
                                 FilledButton.tonal(
                                   onPressed: _busy
                                       ? null
                                       : () => _answer([p], accept: true),
-                                  child: const Text('Use the file’s'),
+                                  child: Text(
+                                    context.tr(
+                                      'app.checks_tabs.use_the_file_s',
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -958,7 +1036,7 @@ class _LocatorsTabState extends State<LocatorsTab> {
                 stale: stale,
                 skipped: skipped,
               ).words
-            : 'Ignored ${items.length}',
+            : context.tr('app.checks_tabs.ignored_n', {'n': items.length}),
       );
       setState(() => _nonce++);
       if (accept) await widget.onChanged();
@@ -990,10 +1068,12 @@ class _LocatorsTabState extends State<LocatorsTab> {
       load: widget.service.locators,
       builder: (context, all, reload) {
         if (all.isEmpty) {
-          return const EmptyState(
+          return EmptyState(
             icon: Icons.task_alt_rounded,
-            title: 'Nothing proposed.',
-            hint: 'A subtitle file knows when each line is spoken, and a book’s EPUB knows each highlight’s chapter. Attach one to a work and its proposals appear here.',
+            title: context.tr('app.checks_tabs.nothing_proposed'),
+            hint: context.tr(
+              'app.checks_tabs.a_subtitle_file_knows_when_each_2',
+            ),
           );
         }
         final exact = [
@@ -1027,9 +1107,13 @@ class _LocatorsTabState extends State<LocatorsTab> {
                           : () async {
                               if (await _confirm(
                                 context,
-                                'Accept all ${rows.length}?',
-                                'Each quote takes the file’s time or place.',
-                                'Accept all',
+                                tx('app.checks_tabs.accept_all_n', {
+                                  'n': rows.length,
+                                }),
+                                context.tr(
+                                  'app.checks_tabs.each_quote_takes_the_file_s',
+                                ),
+                                context.tr('app.checks_tabs.accept_all'),
                               )) {
                                 await _answer(
                                   rows,
@@ -1038,7 +1122,9 @@ class _LocatorsTabState extends State<LocatorsTab> {
                                 );
                               }
                             },
-                      child: Text('Accept all ${rows.length}'),
+                      child: Text(
+                        context.tr('found.accept.all', {'n': rows.length}),
+                      ),
                     ),
                   ],
                 ),
@@ -1081,7 +1167,9 @@ class _LocatorsTabState extends State<LocatorsTab> {
                           children: [
                             Expanded(
                               child: Text(
-                                'Now: ${_where(p, proposed: false)}',
+                                context.tr('app.checks_tabs.now_x', {
+                                  'x': _where(p, proposed: false),
+                                }),
                                 style: theme.textTheme.bodySmall,
                               ),
                             ),
@@ -1089,7 +1177,9 @@ class _LocatorsTabState extends State<LocatorsTab> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'File says: ${_where(p, proposed: true)}',
+                                context.tr('app.checks_tabs.file_says_x', {
+                                  'x': _where(p, proposed: true),
+                                }),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1101,7 +1191,9 @@ class _LocatorsTabState extends State<LocatorsTab> {
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
-                              '“${p.evidence}”',
+                              context.tr('app.checks_tabs.evidence', {
+                                'evidence': p.evidence,
+                              }),
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall?.copyWith(
@@ -1117,7 +1209,7 @@ class _LocatorsTabState extends State<LocatorsTab> {
                               onPressed: _busy
                                   ? null
                                   : () => _answer([p], accept: false),
-                              child: const Text('Ignore'),
+                              child: Text(context.tr('cleanup.ignore.label')),
                             ),
                             FilledButton.tonal(
                               onPressed: _busy
@@ -1128,7 +1220,11 @@ class _LocatorsTabState extends State<LocatorsTab> {
                                       bucket: bucket,
                                     ),
                               child: Text(
-                                p.isBook ? 'Use this place' : 'Use this time',
+                                p.isBook
+                                    ? context.tr(
+                                        'app.checks_tabs.use_this_place',
+                                      )
+                                    : context.tr('locators.accept.tip'),
                               ),
                             ),
                           ],
@@ -1147,14 +1243,14 @@ class _LocatorsTabState extends State<LocatorsTab> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
               children: [
                 Text(
-                  'A subtitle file knows when each line is spoken. A book’s EPUB knows each highlight’s chapter and how far in it sits. Nothing changes until you accept.',
+                  context.tr('app.checks_tabs.a_subtitle_file_knows_when_each'),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
                 section(
                   'Exact matches (${exact.length})',
-                  'Found once, word for word. Safe to accept together.',
+                  context.tr('locators.exact.note'),
                   exact,
                   'exact',
                 ),
@@ -1184,9 +1280,9 @@ class _NeedsServer extends StatelessWidget {
   const _NeedsServer();
 
   @override
-  Widget build(BuildContext context) => const EmptyState(
+  Widget build(BuildContext context) => EmptyState(
     icon: Icons.cloud_off_outlined,
-    title: 'This needs your server.',
-    hint: 'Pair this phone in Settings and these checks appear here.',
+    title: context.tr('app.checks_tabs.this_needs_your_server'),
+    hint: context.tr('app.checks_tabs.pair_this_phone_in_settings_and'),
   );
 }

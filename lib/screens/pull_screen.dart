@@ -6,8 +6,6 @@ import '../sync/pull_sync.dart';
 import 'conflicts_screen.dart';
 import '../l10n/l10n.dart';
 
-String _count(int n, String noun) => '$n ${n == 1 ? noun : '${noun}s'}';
-
 /// What a sync did, in plain words. Counts only: it never repeats what anything said.
 List<String> describePull(PullResult r) {
   final lines = <String>[];
@@ -16,82 +14,64 @@ List<String> describePull(PullResult r) {
       r.conflicts.isEmpty &&
       r.refused.isEmpty &&
       r.stoppedBy == null) {
-    lines.add('Your phone and your server already agree.');
+    lines.add(tx('app.pull.your_phone_and_your_server_already'));
   }
   final down = [
-    if (r.worksAdded > 0) _count(r.worksAdded, 'new work'),
-    if (r.quotesAdded > 0) _count(r.quotesAdded, 'new quote'),
-    if (r.worksUpdated > 0) _count(r.worksUpdated, 'changed work'),
-    if (r.quotesUpdated > 0) _count(r.quotesUpdated, 'changed quote'),
+    if (r.worksAdded > 0) countWords('new work', r.worksAdded),
+    if (r.quotesAdded > 0) countWords('new quote', r.quotesAdded),
+    if (r.worksUpdated > 0) countWords('changed work', r.worksUpdated),
+    if (r.quotesUpdated > 0) countWords('changed quote', r.quotesUpdated),
   ];
-  if (down.isNotEmpty) lines.add('Brought down: ${down.join(', ')}.');
+  if (down.isNotEmpty) {
+    lines.add(tx('app.pull.brought_down', {'x': down.join(', ')}));
+  }
   final up = [
-    if (r.worksSent > 0) _count(r.worksSent, 'work'),
-    if (r.quotesSent > 0) _count(r.quotesSent, 'quote'),
+    if (r.worksSent > 0) countWords('work', r.worksSent),
+    if (r.quotesSent > 0) countWords('quote', r.quotesSent),
   ];
-  if (up.isNotEmpty) lines.add('Sent up your changes to ${up.join(' and ')}.');
+  if (up.isNotEmpty) {
+    lines.add(tx('app.pull.sent_up_your_changes_to_x', {'x': andList(up)}));
+  }
   if (r.conflicts.isNotEmpty) {
-    lines.add(
-      '${_count(r.conflicts.length, 'item')} changed on both sides. Nothing was changed for ${r.conflicts.length == 1 ? 'it' : 'them'}: choose below.',
-    );
+    lines.add(trn('app.pull.conflicts', r.conflicts.length));
   }
   if (r.skipped > 0) {
-    lines.add(
-      '${_count(r.skipped, 'item')} on the server could not be brought down (no words, or its work is not here).',
-    );
+    lines.add(trn('app.pull.skipped', r.skipped));
   }
   if (r.goneOnServer > 0) {
-    lines.add(
-      '${_count(r.goneOnServer, 'item')} ${r.goneOnServer == 1 ? 'was' : 'were'} removed on the server while syncing, and left alone here.',
-    );
+    lines.add(trn('app.pull.gone_on_server', r.goneOnServer));
   }
   if (r.deletedThere > 0) {
-    lines.add(
-      '${_count(r.deletedThere, 'item')} you deleted here ${r.deletedThere == 1 ? 'was' : 'were'} deleted on the server too (they are in its bin for a while).',
-    );
+    lines.add(trn('app.pull.deleted_there', r.deletedThere));
   }
   if (r.deletedHere > 0) {
-    lines.add(
-      '${_count(r.deletedHere, 'item')} deleted on the server ${r.deletedHere == 1 ? 'was' : 'were'} removed here too.',
-    );
+    lines.add(trn('app.pull.deleted_here', r.deletedHere));
   }
   if (r.relinked > 0) {
-    lines.add(
-      '${_count(r.relinked, 'item')} deleted on the server but changed here ${r.relinked == 1 ? 'was' : 'were'} kept, and will be sent up again.',
-    );
+    lines.add(trn('app.pull.relinked', r.relinked));
   }
   if (r.linked > 0) {
-    lines.add(
-      '${_count(r.linked, 'item')} here matched ${r.linked == 1 ? 'one' : 'ones'} already on the server, so ${r.linked == 1 ? 'it was' : 'they were'} joined, not copied.',
-    );
+    lines.add(trn('app.pull.linked', r.linked));
   }
   if (r.heldBack > 0) {
-    lines.add(
-      '${_count(r.heldBack, 'item')} are missing from the server. That is so many that nothing was removed here: check that the server is the right one and has not been restored from an old copy.',
-    );
+    lines.add(tx('app.pull.held_back', {'n': r.heldBack}));
   }
   for (final x in r.refused) {
-    lines.add('The server refused ${x.what}: ${x.reason}.');
+    lines.add(tx('app.pull.refused', {'what': x.what, 'reason': x.reason}));
   }
   switch (r.stoppedBy) {
     case null:
       break;
     case ApiFailure.network || ApiFailure.timeout:
-      lines.add(
-        'The server could not be reached. Nothing more was changed; try again when it answers.',
-      );
+      lines.add(tx('app.pull.unreachable'));
     case ApiFailure.unauthorised:
-      lines.add(
-        'The server does not accept this phone. Pair it again in Settings.',
-      );
+      lines.add(tx('app.pull.the_server_does_not_accept_this'));
     case ApiFailure.rateLimited:
-      lines.add(
-        'The server asked the app to slow down. Try again in a minute.',
-      );
+      lines.add(tx('app.pull.the_server_asked_the_app_to'));
     case ApiFailure.forbidden:
-      lines.add('This account is not allowed to do that.');
+      lines.add(tx('app.pull.this_account_is_not_allowed_to'));
     case ApiFailure.server || ApiFailure.badResponse:
-      lines.add('The server answered with an error. Try again later.');
+      lines.add(tx('app.pull.the_server_answered_with_an_error'));
   }
   return lines;
 }
@@ -112,7 +92,7 @@ class PullScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Sync with server'))),
+      appBar: AppBar(title: Text(context.tr('app.pull.sync_with_server'))),
       body: ListenableBuilder(
         listenable: auto,
         builder: (context, _) {
@@ -121,17 +101,12 @@ class PullScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text(
-                'Brings down what is new or changed on your server, sends up what you changed here, and carries deletes both ways. '
-                'If the same quote or work changed in both places, it waits in Sync conflicts for you to choose.',
-              ),
+              Text(context.tr('app.pull.brings_down_what_is_new_or')),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(context.tr('Sync automatically')),
+                title: Text(context.tr('app.pull.sync_automatically')),
                 subtitle: Text(
-                  context.tr(
-                    'A few seconds after you change something, and once a day (when the app opens, or the network comes back)',
-                  ),
+                  context.tr('app.pull.a_few_seconds_after_you_change'),
                 ),
                 value: auto.enabled,
                 onChanged: auto.setEnabled,
@@ -142,12 +117,12 @@ class PullScreen extends StatelessWidget {
               else
                 FilledButton(
                   onPressed: auto.syncNow,
-                  child: Text(context.tr('Sync now')),
+                  child: Text(context.tr('app.pull.sync_now')),
                 ),
               const SizedBox(height: 16),
               if (auto.lastSynced != null)
                 Text(
-                  context.tr('Last synced {when}.', {
+                  context.tr('app.pull.last_synced_when', {
                     'when': _when(auto.lastSynced!),
                   }),
                 ),

@@ -10,6 +10,7 @@ import '../people/people_directory.dart';
 import '../tools/server_tools.dart';
 import 'filtered_quotes_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
+import '../l10n/l10n.dart';
 
 const _green = Color(0xFF6BAA75);
 const _amber = Color(0xFFE59A4A);
@@ -89,7 +90,10 @@ class _StatsScreenState extends State<StatsScreen> {
     Widget row(String label, Object value) => ListTile(
       dense: true,
       title: Text(label),
-      trailing: Text('$value', style: theme.textTheme.titleMedium),
+      trailing: Text(
+        context.tr('app.prefs.value', {'value': value}),
+        style: theme.textTheme.titleMedium,
+      ),
     );
     Widget big(String label, Object value) => Card(
       color: scheme.secondaryContainer,
@@ -99,7 +103,7 @@ class _StatsScreenState extends State<StatsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '$value',
+              context.tr('app.prefs.value', {'value': value}),
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: scheme.onSecondaryContainer,
               ),
@@ -116,7 +120,7 @@ class _StatsScreenState extends State<StatsScreen> {
       ),
     );
     return Scaffold(
-      appBar: AppBar(title: const Text('Statistics')),
+      appBar: AppBar(title: Text(context.tr('app.settings.statistics'))),
       body: _problem != null
           ? Center(
               child: Padding(
@@ -128,7 +132,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _load,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('common.source.retry')),
                     ),
                   ],
                 ),
@@ -149,14 +153,24 @@ class _StatsScreenState extends State<StatsScreen> {
                     crossAxisSpacing: 10,
                     childAspectRatio: 2.1,
                     children: [
-                      big('Quotes', s.quotes),
-                      big('Favourites', s.favourites),
-                      big('Books', s.books),
-                      big('Films', s.films),
-                      big('Shows', s.shows),
-                      if (s.games > 0) big('Games', s.games),
-                      big('Tags', s.tags),
-                      big('Anthologies', s.anthologies),
+                      big(context.tr('nav.tab.quotes.label'), s.quotes),
+                      big(
+                        context.tr('stats.overview.favourites.label'),
+                        s.favourites,
+                      ),
+                      big(context.tr('library.group.none.label'), s.books),
+                      big(context.tr('stats.breakdown.films.label'), s.films),
+                      big(context.tr('stats.breakdown.shows.label'), s.shows),
+                      if (s.games > 0)
+                        big(
+                          context.tr('movies.filters.media.game.label'),
+                          s.games,
+                        ),
+                      big(context.tr('common.field.tags.label'), s.tags),
+                      big(
+                        context.tr('nav.tab.anthologies.label'),
+                        s.anthologies,
+                      ),
                     ],
                   ),
                   if (s.saves.any((d) => d.count > 0) ||
@@ -197,15 +211,18 @@ class _StatsScreenState extends State<StatsScreen> {
                       child: Column(
                         children: [
                           if (s.firstSaved.isNotEmpty)
-                            row('First saved', s.firstSaved),
+                            row(
+                              context.tr('app.stats.first_saved'),
+                              s.firstSaved,
+                            ),
                           if (s.busiestMonth.isNotEmpty)
                             row(
-                              'Busiest month',
+                              context.tr('stats.super.busiest-month.label'),
                               '${s.busiestMonth} (${s.busiestMonthCount})',
                             ),
                           if (s.mostQuoted.isNotEmpty)
                             row(
-                              'Most quoted work',
+                              context.tr('app.stats.most_quoted_work'),
                               '${s.mostQuoted} (${s.mostQuotedCount})',
                             ),
                         ],
@@ -213,7 +230,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     ),
                   ],
                   if (s.topTags.isNotEmpty) ...[
-                    _Head('Top tags'),
+                    _Head(context.tr('stats.top-tags.title')),
                     Card(
                       child: Column(
                         children: [
@@ -333,7 +350,7 @@ class _ActivityState extends State<_Activity> {
     final total = _series.fold<int>(0, (a, d) => a + d.count);
     final day = _day;
     return _Titled(
-      title: 'Activity',
+      title: context.tr('app.stats.activity'),
       trailing: streams.length < 2
           ? null
           : SegmentedButton<_Stream>(
@@ -344,9 +361,9 @@ class _ActivityState extends State<_Activity> {
                   ButtonSegment(
                     value: k,
                     label: Text(switch (k) {
-                      _Stream.saves => 'Saved',
-                      _Stream.quiz => 'Quiz',
-                      _Stream.practice => 'Practice',
+                      _Stream.saves => context.tr('settings.keys.saved.tip'),
+                      _Stream.quiz => context.tr('stats.activity.quiz.label'),
+                      _Stream.practice => context.tr('quiz.practice.label'),
                     }),
                   ),
               ],
@@ -436,7 +453,10 @@ class _Calendar extends StatelessWidget {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: gap),
                           child: Semantics(
-                            label: '$n on $k',
+                            label: context.tr('app.stats.n_on_k', {
+                              'n': n,
+                              'k': k,
+                            }),
                             child: GestureDetector(
                               onTap: () => onDay(DayCount(k, n)),
                               child: Container(
@@ -496,7 +516,10 @@ class _Memory extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$value', style: theme.textTheme.headlineSmall),
+          Text(
+            context.tr('app.prefs.value', {'value': value}),
+            style: theme.textTheme.headlineSmall,
+          ),
           const SizedBox(height: 4),
           Row(
             children: [
@@ -520,9 +543,12 @@ class _Memory extends StatelessWidget {
       ),
     );
     return _Titled(
-      title: 'Memory',
+      title: context.tr('stats.memory.title'),
       trailing: Text(
-        '${recall.reviewed} of ${recall.total} in rotation',
+        context.tr('app.stats.reviewed_of_total_in_rotation', {
+          'reviewed': recall.reviewed,
+          'total': recall.total,
+        }),
         style: theme.textTheme.labelMedium?.copyWith(
           color: scheme.onSurfaceVariant,
         ),
@@ -531,19 +557,31 @@ class _Memory extends StatelessWidget {
         spacing: 10,
         runSpacing: 10,
         children: [
-          tile('Remembered', recall.remembered, _green),
-          tile('Forgetting', recall.forgetting, _amber),
-          tile('Probably forgotten', recall.probablyForgotten, _red),
+          tile(
+            context.tr('common.status.remembered.label'),
+            recall.remembered,
+            _green,
+          ),
+          tile(
+            context.tr('common.status.forgetting.label'),
+            recall.forgetting,
+            _amber,
+          ),
+          tile(
+            context.tr('common.status.probably-forgotten.label'),
+            recall.probablyForgotten,
+            _red,
+          ),
           tile('Unseen', recall.unseen, scheme.outline),
           if (recall.reviewed > 0)
             tile(
-              'Average half-life',
+              context.tr('app.stats.average_half_life'),
               _halfLife(recall.avgHalfLife),
               scheme.primary,
             ),
           if (recall.longestStreak > 0)
             tile(
-              'Longest streak',
+              context.tr('app.stats.longest_streak'),
               '${recall.longestStreak} days',
               scheme.primary,
               '${recall.streak} days now',
@@ -569,7 +607,7 @@ class _Superlatives extends StatelessWidget {
     final tiles = <Widget>[
       if (s.mostAnnotated != null)
         _SuperTile(
-          label: 'Most annotated',
+          label: context.tr('app.stats.most_annotated'),
           title: s.mostAnnotated!.title,
           detail: '${s.mostAnnotated!.count} quotes',
           cover: s.mostAnnotated!.cover,
@@ -577,7 +615,7 @@ class _Superlatives extends StatelessWidget {
         ),
       if (s.mostQuotedWork != null)
         _SuperTile(
-          label: 'Most quoted work',
+          label: context.tr('app.stats.most_quoted_work'),
           title: s.mostQuotedWork!.title,
           detail: '${s.mostQuotedWork!.count} quotes',
           cover: s.mostQuotedWork!.cover,
@@ -585,7 +623,7 @@ class _Superlatives extends StatelessWidget {
         ),
       if (top != null)
         _SuperTile(
-          label: 'Most quoted person',
+          label: context.tr('stats.super.most-quoted-person.label'),
           title: top.name,
           detail: '${top.quotes} quotes',
           face: true,
@@ -593,7 +631,7 @@ class _Superlatives extends StatelessWidget {
         ),
       if (s.favouritePerson != null)
         _SuperTile(
-          label: 'Most favourited person',
+          label: context.tr('stats.super.most-favourited-person.label'),
           title: s.favouritePerson!.title,
           detail: '${s.favouritePerson!.count} favourites',
           face: true,
@@ -601,7 +639,7 @@ class _Superlatives extends StatelessWidget {
         ),
       if (people?.mostRemembered != null)
         _SuperTile(
-          label: 'Best remembered',
+          label: context.tr('stats.super.best-remembered.label'),
           title: people!.mostRemembered!.name,
           detail:
               '${people.mostRemembered!.remembered} of ${people.mostRemembered!.quotes}',
@@ -610,7 +648,7 @@ class _Superlatives extends StatelessWidget {
         ),
       if (people?.mostForgotten != null)
         _SuperTile(
-          label: 'Most forgotten',
+          label: context.tr('stats.super.most-forgotten.label'),
           title: people!.mostForgotten!.name,
           detail:
               '${people.mostForgotten!.probablyForgotten} of ${people.mostForgotten!.quotes}',
@@ -619,14 +657,14 @@ class _Superlatives extends StatelessWidget {
         ),
       if (s.busiestMonth.isNotEmpty)
         _SuperTile(
-          label: 'Busiest month',
+          label: context.tr('stats.super.busiest-month.label'),
           title: s.busiestMonth,
           detail: '${s.busiestMonthCount} saved',
         ),
     ];
     if (tiles.isEmpty) return const SizedBox.shrink();
     return _Titled(
-      title: 'Highlights',
+      title: context.tr('bin.kind.annotation.plural'),
       child: LayoutBuilder(
         builder: (context, box) {
           final w = (box.maxWidth - 10) / 2;
@@ -775,9 +813,9 @@ class _Timeline extends StatelessWidget {
     final peak = buckets.values.fold<int>(1, (a, b) => b.$2 > a ? b.$2 : a);
     String name(int k) => size == 1 ? '$k' : '${k}s';
     return _Titled(
-      title: 'Timeline',
+      title: context.tr('stats.timeline.title'),
       trailing: Text(
-        'Year the works came out',
+        context.tr('app.stats.year_the_works_came_out'),
         style: theme.textTheme.labelSmall?.copyWith(
           color: scheme.onSurfaceVariant,
         ),
@@ -789,8 +827,11 @@ class _Timeline extends StatelessWidget {
           children: [
             for (final k in keys)
               Tooltip(
-                message:
-                    '${name(k)}: ${buckets[k]!.$2} quotes from ${buckets[k]!.$1} works',
+                message: context.tr('app.stats.x_x2_quotes_from_x3_works', {
+                  'x': name(k),
+                  'x2': buckets[k]!.$2,
+                  'x3': buckets[k]!.$1,
+                }),
                 child: Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: SizedBox(
@@ -831,7 +872,7 @@ class _Timeline extends StatelessWidget {
 
 // ---- breakdown -------------------------------------------------------------------------------------------
 
-const _kinds = <(String, String, bool, bool)>[
+final _kinds = <(String, String, bool, bool)>[
   // key, label, spans several works, a work (cover) rather than a person
   ('authors', 'Authors', true, false),
   ('books', 'Books', false, true),
@@ -873,9 +914,12 @@ class _BreakdownCardState extends State<_BreakdownCard> {
     final b = widget.breakdown[current.$1]!;
     final peak = b.top.fold<int>(1, (a, t) => t.quotes > a ? t.quotes : a);
     return _Titled(
-      title: 'Breakdown',
+      title: context.tr('app.stats.breakdown'),
       trailing: Text(
-        '${b.count} ${current.$2.toLowerCase()}',
+        context.tr('app.stats.count_to_lower_case', {
+          'count': b.count,
+          'to_lower_case': current.$2.toLowerCase(),
+        }),
         style: theme.textTheme.labelMedium?.copyWith(
           color: scheme.onSurfaceVariant,
         ),
@@ -965,7 +1009,7 @@ class _BreakdownRow extends StatelessWidget {
             SizedBox(
               width: 22,
               child: Text(
-                '$rank',
+                context.tr('app.stats.rank', {'rank': rank}),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -1021,12 +1065,12 @@ class _BreakdownRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${t.quotes} ${t.quotes == 1 ? 'quote' : 'quotes'}',
+                  countWords('quote', t.quotes),
                   style: theme.textTheme.labelMedium,
                 ),
                 if (spansWorks && t.works > 0)
                   Text(
-                    '${t.works} ${t.works == 1 ? 'work' : 'works'}',
+                    countWords('work', t.works),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -1053,9 +1097,9 @@ class _Colours extends StatelessWidget {
     final peak = colours.values.fold<int>(1, (a, b) => b > a ? b : a);
     final total = colours.values.fold<int>(0, (a, b) => a + b);
     return _Titled(
-      title: 'Colours',
+      title: context.tr('metadata.categories.colours.title'),
       trailing: Text(
-        '$total marked',
+        context.tr('app.stats.total_marked', {'total': total}),
         style: theme.textTheme.labelMedium?.copyWith(
           color: scheme.onSurfaceVariant,
         ),

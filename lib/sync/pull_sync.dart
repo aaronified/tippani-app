@@ -6,6 +6,7 @@ import '../library/models.dart';
 import 'board_sync.dart';
 import 'fingerprint.dart';
 import 'push_sync.dart' show PushRefusal;
+import '../l10n/l10n.dart';
 
 /// Whose version of a quote or work the reader keeps when both sides changed it.
 enum ConflictSide { phone, server }
@@ -742,21 +743,21 @@ class PullSync {
     return true;
   }
 
-  static const _labels = {
+  static final _labels = {
     'text': 'Words',
-    'translation': 'Translation',
-    'language': 'Language',
-    'speaker': 'Speaker',
-    'chapter': 'Chapter',
-    'location': 'Place',
-    'note': 'Note',
-    'color': 'Colour',
-    'favorite': 'Favourite',
-    'tags': 'Tags',
-    'kind': 'Kind',
-    'title': 'Title',
+    'translation': tx('common.field.translation.label'),
+    'language': tx('common.field.language.label'),
+    'speaker': tx('common.field.speaker.label'),
+    'chapter': tx('board.sort.chapter.label'),
+    'location': tx('common.field.place.label'),
+    'note': tx('common.field.note.label'),
+    'color': tx('common.field.colour.label'),
+    'favorite': tx('common.field.favourite.label'),
+    'tags': tx('common.field.tags.label'),
+    'kind': tx('quotes.form.kind.label'),
+    'title': tx('common.field.title.label'),
     'creator': 'By',
-    'year': 'Year',
+    'year': tx('common.field.year.label'),
   };
 
   static String _show(Object? v) {
@@ -812,16 +813,18 @@ class PullSync {
   }
 
   static String _why(_Put p) {
-    if (p.gone) return 'The server no longer has it.';
+    if (p.gone) return tx('app.pull_sync.the_server_no_longer_has_it');
     if (p.reason != null) return 'The server refused it: ${p.reason}.';
     return switch (p.stopped) {
-      ApiFailure.network ||
-      ApiFailure.timeout => 'The server could not be reached.',
-      ApiFailure.unauthorised =>
-        'The server does not accept this phone. Pair it again in Settings.',
-      ApiFailure.rateLimited => 'The server asked the app to slow down.',
-      ApiFailure.forbidden => 'This account is not allowed to change it.',
-      _ => 'The server answered with an error.',
+      ApiFailure.network || ApiFailure.timeout => tx(
+        'app.admin_service.the_server_could_not_be_reached',
+      ),
+      ApiFailure.unauthorised => tx('app.pull.the_server_does_not_accept_this'),
+      ApiFailure.rateLimited => tx('app.pull_sync.the_server_asked_the_app_to'),
+      ApiFailure.forbidden => tx(
+        'app.pull_sync.this_account_is_not_allowed_to',
+      ),
+      _ => tx('app.pull_sync.the_server_answered_with_an_error'),
     };
   }
 }

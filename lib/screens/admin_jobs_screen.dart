@@ -4,62 +4,65 @@ import 'package:flutter/material.dart';
 
 import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
+import '../l10n/l10n.dart';
 
 /// What a kind of job is called, in words. A kind the app has no words for is shown as "Job".
 String jobKindName(String kind) =>
-    const {
-      'fill': 'Fill in missing details',
-      'covers': 'Fetch covers',
-      'people': 'Fetch portraits and details',
-      'reverify': 'Re-check details',
-      'reverify-apply': 'Apply a re-check',
-      'backup': 'Back up the server',
-      'backup.safety': 'Safety copy before a restore',
-      'import': 'Import a file',
-      'import.approve': 'Approve imported quotes',
-      'library.scan': 'Scan the library folders',
-      'lookup.book': 'Look up a book',
-      'lookup.movie': 'Look up a film',
-      'lookup.images': 'Look up pictures',
-      'lookup.portrait': 'Fetch a portrait',
-      'lookup.links': 'Look up links',
-      'lookup.person': 'Look up a person',
-      'lookup.reverify': 'Re-check one work',
-      'lookup.cast-image': 'Fetch a cast picture',
-      'lookup.cast-imdb': 'Fetch a cast list',
-      'lookup.cast-tvdb': 'Fetch a cast list',
-      'lookup.cast-art': 'Fetch cast art',
-      'lookup.signature': 'Fetch a signature',
-      'update.check': 'Check for an update',
-      'update.apply': 'Update the server',
-      'metadata.test': 'Test the metadata sources',
-      'notify.test': 'Send a test note',
-      'work.save': 'Save a work',
-      'person.save': 'Save a person',
-      'character.save': 'Save a character',
-      'restore': 'Restore a backup',
-      'reset': 'Reset the library',
-      'notify.daily': 'Daily note',
+    {
+      'fill': tx('app.admin_jobs.fill_in_missing_details'),
+      'covers': tx('settings.jobs.kind.covers'),
+      'people': tx('app.admin_jobs.fetch_portraits_and_details'),
+      'reverify': tx('app.admin_jobs.re_check_details'),
+      'reverify-apply': tx('app.admin_jobs.apply_a_re_check'),
+      'backup': tx('app.admin_backup.back_up_the_server'),
+      'backup.safety': tx('app.admin_jobs.safety_copy_before_a_restore'),
+      'import': tx('app.checks.import_a_file'),
+      'import.approve': tx('settings.jobs.kind.import-approve'),
+      'library.scan': tx('app.admin_jobs.scan_the_library_folders'),
+      'lookup.book': tx('app.admin_jobs.look_up_a_book'),
+      'lookup.movie': tx('app.admin_jobs.look_up_a_film'),
+      'lookup.images': tx('app.admin_jobs.look_up_pictures'),
+      'lookup.portrait': tx('app.admin_jobs.fetch_a_portrait'),
+      'lookup.links': tx('app.admin_jobs.look_up_links'),
+      'lookup.person': tx('app.admin_jobs.look_up_a_person'),
+      'lookup.reverify': tx('app.admin_jobs.re_check_one_work'),
+      'lookup.cast-image': tx('app.admin_jobs.fetch_a_cast_picture'),
+      'lookup.cast-imdb': tx('app.admin_jobs.fetch_a_cast_list'),
+      'lookup.cast-tvdb': tx('app.admin_jobs.fetch_a_cast_list'),
+      'lookup.cast-art': tx('app.admin_jobs.fetch_cast_art'),
+      'lookup.signature': tx('app.admin_jobs.fetch_a_signature'),
+      'update.check': tx('app.admin_jobs.check_for_an_update'),
+      'update.apply': tx('app.admin_jobs.update_the_server'),
+      'metadata.test': tx('app.admin_jobs.test_the_metadata_sources'),
+      'notify.test': tx('app.admin_jobs.send_a_test_note'),
+      'work.save': tx('settings.jobs.kind.work-save'),
+      'person.save': tx('settings.jobs.kind.person-save'),
+      'character.save': tx('app.admin_jobs.save_a_character'),
+      'restore': tx('app.admin_jobs.restore_a_backup'),
+      'reset': tx('app.admin_jobs.reset_the_library'),
+      'notify.daily': tx('app.admin_jobs.daily_note'),
     }[kind] ??
-    'Job';
+    tx('settings.jobs.kind.other');
 
 /// What the common-job rows are called.
 String commonJobName(String id) =>
-    const {
-      'fill-all': 'Fill in every work',
-      'people-missing': 'Fetch missing portraits and details',
-      'covers': 'Fetch every cover',
-      'backup': 'Back up the server',
+    {
+      'fill-all': tx('app.admin_jobs.fill_in_every_work'),
+      'people-missing': tx(
+        'app.admin_jobs.fetch_missing_portraits_and_details',
+      ),
+      'covers': tx('app.admin_jobs.fetch_every_cover'),
+      'backup': tx('app.admin_backup.back_up_the_server'),
     }[id] ??
     jobKindName(id);
 
 String _stateName(String s) => switch (s) {
-  'queued' => 'Waiting',
-  'running' => 'Running',
-  'succeeded' => 'Done',
-  'failed' => 'Failed',
-  'stopped' => 'Stopped',
-  'interrupted' => 'Interrupted',
+  'queued' => tx('settings.jobs.state.queued'),
+  'running' => tx('settings.jobs.state.running'),
+  'succeeded' => tx('common.action.done.label'),
+  'failed' => tx('settings.jobs.state.failed'),
+  'stopped' => tx('settings.jobs.state.stopped'),
+  'interrupted' => tx('settings.jobs.state.interrupted'),
   _ => s,
 };
 
@@ -144,9 +147,9 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
   Future<void> _stopAll() async {
     final ok = await confirmDialog(
       context,
-      title: 'Stop every job?',
-      body: 'The running job and every waiting one are stopped.',
-      yes: 'Stop all',
+      title: context.tr('app.admin_jobs.stop_every_job'),
+      body: context.tr('app.admin_jobs.the_running_job_and_every_waiting'),
+      yes: context.tr('settings.jobs.current.stop-all.label'),
       danger: true,
     );
     if (!ok || !mounted) return;
@@ -178,7 +181,8 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            if (lines.isEmpty) const Text('This job logged nothing.'),
+            if (lines.isEmpty)
+              Text(context.tr('app.admin_jobs.this_job_logged_nothing')),
             for (final l in lines)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
@@ -253,10 +257,21 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                     value: (j.done / j.total).clamp(0, 1).toDouble(),
                   ),
                   const SizedBox(height: 4),
-                  Text('${j.done} of ${j.total}', style: text.labelSmall),
+                  Text(
+                    context.tr('quiz.progress.label', {
+                      'done': j.done,
+                      'total': j.total,
+                    }),
+                    style: text.labelSmall,
+                  ),
                 ],
                 if (j.state == 'queued' && j.ahead > 0)
-                  Text('${j.ahead} ahead of it', style: text.labelSmall),
+                  Text(
+                    context.tr('app.admin_jobs.ahead_ahead_of_it', {
+                      'ahead': j.ahead,
+                    }),
+                    style: text.labelSmall,
+                  ),
                 if (j.error.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -272,7 +287,13 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                       spacing: 12,
                       children: [
                         for (final e in counts)
-                          Text('${e.value} ${e.key}', style: text.labelSmall),
+                          Text(
+                            context.tr('app.admin_jobs.value_key', {
+                              'value': e.value,
+                              'key': e.key,
+                            }),
+                            style: text.labelSmall,
+                          ),
                       ],
                     ),
                   ),
@@ -280,7 +301,9 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      'by ${j.username}',
+                      context.tr('app.admin_jobs.by_username', {
+                        'username': j.username,
+                      }),
                       style: text.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -296,13 +319,17 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                           TextButton.icon(
                             onPressed: () => _stop(j),
                             icon: const Icon(Icons.stop_rounded),
-                            label: const Text('Stop'),
+                            label: Text(
+                              context.tr('settings.jobs.current.stop.label'),
+                            ),
                           ),
                         if (j.rerunnable)
                           TextButton.icon(
                             onPressed: () => _rerun(j),
                             icon: const Icon(Icons.replay_rounded),
-                            label: const Text('Run again'),
+                            label: Text(
+                              context.tr('settings.jobs.past.rerun.label'),
+                            ),
                           ),
                       ],
                     ),
@@ -327,7 +354,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
             j.current != null
                 ? '${_stateName(j.current!.state)} now'
                 : last == null
-                ? 'Not run in the last thirty days'
+                ? context.tr('app.admin_jobs.not_run_in_the_last_thirty')
                 : 'Last: ${_stateName(last.state)}${last.finishedAt == null ? '' : ' on ${_day(last.finishedAt!)}'}',
           ),
           trailing: j.current != null
@@ -338,7 +365,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                 )
               : FilledButton.tonal(
                   onPressed: () => _start(j),
-                  child: const Text('Run'),
+                  child: Text(context.tr('settings.jobs.common.run.label')),
                 ),
           iconColor: scheme.primary,
         ),
@@ -356,11 +383,11 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Jobs'),
+          title: Text(context.tr('settings.section.jobs.label')),
           actions: [
             if (cur != null && cur.jobs.isNotEmpty)
               IconButton(
-                tooltip: 'Stop every job',
+                tooltip: context.tr('app.admin_jobs.stop_every_job_2'),
                 icon: const Icon(Icons.stop_circle_outlined),
                 onPressed: _stopAll,
               ),
@@ -369,7 +396,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
             tabs: [
               Tab(
                 text: cur == null || cur.jobs.isEmpty
-                    ? 'Now'
+                    ? tx('locators.now')
                     : 'Now (${cur.jobs.length})',
               ),
               const Tab(text: 'Past'),
@@ -388,7 +415,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                       const SizedBox(height: 12),
                       OutlinedButton(
                         onPressed: _read,
-                        child: const Text('Try again'),
+                        child: Text(context.tr('common.source.retry')),
                       ),
                     ],
                   ),
@@ -400,12 +427,12 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                 children: [
                   _list(
                     cur.jobs,
-                    'Nothing is running or waiting.',
+                    context.tr('settings.jobs.current.empty'),
                     () => _read(),
                   ),
                   _list(
                     past.jobs,
-                    'No job has ended in the last thirty days.',
+                    context.tr('app.admin_jobs.no_job_has_ended_in_the'),
                     () => _read(),
                   ),
                   RefreshIndicator(
@@ -415,10 +442,12 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                       children: [
                         for (final j in common) _commonCard(j),
                         if (common.isEmpty)
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.all(32),
                             child: Text(
-                              'This server has no queue, so there is nothing to start.',
+                              context.tr(
+                                'app.admin_jobs.this_server_has_no_queue_so',
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ),

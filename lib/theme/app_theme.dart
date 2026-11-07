@@ -218,7 +218,7 @@ TextTheme _text(TextTheme t, ColorScheme scheme) {
 }
 
 /// The faces the app carries, by the token the server keeps for them.
-const quoteFaces = {
+final quoteFaces = {
   'source-serif-4': 'SourceSerif4',
   'newsreader': 'Newsreader',
   'noto-serif-bengali': 'NotoSerifBengali',

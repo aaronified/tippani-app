@@ -1,6 +1,7 @@
 import '../sync/fingerprint.dart' show realmOfKind;
 import 'library_store.dart';
 import 'models.dart';
+import '../l10n/l10n.dart';
 
 /// A quote as a draft, so an edit can start from what it already says.
 extension QuoteAsDraft on Quote {
@@ -45,10 +46,10 @@ extension WorkAsDraft on Work {
 
 /// A field of a quote the reader can set on many at once.
 enum QuoteField {
-  speaker('Who said it'),
-  chapter('Chapter'),
-  location('Page or position'),
-  language('Language of the words');
+  speaker('anthologies.form.fields.credit.label'),
+  chapter('board.sort.chapter.label'),
+  location('app.bulk_ops.page_or_position'),
+  language('app.quote_form.language_of_the_words');
 
   const QuoteField(this.label);
   final String label;
@@ -56,9 +57,9 @@ enum QuoteField {
 
 /// A field of a work the reader can set on many at once.
 enum WorkField {
-  creator('Author, director or studio'),
-  language('Language'),
-  year('Year');
+  creator('app.bulk_ops.author_director_or_studio'),
+  language('common.field.language.label'),
+  year('common.field.year.label');
 
   const WorkField(this.label);
   final String label;
@@ -166,7 +167,7 @@ class BulkOps {
       return BulkResult(
         0,
         skipped: works.length,
-        note: 'The year must be a number.',
+        note: tx('app.work_form.the_year_must_be_a_number'),
       );
     }
     var n = 0;
@@ -209,7 +210,7 @@ class BulkOps {
       n,
       skipped: left,
       note: quotes.any((q) => q.workId != null)
-          ? 'Quotes from a book or film are not filed on boards.'
+          ? tx('app.bulk_ops.quotes_from_a_book_or_film')
           : '',
     );
   }

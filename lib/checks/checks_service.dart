@@ -1,5 +1,6 @@
 import '../api/server_call.dart';
 import '../app_controller.dart';
+import '../l10n/l10n.dart';
 
 /// What a press on "accept" or "ignore" did, as the server counts it.
 class ChangeResult {
@@ -42,19 +43,18 @@ class ChangeResult {
   /// The sentence for a snackbar, or '' when nothing happened.
   String get words {
     final parts = <String>[
-      if (applied > 0) 'Updated ${_n(applied, 'quote')}',
-      if (skippedEdited > 0) '$skippedEdited you had edited were left alone',
-      if (stale > 0)
-        '$stale had changed since you looked and ${stale == 1 ? 'was' : 'were'} left alone',
-      if (skipped > 0)
-        '$skipped belonged to the other group and ${skipped == 1 ? 'was' : 'were'} skipped',
-      if (duplicates > 0)
-        '$duplicates would have duplicated a quote you already have',
+      if (applied > 0)
+        tx('app.checks_service.updated', {
+          'quotes': countWords('quote', applied),
+        }),
+      if (skippedEdited > 0)
+        tx('app.checks_service.edited_left_alone', {'n': skippedEdited}),
+      if (stale > 0) trn('app.checks_service.stale', stale),
+      if (skipped > 0) trn('app.checks_service.other_group', skipped),
+      if (duplicates > 0) trn('app.checks_service.duplicated', duplicates),
     ];
     return parts.join(' · ');
   }
-
-  static String _n(int n, String noun) => '$n ${n == 1 ? noun : '${noun}s'}';
 }
 
 // ------------------------------------------------------------------ stray marks
@@ -164,38 +164,38 @@ class CleanupScan {
 }
 
 /// The reader's words for each rule, as the web's own page gives them.
-const cleanupRuleWords = <String, (String, String)>{
+final cleanupRuleWords = <String, (String, String)>{
   'invisible': (
-    'Invisible characters',
-    'An invisible space or hyphen, from HTML, a justified PDF, or a word broken across lines.',
+    tx('cleanup.rule.invisible.label'),
+    tx('app.checks_service.an_invisible_space_or_hyphen_from'),
   ),
   'edge-space': (
-    'Space at the ends',
-    'The quote begins or ends with a space, which a card hides and a search does not.',
+    tx('cleanup.rule.edge-space.label'),
+    tx('cleanup.rule.edge-space.body'),
   ),
   'double-space': (
-    'Double spaces',
-    'Two or more spaces in a row, from justified text, or typed on purpose after a full stop.',
+    tx('cleanup.rule.double-space.label'),
+    tx('app.checks_service.two_or_more_spaces_in_a'),
   ),
   'space-before-punctuation': (
-    'Space before punctuation',
+    tx('cleanup.rule.space-before-punctuation.label'),
     'A space before a comma, full stop or bracket. French does this deliberately.',
   ),
   'reference-mark': (
-    'Footnote numbers',
+    tx('cleanup.rule.reference-mark.label'),
     'A leftover reference mark: a superscript, a number in brackets, or a digit stuck to the last word.',
   ),
   'pronunciation': (
-    'Pronunciation glosses',
+    tx('cleanup.rule.pronunciation.label'),
     "A dictionary's guide to saying the word, carried in with the headword.",
   ),
   'hyphen-break': (
-    'Hyphen from a line break',
+    tx('cleanup.rule.hyphen-break.label'),
     'A word split across two lines and rejoined with the hyphen still in it.',
   ),
   'repeated-punctuation': (
-    'Repeated punctuation',
-    'Doubled commas, stops or marks. An ellipsis and an em-dash pair are left alone.',
+    tx('cleanup.rule.repeated-punctuation.label'),
+    tx('cleanup.rule.repeated-punctuation.body'),
   ),
 };
 
@@ -278,38 +278,44 @@ class CorrectionsScan {
 }
 
 /// The buckets of corrections, in the server's order, with the web's words.
-const correctionBuckets = <String, (String, String)>{
-  'spacing': ('Line breaks and spacing', 'The same words, spaced differently.'),
+final correctionBuckets = <String, (String, String)>{
+  'spacing': (
+    tx('corrections.bucket.spacing.title'),
+    tx('corrections.bucket.spacing.note'),
+  ),
   'punctuation': (
-    'Punctuation and quote marks',
+    tx('corrections.bucket.punctuation.title'),
     'The same words; the marks between them differ.',
   ),
   'capitalisation': ('Capitalisation', 'The same words in a different case.'),
   'accents': (
-    'Accents',
+    tx('corrections.bucket.accents.title'),
     'The same letters; the accents differ. A file can lack them altogether.',
   ),
   'marks': (
-    'Several marks at once',
+    tx('corrections.bucket.marks.title'),
     'Accents, case and punctuation together; the words are the same.',
   ),
   'extend': (
-    'Your quote stops early',
-    'The line continues past where your quote ends.',
+    tx('corrections.bucket.extend.title'),
+    tx('corrections.bucket.extend.note'),
   ),
   'trim': (
-    'Your quote runs past the line',
-    "Your quote holds words the file's line does not.",
+    tx('corrections.bucket.trim.title'),
+    tx('corrections.bucket.trim.note'),
   ),
   'one-word': (
-    'One word differs',
-    'The word is marked. Read each before taking it.',
+    tx('corrections.bucket.one-word.title'),
+    tx('corrections.bucket.one-word.note'),
   ),
   'few-words': (
-    'Two or three words differ',
-    'The words are marked. Read each before taking it.',
+    tx('corrections.bucket.few-words.title'),
+    tx('corrections.bucket.few-words.note'),
   ),
-  'wording': ('The wording differs', 'A longer difference. Read each one.'),
+  'wording': (
+    tx('corrections.bucket.wording.title'),
+    'A longer difference. Read each one.',
+  ),
 };
 
 // ------------------------------------------------------------------ times and places

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../api/server_call.dart';
 import '../app_controller.dart';
 import '../library/models.dart';
+import '../l10n/l10n.dart';
 
 /// One picture that could be a work's cover or poster, and where it came from.
 class CoverOption {
@@ -22,16 +23,16 @@ class CoverOption {
 
 /// What names a supplier in words.
 String coverSourceName(String slug) =>
-    const {
-      'google': 'Google Books',
-      'openlibrary': 'Open Library',
-      'amazon': 'Amazon',
+    {
+      'google': tx('vocab.source.google.label'),
+      'openlibrary': tx('vocab.source.openlibrary.label'),
+      'amazon': tx('vocab.source.amazon.label'),
       'tmdb': 'TMDB',
       'tvdb': 'TheTVDB',
       'igdb': 'IGDB',
-      'wikidata': 'Wikidata',
-      'google-images': 'Web images',
-      'images': 'Web images',
+      'wikidata': tx('vocab.source.wikidata.label'),
+      'google-images': tx('app.cover_search.web_images'),
+      'images': tx('app.cover_search.web_images'),
     }[slug] ??
     (slug.isEmpty ? 'Web' : slug);
 

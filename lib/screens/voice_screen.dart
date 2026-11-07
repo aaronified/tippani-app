@@ -16,7 +16,7 @@ class VoiceScreen extends StatefulWidget {
 }
 
 /// Languages offered, as the phone's recogniser names them.
-const voiceLocales = {
+final voiceLocales = {
   'en_IN': 'English (India)',
   'en_US': 'English (US)',
   'en_GB': 'English (UK)',
@@ -68,7 +68,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
     if (!ok) {
       setState(() {
         _listening = false;
-        _problem = 'This phone could not listen. Allow the microphone for Tippani, and check a speech service is installed.';
+        _problem = context.tr('app.voice.this_phone_could_not_listen_allow');
       });
     }
   }
@@ -87,14 +87,14 @@ class _VoiceScreenState extends State<VoiceScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Say a quote'))),
+      appBar: AppBar(title: Text(context.tr('app.voice.say_a_quote'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           DropdownButtonFormField<String>(
             initialValue: _locale,
             decoration: InputDecoration(
-              labelText: context.tr('Language you will speak'),
+              labelText: context.tr('app.voice.language_you_will_speak'),
             ),
             items: [
               for (final e in voiceLocales.entries)
@@ -113,12 +113,16 @@ class _VoiceScreenState extends State<VoiceScreen> {
               ),
               onPressed: _toggle,
               icon: Icon(_listening ? Icons.stop : Icons.mic),
-              label: Text(_listening ? 'Stop' : 'Start speaking'),
+              label: Text(
+                _listening
+                    ? context.tr('settings.jobs.current.stop.label')
+                    : context.tr('app.voice.start_speaking'),
+              ),
             ),
           ),
           if (_listening) ...[
             const SizedBox(height: 12),
-            Center(child: Text(context.tr('Listening…'))),
+            Center(child: Text(context.tr('app.voice.listening'))),
           ],
           if (_problem != null) ...[
             const SizedBox(height: 16),
@@ -131,21 +135,19 @@ class _VoiceScreenState extends State<VoiceScreen> {
             maxLines: 12,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
-              labelText: context.tr('The words, as heard'),
-              helperText: context.tr('Correct anything it got wrong.'),
+              labelText: context.tr('app.voice.the_words_as_heard'),
+              helperText: context.tr('app.voice.correct_anything_it_got_wrong'),
               alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _text.text.trim().isEmpty ? null : _use,
-            child: Text(context.tr('Use this text')),
+            child: Text(context.tr('app.capture.use_this_text')),
           ),
           const SizedBox(height: 12),
           Text(
-            context.tr(
-              'Tippani keeps no recording. Your phone’s speech service does the listening, and on some phones that service sends the audio to Google.',
-            ),
+            context.tr('app.voice.tippani_keeps_no_recording_your_phone'),
             style: theme.textTheme.bodySmall,
           ),
         ],

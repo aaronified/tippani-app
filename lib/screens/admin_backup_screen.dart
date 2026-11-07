@@ -4,6 +4,7 @@ import '../admin/admin_service.dart';
 import '../admin/server_files.dart';
 import '../api/server_call.dart';
 import 'admin_widgets.dart';
+import '../l10n/l10n.dart';
 
 /// What the reader typed to open or seal a backup: the account's password, or a passphrase.
 typedef BackupSecret = ({String password, String passphrase});
@@ -16,7 +17,7 @@ Future<BackupSecret?> askBackupSecret(
   required String body,
   String? mode,
   String account = '',
-  String yes = 'Go on',
+  String yes = 'app.admin_backup.go_on',
 }) {
   return showDialog<BackupSecret>(
     context: context,
@@ -34,9 +35,15 @@ Future<BackupSecret?> askBackupSecret(
               const SizedBox(height: 12),
               if (mode == null)
                 SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(value: false, label: Text('Password')),
-                    ButtonSegment(value: true, label: Text('Passphrase')),
+                  segments: [
+                    ButtonSegment(
+                      value: false,
+                      label: Text(context.tr('common.field.password.label')),
+                    ),
+                    ButtonSegment(
+                      value: true,
+                      label: Text(context.tr('common.field.passphrase.label')),
+                    ),
                   ],
                   selected: {passphrase},
                   showSelectedIcon: false,
@@ -48,10 +55,12 @@ Future<BackupSecret?> askBackupSecret(
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: passphrase
-                      ? 'Passphrase'
+                      ? context.tr('common.field.passphrase.label')
                       : account.isEmpty
-                      ? 'Your password'
-                      : 'Password of $account',
+                      ? context.tr('settings.restore.password.label')
+                      : tx('app.admin_backup.password_of_account', {
+                          'account': account,
+                        }),
                 ),
               ),
             ],
@@ -59,14 +68,14 @@ Future<BackupSecret?> askBackupSecret(
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.tr('common.action.cancel.label')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, (
                 password: passphrase ? '' : c.text,
                 passphrase: passphrase ? c.text : '',
               )),
-              child: Text(yes),
+              child: Text(context.tr(yes)),
             ),
           ],
         ),
@@ -141,23 +150,28 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
   Future<void> _make() async {
     final secret = await askBackupSecret(
       context,
-      title: 'Back up the server',
+      title: context.tr('app.admin_backup.back_up_the_server'),
       body: 'The backup holds every reader\'s library. It is sealed with your password or a passphrase; you will need the same to open it.',
-      yes: 'Back up',
+      yes: context.tr('settings.jobs.kind.backup'),
     );
     if (secret == null || !mounted) return;
-    setState(() => _working = 'Starting the backup…');
+    final backingUp = context.tr('app.admin_backup.backing_up');
+    setState(
+      () => _working = context.tr('app.admin_backup.starting_the_backup'),
+    );
     try {
       final job = await widget.service.createBackup(
         password: secret.password,
         passphrase: secret.passphrase,
       );
       if (job != null) {
-        final done = await _wait(job, 'Backing up');
+        final done = await _wait(job, backingUp);
         if (done != null && done.state != 'succeeded' && mounted) {
           say(
             context,
-            done.error.isEmpty ? 'The backup did not finish.' : done.error,
+            done.error.isEmpty
+                ? context.tr('app.admin_backup.the_backup_did_not_finish')
+                : done.error,
           );
         }
       }
@@ -175,13 +189,19 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       say(context, const ServerFileTooBig().toString());
       return;
     }
-    setState(() => _working = 'Bringing the backup to this phone…');
+    setState(
+      () => _working = context.tr(
+        'app.admin_backup.bringing_the_backup_to_this_phone',
+      ),
+    );
     try {
       final f = await widget.service.downloadBackup();
       if (!mounted) return;
       setState(() => _working = null);
       final saved = await widget.files.save(f.name, f.bytes);
-      if (mounted && saved) say(context, 'Saved ${f.name}.');
+      if (mounted && saved) {
+        say(context, tx('app.admin_backup.saved_name', {'name': f.name}));
+      }
     } on ServerException catch (e) {
       if (mounted) say(context, e.message);
     }
@@ -192,41 +212,51 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
   Future<bool> _safetyCopy() async {
     final secret = await askBackupSecret(
       context,
-      title: 'A copy of what the server holds now',
-      body: 'Before the library is replaced, the server makes a copy of it, and you keep that copy on this phone. Seal it with your password or a passphrase.',
-      yes: 'Make the copy',
+      title: context.tr('app.admin_backup.a_copy_of_what_the_server'),
+      body: context.tr('app.admin_backup.before_the_library_is_replaced_the'),
+      yes: context.tr('app.admin_backup.make_the_copy'),
     );
     if (secret == null || !mounted) return false;
+    final making = context.tr('app.admin_backup.making_the_safety_copy_2');
     try {
-      setState(() => _working = 'Making the safety copy…');
+      setState(
+        () => _working = context.tr('app.admin_backup.making_the_safety_copy'),
+      );
       final job = await widget.service.createSafetyCopy(
         password: secret.password,
         passphrase: secret.passphrase,
       );
       if (job == null) return false;
-      final done = await _wait(job, 'Making the safety copy');
+      final done = await _wait(job, making);
       if (done == null || done.state != 'succeeded') {
         if (mounted) {
           say(
             context,
             done?.error.isNotEmpty == true
                 ? done!.error
-                : 'The safety copy was not made.',
+                : context.tr('app.admin_backup.the_safety_copy_was_not_made'),
           );
         }
         return false;
       }
-      setState(() => _working = 'Bringing the safety copy to this phone…');
+      setState(
+        () => _working = context.tr(
+          'app.admin_backup.bringing_the_safety_copy_to_this',
+        ),
+      );
       final f = await widget.service.downloadSafetyCopy(done.id);
       if (!mounted) return false;
       setState(() => _working = null);
       final saved = await widget.files.save(
         f.name,
         f.bytes,
-        title: 'Keep the safety copy',
+        title: context.tr('app.admin_backup.keep_the_safety_copy'),
       );
       if (!saved && mounted) {
-        say(context, 'The safety copy was not kept, so nothing was restored.');
+        say(
+          context,
+          context.tr('app.admin_backup.the_safety_copy_was_not_kept'),
+        );
       }
       return saved;
     } on ServerException catch (e) {
@@ -253,32 +283,42 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
     }
     final ok = await confirmDialog(
       context,
-      title: 'Replace the whole library?',
+      title: context.tr('app.admin_backup.replace_the_whole_library'),
       body: fromPhone
-          ? 'Every reader\'s library on the server is replaced with ${file!.name}. First you will keep a copy of what the server holds now.'
-          : 'Every reader\'s library on the server is replaced with the backup made ${info!.created}. First you will keep a copy of what the server holds now.',
-      yes: 'Continue',
+          ? tx('app.admin_backup.every_reader_s_library_on_the', {
+              'name': file!.name,
+            })
+          : tx('app.admin_backup.every_reader_s_library_on_the_2', {
+              'created': info!.created,
+            }),
+      yes: context.tr('home.daily.resume.label'),
       danger: true,
     );
     if (!ok || !mounted) return;
     if (!await _safetyCopy() || !mounted) return;
     final secret = await askBackupSecret(
       context,
-      title: 'Open the backup',
+      title: context.tr('app.admin_backup.open_the_backup'),
       body: fromPhone
-          ? 'Give the password of the account it was made under, or its passphrase.'
+          ? context.tr('app.admin_backup.give_the_password_of_the_account')
           : info!.needsPassphrase
-          ? 'This backup is sealed with a passphrase.'
+          ? context.tr('app.admin_backup.this_backup_is_sealed_with_a')
           : info.needsPassword
-          ? 'This backup is sealed with the password of ${info.account.isEmpty ? 'the account that made it' : info.account}.'
-          : 'This backup is not sealed. Press Restore to go on.',
+          ? info.account.isEmpty
+                ? tx('app.admin_backup.sealed_with_unknown')
+                : tx('app.admin_backup.this_backup_is_sealed_with_the', {
+                    'account': info.account,
+                  })
+          : context.tr('app.admin_backup.this_backup_is_not_sealed_press'),
       mode: fromPhone ? null : (info!.key == 'none' ? 'password' : info.key),
       account: fromPhone ? '' : info!.account,
-      yes: 'Restore',
+      yes: context.tr('common.action.restore.label'),
     );
     if (secret == null || !mounted) return;
     setState(
-      () => _working = 'Restoring. The server will be busy for a while…',
+      () => _working = context.tr(
+        'app.admin_backup.restoring_the_server_will_be_busy',
+      ),
     );
     try {
       if (fromPhone) {
@@ -297,7 +337,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       if (mounted) {
         say(
           context,
-          'The library is restored. Sync this phone from Settings to match it.',
+          context.tr('app.admin_backup.the_library_is_restored_sync_this'),
         );
       }
     } on ServerException catch (e) {
@@ -313,7 +353,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
     final text = Theme.of(context).textTheme;
     final info = _info;
     return Scaffold(
-      appBar: AppBar(title: const Text('Server backup')),
+      appBar: AppBar(title: Text(context.tr('app.admin_backup.server_backup'))),
       body: _problem != null
           ? Center(
               child: Padding(
@@ -325,7 +365,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _read,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('common.source.retry')),
                     ),
                   ],
                 ),
@@ -357,11 +397,16 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('The kept backup', style: text.titleSmall),
+                        Text(
+                          context.tr('app.admin_backup.the_kept_backup'),
+                          style: text.titleSmall,
+                        ),
                         const SizedBox(height: 6),
                         Text(
                           info == null
-                              ? 'The server has no backup yet.'
+                              ? context.tr(
+                                  'app.admin_backup.the_server_has_no_backup_yet',
+                                )
                               : '${info.created.isEmpty ? info.name : info.created} · ${_size(info.size)} · ${switch (info.key) {
                                   'password' => 'sealed with the password of ${info.account.isEmpty ? 'its account' : info.account}',
                                   'passphrase' => 'sealed with a passphrase',
@@ -385,7 +430,11 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                               OutlinedButton.icon(
                                 onPressed: _working == null ? _download : null,
                                 icon: const Icon(Icons.download_rounded),
-                                label: const Text('Save on this phone'),
+                                label: Text(
+                                  context.tr(
+                                    'app.admin_backup.save_on_this_phone',
+                                  ),
+                                ),
                               ),
                           ],
                         ),
@@ -401,12 +450,14 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Put a backup back',
+                          context.tr('app.admin_backup.put_a_backup_back'),
                           style: text.titleSmall?.copyWith(color: scheme.error),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
-                          'This replaces every reader\'s library on the server. A copy of what is there now is made first and kept on this phone.',
+                        Text(
+                          context.tr(
+                            'app.admin_backup.this_replaces_every_reader_s_library',
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Wrap(
@@ -418,13 +469,21 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                                 onPressed: _working == null
                                     ? () => _restore(fromPhone: false)
                                     : null,
-                                child: const Text('Restore the kept backup'),
+                                child: Text(
+                                  context.tr(
+                                    'app.admin_backup.restore_the_kept_backup',
+                                  ),
+                                ),
                               ),
                             OutlinedButton(
                               onPressed: _working == null
                                   ? () => _restore(fromPhone: true)
                                   : null,
-                              child: const Text('Restore from a file'),
+                              child: Text(
+                                context.tr(
+                                  'app.admin_backup.restore_from_a_file',
+                                ),
+                              ),
                             ),
                           ],
                         ),
