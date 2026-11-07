@@ -13,6 +13,7 @@ import '../sync/fingerprint.dart' show realmOfQuote;
 import 'anthologies_screen.dart' show addToAnthologyDialog;
 import 'quote_card.dart';
 import 'quote_chips_row.dart';
+import 'quote_context_section.dart';
 import 'quote_form_screen.dart';
 import 'share_screen.dart';
 import 'work_screen.dart';
@@ -304,6 +305,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
             Text(q.note),
             const SizedBox(height: 16),
           ],
+          QuoteContextSection(quote: q, work: _work),
           if (_work != null)
             ListTile(
               contentPadding: EdgeInsets.zero,
