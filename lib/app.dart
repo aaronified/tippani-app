@@ -12,13 +12,13 @@ import 'screens/nav_icons.dart';
 import 'screens/home_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/settings_screen.dart';
+import 'theme/app_theme.dart';
 
 /// Tippani's own red, used as the seed where the phone gives no wallpaper colours (before Android 12,
 /// and on devices that opt out). The web app's accent is the same colour.
 const Color tippaniSeed = Color(0xFFB4482D);
 
-ThemeData _theme(ColorScheme scheme) =>
-    ThemeData(colorScheme: scheme, useMaterial3: true);
+ThemeData _theme(ColorScheme scheme) => buildTheme(scheme);
 
 class TippaniApp extends StatelessWidget {
   const TippaniApp({

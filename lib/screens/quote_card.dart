@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import '../library/models.dart';
 import '../library/quote_text.dart';
 import '../library/share_format.dart';
+import '../theme/app_theme.dart';
 import 'quote_form_screen.dart' show quoteColour;
 
 /// A quote drawn as a card: the words large, the translation under them, who and what it is from, and an
@@ -57,18 +58,22 @@ class QuoteCard extends StatelessWidget {
           if (showQuote)
             Text(
               '“${quote.text.trim()}”',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: scheme.onSurface,
-                height: 1.35,
+              style: quoteStyle(
+                context,
+                size: 24,
+                height: 1.4,
+                weight: FontWeight.w500,
               ),
             ),
           if (showTranslation && quote.translation.trim().isNotEmpty) ...[
             const SizedBox(height: 16),
             Text(
               quote.translation.trim(),
-              style: theme.textTheme.bodyLarge?.copyWith(
+              style: quoteStyle(
+                context,
+                size: 17,
                 color: scheme.onSurfaceVariant,
-                fontStyle: FontStyle.italic,
+                style: FontStyle.italic,
               ),
             ),
           ],

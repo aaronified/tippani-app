@@ -10,7 +10,6 @@ import '../library/models.dart';
 import '../tools/work_lookup.dart';
 import '../sync/auto_sync.dart';
 import 'conflicts_screen.dart';
-import '../library/cover_cache.dart';
 import 'boards_screen.dart';
 import '../library/quote_chips.dart';
 import 'library_widgets.dart';
@@ -419,8 +418,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           _load();
                         },
                       ),
-                border: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(28)),
+                border: _pill(),
+                enabledBorder: _pill(),
+                focusedBorder: _pill(
+                  BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -452,40 +456,37 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       _load();
                     },
                   ),
-                const Spacer(),
-                if (_mode == _Mode.quotes) ...[
-                  FilterChip(
-                    label: const Text('Favourites'),
-                    selected: _favourites,
-                    onSelected: (v) {
-                      setState(() => _favourites = v);
-                      _load();
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  InputChip(
-                    label: Text(_tag == null ? 'Tag' : '#$_tag'),
-                    selected: _tag != null,
-                    onPressed: _pickTag,
-                    onDeleted: _tag == null
-                        ? null
-                        : () {
-                            setState(() => _tag = null);
-                            _load();
-                          },
-                  ),
-                ],
               ],
             ),
           ),
           if (_mode == _Mode.quotes)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
+            SizedBox(
+              height: 44,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
                   spacing: 8,
                   children: [
+                    FilterChip(
+                      label: const Text('Favourites'),
+                      selected: _favourites,
+                      onSelected: (v) {
+                        setState(() => _favourites = v);
+                        _load();
+                      },
+                    ),
+                    InputChip(
+                      label: Text(_tag == null ? 'Tag' : '#$_tag'),
+                      selected: _tag != null,
+                      onPressed: _pickTag,
+                      onDeleted: _tag == null
+                          ? null
+                          : () {
+                              setState(() => _tag = null);
+                              _load();
+                            },
+                    ),
                     InputChip(
                       label: Text(
                         _boardFilter == null
@@ -522,6 +523,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
     );
   }
+
+  static OutlineInputBorder _pill([BorderSide side = BorderSide.none]) =>
+      OutlineInputBorder(
+        borderRadius: BorderRadius.circular(28),
+        borderSide: side,
+      );
 
   Widget _quoteTile(Quote q) => QuoteTile(
     quote: q,
@@ -590,22 +597,28 @@ class _LibraryScreenState extends State<LibraryScreen> {
         _boardFilter != null;
     final empty = _mode == _Mode.quotes ? _quotes.isEmpty : _works.isEmpty;
     if (empty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text(
-            searching
-                ? 'Nothing matches.'
-                : _mode == _Mode.quotes
-                ? 'No quotes yet. Add the first one with the button below.'
-                : switch (widget.section) {
-                    LibrarySection.books => 'No books yet.',
-                    LibrarySection.catalogue => 'No films, shows or games yet.',
-                    _ => 'No works yet.',
-                  },
-            textAlign: TextAlign.center,
-          ),
-        ),
+      return EmptyState(
+        icon: searching
+            ? Icons.search_off_rounded
+            : _mode == _Mode.quotes
+            ? Icons.format_quote_rounded
+            : widget.section == LibrarySection.catalogue
+            ? Icons.movie_outlined
+            : Icons.menu_book_rounded,
+        title: searching
+            ? 'Nothing matches.'
+            : _mode == _Mode.quotes
+            ? 'No quotes yet.'
+            : switch (widget.section) {
+                LibrarySection.books => 'No books yet.',
+                LibrarySection.catalogue => 'No films, shows or games yet.',
+                _ => 'No works yet.',
+              },
+        hint: searching
+            ? 'Try fewer words, or clear a filter.'
+            : _mode == _Mode.quotes
+            ? 'Add the first one with the button below.'
+            : 'Add one with the button below.',
       );
     }
     return ListView(
@@ -616,25 +629,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 : [for (final q in _quotes) _quoteTile(q)]
           : [
               for (final w in _works)
-                ListTile(
-                  leading: w.cover.isEmpty
-                      ? null
-                      : WorkCover(
-                          work: w,
-                          width: 40,
-                          height: 56,
-                          fallback: const SizedBox(width: 40, height: 56),
-                        ),
-                  title: Text(w.title),
-                  subtitle: Text(
-                    [
-                      workKindLabel(w.kind),
-                      if (w.creator.isNotEmpty) w.creator,
-                      if (w.year != null) '${w.year}',
-                    ].join(' · '),
-                  ),
-                  onTap: () => _openWork(w),
-                ),
+                WorkTile(work: w, onTap: () => _openWork(w)),
             ],
     );
   }

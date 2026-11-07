@@ -332,7 +332,8 @@ void main() {
       await tester.enterText(field('Year'), '1854');
       await tapText(tester, 'Save');
       expect(find.text('Walden'), findsOneWidget);
-      expect(find.text('Book · Thoreau · 1854'), findsOneWidget);
+      expect(find.text('Thoreau · 1854'), findsOneWidget);
+      expect(find.text('BOOK'), findsOneWidget);
       await tapText(tester, 'Walden');
       expect(find.text('No quotes from this work yet.'), findsOneWidget);
       await tapText(tester, 'Add a quote');
