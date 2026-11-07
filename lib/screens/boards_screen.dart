@@ -170,25 +170,33 @@ class _BoardsScreenState extends State<BoardsScreen> {
               ),
             )
           : ListView(
-              padding: const EdgeInsets.only(bottom: 88),
+              padding: const EdgeInsets.only(top: 8, bottom: 88),
               children: [
                 for (final b in boards)
-                  ListTile(
-                    leading: CircleAvatar(
-                      radius: 10,
-                      backgroundColor: b.color.isEmpty
-                          ? Theme.of(context).colorScheme.outlineVariant
-                          : quoteColour(b.color),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 5,
                     ),
-                    title: Text(b.name),
-                    subtitle: Text(
-                      '${b.quotes} ${b.quotes == 1 ? 'quote' : 'quotes'}',
-                    ),
-                    onTap: () => _edit(board: b),
-                    trailing: IconButton(
-                      tooltip: 'Delete board',
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _delete(b),
+                    child: Card(
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          radius: 12,
+                          backgroundColor: b.color.isEmpty
+                              ? Theme.of(context).colorScheme.outlineVariant
+                              : quoteColour(b.color),
+                        ),
+                        title: Text(b.name),
+                        subtitle: Text(
+                          '${b.quotes} ${b.quotes == 1 ? 'quote' : 'quotes'}',
+                        ),
+                        onTap: () => _edit(board: b),
+                        trailing: IconButton(
+                          tooltip: 'Delete board',
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () => _delete(b),
+                        ),
+                      ),
                     ),
                   ),
               ],

@@ -307,21 +307,32 @@ class _QuoteScreenState extends State<QuoteScreen> {
           ],
           QuoteContextSection(quote: q, work: _work),
           if (_work != null)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.menu_book_outlined),
-              title: Text(_work!.title),
-              subtitle: Text(
-                [
-                  if (_work!.creator.isNotEmpty) _work!.creator,
-                  if (place.isNotEmpty) place,
-                ].join(' · '),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.menu_book_outlined),
+                title: Text(_work!.title),
+                subtitle: Text(
+                  [
+                    if (_work!.creator.isNotEmpty) _work!.creator,
+                    if (place.isNotEmpty) place,
+                  ].join(' · '),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: _openWork,
               ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: _openWork,
             )
           else if (place.isNotEmpty)
-            Text(place),
+            Row(
+              children: [
+                Icon(
+                  Icons.place_outlined,
+                  size: 18,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text(place)),
+              ],
+            ),
           if (q.tags.isNotEmpty) ...[
             const SizedBox(height: 12),
             Wrap(
@@ -330,8 +341,15 @@ class _QuoteScreenState extends State<QuoteScreen> {
               children: [for (final t in q.tags) Chip(label: Text('#$t'))],
             ),
           ],
-          const SizedBox(height: 16),
-          Text('Noted ${_date(q.notedAt)}', style: theme.textTheme.labelSmall),
+          const SizedBox(height: 24),
+          Center(
+            child: Text(
+              'Noted ${_date(q.notedAt)}',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -277,6 +277,10 @@ synced account's theme preferences are ignored here.
 - [x] **Boards, on the phone** (done 7 November 2026): `boards` table and `quotes.board_id` (schema 6); make, rename, recolour, delete (quotes kept,
       unfiled); file a standalone quote on a board; filter by a board or by none; group by board; boards are in backups. A quote from a work is never on
       a board, as on the server. Synced: see the next item.
+- [x] **A designed look** (done 8 November 2026, owner's ask: "ultra polished"): `lib/theme/app_theme.dart`, bundled Inter and Source Serif 4,
+      card lists, grouped Settings, one row of filter chips, empty states, a browser preview (`tool/preview`) to look at every screen. **Not done:**
+      a pass over the screens that need a server (sync, conflicts, anthologies, devices), the share screen (rebuilt with the share parity work),
+      and motion beyond the system's page transitions.
 - [x] **Boards sync** (done 8 November 2026, owner's ask): `lib/sync/board_sync.dart`, schema 7 (`boards.server_id`, `synced_hash`, `server_row`;
       `quotes.board_synced`). A board is its name and colour; the server's own row is kept and sent back with each edit because its board PUT replaces
       the whole board. Boards with the same name are linked, not doubled. Both sides changed: the server's wins. A board deleted here is deleted there with
