@@ -17,7 +17,7 @@ Future<(AppController, FakeServer)> open(
   tester.view.physicalSize = const Size(800, 2400);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  SharedPreferences.setMockInitialValues({if (url != null) 'server_url': url});
+  SharedPreferences.setMockInitialValues({'server_url': ?url});
   final server = FakeServer();
   final store = SettingsStore(
     await SharedPreferences.getInstance(),
