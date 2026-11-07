@@ -3,6 +3,9 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../checks/checks_service.dart';
+import '../imports/import_picker.dart';
+import '../imports/import_service.dart';
 import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
@@ -98,6 +101,9 @@ class Harness {
     this.covers,
     this.people,
     this.directory,
+    this.imports,
+    this.checks,
+    this.importPicker = const SystemImportPicker(),
     this.prefs,
     this.l10n,
     this.localeFetch,
@@ -149,6 +155,15 @@ class Harness {
 
   /// Everyone with a face on the server, kept on the phone, for the round portraits on a quote's chips.
   final PeopleDirectory? directory;
+
+  /// Importing files on the server and reviewing what they staged. Null in a test about something else.
+  final ImportService? imports;
+
+  /// The server's checks: stray marks, corrections, times and places. Null in a test about something else.
+  final ChecksService? checks;
+
+  /// Choosing a file to import with the system's picker.
+  final ImportPicker importPicker;
 
   /// The account's preferences (text size, colours, sections, language...), kept in step with the server's. Null
   /// in a test about something else.
@@ -251,6 +266,8 @@ class Harness {
       covers: covers,
       people: PairedSharePeople(controller, directory),
       directory: directory,
+      imports: PairedImportService(controller),
+      checks: PairedChecksService(controller),
       prefs: prefs,
       l10n: l10n,
       localeFetch: () =>
@@ -282,6 +299,9 @@ class Harness {
     CoverSource? covers,
     SharePeopleSource? people,
     PeopleDirectory? directory,
+    ImportService? imports,
+    ChecksService? checks,
+    ImportPicker? importPicker,
     PreferencesSource? prefs,
     L10n? l10n,
     AccountService? account,
@@ -331,6 +351,9 @@ class Harness {
       covers: covers,
       people: people,
       directory: directory,
+      imports: imports,
+      checks: checks,
+      importPicker: importPicker ?? const SystemImportPicker(),
       prefs: prefs,
       l10n: l10n,
       account: account,
