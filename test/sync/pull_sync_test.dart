@@ -195,8 +195,8 @@ void main() {
       expect(r.server.updated, isEmpty);
       expect(
         r.server.requests.length - before,
-        5,
-      ); // the five reads and nothing else
+        6,
+      ); // the five lists and the boards read and nothing else
     },
   );
 
