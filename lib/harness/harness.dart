@@ -10,6 +10,7 @@ import '../anthologies/anthologies.dart';
 import '../library/cover_cache.dart';
 import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
+import '../tags/tag_service.dart';
 import '../tools/server_tools.dart';
 import '../tools/work_lookup.dart';
 import '../app_controller.dart';
@@ -98,6 +99,7 @@ class Harness {
     this.contexts,
     this.anthologies,
     this.tools,
+    this.tags,
     this.lookup,
     Future<List<ChangelogEntry>> Function()? changelogLoader,
     this.showWhatsNew = true,
@@ -152,6 +154,9 @@ class Harness {
 
   /// The paired server's bin and statistics. Null in a test that is about something else.
   final ServerTools? tools;
+
+  /// The server's tags (their colours and styles) for the Tags page. Null in a test about something else.
+  final TagService? tags;
 
   /// Finds a work's details through the paired server. Null in a test that is about something else.
   final WorkLookup? lookup;
@@ -218,6 +223,7 @@ class Harness {
       contexts: PairedQuoteContext(controller),
       anthologies: ServerAnthologies(controller),
       tools: PairedServerTools(controller),
+      tags: PairedTagService(controller),
       lookup: PairedWorkLookup(controller),
     );
   }
@@ -241,6 +247,7 @@ class Harness {
     QuoteContextSource? contexts,
     AnthologyService? anthologies,
     ServerTools? tools,
+    TagService? tags,
     WorkLookup? lookup,
     List<ChangelogEntry>? changelog,
     bool showWhatsNew = false,
@@ -284,6 +291,7 @@ class Harness {
       contexts: contexts,
       anthologies: anthologies,
       tools: tools,
+      tags: tags,
       lookup: lookup,
       changelogLoader: () async => changelog ?? const [],
       showWhatsNew: showWhatsNew,

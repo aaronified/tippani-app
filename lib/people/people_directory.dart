@@ -51,6 +51,10 @@ abstract class PeopleDirectory implements Listenable {
   /// failing that the portrait of the actor who plays them. '' when there is none.
   String faceOf(QuoteChip chip);
 
+  /// A portrait for [name] whatever they are credited as: an author, an actor, a director, a speaker or a
+  /// character. '' when there is none.
+  String anyFaceOf(String name);
+
   /// The file of a picture the server names, fetched once and kept; null while it is not there.
   Future<File?> file(String name);
 
@@ -275,6 +279,17 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
   }
 
   @override
+  String anyFaceOf(String name) {
+    _ensure();
+    final key = foldName(name);
+    for (final k in kinds) {
+      final img = _people[k]?[key]?.image ?? '';
+      if (img.isNotEmpty) return img;
+    }
+    return _characters[key]?.image ?? '';
+  }
+
+  @override
   Future<File?> file(String name) => _covers.fileFor(name);
 
   @override
@@ -315,12 +330,21 @@ class PeopleDirectoryScope extends InheritedWidget {
 class PersonFace extends StatefulWidget {
   const PersonFace({
     super.key,
-    required this.chip,
+    required QuoteChip this.chip,
     required this.radius,
     required this.fallback,
-  });
+  }) : anyName = null;
 
-  final QuoteChip chip;
+  /// The portrait of [name] whoever they are credited as (see [PeopleDirectory.anyFaceOf]).
+  const PersonFace.any({
+    super.key,
+    required String this.anyName,
+    required this.radius,
+    required this.fallback,
+  }) : chip = null;
+
+  final QuoteChip? chip;
+  final String? anyName;
   final double radius;
   final Widget fallback;
 
@@ -363,7 +387,11 @@ class _PersonFaceState extends State<PersonFace> {
 
   void _look() {
     final d = _dir;
-    final name = d == null ? '' : d.faceOf(widget.chip);
+    final name = d == null
+        ? ''
+        : widget.chip != null
+        ? d.faceOf(widget.chip!)
+        : d.anyFaceOf(widget.anyName ?? '');
     if (name == _name) return;
     _name = name;
     _file = name.isEmpty ? null : d!.file(name);

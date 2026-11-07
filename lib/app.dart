@@ -14,6 +14,7 @@ import 'screens/library_screen.dart';
 import 'screens/settings_screen.dart';
 import 'people/people_directory.dart';
 import 'people/people_service.dart';
+import 'tags/tag_service.dart';
 import 'share/share_people.dart';
 import 'theme/app_theme.dart';
 
@@ -63,7 +64,10 @@ class TippaniApp extends StatelessWidget {
                     directory: harness.directory,
                     child: PeopleServiceScope(
                       service: harness.peopleService,
-                      child: child!,
+                      child: TagServiceScope(
+                        service: harness.tags,
+                        child: child!,
+                      ),
                     ),
                   ),
                 ),
