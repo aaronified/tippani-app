@@ -14,11 +14,13 @@ import 'boards_screen.dart';
 import '../library/quote_chips.dart';
 import '../sync/fingerprint.dart' show realmOfQuote;
 import 'anthologies_screen.dart' show addToAnthologyDialog;
+import 'bulk_bar.dart';
 import 'library_widgets.dart';
 import '../tags/tag_service.dart';
 import 'quote_form_screen.dart';
 import 'tags_screen.dart';
 import 'quote_screen.dart';
+import 'search_screen.dart';
 import 'work_form_screen.dart';
 import 'work_screen.dart';
 import '../l10n/l10n.dart';
@@ -102,6 +104,24 @@ class _LibraryScreenState extends State<LibraryScreen> {
   List<Board> _boards = const [];
   List<Quote> _quotes = const [];
   List<Work> _works = const [];
+
+  /// The quotes (or, in the works list, the works) the reader has selected, by id. Empty: not selecting.
+  final _picked = <int>{};
+  bool get _selecting => _picked.isNotEmpty;
+
+  void _toggle(int id) => setState(() {
+    if (!_picked.add(id)) _picked.remove(id);
+  });
+
+  void _endSelecting() => setState(_picked.clear);
+
+  /// A bulk change is done: leave selecting and read the library again.
+  void _bulkDone() {
+    if (!mounted) return;
+    setState(_picked.clear);
+    _load();
+  }
+
   Map<int, Work> _byId = const {};
   LibraryCounts? _counts;
   bool _loaded = false;
@@ -366,85 +386,153 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final counts = _counts;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(switch (widget.section) {
-          LibrarySection.catalogue => 'Catalogue',
-          LibrarySection.quotes => 'Quotes',
-          _ => 'Library',
-        }),
-        actions: [
-          if (widget.section == LibrarySection.all ||
-              widget.section == LibrarySection.quotes)
-            IconButton(
-              tooltip: context.tr('Boards'),
-              icon: const Icon(Icons.dashboard_customize_outlined),
-              onPressed: _manageBoards,
-            ),
-          if (widget.auto != null)
-            ListenableBuilder(
-              listenable: widget.auto!,
-              builder: (context, _) {
-                final auto = widget.auto!;
-                final n = auto.conflicts.length;
-                if (n > 0) {
-                  return IconButton(
-                    tooltip: n == 1 ? '1 sync conflict' : '$n sync conflicts',
-                    icon: Badge(
-                      label: Text('$n'),
-                      child: const Icon(Icons.sync_problem_outlined),
-                    ),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => ConflictsScreen(auto: auto),
-                      ),
-                    ),
-                  );
-                }
-                if (auto.syncing) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          PopupMenuButton<ExportKind>(
-            tooltip: context.tr('Export'),
-            icon: const Icon(Icons.ios_share),
-            onSelected: _export,
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: ExportKind.share,
-                child: Text(context.tr('Share as Markdown')),
-              ),
-              PopupMenuItem(
-                value: ExportKind.save,
-                child: Text(context.tr('Save as Markdown file')),
-              ),
-            ],
+    final PreferredSizeWidget bar;
+    if (_selecting) {
+      final quoteMode = _mode == _Mode.quotes;
+      final chosenQuotes = [
+        for (final q in _quotes)
+          if (_picked.contains(q.id)) q,
+      ];
+      final chosenWorks = [
+        for (final w in _works)
+          if (_picked.contains(w.id)) w,
+      ];
+      bar = bulkAppBar(
+        context,
+        count: quoteMode ? chosenQuotes.length : chosenWorks.length,
+        total: quoteMode ? _quotes.length : _works.length,
+        onClose: _endSelecting,
+        onAll: () => setState(
+          () => _picked.addAll(
+            quoteMode ? _quotes.map((q) => q.id) : _works.map((w) => w.id),
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'add-${widget.section.name}',
-        onPressed: _mode == _Mode.quotes ? _addQuote : _addWork,
-        icon: const Icon(Icons.add),
-        label: Text(
-          _mode == _Mode.quotes
-              ? 'Add a quote'
-              : switch (widget.section) {
-                  LibrarySection.books => 'Add a book',
-                  LibrarySection.catalogue => 'Add a film, show or game',
-                  _ => 'Add a work',
-                },
         ),
-      ),
+        actions: quoteMode
+            ? QuoteBulkActions(
+                store: widget.store,
+                anthologies: widget.anthologies,
+                quotes: chosenQuotes,
+                done: _bulkDone,
+              ).bar(context)
+            : WorkBulkActions(
+                store: widget.store,
+                works: chosenWorks,
+                all: _works,
+                done: _bulkDone,
+              ).bar(context),
+      );
+    } else {
+      bar = _normalBar(context);
+    }
+    return PopScope(
+      canPop: !_selecting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _endSelecting();
+      },
+      child: _scaffold(context, bar, counts),
+    );
+  }
+
+  AppBar _normalBar(BuildContext context) {
+    return AppBar(
+      title: Text(switch (widget.section) {
+        LibrarySection.catalogue => 'Catalogue',
+        LibrarySection.quotes => 'Quotes',
+        _ => 'Library',
+      }),
+      actions: [
+        IconButton(
+          tooltip: context.tr('Search everything'),
+          icon: const Icon(Icons.manage_search),
+          onPressed: () => openSearch(
+            context,
+            store: widget.store,
+            picker: widget.picker,
+            share: widget.share,
+            shareImage: widget.shareImage,
+            anthologies: widget.anthologies,
+            lookup: widget.lookup,
+            initial: _search.text,
+          ),
+        ),
+        if (widget.section == LibrarySection.all ||
+            widget.section == LibrarySection.quotes)
+          IconButton(
+            tooltip: context.tr('Boards'),
+            icon: const Icon(Icons.dashboard_customize_outlined),
+            onPressed: _manageBoards,
+          ),
+        if (widget.auto != null)
+          ListenableBuilder(
+            listenable: widget.auto!,
+            builder: (context, _) {
+              final auto = widget.auto!;
+              final n = auto.conflicts.length;
+              if (n > 0) {
+                return IconButton(
+                  tooltip: n == 1 ? '1 sync conflict' : '$n sync conflicts',
+                  icon: Badge(
+                    label: Text('$n'),
+                    child: const Icon(Icons.sync_problem_outlined),
+                  ),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ConflictsScreen(auto: auto),
+                    ),
+                  ),
+                );
+              }
+              if (auto.syncing) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        PopupMenuButton<ExportKind>(
+          tooltip: context.tr('Export'),
+          icon: const Icon(Icons.ios_share),
+          onSelected: _export,
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: ExportKind.share,
+              child: Text(context.tr('Share as Markdown')),
+            ),
+            PopupMenuItem(
+              value: ExportKind.save,
+              child: Text(context.tr('Save as Markdown file')),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _scaffold(BuildContext context, PreferredSizeWidget bar, counts) {
+    return Scaffold(
+      appBar: bar,
+      floatingActionButton: _selecting
+          ? null
+          : FloatingActionButton.extended(
+              heroTag: 'add-${widget.section.name}',
+              onPressed: _mode == _Mode.quotes ? _addQuote : _addWork,
+              icon: const Icon(Icons.add),
+              label: Text(
+                _mode == _Mode.quotes
+                    ? 'Add a quote'
+                    : switch (widget.section) {
+                        LibrarySection.books => 'Add a book',
+                        LibrarySection.catalogue => 'Add a film, show or game',
+                        _ => 'Add a work',
+                      },
+              ),
+            ),
       body: Column(
         children: [
           Padding(
@@ -587,7 +675,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
       _applyChip(f);
       _load();
     },
-    onTap: () => _openQuote(q),
+    selected: _picked.contains(q.id),
+    onLongPress: () => _toggle(q.id),
+    onTap: () => _selecting ? _toggle(q.id) : _openQuote(q),
     onFavourite: () async {
       await widget.store.setFavorite(q.id, !q.favorite);
       await _load();
@@ -688,7 +778,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 : [for (final q in _quotes) _quoteTile(q)]
           : [
               for (final w in _works)
-                WorkTile(work: w, onTap: () => _openWork(w)),
+                WorkTile(
+                  work: w,
+                  selected: _picked.contains(w.id),
+                  onLongPress: () => _toggle(w.id),
+                  onTap: () => _selecting ? _toggle(w.id) : _openWork(w),
+                ),
             ],
     );
   }

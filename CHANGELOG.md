@@ -12,6 +12,22 @@ version. Write each entry for the person using the app, in plain words. **Start 
 - The shelf: on a work's page, say where you are with it: Reading (Watching, Playing), Paused, Abandoned or Finished, with a bar for how far you
   are, and how many times you have finished it. It is the same shelf the web keeps, so a change on either shows on the other; the library list
   shows each work's status and bar. Changing it needs your server (it is kept there), and a refusal comes back in the server's own words.
+- Search is a page of its own, like the web's: a search button on the Library, Catalogue and Quotes screens and a search box on Home open it.
+  With your server it forgives typos ("showing results for ..."), and reads names, tags and genres as well as the words; without one it
+  searches what is on the phone, and it says which it did. Results come in sections (titles, people, characters, tags, genres, notes, quotes)
+  with the words you typed marked, portraits beside people, and a press opens the book, the quote or the person. Narrow a search with a
+  Filter (author, director, actor, character, speaker, tag, genre, colour, language, series), by pressing a suggestion that appears as you type, or
+  by typing it (`tag:life`, `author:"Le Guin"`), and with the scope chips (books, films and shows, highlights, film lines, quotes).
+- Select many at once: press and hold a quote or a work in a list (the Library, Catalogue, Quotes and a work's own page), then press others. The
+  bar at the top then favourites them, changes their colour, adds a tag or takes one off, sets one field (who said it, the chapter, the page,
+  the language), moves them to a board, adds them to an anthology or deletes them (with Undo). For works it sets the author or the year,
+  merges several into one (their quotes move onto the one you keep) or deletes them. Every change is an ordinary edit, so it works with no
+  server and syncs afterwards.
+- Run the server from your phone (admin accounts only, in Settings): add a reader, make an account an admin or step down, and remove an account;
+  watch the server's jobs as they run and wait (with Stop, Run again, each job's log, and the common jobs to start); make a backup of the server, keep
+  it on the phone, and put one back, from the server's own copy or from a file on the phone, after keeping a safety copy of what is there now; see the
+  server's version, choose the stable or pre-release line, and update it where it can update itself (or copy the command where it cannot); add and
+  remove the folders its library is read from and tidy saved files nothing uses; test each source it asks for details and set or clear its keys.
 - Quote screen: a Copy button puts the quote and its credit on the clipboard, and after you delete a quote an Undo button brings it back, with
   its note, tags, colour and place.
 - The quote form suggests as you write: the characters of the work you chose (and who else was already quoted from it) under "Who said it", the
