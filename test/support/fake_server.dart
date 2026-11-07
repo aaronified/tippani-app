@@ -484,9 +484,17 @@ class FakeServer {
   bool _authed(http.Request r) =>
       tokenValid && r.headers['Authorization'] == 'Bearer $claimedToken';
 
+  /// Routes a test adds for itself: return null to let the server answer as usual.
+  Future<http.Response?> Function(http.Request request, String path)? extra;
+
+  /// A JSON answer, for an [extra] hook.
+  http.Response json(Object body, [int status = 200]) => _json(body, status);
+
   Future<http.Response> handle(http.Request r) async {
     requests.add(r);
     final path = r.url.path.replaceFirst(RegExp(r'^.*?/api'), '');
+    final hooked = await extra?.call(r, path);
+    if (hooked != null) return hooked;
     if (r.method == 'GET' && path == '/capabilities') {
       return _json({
         'version': '3.6.2',
