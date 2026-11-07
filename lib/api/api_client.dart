@@ -119,6 +119,15 @@ class ApiClient {
     ),
   );
 
+  /// PATCH [body] as JSON to [path] and decode the JSON answer (null for an empty one).
+  Future<Object?> patchJson(String path, Map<String, Object?> body) => _send(
+    () => _client.patch(
+      _uri(path),
+      headers: {..._headers, 'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    ),
+  );
+
   /// DELETE [path], with [body] as JSON when there is one. A 204 is an empty answer, so this returns null on
   /// success.
   Future<Object?> delete(String path, {Map<String, Object?>? body}) => _send(

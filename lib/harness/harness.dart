@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../admin/admin_service.dart';
+import '../admin/server_files.dart';
 import '../checks/checks_service.dart';
 import '../imports/import_picker.dart';
 import '../imports/import_service.dart';
@@ -115,6 +117,8 @@ class Harness {
     this.peopleService,
     this.sources,
     this.sourcePicker = const SystemSourcePicker(),
+    this.admin,
+    this.serverFiles = const SystemServerFiles(),
     this.quiz,
     this.details,
     this.contexts,
@@ -196,6 +200,13 @@ class Harness {
 
   /// Choosing a source file from the phone.
   final SourcePicker sourcePicker;
+
+  /// Running the server (users, jobs, backups, updates, folders, sources), for an admin account. Null in a test about
+  /// something else.
+  final AdminService? admin;
+
+  /// The system's file pickers for the server's big backup files.
+  final ServerFiles serverFiles;
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
@@ -293,6 +304,7 @@ class Harness {
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
       sources: PairedSourcesService(controller),
+      admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
@@ -328,6 +340,8 @@ class Harness {
     PeopleService? peopleService,
     SourcesService? sources,
     SourcePicker? sourcePicker,
+    AdminService? admin,
+    ServerFiles? serverFiles,
     QuizService? quiz,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
@@ -383,6 +397,8 @@ class Harness {
       peopleService: peopleService,
       sources: sources,
       sourcePicker: sourcePicker ?? const SystemSourcePicker(),
+      admin: admin,
+      serverFiles: serverFiles ?? const SystemServerFiles(),
       quiz: quiz,
       details: details,
       contexts: contexts,
