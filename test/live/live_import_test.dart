@@ -97,7 +97,7 @@ void main() {
     final books = ((await raw('GET', '/books')) as Map)['books'] as List;
     expect(books.any((b) => (b as Map)['title'] == title), isTrue);
     expect(await service.pending(), before);
-  });
+  }, skip: skip);
 
   test(
     'a file nothing claims is refused, and naming the format reads it',
@@ -110,6 +110,7 @@ void main() {
       expect(o.ok, isFalse);
       expect(o.message, isNotEmpty);
     },
+    skip: skip,
   );
 
   test('stray marks are found, fixed, and ignored', () async {
@@ -167,7 +168,7 @@ void main() {
       ),
       isTrue,
     );
-  });
+  }, skip: skip);
 
   test(
     'corrections, locators and the badges read from a real server',
@@ -180,5 +181,6 @@ void main() {
       final counts = await checks.counts();
       expect(counts.total, greaterThanOrEqualTo(0));
     },
+    skip: skip,
   );
 }
