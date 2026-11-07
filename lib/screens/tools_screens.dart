@@ -127,53 +127,63 @@ class _BinScreenState extends State<BinScreen> {
           : bin.entries.isEmpty
           ? const Center(child: Text('The bin is empty.'))
           : ListView(
+              padding: const EdgeInsets.only(bottom: 24),
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                   child: Text(
                     'Things you delete are kept here for ${bin.keptDays} days.',
                   ),
                 ),
                 for (final e in bin.entries)
-                  ListTile(
-                    title: Text(
-                      e.label.isEmpty ? _kindWords(e.kind) : e.label,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 5,
                     ),
-                    subtitle: Text(
-                      [
-                        _kindWords(e.kind),
-                        if (e.childCount > 0)
-                          'with ${e.childCount} ${e.childCount == 1 ? 'quote' : 'quotes'}',
-                        if (e.deletedAt.isNotEmpty) 'deleted ${e.deletedAt}',
-                      ].join(' · '),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: 'Restore',
-                          icon: const Icon(Icons.restore),
-                          onPressed: () =>
-                              _act(() => widget.tools.restore(e.id)),
+                    child: Card(
+                      child: ListTile(
+                        title: Text(
+                          e.label.isEmpty ? _kindWords(e.kind) : e.label,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        IconButton(
-                          tooltip: 'Delete for good',
-                          icon: const Icon(Icons.delete_forever_outlined),
-                          onPressed: () async {
-                            if (await _confirm(
-                              'Delete for good?',
-                              'It cannot be brought back after this.',
-                              'Delete',
-                            )) {
-                              await _act(
-                                () => widget.tools.deleteForever(e.id),
-                              );
-                            }
-                          },
+                        subtitle: Text(
+                          [
+                            _kindWords(e.kind),
+                            if (e.childCount > 0)
+                              'with ${e.childCount} ${e.childCount == 1 ? 'quote' : 'quotes'}',
+                            if (e.deletedAt.isNotEmpty)
+                              'deleted ${e.deletedAt}',
+                          ].join(' · '),
                         ),
-                      ],
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: 'Restore',
+                              icon: const Icon(Icons.restore),
+                              onPressed: () =>
+                                  _act(() => widget.tools.restore(e.id)),
+                            ),
+                            IconButton(
+                              tooltip: 'Delete for good',
+                              icon: const Icon(Icons.delete_forever_outlined),
+                              onPressed: () async {
+                                if (await _confirm(
+                                  'Delete for good?',
+                                  'It cannot be brought back after this.',
+                                  'Delete',
+                                )) {
+                                  await _act(
+                                    () => widget.tools.deleteForever(e.id),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -220,10 +230,35 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget build(BuildContext context) {
     final s = _stats;
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     Widget row(String label, Object value) => ListTile(
       dense: true,
       title: Text(label),
       trailing: Text('$value', style: theme.textTheme.titleMedium),
+    );
+    Widget big(String label, Object value) => Card(
+      color: scheme.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$value',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: scheme.onSecondaryContainer,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: scheme.onSecondaryContainer,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
     return Scaffold(
       appBar: AppBar(title: const Text('Statistics')),
@@ -247,32 +282,67 @@ class _StatsScreenState extends State<StatsScreen> {
           : s == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
-                row('Quotes', s.quotes),
-                row('Favourites', s.favourites),
-                row('Books', s.books),
-                row('Films', s.films),
-                row('Shows', s.shows),
-                if (s.games > 0) row('Games', s.games),
-                row('Tags', s.tags),
-                row('Anthologies', s.anthologies),
-                if (s.firstSaved.isNotEmpty) row('First saved', s.firstSaved),
-                if (s.busiestMonth.isNotEmpty)
-                  row(
-                    'Busiest month',
-                    '${s.busiestMonth} (${s.busiestMonthCount})',
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 2.1,
+                  children: [
+                    big('Quotes', s.quotes),
+                    big('Favourites', s.favourites),
+                    big('Books', s.books),
+                    big('Films', s.films),
+                    big('Shows', s.shows),
+                    if (s.games > 0) big('Games', s.games),
+                    big('Tags', s.tags),
+                    big('Anthologies', s.anthologies),
+                  ],
+                ),
+                if (s.firstSaved.isNotEmpty ||
+                    s.busiestMonth.isNotEmpty ||
+                    s.mostQuoted.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Column(
+                      children: [
+                        if (s.firstSaved.isNotEmpty)
+                          row('First saved', s.firstSaved),
+                        if (s.busiestMonth.isNotEmpty)
+                          row(
+                            'Busiest month',
+                            '${s.busiestMonth} (${s.busiestMonthCount})',
+                          ),
+                        if (s.mostQuoted.isNotEmpty)
+                          row(
+                            'Most quoted work',
+                            '${s.mostQuoted} (${s.mostQuotedCount})',
+                          ),
+                      ],
+                    ),
                   ),
-                if (s.mostQuoted.isNotEmpty)
-                  row(
-                    'Most quoted work',
-                    '${s.mostQuoted} (${s.mostQuotedCount})',
-                  ),
+                ],
                 if (s.topTags.isNotEmpty) ...[
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
-                    child: Text('Top tags'),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 20, 12, 8),
+                    child: Text(
+                      'Top tags',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                  for (final t in s.topTags) row('#${t.name}', t.count),
+                  Card(
+                    child: Column(
+                      children: [
+                        for (final t in s.topTags) row('#${t.name}', t.count),
+                      ],
+                    ),
+                  ),
                 ],
               ],
             ),
