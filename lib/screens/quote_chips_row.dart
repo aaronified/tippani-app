@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../library/models.dart';
 import '../library/quote_chips.dart';
 import '../people/people_directory.dart';
+import '../people/people_service.dart';
+import 'person_screen.dart';
 
 /// The people on a quote as a row of chips that scrolls sideways rather than wrapping (as on the web, so a long name
 /// never pushes the words down): the author of the book, and each character or speaker with the actor under their
@@ -14,18 +16,23 @@ class QuoteChipsRow extends StatelessWidget {
     required this.work,
     required this.onTap,
     this.dense = false,
+    this.omitAuthor = false,
   });
 
   final Quote quote;
   final Work? work;
   final ValueChanged<ChipFilter> onTap;
 
+  /// Leave out the author's pill: on the page of the work itself the author is already in the header, and naming
+  /// one person twice on a card is noise.
+  final bool omitAuthor;
+
   /// Smaller, for a list.
   final bool dense;
 
   @override
   Widget build(BuildContext context) {
-    final chips = chipsFor(quote, work);
+    final chips = chipsFor(quote, work, omitAuthor: omitAuthor);
     if (chips.isEmpty) return const SizedBox.shrink();
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -37,7 +44,46 @@ class QuoteChipsRow extends StatelessWidget {
               child: PersonChip(
                 chip: c,
                 dense: dense,
-                onTap: () => onTap(ChipFilter(c.name)),
+                // where the server's people are known, a press opens the person's page (which can still filter the
+                // library); without them it filters at once
+                onTap: () => PeopleServiceScope.of(context) == null
+                    ? onTap(ChipFilter(c.name))
+                    : openPersonPage(context, chip: c, onFilter: onTap),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The people credited on a work (its author, director ...) as pills with their portraits, in a row that scrolls
+/// sideways. Pressing one opens the person's page where the server's people are known, or filters at once.
+class CreatorPills extends StatelessWidget {
+  const CreatorPills({super.key, required this.names, required this.onTap});
+
+  final List<String> names;
+  final ValueChanged<ChipFilter> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (names.isEmpty) return const SizedBox.shrink();
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final n in names)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: PersonChip(
+                chip: QuoteChip(ChipKind.author, n),
+                onTap: () => PeopleServiceScope.of(context) == null
+                    ? onTap(ChipFilter(n))
+                    : openPersonPage(
+                        context,
+                        chip: QuoteChip(ChipKind.author, n),
+                        onFilter: onTap,
+                      ),
               ),
             ),
         ],
