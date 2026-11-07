@@ -6,6 +6,8 @@ version. Write each entry for the person using the app, in plain words.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-07
+
 ### Changed
 
 - After a page is read, you pick the passage right on the picture. Every word Tesseract found is drawn over the page: tap a word to take it or
