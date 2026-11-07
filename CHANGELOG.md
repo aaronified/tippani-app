@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-07
+
 ### Added
 
 - People on the share picture: when your server has a photo of the author, the actor or the speaker, the picture shows small round portraits
