@@ -9,6 +9,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Changed
 
+- The last sentences that were still English-only (sync results, the Import and checks list, source files, backups, counts such as "1 quote" and
+  "5 quotes") are in Bengali too, and Home shows a card when imported quotes are waiting for your approval, with a Review button.
 - The whole app speaks English or Bengali, from one set of words: every label, button, message and hint is looked up by name, in the language you chose
   in Settings (or your phone's), using the same words as the web where the web has them. A correction made to the language files on your server reaches
   the phone, and a word with no Bengali yet shows in English rather than blank. Sync results, error messages and counts ("1 quote", "5 quotes") follow the
