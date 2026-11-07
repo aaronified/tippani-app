@@ -20,7 +20,12 @@ version. Write each entry for the person using the app, in plain words. **Start 
   spaces and hidden characters in your quotes, shows the fix beside the problem, and lets you fix or ignore each (and bring an ignored one
   back). Corrections offers the words from a work's own file where your quote differs, a bucket at a time. Times and places offers the time a
   subtitle file gives a line, or the chapter and place a book's file gives a highlight.
-
+- Anthologies are complete: drag passages into order (or use Move up and Move down), write your commentary before a passage, add headings with words
+  under them, group passages by book, person or character, and choose what each passage shows (who it is by, the book, your commentary, the colour
+  edge, where in the work, the date). Give an anthology a cover, an epigraph and a dedication. Fill it from a search: everything, a book, a film, a
+  tag, an author, a colour, a shelf, your favourites or a stretch of dates, with a preview first and an option to keep adding as new quotes arrive.
+  Passages you take out can be put back from Taken out, and the whole anthology can be saved or sent as a Markdown file or an EPUB book.
+- Add to anthology from any list: a quote in the library has a button for it (and a long press does the same), not only on the quote's own page.
 - Portraits on the people pills: the round pill on a quote (the author of a book, the speaker, the character with the actor under their name) now
   shows the photo your server holds for them, as on the web, in the library, on the quote and on every card. A character shows its own picture,
   or the actor's if it has none. The photos are kept on the phone, so they are there without the server.
