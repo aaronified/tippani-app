@@ -8,12 +8,12 @@ import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../library/models.dart';
-import '../library/quote_text.dart';
 import '../speech/speaker.dart';
 import '../sync/fingerprint.dart' show realmOfQuote;
 import 'anthologies_screen.dart' show addToAnthologyDialog;
 import 'quote_card.dart';
 import 'quote_form_screen.dart';
+import 'share_screen.dart';
 import 'work_screen.dart';
 
 /// Shares a picture through Android's share sheet. A function so a test can stand in for it.
@@ -189,45 +189,20 @@ class _QuoteScreenState extends State<QuoteScreen> {
     if (mounted) Navigator.of(context).pop(true);
   }
 
-  Future<void> _shareText() async {
+  void _share() {
     final q = _quote;
     if (q == null) return;
-    try {
-      await widget.share(quoteShareText(q, _work), 'A quote');
-    } on Object {
-      if (mounted) _say('The quote could not be shared.');
-    }
-  }
-
-  String get _fileName => 'tippani-quote-${widget.quoteId}.png';
-
-  Future<void> _sharePicture() async {
-    final q = _quote;
-    if (q == null) return;
-    try {
-      final png = await captureCard(_cardKey);
-      if (png == null) {
-        if (mounted) _say('The picture could not be made.');
-        return;
-      }
-      await widget.shareImage(png, _fileName, quoteShareText(q, _work));
-    } on Object {
-      if (mounted) _say('The picture could not be shared.');
-    }
-  }
-
-  Future<void> _savePicture() async {
-    try {
-      final png = await captureCard(_cardKey);
-      if (png == null) {
-        if (mounted) _say('The picture could not be made.');
-        return;
-      }
-      final saved = await widget.picker.save(_fileName, png);
-      if (mounted) _say(saved ? 'Saved.' : 'Nothing was saved.');
-    } on Object {
-      if (mounted) _say('The picture could not be saved.');
-    }
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => ShareScreen(
+          quote: q,
+          work: _work,
+          share: widget.share,
+          shareImage: widget.shareImage,
+          picker: widget.picker,
+        ),
+      ),
+    );
   }
 
   @override
@@ -308,19 +283,9 @@ class _QuoteScreenState extends State<QuoteScreen> {
                 label: Text(_speaking ? 'Stop' : 'Read aloud'),
               ),
               FilledButton.tonalIcon(
-                onPressed: _shareText,
-                icon: const Icon(Icons.share_outlined),
-                label: const Text('Share text'),
-              ),
-              FilledButton.tonalIcon(
-                onPressed: _sharePicture,
-                icon: const Icon(Icons.image_outlined),
-                label: const Text('Share picture'),
-              ),
-              FilledButton.tonalIcon(
-                onPressed: _savePicture,
-                icon: const Icon(Icons.save_alt),
-                label: const Text('Save picture'),
+                onPressed: _share,
+                icon: const Icon(Icons.ios_share),
+                label: const Text('Share'),
               ),
             ],
           ),

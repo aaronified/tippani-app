@@ -10,6 +10,16 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Added
 
+- The app has Tippani's own icon: the rust speech bubble with quote marks, as a normal launcher icon, an adaptive icon for round and
+  squircle masks, and a single-colour version for Android's themed icons.
+- One Share screen replaces the three share buttons on a quote. Choose the format (Picture, Plain text, Markdown, WhatsApp or Reddit),
+  switch parts on or off (quote, translation, speaker, author, work, year, chapter, location, date noted, tags, your note; location, date
+  and year start off, as on the web), and see exactly what will be sent. A picture can be light or dark and can be shared or saved; text can
+  be edited by hand, shared or copied.
+- Read aloud has settings (Settings > Read aloud): pick the voice, the speed and the pitch, and try them. By default the app now picks the
+  best installed voice for each quote's language, preferring higher quality and online voices, which sound far less robotic than the
+  basic one. The voices come from Android's own speech service; install more in Android Settings > Text-to-speech.
+
 - Look up details (needs your server): when you add or edit a work, Look up details asks your server what the title most likely is and
   offers the matches; pick one to fill in the title, the author and the year. The app holds no keys of its own: the server does the lookup.
 - Bin (needs your server): Settings > Bin lists what you deleted lately on the server, with how many quotes went with a book, and lets you

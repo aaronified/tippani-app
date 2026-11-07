@@ -40,6 +40,9 @@ class FakeSpeaker implements Speaker {
   void finish() => _open.removeAt(0).complete();
 
   @override
+  Future<List<SpeechVoice>> voices() async => const [];
+
+  @override
   Future<void> stop() async {
     stops++;
     for (final c in _open) {
