@@ -255,8 +255,12 @@ synced account's theme preferences are ignored here.
       marks the quote `ocr`; spoken text is `manual` (the server accepts only those two).
 - [x] **Boards, on the phone** (done 7 November 2026): `boards` table and `quotes.board_id` (schema 6); make, rename, recolour, delete (quotes kept,
       unfiled); file a standalone quote on a board; filter by a board or by none; group by board; boards are in backups. A quote from a work is never on
-      a board, as on the server. **Not done: syncing boards.** The server has `/boards` and a `board_id` on each standalone quote; pulling and pushing
-      those needs the quote fingerprint to carry the board's server id and boards to get server ids of their own.
+      a board, as on the server. **Not done: syncing boards, and it needs a decision from the owner first.** The server has `/boards` and a `board_id`
+      on each standalone quote, but (1) it seeds default boards for every account, so a first pull would bring those down onto the phone;
+      (2) `DELETE /boards/{id}` on a board that holds quotes is refused unless the request names another board to move them to
+      (`move_to`), while the phone's delete leaves them on no board; and (3) the quote fingerprint would have to carry the board by its server id and
+      boards would need server ids and pending deletions of their own. The question: when a board with quotes is deleted on the phone, which board
+      do its quotes move to on the server?
 - [x] **Work details** (done 7 November 2026): a work's page shows the server's description, genres, publisher, pages, ISBN, series and cast (a
       film's cast, a book's characters). Fetched from `GET /books|movies/{id}` and `/{id}/cast` when the page opens if never fetched or over a day
       old (`lib/tools/work_details_source.dart`), kept on the work (`works.details`, schema 5) as read-only metadata outside the sync fingerprint.
