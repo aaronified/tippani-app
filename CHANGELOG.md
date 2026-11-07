@@ -21,6 +21,14 @@ version. Write each entry for the person using the app, in plain words. **Start 
   Pushover notifications and the widget key (shown once when it is made).
 - Context around a quote: how many lines of the book or film show before and after a quote, for everything (Settings) and for one work (its
   menu), with the choice of what to do to quotes you had already adjusted.
+- A page for every person and character: press a pill on a quote, a work's author in its header, or a row of a film's cast, and their page opens
+  with the portrait (press it to see it big), dates, bio, links by provider (IMDb, Wikipedia and the rest), signature, other spellings, the
+  works they are credited on, the parts they played and the quotes that name them. A character's page names who played them in each adaptation
+  (press an actor to open theirs). "Show their quotes" filters the library by that name, as a press on a pill used to. Where your server allows
+  it you can edit a person from the page: their details, the portrait (from the gallery or looked up by the server) and the signature.
+- Faces on work cards and the work page: a work's card shows round portraits of its author or director, the work's page shows them as pills
+  in its header, and each row of the cast has the character's picture (or the actor's). On a work's own page the author is not named again on
+  every quote.
 - Home, with the Daily Quiz and Practice: the app now opens on Home. It greets you for the time of day with the date and a line to think on,
   counts what you keep (books and quotes, titles and lines), and has your Daily Quiz: the few quotes your server has set for today, each one a
   question (which book or film is this from, which quote is from this work, who said it, who wrote it, fill in the blank by typing or by choosing).
@@ -48,7 +56,6 @@ version. Write each entry for the person using the app, in plain words. **Start 
   or the actor's if it has none. The photos are kept on the phone, so they are there without the server.
 
 ### Fixed
-
 - The Quotes tab is the quote board again: it showed every quote, including the ones from your books and films. It now shows only quotes that
   belong to no work (a line from a speech, a proverb, something someone said), as on the web; the quotes of a book are in that book.
 - The bottom bar no longer cuts words off: "Anthologies" was clipped on narrower phones or with large text. The labels are a little smaller, and

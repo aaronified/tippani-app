@@ -7,6 +7,7 @@ import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
 import '../people/people_directory.dart';
+import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
@@ -102,6 +103,7 @@ class Harness {
     this.localeFetch,
     this.account,
     this.contextRules,
+    this.peopleService,
     this.quiz,
     this.details,
     this.contexts,
@@ -163,6 +165,9 @@ class Harness {
 
   /// How much of a quote's source is shown around it, for everything and for one work.
   final ContextRules? contextRules;
+
+  /// The pages of people and characters (and edits to a person) from the paired server.
+  final PeopleService? peopleService;
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
@@ -252,6 +257,7 @@ class Harness {
           controller.withClient<Object?>((c) => c.getJson('/locales')),
       account: PairedAccount(controller),
       contextRules: PairedContextRules(controller),
+      peopleService: PairedPeopleService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
@@ -280,6 +286,7 @@ class Harness {
     L10n? l10n,
     AccountService? account,
     ContextRules? contextRules,
+    PeopleService? peopleService,
     QuizService? quiz,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
@@ -328,6 +335,7 @@ class Harness {
       l10n: l10n,
       account: account,
       contextRules: contextRules,
+      peopleService: peopleService,
       quiz: quiz,
       details: details,
       contexts: contexts,

@@ -64,11 +64,11 @@ List<String> _names(String s, RegExp pattern) {
 /// The chips for a quote, in the order the web app draws them: the author of a book first, then each named speaker.
 /// A film's, show's or game's speaker is a character, and carries the actor when the work's cast lists that
 /// character; a speaker anywhere else is just a person. A quote with neither has none.
-List<QuoteChip> chipsFor(Quote q, Work? w) {
+List<QuoteChip> chipsFor(Quote q, Work? w, {bool omitAuthor = false}) {
   final out = <QuoteChip>[];
   final isBook =
       w != null && (w.kind == WorkKind.book || w.kind == WorkKind.other);
-  if (isBook) {
+  if (isBook && !omitAuthor) {
     for (final n in creditNames(w.creator)) {
       out.add(QuoteChip(ChipKind.author, n));
     }
