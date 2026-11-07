@@ -7,6 +7,13 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- People on the share picture: when your server has a photo of the author, the actor or the speaker, the picture shows small round portraits
+  beside the name, or (Backdrop) the photo big and faded in from the edge behind the words. Swap changes which person comes first or which side
+  they sit on. A film's quote can show the actor or the character (Actor / Character), and Signature puts the credited person's signature in the
+  corner beside the Tippani mark. These choices are remembered, and the options appear only when the server has the pictures.
+
 ## [0.5.0] - 2026-11-07
 
 ### Added

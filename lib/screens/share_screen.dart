@@ -6,6 +6,7 @@ import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText;
 import '../library/models.dart';
 import '../library/share_format.dart';
+import '../share/share_people.dart';
 import '../share/share_picture.dart';
 import 'quote_card.dart' show captureCard;
 import 'quote_screen.dart' show ShareImage;
@@ -52,6 +53,12 @@ class _ShareScreenState extends State<ShareScreen> {
   Brightness? _look;
   ShareMaterial _material = ShareMaterial.manuscript;
   bool _tint = false;
+  bool _backdrop = false;
+  bool _swap = false;
+  bool _signature = false;
+  bool _characters = false;
+  SharePeople _people = SharePeople.none;
+  bool _asked = false;
   late final _text = TextEditingController(text: _build());
   bool _busy = false;
 
@@ -59,6 +66,22 @@ class _ShareScreenState extends State<ShareScreen> {
   static const _kTheme = 'share_image_theme';
   static const _kMaterial = 'share_image_material';
   static const _kTint = 'share_image_tint';
+  static const _kBackdrop = 'share_portrait';
+  static const _kSwap = 'share_swap_sides';
+  static const _kSignature = 'share_signature';
+  static const _kFace = 'share_face_kind';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_asked) return;
+    _asked = true;
+    final source = PeopleScope.of(context);
+    if (source == null || !source.available) return;
+    source.forQuote(widget.quote, widget.work).then((p) {
+      if (mounted) setState(() => _people = p);
+    });
+  }
 
   @override
   void initState() {
@@ -76,6 +99,10 @@ class _ShareScreenState extends State<ShareScreen> {
         if (t == 'dark') _look = Brightness.dark;
         _material = ShareMaterial.named(p.getString(_kMaterial));
         _tint = p.getBool(_kTint) ?? false;
+        _backdrop = p.getBool(_kBackdrop) ?? false;
+        _swap = p.getBool(_kSwap) ?? false;
+        _signature = p.getBool(_kSignature) ?? false;
+        _characters = p.getString(_kFace) == 'character';
       });
     } on Object {
       // nothing remembered: the defaults stand
@@ -89,6 +116,10 @@ class _ShareScreenState extends State<ShareScreen> {
       await p.setString(_kTheme, dark ? 'dark' : 'light');
       await p.setString(_kMaterial, _material.name);
       await p.setBool(_kTint, _tint);
+      await p.setBool(_kBackdrop, _backdrop);
+      await p.setBool(_kSwap, _swap);
+      await p.setBool(_kSignature, _signature);
+      await p.setString(_kFace, _characters ? 'character' : 'actor');
     } on Object {
       // not remembered this time
     }
@@ -178,6 +209,34 @@ class _ShareScreenState extends State<ShareScreen> {
     }
   }
 
+  bool get _screenWork {
+    final w = widget.work;
+    return w != null &&
+        (w.kind == WorkKind.film ||
+            w.kind == WorkKind.show ||
+            w.kind == WorkKind.game);
+  }
+
+  /// Faces and the signature ride with the credit they belong to: switch the author (or the speaker, or the
+  /// character) off and they go.
+  bool get _creditOn =>
+      _on.contains(widget.work == null || _screenWork ? 'speaker' : 'author');
+
+  bool get _useCharacters =>
+      _screenWork &&
+      _people.characterFaces.isNotEmpty &&
+      (_characters || _people.faces.isEmpty);
+
+  List<ShareFace> get _faces => !_creditOn
+      ? const []
+      : _useCharacters
+      ? _people.characterFaces
+      : _people.faces;
+
+  /// A character signed nothing, so a character's face has no signature.
+  ShareFace? get _signatureFace =>
+      !_creditOn || _useCharacters ? null : _people.signature;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -266,9 +325,62 @@ class _ShareScreenState extends State<ShareScreen> {
               ],
             ),
             const SizedBox(height: 12),
+            if (_people.faces.isNotEmpty &&
+                _people.characterFaces.isNotEmpty) ...[
+              Row(
+                children: [
+                  Text('Face', style: theme.textTheme.labelLarge),
+                  const SizedBox(width: 12),
+                  SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(value: false, label: Text('Actor')),
+                      ButtonSegment(value: true, label: Text('Character')),
+                    ],
+                    selected: {_characters},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (s) {
+                      setState(() => _characters = s.single);
+                      _remember();
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
             Wrap(
               spacing: 8,
+              runSpacing: 4,
               children: [
+                if (_faces.isNotEmpty) ...[
+                  FilterChip(
+                    label: const Text('Backdrop'),
+                    tooltip: 'Chip: a small round photo beside the name. Backdrop: the same photo faded in from the edge.',
+                    selected: _backdrop,
+                    onSelected: (v) {
+                      setState(() => _backdrop = v);
+                      _remember();
+                    },
+                  ),
+                  FilterChip(
+                    label: const Text('Swap'),
+                    tooltip: 'Which credited person comes first. On chips it changes whose face is in front; on a backdrop it swaps the sides.',
+                    selected: _swap,
+                    onSelected: (v) {
+                      setState(() => _swap = v);
+                      _remember();
+                    },
+                  ),
+                ],
+                if (_signatureFace != null)
+                  FilterChip(
+                    label: const Text('Signature'),
+                    tooltip: "Puts the credited person's signature in the picture's bottom right corner.",
+                    selected: _signature,
+                    onSelected: (v) {
+                      setState(() => _signature = v);
+                      _remember();
+                    },
+                  ),
                 FilterChip(
                   label: const Text('Quote colour'),
                   tooltip: "Adds the quote's colour to the picture, as a stripe beside the words.",
@@ -296,6 +408,11 @@ class _ShareScreenState extends State<ShareScreen> {
                       dark: look == Brightness.dark,
                       material: _material,
                       tint: _tint,
+                      faces: _faces,
+                      facesInMeta: _screenWork,
+                      backdrop: _backdrop,
+                      swap: _swap,
+                      signature: _signature ? _signatureFace : null,
                     ),
                   ),
                 ),

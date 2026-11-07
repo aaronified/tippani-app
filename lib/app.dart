@@ -12,6 +12,7 @@ import 'screens/nav_icons.dart';
 import 'screens/home_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/settings_screen.dart';
+import 'share/share_people.dart';
 import 'theme/app_theme.dart';
 
 /// Tippani's own red, used as the seed where the phone gives no wallpaper colours (before Android 12,
@@ -52,7 +53,10 @@ class TippaniApp extends StatelessWidget {
             source: harness.covers,
             child: DetailsScope(
               source: harness.details,
-              child: ContextScope(source: harness.contexts, child: child!),
+              child: ContextScope(
+                source: harness.contexts,
+                child: PeopleScope(source: harness.people, child: child!),
+              ),
             ),
           ),
           home: Shell(controller: controller, harness: harness),

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
 import '../library/cover_cache.dart';
 import '../tools/quote_context.dart';
@@ -88,6 +89,7 @@ class Harness {
     this.auto,
     this.runAutoSync = false,
     this.covers,
+    this.people,
     this.details,
     this.contexts,
     this.anthologies,
@@ -125,6 +127,9 @@ class Harness {
 
   /// Fetches and keeps cover pictures from the paired server. Null in a test that is about something else.
   final CoverSource? covers;
+
+  /// Where the pictures of people (portraits, characters, signatures) for a shared quote come from.
+  final SharePeopleSource? people;
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
@@ -194,6 +199,7 @@ class Harness {
             ),
       runAutoSync: true,
       covers: CoverCache(controller),
+      people: PairedSharePeople(controller),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
       anthologies: ServerAnthologies(controller),
@@ -214,6 +220,7 @@ class Harness {
     BackupPicker? picker,
     LibraryStore? library,
     CoverSource? covers,
+    SharePeopleSource? people,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
     AnthologyService? anthologies,
@@ -254,6 +261,7 @@ class Harness {
           ? null
           : AutoSync(push: push, pull: pull, controller: controller, log: l),
       covers: covers,
+      people: people,
       details: details,
       contexts: contexts,
       anthologies: anthologies,
