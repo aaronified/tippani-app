@@ -7,6 +7,7 @@ import '../checks/checks_service.dart';
 import '../imports/import_picker.dart';
 import '../imports/import_service.dart';
 import '../people/people_directory.dart';
+import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
@@ -100,6 +101,7 @@ class Harness {
     this.imports,
     this.checks,
     this.importPicker = const SystemImportPicker(),
+    this.peopleService,
     this.quiz,
     this.details,
     this.contexts,
@@ -154,6 +156,9 @@ class Harness {
 
   /// Choosing a file to import with the system's picker.
   final ImportPicker importPicker;
+
+  /// The pages of people and characters (and edits to a person) from the paired server.
+  final PeopleService? peopleService;
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
@@ -236,6 +241,7 @@ class Harness {
       directory: directory,
       imports: PairedImportService(controller),
       checks: PairedChecksService(controller),
+      peopleService: PairedPeopleService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
@@ -263,6 +269,7 @@ class Harness {
     ImportService? imports,
     ChecksService? checks,
     ImportPicker? importPicker,
+    PeopleService? peopleService,
     QuizService? quiz,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
@@ -310,6 +317,7 @@ class Harness {
       imports: imports,
       checks: checks,
       importPicker: importPicker ?? const SystemImportPicker(),
+      peopleService: peopleService,
       quiz: quiz,
       details: details,
       contexts: contexts,

@@ -18,6 +18,8 @@ import '../library/quote_chips.dart';
 import '../tools/work_lookup.dart';
 import '../library/work_order.dart';
 import 'library_widgets.dart';
+import 'quote_chips_row.dart';
+import '../people/face_stack.dart';
 import 'quote_form_screen.dart';
 import 'quote_screen.dart';
 import 'work_form_screen.dart';
@@ -196,6 +198,10 @@ class _WorkScreenState extends State<WorkScreen> {
   Widget _tile(Quote q) => QuoteTile(
     quote: q,
     work: null,
+    chipWork: _work,
+    omitAuthor: true,
+    // the library opens on this name
+    onChip: (f) => Navigator.of(context).pop(f),
     onTap: () => _open(q),
     onFavourite: () async {
       await widget.store.setFavorite(q.id, !q.favorite);
@@ -345,6 +351,13 @@ class _WorkScreenState extends State<WorkScreen> {
                         ].join(' · '),
                         style: text.bodyMedium,
                       ),
+                      if (w.creator.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        CreatorPills(
+                          names: creditNames(w.creator),
+                          onTap: (f) => Navigator.of(context).pop(f),
+                        ),
+                      ],
                       const SizedBox(height: 4),
                       Text(
                         '${_quotes.length} ${_quotes.length == 1 ? 'quote' : 'quotes'}'
@@ -379,7 +392,10 @@ class _WorkScreenState extends State<WorkScreen> {
                     ],
                   ),
                 ),
-                WorkDetailsSection(work: w),
+                WorkDetailsSection(
+                  work: w,
+                  onFilter: (f) => Navigator.of(context).pop(f),
+                ),
                 if (_quotes.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(16),

@@ -131,6 +131,15 @@ class FakeServer {
   /// The characters the server knows (name, image_path). `GET /characters` lists them.
   final characterRows = <Map<String, Object?>>[];
 
+  /// The full record of a person (`GET /people/id/{id}`), by id; `PUT /people/id/{id}` merges into it.
+  final personDetails = <int, Map<String, Object?>>{};
+
+  /// The full record of a character (`GET /characters/{id}`), by id.
+  final characterDetails = <int, Map<String, Object?>>{};
+
+  /// Every write to a person: the route (`PUT /people/id/3`) and what was sent.
+  final personWrites = <(String, Object?)>[];
+
   /// How many times `GET /people` was asked.
   int peopleReads = 0;
 
@@ -550,6 +559,35 @@ class FakeServer {
     if (r.method == 'GET' && path == '/people') {
       peopleReads++;
       return _json({'people': people[r.url.queryParameters['kind']] ?? []});
+    }
+    final person = RegExp(r'^/people/id/(\d+)(/.*)?$').firstMatch(path);
+    if (person != null) {
+      final id = int.parse(person[1]!);
+      final row = personDetails[id];
+      if (row == null) return _json({'error': 'not found'}, 404);
+      if (r.method == 'GET' && person[2] == null) return _json(row);
+      if (r.method == 'PUT' && person[2] == null) {
+        final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+        personWrites.add(('PUT $path', body));
+        personDetails[id] = {
+          ...row,
+          for (final e in body.entries)
+            if (e.key == 'clear_image')
+              'image_path': ''
+            else if (e.key == 'clear_signature')
+              'signature_path': ''
+            else
+              e.key: e.value,
+        };
+        return _json(personDetails[id]!);
+      }
+      personWrites.add(('${r.method} $path', r.bodyBytes.length));
+      return _json(row);
+    }
+    final character = RegExp(r'^/characters/(\d+)$').firstMatch(path);
+    if (r.method == 'GET' && character != null) {
+      final row = characterDetails[int.parse(character[1]!)];
+      return row == null ? _json({'error': 'not found'}, 404) : _json(row);
     }
     if (r.method == 'GET' && path == '/characters') {
       return _json({'characters': characterRows});
