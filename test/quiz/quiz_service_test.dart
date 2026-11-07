@@ -96,6 +96,21 @@ void main() {
     expect(deck.streak, 4);
     expect(deck.states.probablyForgotten, 4);
     expect((await quiz.practice()).single.isFlip, isTrue);
+    await quiz.practice(anthology: 4);
+    expect(
+      server.requests.last.url.queryParameters['anthology'],
+      '4',
+      reason: 'Practise on an anthology asks the server for that anthology',
+    );
+    expect(
+      server.requests
+          .where((r) => r.url.path.endsWith('/review/practice'))
+          .first
+          .url
+          .queryParameters
+          .containsKey('anthology'),
+      isFalse,
+    );
     final scores = await quiz.scores();
     expect(scores.remaining, 5);
     expect(scores.practiceGot, 7);

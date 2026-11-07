@@ -15,6 +15,9 @@ class FakeQuiz extends ChangeNotifier implements QuizService {
 
   QuizDeck deck;
   List<QuizCard> practiceCards;
+
+  /// The anthology each Practice round was asked for (null: the whole library).
+  final practiceAnthologies = <int?>[];
   QuizScores scoresValue;
 
   /// When set, the loading calls throw it.
@@ -41,8 +44,9 @@ class FakeQuiz extends ChangeNotifier implements QuizService {
   }
 
   @override
-  Future<List<QuizCard>> practice() async {
+  Future<List<QuizCard>> practice({int? anthology}) async {
     if (fail != null) throw fail!;
+    practiceAnthologies.add(anthology);
     return practiceCards;
   }
 

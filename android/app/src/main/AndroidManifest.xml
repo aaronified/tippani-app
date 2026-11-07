@@ -44,6 +44,16 @@
             android:name="flutterEmbedding"
             android:value="2" />
         <!-- Lets Android's installer read the update ota_update downloaded (res/xml/ota_update_paths.xml). -->
+        <!-- Lets an app that pastes a copied quote picture read it (res/xml/clip_paths.xml). -->
+        <provider
+            android:name=".ClipFileProvider"
+            android:authorities="${applicationId}.clip_provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/clip_paths" />
+        </provider>
         <provider
             android:name="sk.fourq.otaupdate.OtaUpdateFileProvider"
             android:authorities="${applicationId}.ota_update_provider"

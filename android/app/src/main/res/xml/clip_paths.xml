@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The folder a copied quote picture is written to, which an app that pastes it may read. -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="clip" path="clip/"/>
+</paths>
