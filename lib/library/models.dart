@@ -240,9 +240,10 @@ class WorkDetails {
     String? status,
     int? progress,
     List<ReadEntry>? reads,
+    List<String>? genres,
   }) => WorkDetails(
     description: description,
-    genres: genres,
+    genres: genres ?? this.genres,
     publisher: publisher,
     pages: pages,
     isbn: isbn,

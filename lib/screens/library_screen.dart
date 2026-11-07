@@ -21,6 +21,7 @@ import 'tags_screen.dart';
 import 'quote_screen.dart';
 import 'work_form_screen.dart';
 import 'work_screen.dart';
+import 'works_view.dart';
 import '../l10n/l10n.dart';
 
 enum _Mode { quotes, works }
@@ -680,16 +681,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
             : 'Add one with the button below.',
       );
     }
+    if (_mode == _Mode.works) {
+      return WorksView(
+        works: _works,
+        onOpen: _openWork,
+        sectionKey: widget.section == LibrarySection.catalogue
+            ? 'catalogue'
+            : 'books',
+      );
+    }
     return ListView(
       padding: const EdgeInsets.only(bottom: 88),
-      children: _mode == _Mode.quotes
-          ? _groupByBoard
-                ? _groupedQuotes()
-                : [for (final q in _quotes) _quoteTile(q)]
-          : [
-              for (final w in _works)
-                WorkTile(work: w, onTap: () => _openWork(w)),
-            ],
+      children: _groupByBoard
+          ? _groupedQuotes()
+          : [for (final q in _quotes) _quoteTile(q)],
     );
   }
 }

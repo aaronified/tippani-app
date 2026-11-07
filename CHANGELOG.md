@@ -9,6 +9,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Library browsing: the Library and Catalogue lists can be sorted (title, author or maker, year either way, recently added), grouped under
+  headings (author or maker, decade, where you are with it, genre, language), filtered by where you are with each work (in progress, not
+  started, paused, finished, abandoned), and shown as a list or as a wall of covers whose size you set. The count of works shown is on top, and your
+  choices are kept for next time.
 - The shelf: on a work's page, say where you are with it: Reading (Watching, Playing), Paused, Abandoned or Finished, with a bar for how far you
   are, and how many times you have finished it. It is the same shelf the web keeps, so a change on either shows on the other; the library list
   shows each work's status and bar. Changing it needs your server (it is kept there), and a refusal comes back in the server's own words.

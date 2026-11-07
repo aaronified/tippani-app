@@ -367,17 +367,33 @@ class PullSync {
     }
   }
 
-  /// Keeps the shelf status and progress the server holds for a work (read-only here: the server owns the shelf),
-  /// so the library can show them without opening each work. Changes nothing that syncs.
+  /// Keeps the shelf status and progress, and the genres, the server holds for a work (read-only here), so the
+  /// library can show, group and filter by them without opening each work. Changes nothing that syncs.
   Future<void> _keepShelf(Work w, Map row) async {
     final status = row['status'] is String ? (row['status'] as String) : '';
     final progress = row['progress'] is int
         ? (row['progress'] as int).clamp(0, 100)
         : 0;
-    if (w.details.status == status && w.details.progress == progress) return;
+    final g = row['genres'];
+    final genres = [
+      if (g is List)
+        for (final x in g)
+          if (x is String && x.trim().isNotEmpty) x.trim(),
+    ];
+    final sameGenres =
+        genres.length == w.details.genres.length &&
+        [
+          for (var i = 0; i < genres.length; i++)
+            genres[i] == w.details.genres[i],
+        ].every((b) => b);
+    if (w.details.status == status &&
+        w.details.progress == progress &&
+        sameGenres) {
+      return;
+    }
     await _store.setWorkDetails(
       w.id,
-      w.details.copyWith(status: status, progress: progress),
+      w.details.copyWith(status: status, progress: progress, genres: genres),
     );
   }
 
