@@ -3,6 +3,9 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../checks/checks_service.dart';
+import '../imports/import_picker.dart';
+import '../imports/import_service.dart';
 import '../people/people_directory.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
@@ -92,6 +95,9 @@ class Harness {
     this.covers,
     this.people,
     this.directory,
+    this.imports,
+    this.checks,
+    this.importPicker = const SystemImportPicker(),
     this.details,
     this.contexts,
     this.anthologies,
@@ -135,6 +141,15 @@ class Harness {
 
   /// Everyone with a face on the server, kept on the phone, for the round portraits on a quote's chips.
   final PeopleDirectory? directory;
+
+  /// Importing files on the server and reviewing what they staged. Null in a test about something else.
+  final ImportService? imports;
+
+  /// The server's checks: stray marks, corrections, times and places. Null in a test about something else.
+  final ChecksService? checks;
+
+  /// Choosing a file to import with the system's picker.
+  final ImportPicker importPicker;
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
@@ -208,6 +223,8 @@ class Harness {
       covers: covers,
       people: PairedSharePeople(controller, directory),
       directory: directory,
+      imports: PairedImportService(controller),
+      checks: PairedChecksService(controller),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
       anthologies: ServerAnthologies(controller),
@@ -230,6 +247,9 @@ class Harness {
     CoverSource? covers,
     SharePeopleSource? people,
     PeopleDirectory? directory,
+    ImportService? imports,
+    ChecksService? checks,
+    ImportPicker? importPicker,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
     AnthologyService? anthologies,
@@ -272,6 +292,9 @@ class Harness {
       covers: covers,
       people: people,
       directory: directory,
+      imports: imports,
+      checks: checks,
+      importPicker: importPicker ?? const SystemImportPicker(),
       details: details,
       contexts: contexts,
       anthologies: anthologies,

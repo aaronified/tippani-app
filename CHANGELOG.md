@@ -9,6 +9,18 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Import and checks, in Settings: bring in a file and look over what it holds before it joins your library. Choose a Kindle My Clippings file,
+  a Kindle notebook page, Bookcision, Readest, Goodreads, Hardcover, IMDb or Markdown, and your server reads it (it works out the format
+  itself, or you name it). The quotes wait in a queue you review: edit a quote's colour, favourite mark and where it came from, shift page
+  numbers or timestamps for a whole file, move a group onto the right book or film, then approve or discard one quote, a book or everything.
+  The phone pulls the approved quotes straight away. A count shows in Settings and on the tab.
+- Import Markdown into this phone with no server: a file in the form the app exports comes straight back into the library, and a book or
+  quote you already have is left as it is, so importing the same file twice changes nothing.
+- Stray marks, Corrections, and Times and places, the server's three checks, each with a count. Stray marks finds footnote numbers, doubled
+  spaces and hidden characters in your quotes, shows the fix beside the problem, and lets you fix or ignore each (and bring an ignored one
+  back). Corrections offers the words from a work's own file where your quote differs, a bucket at a time. Times and places offers the time a
+  subtitle file gives a line, or the chapter and place a book's file gives a highlight.
+
 - Portraits on the people pills: the round pill on a quote (the author of a book, the speaker, the character with the actor under their name) now
   shows the photo your server holds for them, as on the web, in the library, on the quote and on every card. A character shows its own picture,
   or the actor's if it has none. The photos are kept on the phone, so they are there without the server.

@@ -1,3 +1,4 @@
+import 'checks_entry.dart';
 import 'conflicts_screen.dart';
 import 'read_aloud_settings_screen.dart';
 import 'tools_screens.dart';
@@ -264,6 +265,14 @@ class SettingsScreen extends StatelessWidget {
                   ),
               ],
             ),
+            if (harness.library != null || harness.imports != null) ...[
+              const _Section('Your library'),
+              _Group(
+                children: [
+                  ChecksEntry(controller: controller, harness: harness),
+                ],
+              ),
+            ],
             const _Section('App'),
             _Group(
               children: [
