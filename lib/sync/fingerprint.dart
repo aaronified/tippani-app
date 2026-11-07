@@ -111,7 +111,7 @@ Fields serverQuoteFields(Map row, Realm realm) {
 String fingerprint(Fields fields) {
   final keys = fields.keys.toList()..sort();
   final text = jsonEncode({for (final k in keys) k: fields[k]});
-  var h = 0x4bf29ce484222;
+  var h = 0xcbf29ce484222325;
   for (final b in utf8.encode(text)) {
     h ^= b;
     h *= 0x100000001b3;
