@@ -13,6 +13,12 @@ version. Write each entry for the person using the app, in plain words. **Start 
   headings (author or maker, decade, where you are with it, genre, language), filtered by where you are with each work (in progress, not
   started, paused, finished, abandoned), and shown as a list or as a wall of covers whose size you set. The count of works shown is on top, and your
   choices are kept for next time.
+- People and characters console (Settings, Your library): every person and character your server keeps, with search that also finds other
+  spellings, filters for no photo or no links and by kind, and counts of works and quotes. Open one, edit its spellings (the first line is the
+  name shown), merge two that are the same (you choose the name that stays; the Bin can undo it), remove one, make a new character, ask the
+  server to fetch the photos and details that are missing, and clear out people and characters nothing uses. Press and hold to choose two to merge.
+- A character's page can be edited: its details, its picture (from the phone, or taken away), its spellings (press one to make it a record of its
+  own), merging it into another character, and removing it. A person's page gains the same for spellings, merging and removing.
 - The shelf: on a work's page, say where you are with it: Reading (Watching, Playing), Paused, Abandoned or Finished, with a bar for how far you
   are, and how many times you have finished it. It is the same shelf the web keeps, so a change on either shows on the other; the library list
   shows each work's status and bar. Changing it needs your server (it is kept there), and a refusal comes back in the server's own words.
