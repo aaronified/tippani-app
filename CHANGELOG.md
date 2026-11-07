@@ -8,6 +8,9 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Added
 
+- Covers: a book's cover or a film's poster from your server now shows on the work's page and beside it in the Library's list of works.
+  The picture is fetched once and kept on the phone, so it shows again without the server. For a work that is on the server, the menu on its
+  page has Choose a cover, which sends a picture from your gallery to the server as the cover.
 - Sync now runs by itself once a server is paired: when the app opens, when you come back to it, a few seconds after you change something, and
   every few minutes while it is open. If the server cannot be reached it tries again after 30 seconds, then a minute, two, five. You can turn
   it off in Settings > Sync with server, which also shows when it last finished and has Sync now.

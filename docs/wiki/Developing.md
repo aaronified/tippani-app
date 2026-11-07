@@ -212,6 +212,13 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## Covers
+
+`CoverCache` (`lib/library/cover_cache.dart`) fetches `GET /covers/{name}` once into `<app support>/covers/` and answers from disk after. The server
+names a cover file once and never reuses the name, so nothing is ever refreshed: a changed cover is a new name, which the pull stores on the work
+(`Work.cover`). Names are checked against the server's own pattern before any fetch or file path is built. A failed fetch is not retried for two
+minutes. `CoverScope` hands the source to every screen from above the navigator, and `WorkCover` draws a work's picture or a fallback.
+
 ## Testing against a real server
 
 `test/live/live_sync_test.dart` runs the real push and pull code against a real Tippani server (it checks what the server really holds

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'app_controller.dart';
 import 'harness/harness.dart';
+import 'library/cover_cache.dart';
 import 'harness/update_ui.dart';
 import 'screens/home_screen.dart';
 import 'screens/library_screen.dart';
@@ -43,6 +44,8 @@ class TippaniApp extends StatelessWidget {
           title: 'Tippani',
           theme: _theme(light.harmonized()),
           darkTheme: _theme(dark.harmonized()),
+          builder: (context, child) =>
+              CoverScope(source: harness.covers, child: child!),
           home: Shell(controller: controller, harness: harness),
         );
       },

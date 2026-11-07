@@ -86,6 +86,18 @@ class FakeServer {
   /// Every DELETE of a work or quote answers with this status instead (409, 500...), when set.
   int? failDeletesWith;
 
+  /// The cover pictures the server holds, by file name. `GET /covers/{name}` serves them.
+  final covers = <String, List<int>>{};
+
+  /// Every `GET /covers/{name}` asked for, in order.
+  final coverReads = <String>[];
+
+  /// Every cover upload accepted: the route (`/books/3/cover`) and the form body it came in.
+  final coverUploads = <String>[];
+
+  /// Cover reads and uploads answer with this status instead, when set.
+  int? failCoversWith;
+
   /// Puts a row on the server as if it had been made on the web, and returns its id. [path] is a create
   /// route (`/books`, `/annotations`...). The row is what the server's list would give back.
   int seed(String path, Map<String, Object?> fields, {int? id}) {
@@ -261,6 +273,41 @@ class FakeServer {
       return _json({'token': claimedToken, 'username': username}, 201);
     }
     if (!_authed(r)) return _json({'error': 'not logged in'}, 401);
+    final cover = RegExp(r'^/covers/([^/]+)$').firstMatch(path);
+    if (r.method == 'GET' && cover != null) {
+      coverReads.add(cover[1]!);
+      if (failCoversWith != null) {
+        return _json({'error': 'try later'}, failCoversWith!);
+      }
+      final bytes = covers[cover[1]!];
+      return bytes == null
+          ? _json({'error': 'not found'}, 404)
+          : http.Response.bytes(
+              bytes,
+              200,
+              headers: {'content-type': 'image/png'},
+            );
+    }
+    final upload = RegExp(r'^(/books|/movies)/(\d+)/cover$').firstMatch(path);
+    if (r.method == 'POST' && upload != null) {
+      if (failCoversWith != null) {
+        return _json({'error': 'refused'}, failCoversWith!);
+      }
+      final rows = created[upload[1]!] ?? [];
+      final i = rows.indexWhere((x) => x['id'] == int.parse(upload[2]!));
+      if (i < 0) return _json({'error': 'not found'}, 404);
+      final type = r.headers['content-type'] ?? '';
+      if (!type.startsWith('multipart/form-data') ||
+          !String.fromCharCodes(r.bodyBytes).contains('name="file"')) {
+        return _json({'error': 'a picture is needed'}, 400);
+      }
+      coverUploads.add('${upload[1]}/${upload[2]}/cover');
+      final name =
+          '${(0x0abc000000000000 + coverUploads.length).toRadixString(16).padLeft(16, '0')}.png';
+      covers[name] = r.bodyBytes;
+      rows[i][upload[1] == '/books' ? 'cover_path' : 'poster_path'] = name;
+      return _json({'cover_path': name});
+    }
     if (r.method == 'POST' && _createRoutes.contains(path)) {
       return _create(path, jsonDecode(r.body) as Map);
     }

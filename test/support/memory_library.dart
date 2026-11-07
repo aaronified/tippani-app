@@ -69,6 +69,7 @@ class MemoryLibrary implements LibraryStore {
       updatedAt: _clock(),
       serverId: old.serverId,
       syncedHash: old.syncedHash,
+      cover: old.cover,
     );
     _works[id] = updated;
     _notify();
@@ -302,6 +303,12 @@ class MemoryLibrary implements LibraryStore {
   Future<void> setQuoteServerId(int id, int serverId) async {
     final q = _quotes[id];
     if (q != null) _quotes[id] = q.withServerId(serverId);
+  }
+
+  @override
+  Future<void> setWorkCover(int id, String name) async {
+    final w = _works[id];
+    if (w != null) _works[id] = w.withCover(name);
   }
 
   @override
