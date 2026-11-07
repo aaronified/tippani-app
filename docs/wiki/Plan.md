@@ -277,6 +277,11 @@ synced account's theme preferences are ignored here.
 - [x] **Boards, on the phone** (done 7 November 2026): `boards` table and `quotes.board_id` (schema 6); make, rename, recolour, delete (quotes kept,
       unfiled); file a standalone quote on a board; filter by a board or by none; group by board; boards are in backups. A quote from a work is never on
       a board, as on the server. Synced: see the next item.
+- [x] **Share picture, as on the web** (done 8 November 2026, owner's ask): `lib/share/share_picture.dart` draws the web's picture (640 wide at 2x,
+      its palettes, the paper grain over the card, block order and gaps, fonts, tag pills, footer and mark) from the same parts the text formats use;
+      Light/Dark, the eight materials and the quote colour stripe are chosen and remembered. The text formats were already the web's five. **Not done:**
+      people's portraits (chips and backdrop), their signatures and the actor/character switch, which need the server's pictures of people on the phone;
+      copying the picture to the clipboard.
 - [x] **A designed look** (done 8 November 2026, owner's ask: "ultra polished"): `lib/theme/app_theme.dart`, bundled Inter and Source Serif 4,
       card lists, grouped Settings, one row of filter chips, empty states, a browser preview (`tool/preview`) to look at every screen. **Not done:**
       a pass over the screens that need a server (sync, conflicts, anthologies, devices), the share screen (rebuilt with the share parity work),

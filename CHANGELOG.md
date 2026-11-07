@@ -9,6 +9,11 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Changed
 
+- The picture of a quote is drawn as the web app draws it: Newsreader set on a card with a paper grain and a thin border, the Tippani mark and
+  "made with tippani" at the foot, the author and work in the credit and the chapter in a small line beneath, tags as pills, your note in
+  handwriting, and Bengali and Devanagari in their own fonts. You can choose Light or Dark and one of the web's eight materials (Manuscript, Film
+  assembly, Office, School, Atelier, Bindery, Quarry, Atrium), and switch on the quote's colour as a stripe. Your choices are remembered. The
+  file is 1280 pixels wide and as tall as the quote needs.
 - A new look: the whole app is redrawn with its own type and shapes. Quotes are set in a serif (Source Serif 4) and the rest in Inter, both
   built in so they look the same on every phone. Quotes and works are cards (a work with no cover gets a lettered one in a colour taken from
   its title), the filters sit in one row of chips, Settings is grouped into blocks, empty lists say what to do, and bars, buttons, fields,

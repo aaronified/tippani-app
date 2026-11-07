@@ -212,6 +212,14 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## The share picture
+
+`lib/share/share_picture.dart` is one widget, `SharePicture`, at its own width (`shareWidth` 640). The Share screen shows it scaled down in a
+`FittedBox` and makes the file from the unscaled `RepaintBoundary` at `shareScale` (2), so the file is 1280 wide and as tall as the content. The
+constants (paddings, type sizes and line heights, gaps, palettes, grain sizes and strengths) are the web's from `web/frontend/src/quoteImage.js`
+and `theme.js`, under the same names where there is one. The grain tiles are in `assets/share`, the fonts (Newsreader, Noto Serif Bengali and
+Devanagari, IBM Plex Mono, Caveat) in `assets/fonts/share` with their licences.
+
 ## The look
 
 `lib/theme/app_theme.dart` (`buildTheme`) is the one place that sets shape, type and spacing over the phone's Material You colours: Inter for the

@@ -237,10 +237,13 @@ void main() {
       (tester) async {
         await open(tester);
         expect(find.text('“Simplify, simplify.”'), findsOneWidget);
-        expect(find.text('— Thoreau, Walden, Economy'), findsOneWidget);
+        // the author and the work credit it; the chapter is the small line under; the tags are pills
+        expect(find.text('— Thoreau, Walden'), findsOneWidget);
+        expect(find.text('ECONOMY'), findsOneWidget);
         expect(find.text('my margin'), findsOneWidget);
-        expect(find.text('#life #work'), findsOneWidget);
-        expect(find.text('p. 8'), findsNothing);
+        expect(find.text('life'), findsOneWidget);
+        expect(find.text('work'), findsOneWidget);
+        expect(find.textContaining('P. 8'), findsNothing);
       },
     );
 
@@ -252,7 +255,7 @@ void main() {
         await tester.tap(find.widgetWithText(FilterChip, 'Location'));
         await tester.pumpAndSettle();
         expect(find.text('saral'), findsNothing);
-        expect(find.text('— Thoreau, Walden, Economy, p. 8'), findsOneWidget);
+        expect(find.text('ECONOMY  ·  P. 8'), findsOneWidget);
       },
     );
 
