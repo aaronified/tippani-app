@@ -151,7 +151,10 @@ class _ShellState extends State<Shell> {
           ),
       if (library != null && widget.harness.anthologies != null)
         (
-          screen: AnthologiesScreen(service: widget.harness.anthologies!),
+          screen: AnthologiesScreen(
+            service: widget.harness.anthologies!,
+            picker: widget.harness.picker,
+          ),
           destination: NavigationDestination(
             icon: NavSectionIcon(NavSection.anthologies),
             label: NavSection.anthologies.label,
