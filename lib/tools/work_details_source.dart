@@ -11,6 +11,11 @@ abstract class WorkDetailsSource {
   /// What the server knows about [work] (its description, genres, cast and the rest), or null when it cannot be
   /// asked: the work is not on the server yet, no server is paired, or the server did not answer.
   Future<WorkDetails?> fetch(Work work);
+
+  /// Moves [work] on the shelf (to [status], at [progress] per cent) on the server, which owns the shelf and
+  /// keeps the read log. Returns the work's record as the server now holds it, or null when the work is not on the
+  /// server (or no server is paired). A refusal throws a [ServerException] with the server's words.
+  Future<WorkDetails?> setStatus(Work work, String status, {int progress = 0});
 }
 
 /// How long fetched details are trusted before a work's page asks again.
@@ -53,6 +58,28 @@ class PairedWorkDetails implements WorkDetailsSource {
     } on ServerException {
       return null;
     }
+  }
+
+  @override
+  Future<WorkDetails?> setStatus(
+    Work work,
+    String status, {
+    int progress = 0,
+  }) async {
+    final id = work.serverId;
+    if (id == null || !_controller.paired) return null;
+    final route = workRoute(realmOfKind(work.kind));
+    // a refusal ("a finished book can only be started again") reaches the reader in the server's own words
+    return serverCall<WorkDetails?>(_controller, (c) async {
+      final row = await c.putJson('$route/$id/status', {
+        'status': status,
+        'progress': progress,
+      });
+      if (row is! Map) return null;
+      // the answer is the whole record; the cast is kept as it was
+      return WorkDetails.fromJson(row)
+          .copyWith(cast: work.details.cast, fetchedAt: _clock());
+    });
   }
 }
 

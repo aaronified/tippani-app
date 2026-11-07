@@ -9,6 +9,9 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- The shelf: on a work's page, say where you are with it: Reading (Watching, Playing), Paused, Abandoned or Finished, with a bar for how far you
+  are, and how many times you have finished it. It is the same shelf the web keeps, so a change on either shows on the other; the library list
+  shows each work's status and bar. Changing it needs your server (it is kept there), and a refusal comes back in the server's own words.
 - Search is a page of its own, like the web's: a search button on the Library, Catalogue and Quotes screens and a search box on Home open it.
   With your server it forgives typos ("showing results for ..."), and reads names, tags and genres as well as the words; without one it
   searches what is on the phone, and it says which it did. Results come in sections (titles, people, characters, tags, genres, notes, quotes)
