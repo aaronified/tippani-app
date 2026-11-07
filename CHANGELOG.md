@@ -8,6 +8,10 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Changed
 
+- After a page is read, you pick the passage right on the picture. Every word Tesseract found is drawn over the page: tap a word to take it or
+  leave it out, drag a box across words to take them, or use Select all and Clear. The words you chose, in reading order (a word cut at a line's
+  end mended, a gap on the page kept as a paragraph break), fill the text box, which you can still correct by hand. If the words' places cannot
+  be had, you get the plain text as before.
 - Scanning a page now starts with Straighten and crop. The app works out how the page is tilted and where the text is, and shows both: turn the
   picture with the slider or the nudge buttons (up to 15 degrees either way), and drag the corners of the frame to keep only the text. Auto
   works it out again, Reset starts over, and Use as is skips it. The page is read after it is straightened and cropped, which reads better.

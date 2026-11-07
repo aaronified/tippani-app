@@ -212,6 +212,14 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## Choosing words on the picture
+
+`CaptureScreen` asks the recogniser for hOCR first. `parseHocr` is lenient (it never throws; a word with no box or no text is skipped) and gives a
+`RecognisedPage`; `PageSelection` holds the chosen word indexes and builds the text. `PageSelector` uses one `ImmediateMultiDragGestureRecognizer`
+for everything on the picture: a finger that lands and lifts without moving far is a tap, one that moves draws a box. That recogniser is deliberate:
+the picture sits in a scrolling page, and an ordinary tap-and-pan recogniser loses to the page's scroll on any mostly vertical drag. The same is
+true of the crop handles in `AdjustScreen`. If hOCR is empty or throws, the screen falls back to `TextRecogniser.read`.
+
 ## Straighten and crop
 
 `page_geometry.dart` is plain Dart over a `Luma` (brightness bytes), so it is tested with drawn pages: `estimateSkewDegrees` projects the ink onto rows for each

@@ -5,6 +5,10 @@ abstract class TextRecogniser {
   /// The text on the picture at [imagePath], read as [language] (Tesseract codes joined with "+", such as "eng"
   /// or "eng+hin"). Throws if the picture cannot be read.
   Future<String> read(String imagePath, String language);
+
+  /// The same page as hOCR: HTML with each line's and word's text and box, which the reader picks words from on the
+  /// picture. Throws if the picture cannot be read.
+  Future<String> hocr(String imagePath, String language);
 }
 
 /// Tesseract, running on the phone: the picture never leaves it. The language data it needs is bundled in
@@ -15,6 +19,10 @@ class TesseractRecogniser implements TextRecogniser {
   @override
   Future<String> read(String imagePath, String language) =>
       FlutterTesseractOcr.extractText(imagePath, language: language);
+
+  @override
+  Future<String> hocr(String imagePath, String language) =>
+      FlutterTesseractOcr.extractHocr(imagePath, language: language);
 }
 
 /// What a page photographed straight comes out as is one line per printed line, with words cut by a hyphen at
