@@ -781,13 +781,17 @@ class _QuizScreenState extends State<QuizScreen> {
     final String word;
     final Color color;
     if (c.isFlip) {
-      word = _correct ? 'recalled' : 'noted';
+      word = context.tr(
+        _correct ? 'app.quiz.word_recalled' : 'app.quiz.word_noted',
+      );
       color = _correct ? scheme.primary : scheme.onSurfaceVariant;
     } else if (_kept && c.isCloze) {
-      word = 'kept, to be marked';
+      word = context.tr('app.quiz.word_kept');
       color = scheme.onSurfaceVariant;
     } else {
-      word = _correct ? 'correct' : 'not quite';
+      word = context.tr(
+        _correct ? 'app.quiz.word_correct' : 'app.quiz.word_not_quite',
+      );
       color = _correct ? scheme.primary : scheme.error;
     }
     return Column(

@@ -178,7 +178,7 @@ class _ShareScreenState extends State<ShareScreen> {
 
   Future<void> _shareText() async {
     try {
-      await widget.share(_text.text, 'A quote');
+      await widget.share(_text.text, context.tr('add.mode.quote.label'));
     } on Object {
       if (mounted) _say(context.tr('app.share.the_quote_could_not_be_shared'));
     }

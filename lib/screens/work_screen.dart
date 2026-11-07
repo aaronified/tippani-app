@@ -284,7 +284,7 @@ class _WorkScreenState extends State<WorkScreen> {
         content: Text(
           n == 0
               ? context.tr('app.work.it_is_removed_from_this_phone')
-              : 'Its $n ${n == 1 ? 'quote is' : 'quotes are'} deleted with it. This cannot be undone.',
+              : trn('app.work.quotes_deleted_with_it', n),
         ),
         actions: [
           TextButton(

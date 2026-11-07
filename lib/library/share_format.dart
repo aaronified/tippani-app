@@ -129,7 +129,7 @@ String buildShareText(Quote q, Work? w, Set<String> on, ShareFormat format) {
   }
   if (on.contains('tags') && fields['tags'] != null) out.add(fields['tags']!);
   if (on.contains('note') && fields['note'] != null) {
-    out.add('Note: ${fields['note']}');
+    out.add(tx('app.share_format.note_x', {'x': fields['note']}));
   }
   return out.join('\n\n');
 }

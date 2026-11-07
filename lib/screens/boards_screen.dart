@@ -132,7 +132,11 @@ class _BoardsScreenState extends State<BoardsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(board == null ? 'New board' : 'Edit board'),
+          title: Text(
+            context.tr(
+              board == null ? 'app.boards.new_board' : 'app.boards.edit_board',
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -346,8 +350,8 @@ class _BoardsScreenState extends State<BoardsScreen> {
                 child: Text(
                   context.tr(
                     wanted.contains(o.language.toLowerCase())
-                        ? 'app.boards.language_count_here'
-                        : 'app.boards.language_count',
+                        ? tx('app.boards.language_count_here')
+                        : tx('app.boards.language_count'),
                     {'language': o.language, 'count': o.count},
                   ),
                 ),

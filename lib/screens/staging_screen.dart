@@ -211,7 +211,7 @@ class _StagingScreenState extends State<StagingScreen> {
 
   Future<void> _discard(StagedSelector sel, int n) async {
     if (!await _confirm(
-      n == 1 ? 'Discard this quote?' : 'Discard $n quotes?',
+      trn('app.staging.discard_quotes', n),
       context.tr('staging.discard.confirm.body'),
       context.tr('common.unsaved.discard.label'),
     )) {
@@ -1190,7 +1190,7 @@ class _ShiftSheetState extends State<_ShiftSheet> {
             ])
               ChoiceChip(
                 label: Text(switch (o) {
-                  'set' => 'set to',
+                  'set' => context.tr('app.staging.set_to'),
                   _ => o,
                 }),
                 selected: _op == o,

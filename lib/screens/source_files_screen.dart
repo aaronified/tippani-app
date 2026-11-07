@@ -473,11 +473,18 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                       [
                         s.format.toUpperCase(),
                         if (s.bytes > 0) _size(s.bytes),
-                        if (s.mounted) 'from a server folder' else 'uploaded',
-                        if (s.state == 'pruned') 'space freed',
-                        if (s.state == 'missing') 'missing on the server',
+                        if (s.mounted)
+                          context.tr('app.source_files.from_a_server_folder')
+                        else
+                          context.tr('app.source_files.uploaded'),
+                        if (s.state == 'pruned')
+                          context.tr('app.source_files.space_freed'),
+                        if (s.state == 'missing')
+                          context.tr('app.source_files.missing_on_the_server'),
                       ].where((x) => x.isNotEmpty).join(' · '),
-                      '${s.withContext} ${s.withContext == 1 ? 'quote' : 'quotes'} with surroundings',
+                      context.tr('app.source_files.with_surroundings', {
+                        'quotes': countWords('quote', s.withContext),
+                      }),
                     ].join('\n'),
                   ),
                   trailing: PopupMenuButton<String>(
@@ -621,7 +628,9 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
           if (_scan.live) const LinearProgressIndicator(),
           if (exact.isNotEmpty) ...[
             _FoundHeading(
-              'Exact matches (${exact.length})',
+              context.tr('app.checks_tabs.exact_matches_n', {
+                'n': exact.length,
+              }),
               action: context.tr('app.source_files.attach_all'),
               onAction: () => _attachFound(exact, 'exact'),
             ),
@@ -629,7 +638,9 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
           ],
           if (review.isNotEmpty) ...[
             _FoundHeading(
-              'To look over (${review.length})',
+              context.tr('app.source_files.to_look_over_n', {
+                'n': review.length,
+              }),
               action: context.tr('app.source_files.turn_all_down'),
               onAction: () => _ignoreFound(review),
             ),
@@ -668,8 +679,8 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
             Text(
               context.tr(
                 f.exact
-                    ? 'app.source_files.found_by_ids'
-                    : 'app.source_files.found_by_name',
+                    ? tx('app.source_files.found_by_ids')
+                    : tx('app.source_files.found_by_name'),
                 {'rel': f.rel, 'format': f.format.toUpperCase()},
               ),
               style: Theme.of(context).textTheme.bodySmall,
@@ -751,9 +762,17 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
             Tab(
               text: attached == null
                   ? 'Attached'
-                  : 'Attached (${attached.length})',
+                  : context.tr('app.source_files.attached_n_2', {
+                      'n': attached.length,
+                    }),
             ),
-            Tab(text: _found.isEmpty ? 'Found' : 'Found (${_found.length})'),
+            Tab(
+              text: _found.isEmpty
+                  ? 'Found'
+                  : context.tr('app.source_files.found_n', {
+                      'n': _found.length,
+                    }),
+            ),
             Tab(text: context.tr('common.action.add.label')),
           ],
         ),
@@ -852,7 +871,9 @@ class _BrowseScreenState extends State<_BrowseScreen> {
     final l = _list;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l == null || l.root ? 'Choose a file' : l.path),
+        title: Text(
+          l == null || l.root ? context.tr('app.checks.choose_a_file') : l.path,
+        ),
         leading: BackButton(
           onPressed: () {
             if (l != null && !l.root) {

@@ -14,6 +14,7 @@ import 'screens/anthologies_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/nav_icons.dart';
 import 'screens/home_screen.dart';
+import 'screens/checks_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/settings_screen.dart';
 import 'boards/board_service.dart';
@@ -201,6 +202,21 @@ class _ShellState extends State<Shell> {
             auto: widget.harness.auto,
             onOpenLibrary: () => _goTo(LibrarySection.books),
             onOpenCatalogue: () => _goTo(LibrarySection.catalogue),
+            imports: widget.harness.imports,
+            onOpenImports: () async {
+              final h = widget.harness;
+              await Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (_) => ChecksScreen(
+                    imports: h.imports,
+                    checks: h.checks,
+                    library: h.library,
+                    picker: h.importPicker,
+                    auto: h.auto,
+                  ),
+                ),
+              );
+            },
           ),
           destination: NavigationDestination(
             icon: const Icon(Icons.home_outlined),

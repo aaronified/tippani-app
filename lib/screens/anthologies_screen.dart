@@ -456,8 +456,10 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
             r.added == 0
                 ? nothingNew
                 : r.added == 1
-                ? addedText('app.anthologies.added_one_passage')
-                : addedText('app.anthologies.added_n_passages', {'n': r.added}),
+                ? addedText(tx('app.anthologies.added_one_passage'))
+                : addedText(tx('app.anthologies.added_n_passages'), {
+                    'n': r.added,
+                  }),
           );
         }
       case _Menu.removed:

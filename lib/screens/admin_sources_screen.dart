@@ -104,7 +104,9 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
     final v = await askText(
       context,
       title: context.tr(f.label),
-      label: f.secret ? 'New value (kept secret)' : 'Value',
+      label: f.secret
+          ? context.tr('app.admin_sources.new_value_kept_secret')
+          : 'Value',
       secret: f.secret,
       initial: f.secret ? '' : (_keys?.text(f.field) ?? ''),
       yes: context.tr('common.action.save.label'),

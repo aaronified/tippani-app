@@ -58,8 +58,10 @@ class _ChecksEntryState extends State<ChecksEntry> {
       title: Text(context.tr('app.checks_entry.import_and_checks')),
       subtitle: Text(
         _pending > 0
-            ? '$_pending imported ${_pending == 1 ? 'quote waits' : 'quotes wait'} for your approval'
-            : 'Bring in files; stray marks, corrections, times and places',
+            ? trn('app.checks_entry.waiting', _pending)
+            : context.tr(
+                'app.checks_entry.bring_in_files_stray_marks_corrections',
+              ),
       ),
       trailing: _pending > 0
           ? Badge(

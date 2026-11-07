@@ -95,7 +95,10 @@ Future<bool> editSpellings(
       if (l.trim().isNotEmpty) l.trim(),
   ];
   if (lines.isEmpty) {
-    _say(context, 'A record needs at least one name.');
+    _say(
+      context,
+      context.tr('app.people_console_actions.a_record_needs_at_least_one'),
+    );
     return false;
   }
   return consoleCall(

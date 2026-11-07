@@ -114,7 +114,11 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
         }
         final phase = await widget.service.updatePhase();
         if (mounted && phase.isNotEmpty) {
-          setState(() => _applying = 'Updating… ($phase)');
+          setState(
+            () => _applying = context.tr('app.admin_update.updating_phase', {
+              'phase': phase,
+            }),
+          );
         }
       } on ServerException {
         if (mounted) {
@@ -189,8 +193,8 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
                     Text(
                       context.tr(
                         i.channel == 'prerelease'
-                            ? 'app.admin_update.newest_prerelease'
-                            : 'app.admin_update.newest_stable',
+                            ? tx('app.admin_update.newest_prerelease')
+                            : tx('app.admin_update.newest_stable'),
                         {
                           'latest': i.latest.isEmpty
                               ? context.tr('app.admin_update.unknown')

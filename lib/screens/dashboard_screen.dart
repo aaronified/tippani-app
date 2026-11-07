@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../anthologies/anthologies.dart';
 import '../app_controller.dart';
 import '../harness/harness.dart' show BackupPicker;
+import '../imports/import_service.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
 import '../quiz/quiz.dart';
@@ -105,6 +106,8 @@ class DashboardScreen extends StatefulWidget {
     this.auto,
     this.onOpenLibrary,
     this.onOpenCatalogue,
+    this.imports,
+    this.onOpenImports,
     this.clock,
     this.random,
   });
@@ -119,6 +122,10 @@ class DashboardScreen extends StatefulWidget {
   /// Taken when a tile is pressed; null leaves the tile as plain information.
   final VoidCallback? onOpenLibrary;
   final VoidCallback? onOpenCatalogue;
+
+  /// Where imported quotes wait for approval, and the way to look at them; null leaves the card out.
+  final ImportService? imports;
+  final VoidCallback? onOpenImports;
 
   /// The time and the dice, so a test can fix them.
   final DateTime Function()? clock;
@@ -140,6 +147,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _scoresLoading = false;
   Quote? _shuffled;
   bool _allFavourites = false;
+  int _pendingImports = 0;
   StreamSubscription<void>? _changes;
 
   DateTime get _now => (widget.clock ?? DateTime.now)();
@@ -153,7 +161,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     widget.controller.addListener(_pairingChanged);
     _loadLibrary();
     _loadScores();
+    _loadImports();
     widget.quiz.drain();
+  }
+
+  /// How many imported quotes wait for approval (the same count the Settings row is badged with).
+  Future<void> _loadImports() async {
+    final s = widget.imports;
+    if (s == null || !s.available) {
+      if (_pendingImports != 0 && mounted) setState(() => _pendingImports = 0);
+      return;
+    }
+    try {
+      final n = await s.pending();
+      if (mounted) setState(() => _pendingImports = n);
+    } on Object {
+      // the card is a nicety; the Import screen says what is wrong
+    }
   }
 
   @override
@@ -169,7 +193,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _pairingChanged() {
-    if (mounted) _loadScores();
+    if (mounted) {
+      _loadScores();
+      _loadImports();
+    }
   }
 
   Future<void> _loadLibrary() async {
@@ -324,6 +351,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           _tiles(context),
+          if (_pendingImports > 0 && widget.onOpenImports != null)
+            _importsCard(context),
           if (widget.quiz.waiting > 0) _waitingBanner(context),
           _dailyCard(context),
           _practiceCard(context),
@@ -353,7 +382,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Text(
                     _allFavourites
                         ? context.tr('app.dashboard.show_fewer')
-                        : 'View more (${favourites.length - _favouritesShown})',
+                        : context.tr(
+                            'app.dashboard.view_more_favourites_shown',
+                            {
+                              'favourites_shown':
+                                  favourites.length - _favouritesShown,
+                            },
+                          ),
                   ),
                 ),
               ),
@@ -499,6 +534,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _importsCard(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Card(
+        color: scheme.secondaryContainer,
+        child: ListTile(
+          leading: Icon(
+            Icons.move_to_inbox_outlined,
+            color: scheme.onSecondaryContainer,
+          ),
+          title: Text(
+            trn('app.dashboard.imports_waiting', _pendingImports),
+            style: TextStyle(color: scheme.onSecondaryContainer),
+          ),
+          trailing: TextButton(
+            onPressed: () async {
+              widget.onOpenImports?.call();
+            },
+            child: Text(context.tr('app.dashboard.review')),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _waitingBanner(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -513,9 +574,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             color: scheme.onTertiaryContainer,
           ),
           title: Text(
-            n == 1
-                ? '1 answer waiting to be sent'
-                : '$n answers waiting to be sent',
+            trn('app.dashboard.answers_waiting', n),
             style: TextStyle(color: scheme.onTertiaryContainer),
           ),
           trailing: TextButton(
@@ -568,9 +627,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final String headline;
       final String sub;
       if (due == 0 && done > 0) {
-        headline = 'All caught up ✓';
-        sub =
-            '${s.dailyGot} recalled · ${s.dailyAnswered - s.dailyGot} to resurface · back tomorrow';
+        headline = context.tr('app.dashboard.all_caught_up');
+        sub = context.tr('app.dashboard.recalled_resurface', {
+          'got': s.dailyGot,
+          'again': s.dailyAnswered - s.dailyGot,
+        });
       } else if (due == 0) {
         headline = context.tr('app.dashboard.nothing_due_today');
         sub = context.tr('app.dashboard.add_or_review_more_quotes_to');

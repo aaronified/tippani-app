@@ -564,7 +564,10 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                   enabled: _orphans.total > 0,
                   child: Text(
                     _orphans.total > 0
-                        ? 'Remove what nothing uses (${_orphans.total})'
+                        ? context.tr(
+                            'app.people_console.remove_what_nothing_uses_total',
+                            {'total': _orphans.total},
+                          )
                         : context.tr(
                             'app.people_console.nothing_unused_to_remove',
                           ),
@@ -594,12 +597,16 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                   Tab(
                     text: people == null
                         ? context.tr('common.field.people.label')
-                        : 'People (${people.length})',
+                        : context.tr('app.people_console.people_n', {
+                            'n': people.length,
+                          }),
                   ),
                   Tab(
                     text: characters == null
                         ? context.tr('stats.breakdown.characters.label')
-                        : 'Characters (${characters.length})',
+                        : context.tr('app.people_console.characters_n', {
+                            'n': characters.length,
+                          }),
                   ),
                 ],
               ),

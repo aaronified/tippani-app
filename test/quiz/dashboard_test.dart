@@ -6,11 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/harness/harness.dart';
+import 'package:tippani/imports/import_service.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/quiz/quiz.dart';
 import 'package:tippani/screens/dashboard_screen.dart';
 import 'package:tippani/settings/settings_store.dart';
 
+import '../support/fake_checks.dart';
 import '../support/fake_quiz.dart';
 import '../support/memory_library.dart';
 
@@ -207,6 +209,65 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Daily quiz'), findsWidgets);
       expect(find.text('Nothing due today.'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'imported quotes waiting for approval show a card that opens the queue',
+    (tester) async {
+      _tall(tester);
+      final lib = MemoryLibrary();
+      final imports = FakeImports()
+        ..staging = const Staging(
+          pending: 3,
+          batches: [],
+          works: [],
+          quotes: [],
+          total: 3,
+        );
+      var opened = 0;
+      final controller = await _controller();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DashboardScreen(
+              store: lib,
+              quiz: FakeQuiz(),
+              controller: controller,
+              picker: _Picker(),
+              imports: imports,
+              onOpenImports: () => opened++,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('3 imported quotes wait for your approval'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Review'));
+      expect(opened, 1);
+
+      // nothing waiting: no card
+      imports.staging = Staging.empty;
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DashboardScreen(
+              store: lib,
+              quiz: FakeQuiz(),
+              controller: controller,
+              picker: _Picker(),
+              imports: imports,
+              onOpenImports: () => opened++,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('imported quote'), findsNothing);
     },
   );
 }

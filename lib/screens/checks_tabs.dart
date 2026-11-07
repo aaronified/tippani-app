@@ -1249,14 +1249,18 @@ class _LocatorsTabState extends State<LocatorsTab> {
                   ),
                 ),
                 section(
-                  'Exact matches (${exact.length})',
+                  context.tr('app.checks_tabs.exact_matches_n', {
+                    'n': exact.length,
+                  }),
                   context.tr('locators.exact.note'),
                   exact,
                   'exact',
                 ),
                 section(
-                  'Worth a look (${review.length})',
-                  'A near match: the file’s words differ a little from yours.',
+                  context.tr('app.checks_tabs.worth_a_look_n', {
+                    'n': review.length,
+                  }),
+                  context.tr('app.checks_tabs.a_near_match_the_file_s'),
                   review,
                   'review',
                 ),

@@ -155,17 +155,20 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
         .where((i) => i.status != 'ok' && i.status != 'unpinned')
         .length;
     final summary = [
-      if (upToDate > 0) '$upToDate up to date',
-      if (unpinned > 0)
-        '$unpinned ${unpinned == 1 ? 'has' : 'have'} no id to look up by',
-      if (failed > 0) '$failed could not be reached',
+      if (upToDate > 0)
+        context.tr('app.metadata_tools.n_up_to_date', {'n': upToDate}),
+      if (unpinned > 0) trn('app.metadata_tools.no_id', unpinned),
+      if (failed > 0)
+        context.tr('app.metadata_tools.n_unreachable', {'n': failed}),
     ].join(', ');
     if (withChanges.isEmpty) {
       _say(
         context,
         summary.isEmpty
             ? context.tr('app.metadata_tools.the_web_had_nothing_new')
-            : 'Nothing to change: $summary.',
+            : context.tr('app.metadata_tools.nothing_to_change_summary', {
+                'summary': summary,
+              }),
       );
       return;
     }
@@ -360,7 +363,12 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                               subtitle: Text(
                                 [
                                   if (w.creator.isNotEmpty) w.creator,
-                                  'Missing: ${w.gaps.join(', ')}${w.lowRes ? ' · small cover' : ''}',
+                                  context.tr('app.metadata_tools.missing_x_x2', {
+                                    'x': w.gaps.join(', '),
+                                    'x2': w.lowRes
+                                        ? ' · ${context.tr('app.metadata_tools.small_cover')}'
+                                        : '',
+                                  }),
                                 ].join('\n'),
                               ),
                               selected: _picked.contains(_key(w)),
@@ -543,12 +551,16 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                   Tab(
                     text: works == null
                         ? 'Gaps'
-                        : 'Gaps (${works.where((w) => w.gaps.isNotEmpty).length})',
+                        : context.tr('app.metadata_tools.gaps_n', {
+                            'n': works.where((w) => w.gaps.isNotEmpty).length,
+                          }),
                   ),
                   Tab(
                     text: _dups == null
                         ? 'Twice'
-                        : 'Saved twice (${_dups!.length})',
+                        : context.tr('app.metadata_tools.saved_twice_n', {
+                            'n': _dups!.length,
+                          }),
                   ),
                 ],
               ),
@@ -700,7 +712,7 @@ class _ReverifyReviewScreenState extends State<ReverifyReviewScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
               child: Text(
-                i.title.isEmpty ? 'A work' : i.title,
+                i.title.isEmpty ? context.tr('add.mode.work.label') : i.title,
                 style: theme.textTheme.titleMedium,
               ),
             ),

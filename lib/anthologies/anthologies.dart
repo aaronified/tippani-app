@@ -329,12 +329,12 @@ class FillVocabulary {
 /// The places a fill can take passages from, in the order the chooser lists them.
 enum FillSource {
   all('anthologies.fill.all.label'),
-  book('A book'),
-  movie('A film or show'),
-  tag('A tag'),
+  book('anthologies.fill.book.label'),
+  movie('anthologies.fill.movie.label'),
+  tag('anthologies.fill.tag.label'),
   author('anthologies.fill.author.label'),
-  colour('A colour'),
-  shelf('A shelf'),
+  colour('anthologies.fill.colour.label'),
+  shelf('anthologies.fill.shelf.label'),
   favourite('anthologies.fill.favourite.label'),
   dates('anthologies.fill.dates.label');
 

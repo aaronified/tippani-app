@@ -159,7 +159,13 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.work == null ? 'Add a work' : 'Edit work'),
+        title: Text(
+          context.tr(
+            widget.work == null
+                ? 'app.work_form.add_a_work'
+                : 'app.work_form.edit_work',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,

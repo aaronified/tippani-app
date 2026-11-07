@@ -403,7 +403,7 @@ Future<({bool epub, ExportAction action})?> askExport(
       children: [
         for (final (epub, label) in [
           (false, context.tr('share.format.markdown.name')),
-          (true, 'EPUB book'),
+          (true, context.tr('app.anthology_tools.epub_book')),
         ]) ...[
           ListTile(
             leading: const Icon(Icons.save_alt),
@@ -751,8 +751,8 @@ class _FillScreenState extends State<FillScreen> {
                     ? context.tr('app.search.nothing_matches')
                     : context.tr(
                         _preview!.matched == 1
-                            ? 'app.anthology_tools.preview_one'
-                            : 'app.anthology_tools.preview_many',
+                            ? tx('app.anthology_tools.preview_one')
+                            : tx('app.anthology_tools.preview_many'),
                         {
                           'n': _preview!.matched,
                           'add': _preview!.matched - _preview!.skipped,

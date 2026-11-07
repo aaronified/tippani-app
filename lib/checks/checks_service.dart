@@ -179,19 +179,19 @@ final cleanupRuleWords = <String, (String, String)>{
   ),
   'space-before-punctuation': (
     tx('cleanup.rule.space-before-punctuation.label'),
-    'A space before a comma, full stop or bracket. French does this deliberately.',
+    tx('cleanup.rule.space-before-punctuation.body'),
   ),
   'reference-mark': (
     tx('cleanup.rule.reference-mark.label'),
-    'A leftover reference mark: a superscript, a number in brackets, or a digit stuck to the last word.',
+    tx('app.checks_service.a_leftover_reference_mark_a_superscript'),
   ),
   'pronunciation': (
     tx('cleanup.rule.pronunciation.label'),
-    "A dictionary's guide to saying the word, carried in with the headword.",
+    tx('cleanup.rule.pronunciation.body'),
   ),
   'hyphen-break': (
     tx('cleanup.rule.hyphen-break.label'),
-    'A word split across two lines and rejoined with the hyphen still in it.',
+    tx('cleanup.rule.hyphen-break.body'),
   ),
   'repeated-punctuation': (
     tx('cleanup.rule.repeated-punctuation.label'),
@@ -285,12 +285,12 @@ final correctionBuckets = <String, (String, String)>{
   ),
   'punctuation': (
     tx('corrections.bucket.punctuation.title'),
-    'The same words; the marks between them differ.',
+    tx('corrections.bucket.punctuation.note'),
   ),
   'capitalisation': ('Capitalisation', 'The same words in a different case.'),
   'accents': (
     tx('corrections.bucket.accents.title'),
-    'The same letters; the accents differ. A file can lack them altogether.',
+    tx('corrections.bucket.accents.note'),
   ),
   'marks': (
     tx('corrections.bucket.marks.title'),
@@ -314,7 +314,7 @@ final correctionBuckets = <String, (String, String)>{
   ),
   'wording': (
     tx('corrections.bucket.wording.title'),
-    'A longer difference. Read each one.',
+    tx('corrections.bucket.wording.note'),
   ),
 };
 
