@@ -75,6 +75,9 @@ class _MemoryLibrary implements LibraryStore {
   Future<List<Board>> boards() async => [];
 
   @override
+  Stream<void> get changes => const Stream.empty();
+
+  @override
   Future<LibraryCounts> counts() async =>
       const LibraryCounts(works: 0, quotes: 0, favourites: 0, tags: 0);
 

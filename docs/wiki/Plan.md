@@ -249,6 +249,9 @@ synced account's theme preferences are ignored here.
 - [x] **The server is a section of Settings** (done 8 November 2026, owner's ask): the Server tab is removed; Settings opens with a Server section (address
       and status via `serverStatusLine`, Check again, the unpaired warning, pairing, and everything that needs a paired server) followed by App. Only
       the test-only harness with no library keeps a Home tab.
+- [x] **The four sections** (done 8 November 2026, owner's ask): the bar is Library (books), Catalogue (films, shows, games), Quotes (with boards) and
+      Anthologies, then Settings, with the web app's own four icons (`lib/screens/nav_icons.dart`, `flutter_svg`). One `LibraryScreen`, told which
+      `LibrarySection` it is; the default section is the whole library, so earlier uses are unchanged. Each reloads on `LibraryStore.changes` and when a sync ends.
 - [x] **Scan: choose words on the picture** (done 7 November 2026): Tesseract's hOCR (`extractHocr`) is parsed (`lib/capture/recognised_page.dart`,
       `parseHocr`) into lines and words with boxes; `PageSelector` draws them over the page and `PageSelection` turns the chosen words into text (reading
       order, hyphens mended, a gap kept as a paragraph break). Falls back to plain `read` text when hOCR gives no words. **Not done:** proposing a page

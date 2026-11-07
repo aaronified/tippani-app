@@ -9,6 +9,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Changed
 
+- The app is laid out as the web app is: Library, Catalogue, Quotes and Anthologies, each with the web app's own icon, then Settings. The Library
+  is your books, the Catalogue your films, shows and games, Quotes your quotes with their boards, and Anthologies is the collections on your server
+  (it is there once the app can reach one). Each section reloads when something changes under it, from another section or from a sync. The
+  Anthologies entry in Settings is gone; it is a tab now.
 - What's new shows each change by a short header, not its details, and ends with a link to the full changelog on GitHub. It is in Settings, and the
   same short list is what you see after an update.
 - The server is a section of Settings: the Server tab is gone. Settings now opens with a Server section (the address and whether it answers, Check
