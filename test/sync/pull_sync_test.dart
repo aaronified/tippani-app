@@ -546,16 +546,192 @@ void main() {
     expect((await r.lib.quote(a.quote.id))!.note, 'web again');
   });
 
-  test('gone on the server: counted, left alone, never deleted', () async {
-    final r = await rig();
-    final a = await agreed(r);
-    r.server.remove('/annotations', a.noteId);
+  group('deletes travel both ways', () {
+    test(
+      'deleted on the server and not changed here: removed here too',
+      () async {
+        final r = await rig();
+        final a = await agreed(r);
+        r.server.remove('/annotations', a.noteId);
 
-    final res = await r.pull.sync();
+        final res = await r.pull.sync();
 
-    expect(res.goneOnServer, 1);
-    expect(await r.lib.quote(a.quote.id), isNotNull);
-    expect(r.server.updated, isEmpty);
+        expect(res.deletedHere, 1);
+        expect(await r.lib.quote(a.quote.id), isNull);
+        expect(await r.lib.work(a.work.id), isNotNull);
+        expect(await r.lib.pendingDeletions(), isEmpty);
+      },
+    );
+
+    test(
+      'deleted on the server but changed here: kept, and sent up again as new',
+      () async {
+        final r = await rig();
+        final a = await agreed(r);
+        await r.lib.updateQuote(
+          a.quote.id,
+          QuoteDraft(text: 'Simplify, simplify.', workId: a.work.id),
+        );
+        r.server.remove('/annotations', a.noteId);
+
+        final res = await r.pull.sync();
+
+        expect(res.relinked, 1);
+        expect(res.deletedHere, 0);
+        final kept = (await r.lib.quote(a.quote.id))!;
+        expect(kept.text, 'Simplify, simplify.');
+        expect(kept.serverId, isNull);
+        final up = await r.push.push();
+        expect(up.quotesSent, 1);
+        expect((await r.lib.quote(a.quote.id))!.serverId, isNotNull);
+      },
+    );
+
+    test('a work deleted on the server goes with its quotes when none is only here', () async {
+      final r = await rig();
+      final a = await agreed(r);
+      r.server.remove('/books', a.bookId);
+      r.server.remove('/annotations', a.noteId);
+
+      final res = await r.pull.sync();
+
+      expect(res.deletedHere, 2);
+      expect(await r.lib.works(), isEmpty);
+      expect(await r.lib.quotes(), isEmpty);
+    });
+
+    test('a work deleted on the server that still holds a quote only here is kept, unlinked', () async {
+      final r = await rig();
+      final a = await agreed(r);
+      final mine = await r.lib.addQuote(
+        QuoteDraft(text: 'Only on the phone.', workId: a.work.id),
+      );
+      r.server.remove('/books', a.bookId);
+      r.server.remove('/annotations', a.noteId);
+
+      final res = await r.pull.sync();
+
+      expect(res.deletedHere, 1);
+      expect(res.relinked, 1);
+      expect(await r.lib.quote(a.quote.id), isNull);
+      expect(await r.lib.quote(mine.id), isNotNull);
+      expect((await r.lib.work(a.work.id))!.serverId, isNull);
+      final up = await r.push.push();
+      expect(up.worksSent, 1);
+      expect(up.quotesSent, 1);
+    });
+
+    test(
+      'deleted here: the server is told once, and it does not come back',
+      () async {
+        final r = await rig();
+        final a = await agreed(r);
+        await r.lib.deleteQuote(a.quote.id);
+        expect(await r.lib.pendingDeletions(), hasLength(1));
+
+        final res = await r.pull.sync();
+
+        expect(r.server.deleted, ['/annotations/${a.noteId}']);
+        expect(res.deletedThere, 1);
+        expect(await r.lib.quotes(), isEmpty);
+        expect(await r.lib.pendingDeletions(), isEmpty);
+        final again = await r.pull.sync();
+        expect(again.deletedThere, 0);
+        expect(r.server.deleted, hasLength(1));
+      },
+    );
+
+    test('a work deleted here is deleted on the server, and its quotes do not come back', () async {
+      final r = await rig();
+      final a = await agreed(r);
+      await r.lib.deleteWork(a.work.id);
+
+      final res = await r.pull.sync();
+
+      expect(r.server.deleted, contains('/books/${a.bookId}'));
+      expect(res.deletedThere, greaterThanOrEqualTo(1));
+      expect(await r.lib.works(), isEmpty);
+      expect(await r.lib.quotes(), isEmpty);
+      expect(await r.lib.pendingDeletions(), isEmpty);
+    });
+
+    test('a delete the server already did is cleared, not an error', () async {
+      final r = await rig();
+      final a = await agreed(r);
+      r.server.remove('/annotations', a.noteId);
+      await r.lib.deleteQuote(a.quote.id);
+
+      final res = await r.pull.sync();
+
+      expect(res.deletedThere, 0);
+      expect(res.refused, isEmpty);
+      expect(await r.lib.pendingDeletions(), isEmpty);
+    });
+
+    test('a delete the server refuses is reported and cleared; the item comes back down', () async {
+      final r = await rig();
+      final a = await agreed(r);
+      await r.lib.deleteQuote(a.quote.id);
+      r.server.failDeletesWith = 409;
+
+      final res = await r.pull.sync();
+
+      expect(res.refused, hasLength(1));
+      expect(await r.lib.pendingDeletions(), isEmpty);
+      expect(res.quotesAdded, 1);
+    });
+
+    test(
+      'a server that fails stops the sync and the deletes stay pending',
+      () async {
+        final r = await rig();
+        final a = await agreed(r);
+        await r.lib.deleteQuote(a.quote.id);
+        r.server.failDeletesWith = 500;
+
+        final res = await r.pull.sync();
+
+        expect(res.stoppedBy, ApiFailure.server);
+        expect(await r.lib.pendingDeletions(), hasLength(1));
+        expect(r.server.row('/annotations', a.noteId), isNotNull);
+      },
+    );
+
+    test('a server that has lost most of the library is not believed: nothing is removed', () async {
+      final r = await rig();
+      final ids = [
+        for (var i = 0; i < 12; i++)
+          r.server.seed('/books', {'title': 'Book $i', 'author': 'A'}),
+      ];
+      await r.pull.sync();
+      expect(await r.lib.works(), hasLength(12));
+      for (final id in ids) {
+        r.server.remove('/books', id);
+      }
+
+      final res = await r.pull.sync();
+
+      expect(res.heldBack, 12);
+      expect(res.deletedHere, 0);
+      expect(await r.lib.works(), hasLength(12));
+    });
+
+    test('a few missing out of many are real deletes', () async {
+      final r = await rig();
+      final ids = [
+        for (var i = 0; i < 12; i++)
+          r.server.seed('/books', {'title': 'Book $i', 'author': 'A'}),
+      ];
+      await r.pull.sync();
+      r.server.remove('/books', ids.first);
+      r.server.remove('/books', ids[1]);
+
+      final res = await r.pull.sync();
+
+      expect(res.deletedHere, 2);
+      expect(res.heldBack, 0);
+      expect(await r.lib.works(), hasLength(10));
+    });
   });
 
   test('items that cannot come down are counted: a quote with no words, a quote whose work is not here', () async {

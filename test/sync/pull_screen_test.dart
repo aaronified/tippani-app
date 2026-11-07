@@ -75,7 +75,7 @@ void main() {
       expect(
         lines,
         contains(
-          '2 items here are no longer on the server. They were left alone.',
+          '2 items were removed on the server while syncing, and left alone here.',
         ),
       );
       expect(lines, contains('1 item on the server could not be brought down'));
@@ -83,6 +83,31 @@ void main() {
         lines,
         contains('The server refused quote 4: colour is not one of them.'),
       );
+    });
+
+    test('deletes and a distrusted server are each said', () {
+      final lines = describePull(
+        const PullResult(
+          deletedThere: 1,
+          deletedHere: 2,
+          relinked: 1,
+          heldBack: 15,
+        ),
+      ).join('\n');
+      expect(
+        lines,
+        contains('1 item you deleted here was deleted on the server too'),
+      );
+      expect(
+        lines,
+        contains('2 items deleted on the server were removed here too'),
+      );
+      expect(
+        lines,
+        contains('1 item deleted on the server but changed here was kept'),
+      );
+      expect(lines, contains('15 items are missing from the server'));
+      expect(lines, contains('nothing was removed here'));
     });
 
     test('each reason a sync stops has its own words', () {

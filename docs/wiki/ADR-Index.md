@@ -45,5 +45,6 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0014](ADR-0014-Export-Is-Tippani-s-Own-Markdown.md): Export is Tippani's own Markdown, written to the server's format
 - [ADR-0015](ADR-0015-Sync-Starts-As-A-Push-That-Only-Adds.md): Sync starts as a push that only adds
 - [ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md): Conflicts are chosen per quote and per work, never by a rule
+- [ADR-0017](ADR-0017-Deletes-Travel-Both-Ways-With-A-Wipe-Guard.md): Deletes travel both ways, with a guard against a wiped server
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)

@@ -640,4 +640,146 @@ void main() {
       },
     );
   });
+
+  group('deleting what the server holds', () {
+    test(
+      'a linked quote leaves a note for the server, in the right table',
+      () async {
+        final w = await walden();
+        await store.setWorkServerId(w.id, 4);
+        final q = await store.addQuote(QuoteDraft(text: 'One.', workId: w.id));
+        await store.setQuoteServerId(q.id, 9);
+        await store.deleteQuote(q.id);
+        final p = (await store.pendingDeletions()).single;
+        expect(p.route, '/annotations');
+        expect(p.serverId, 9);
+      },
+    );
+
+    test('a film quote and a loose quote use their own tables', () async {
+      final f = await store.addWork(
+        const WorkDraft(title: 'Casablanca', kind: WorkKind.film),
+      );
+      final fq = await store.addQuote(QuoteDraft(text: 'Kid.', workId: f.id));
+      final lq = await store.addQuote(const QuoteDraft(text: 'Loose.'));
+      await store.setQuoteServerId(fq.id, 1);
+      await store.setQuoteServerId(lq.id, 2);
+      await store.deleteQuote(fq.id);
+      await store.deleteQuote(lq.id);
+      expect(
+        [for (final d in await store.pendingDeletions()) d.route],
+        ['/dialogues', '/quotes'],
+      );
+    });
+
+    test(
+      'deleting a linked work notes the work and each linked quote under it',
+      () async {
+        final w = await walden();
+        await store.setWorkServerId(w.id, 4);
+        final a = await store.addQuote(QuoteDraft(text: 'A.', workId: w.id));
+        await store.addQuote(QuoteDraft(text: 'Only here.', workId: w.id));
+        await store.setQuoteServerId(a.id, 11);
+        await store.deleteWork(w.id);
+        final notes = [
+          for (final d in await store.pendingDeletions())
+            '${d.route}/${d.serverId}',
+        ];
+        expect(notes, ['/books/4', '/annotations/11']);
+        expect(await store.quotes(), isEmpty);
+      },
+    );
+
+    test('nothing is noted for what was never on the server', () async {
+      final w = await walden();
+      final q = await store.addQuote(QuoteDraft(text: 'One.', workId: w.id));
+      await store.deleteQuote(q.id);
+      await store.deleteWork(w.id);
+      expect(await store.pendingDeletions(), isEmpty);
+    });
+
+    test('dropping, for what the server deleted, notes nothing; clearing removes a note', () async {
+      final w = await walden();
+      await store.setWorkServerId(w.id, 4);
+      final q = await store.addQuote(QuoteDraft(text: 'One.', workId: w.id));
+      await store.setQuoteServerId(q.id, 9);
+      await store.dropQuote(q.id);
+      await store.dropWork(w.id);
+      expect(await store.pendingDeletions(), isEmpty);
+
+      final w2 = await walden();
+      await store.setWorkServerId(w2.id, 5);
+      await store.deleteWork(w2.id);
+      final p = (await store.pendingDeletions()).single;
+      await store.clearDeletion(p.id);
+      expect(await store.pendingDeletions(), isEmpty);
+    });
+
+    test(
+      'unlinking forgets the server id and the agreement, so it is sent as new',
+      () async {
+        final w = await walden();
+        await store.setWorkServerId(w.id, 4);
+        await store.markWorkSynced(w.id, 'h');
+        final q = await store.addQuote(QuoteDraft(text: 'One.', workId: w.id));
+        await store.setQuoteServerId(q.id, 9);
+        await store.markQuoteSynced(q.id, 'h');
+        await store.unlinkWork(w.id);
+        await store.unlinkQuote(q.id);
+        final w2 = (await store.work(w.id))!;
+        final q2 = (await store.quote(q.id))!;
+        expect(
+          [w2.serverId, w2.syncedHash, q2.serverId, q2.syncedHash],
+          [null, null, null, null],
+        );
+        expect(await store.unsyncedWorks(), hasLength(1));
+        expect(await store.unsyncedQuotes(), hasLength(1));
+      },
+    );
+
+    test(
+      'a library from before this is upgraded and can note deletes',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('tippani_upgrade3');
+        addTearDown(() => dir.delete(recursive: true));
+        final path = '${dir.path}/lib.db';
+        final old = await openDatabase(
+          path,
+          version: 2,
+          singleInstance: false,
+          onCreate: (db, v) async {
+            await db.execute(
+              'CREATE TABLE works (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, title TEXT NOT NULL, creator TEXT NOT NULL DEFAULT "", year INTEGER, language TEXT NOT NULL DEFAULT "", created_at TEXT NOT NULL, updated_at TEXT NOT NULL, server_id INTEGER, synced_hash TEXT)',
+            );
+            await db.execute(
+              'CREATE TABLE quotes (id INTEGER PRIMARY KEY AUTOINCREMENT, work_id INTEGER REFERENCES works(id) ON DELETE CASCADE, text TEXT NOT NULL, translation TEXT NOT NULL DEFAULT "", language TEXT NOT NULL DEFAULT "", speaker TEXT NOT NULL DEFAULT "", chapter TEXT NOT NULL DEFAULT "", location TEXT NOT NULL DEFAULT "", note TEXT NOT NULL DEFAULT "", color TEXT NOT NULL DEFAULT "yellow", favorite INTEGER NOT NULL DEFAULT 0, noted_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT "manual", created_at TEXT NOT NULL, updated_at TEXT NOT NULL, server_id INTEGER, synced_hash TEXT)',
+            );
+            await db.execute(
+              'CREATE TABLE tags (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE COLLATE NOCASE)',
+            );
+            await db.execute(
+              'CREATE TABLE quote_tags (quote_id INTEGER NOT NULL REFERENCES quotes(id) ON DELETE CASCADE, tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE, PRIMARY KEY (quote_id, tag_id))',
+            );
+            await db.insert('works', {
+              'kind': 'book',
+              'title': 'Old',
+              'created_at': '2026-01-01T00:00:00.000Z',
+              'updated_at': '2026-01-01T00:00:00.000Z',
+              'server_id': 3,
+            });
+          },
+        );
+        await old.close();
+        final upgraded = await SqliteLibraryStore.open(
+          path,
+          singleInstance: false,
+        );
+        addTearDown(upgraded.close);
+        final w = (await upgraded.works()).single;
+        expect(w.title, 'Old');
+        await upgraded.deleteWork(w.id);
+        expect((await upgraded.pendingDeletions()).single.route, '/books');
+      },
+    );
+  });
 }
