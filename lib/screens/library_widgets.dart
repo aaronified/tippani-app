@@ -1,3 +1,6 @@
+import '../library/quote_chips.dart';
+import 'quote_chips_row.dart';
+
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -18,6 +21,7 @@ class QuoteTile extends StatelessWidget {
     required this.work,
     required this.onTap,
     required this.onFavourite,
+    this.onChip,
   });
 
   final Quote quote;
@@ -25,11 +29,15 @@ class QuoteTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onFavourite;
 
+  /// What pressing a person chip does. Null draws no chips, and the speaker stays in the line of text.
+  final ValueChanged<ChipFilter>? onChip;
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final chips = onChip != null && chipsFor(quote, work).isNotEmpty;
     final from = [
-      if (quote.speaker.isNotEmpty) quote.speaker,
+      if (quote.speaker.isNotEmpty && !chips) quote.speaker,
       if (work != null) work!.title,
       if (quote.chapter.isNotEmpty) quote.chapter,
     ].join(' · ');
@@ -57,6 +65,15 @@ class QuoteTile extends StatelessWidget {
                     if (from.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Text(from, style: text.bodySmall),
+                    ],
+                    if (chips) ...[
+                      const SizedBox(height: 6),
+                      QuoteChipsRow(
+                        quote: quote,
+                        work: work,
+                        dense: true,
+                        onTap: onChip!,
+                      ),
                     ],
                     if (quote.tags.isNotEmpty) ...[
                       const SizedBox(height: 6),

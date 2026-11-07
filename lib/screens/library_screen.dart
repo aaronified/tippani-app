@@ -12,6 +12,7 @@ import '../sync/auto_sync.dart';
 import 'conflicts_screen.dart';
 import '../library/cover_cache.dart';
 import 'boards_screen.dart';
+import '../library/quote_chips.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart';
 import 'quote_screen.dart';
@@ -185,8 +186,20 @@ class _LibraryScreenState extends State<LibraryScreen> {
     await _load();
   }
 
+  /// Shows the library for a name pressed on a chip: the search box holds it and every other narrowing is cleared.
+  Future<void> _applyChip(Object? result) async {
+    if (result is! ChipFilter) return;
+    setState(() {
+      _mode = _Mode.quotes;
+      _search.text = result.name;
+      _favourites = false;
+      _tag = null;
+      _boardFilter = null;
+    });
+  }
+
   Future<void> _openQuote(Quote q) async {
-    await Navigator.of(context).push<bool>(
+    final result = await Navigator.of(context).push<Object?>(
       MaterialPageRoute(
         builder: (_) => QuoteScreen(
           store: widget.store,
@@ -198,11 +211,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
       ),
     );
+    await _applyChip(result);
     await _load();
   }
 
   Future<void> _openWork(Work w) async {
-    await Navigator.of(context).push<bool>(
+    final result = await Navigator.of(context).push<Object?>(
       MaterialPageRoute(
         builder: (_) => WorkScreen(
           store: widget.store,
@@ -215,6 +229,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
       ),
     );
+    await _applyChip(result);
     await _load();
   }
 
@@ -511,6 +526,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Widget _quoteTile(Quote q) => QuoteTile(
     quote: q,
     work: _byId[q.workId],
+    onChip: (f) {
+      _applyChip(f);
+      _load();
+    },
     onTap: () => _openQuote(q),
     onFavourite: () async {
       await widget.store.setFavorite(q.id, !q.favorite);

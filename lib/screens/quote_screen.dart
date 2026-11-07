@@ -12,6 +12,8 @@ import '../speech/speaker.dart';
 import '../sync/fingerprint.dart' show realmOfQuote;
 import 'anthologies_screen.dart' show addToAnthologyDialog;
 import 'quote_card.dart';
+import 'quote_chips_row.dart';
+import 'quote_context_section.dart';
 import 'quote_form_screen.dart';
 import 'share_screen.dart';
 import 'work_screen.dart';
@@ -260,6 +262,13 @@ class _QuoteScreenState extends State<QuoteScreen> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          QuoteChipsRow(
+            quote: q,
+            work: _work,
+            // the library opens on this name
+            onTap: (f) => Navigator.of(context).pop(f),
+          ),
           const SizedBox(height: 16),
           Wrap(
             alignment: WrapAlignment.center,
@@ -296,6 +305,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
             Text(q.note),
             const SizedBox(height: 16),
           ],
+          QuoteContextSection(quote: q, work: _work),
           if (_work != null)
             ListTile(
               contentPadding: EdgeInsets.zero,

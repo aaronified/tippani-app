@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../anthologies/anthologies.dart';
 import '../library/cover_cache.dart';
+import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
 import '../tools/server_tools.dart';
 import '../tools/work_lookup.dart';
@@ -88,6 +89,7 @@ class Harness {
     this.runAutoSync = false,
     this.covers,
     this.details,
+    this.contexts,
     this.anthologies,
     this.tools,
     this.lookup,
@@ -126,6 +128,9 @@ class Harness {
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
+
+  /// Fetches the stored context of a quote from the paired server. Null in a test about something else.
+  final QuoteContextSource? contexts;
 
   /// The paired server's anthologies. Null in a test that is about something else.
   final AnthologyService? anthologies;
@@ -190,6 +195,7 @@ class Harness {
       runAutoSync: true,
       covers: CoverCache(controller),
       details: PairedWorkDetails(controller),
+      contexts: PairedQuoteContext(controller),
       anthologies: ServerAnthologies(controller),
       tools: PairedServerTools(controller),
       lookup: PairedWorkLookup(controller),
@@ -209,6 +215,7 @@ class Harness {
     LibraryStore? library,
     CoverSource? covers,
     WorkDetailsSource? details,
+    QuoteContextSource? contexts,
     AnthologyService? anthologies,
     ServerTools? tools,
     WorkLookup? lookup,
@@ -248,6 +255,7 @@ class Harness {
           : AutoSync(push: push, pull: pull, controller: controller, log: l),
       covers: covers,
       details: details,
+      contexts: contexts,
       anthologies: anthologies,
       tools: tools,
       lookup: lookup,

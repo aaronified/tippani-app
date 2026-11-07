@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'app_controller.dart';
 import 'harness/harness.dart';
 import 'library/cover_cache.dart';
+import 'tools/quote_context.dart';
 import 'tools/work_details_source.dart';
 import 'harness/update_ui.dart';
 import 'screens/anthologies_screen.dart';
@@ -49,7 +50,10 @@ class TippaniApp extends StatelessWidget {
           darkTheme: _theme(dark.harmonized()),
           builder: (context, child) => CoverScope(
             source: harness.covers,
-            child: DetailsScope(source: harness.details, child: child!),
+            child: DetailsScope(
+              source: harness.details,
+              child: ContextScope(source: harness.contexts, child: child!),
+            ),
           ),
           home: Shell(controller: controller, harness: harness),
         );
