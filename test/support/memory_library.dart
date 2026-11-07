@@ -19,6 +19,7 @@ class MemoryLibrary implements LibraryStore {
   var _next = 1;
   final _boards = <int, Board>{};
   var _nextBoard = 1;
+  final _filed = <int, int?>{};
   final _deletions = <PendingDeletion>[];
   var _deletionId = 1;
   var _quiet = false;
@@ -324,6 +325,9 @@ class MemoryLibrary implements LibraryStore {
         name: b.name,
         color: b.color,
         quotes: _quotes.values.where((q) => q.boardId == b.id).length,
+        serverId: b.serverId,
+        syncedHash: b.syncedHash,
+        serverRow: b.serverRow,
       ),
   ]..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
@@ -355,7 +359,7 @@ class MemoryLibrary implements LibraryStore {
     final b = _boards[id];
     if (b == null) throw const LibraryException('no such board');
     _checkBoardName(name, except: id);
-    _boards[id] = Board(id: id, name: name.trim(), color: b.color);
+    _boards[id] = _board(b, name: name.trim());
     _notify();
   }
 
@@ -363,16 +367,120 @@ class MemoryLibrary implements LibraryStore {
   Future<void> recolourBoard(int id, String color) async {
     final b = _boards[id];
     if (b == null) return;
-    _boards[id] = Board(
-      id: id,
-      name: b.name,
-      color: quoteColors.contains(color) ? color : '',
-    );
+    _boards[id] = _board(b, color: quoteColors.contains(color) ? color : '');
     _notify();
+  }
+
+  Board _board(
+    Board b, {
+    String? name,
+    String? color,
+    int? serverId,
+    String? hash,
+    Map? row,
+  }) => Board(
+    id: b.id,
+    name: name ?? b.name,
+    color: color ?? b.color,
+    serverId: serverId ?? b.serverId,
+    syncedHash: hash ?? b.syncedHash,
+    serverRow: row == null ? b.serverRow : Map<String, Object?>.from(row),
+  );
+
+  @override
+  Future<void> linkBoard(int id, int serverId, String hash, Map row) async {
+    final b = _boards[id];
+    if (b != null) {
+      _boards[id] = _board(b, serverId: serverId, hash: hash, row: row);
+    }
+  }
+
+  @override
+  Future<Board> adoptBoard(
+    String name,
+    String color,
+    int serverId,
+    String hash,
+    Map row,
+  ) async {
+    final b = Board(
+      id: _nextBoard++,
+      name: name,
+      color: quoteColors.contains(color) ? color : '',
+      serverId: serverId,
+      syncedHash: hash,
+      serverRow: Map<String, Object?>.from(row),
+    );
+    _boards[b.id] = b;
+    return b;
+  }
+
+  @override
+  Future<void> applyBoard(
+    int id,
+    String name,
+    String color,
+    String hash,
+    Map row,
+  ) async {
+    final b = _boards[id];
+    if (b != null) {
+      _boards[id] = _board(
+        b,
+        name: name,
+        color: quoteColors.contains(color) ? color : '',
+        hash: hash,
+        row: row,
+      );
+    }
+  }
+
+  @override
+  Future<void> unlinkBoard(int id) async {
+    final b = _boards[id];
+    if (b != null) {
+      _boards[id] = Board(id: b.id, name: b.name, color: b.color);
+    }
+  }
+
+  @override
+  Future<void> dropBoard(int id) async {
+    _boards.remove(id);
+    for (final q in _quotes.values.where((q) => q.boardId == id).toList()) {
+      _quotes[q.id] = q.withBoard(null);
+    }
+  }
+
+  @override
+  Future<List<Filing>> filings() async => [
+    for (final q in _quotes.values)
+      if (q.workId == null && q.serverId != null)
+        Filing(
+          quoteId: q.id,
+          quoteServerId: q.serverId!,
+          boardId: q.boardId,
+          boardServerId: q.boardId == null
+              ? null
+              : _boards[q.boardId]?.serverId,
+          agreed: _filed[q.id],
+        ),
+  ];
+
+  @override
+  Future<void> setQuoteBoard(int quoteId, int? boardId) async {
+    final q = _quotes[quoteId];
+    if (q != null) _quotes[quoteId] = q.withBoard(boardId);
+  }
+
+  @override
+  Future<void> markQuoteFiled(int quoteId, int? serverBoard) async {
+    _filed[quoteId] = serverBoard;
   }
 
   @override
   Future<void> deleteBoard(int id) async {
+    final sid = _boards[id]?.serverId;
+    if (sid != null) _remember('/boards', sid);
     _boards.remove(id);
     for (final q in _quotes.values.where((q) => q.boardId == id).toList()) {
       _quotes[q.id] = Quote(

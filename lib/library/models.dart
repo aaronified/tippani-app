@@ -342,6 +342,28 @@ class Quote {
     boardId: boardId,
   );
 
+  Quote withBoard(int? board) => Quote(
+    id: id,
+    workId: workId,
+    text: text,
+    translation: translation,
+    language: language,
+    speaker: speaker,
+    chapter: chapter,
+    location: location,
+    note: note,
+    color: color,
+    favorite: favorite,
+    notedAt: notedAt,
+    source: source,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    tags: tags,
+    serverId: serverId,
+    syncedHash: syncedHash,
+    boardId: board,
+  );
+
   Quote withSyncedHash(String? hash) => Quote(
     id: id,
     workId: workId,
@@ -394,10 +416,23 @@ class Board {
     required this.name,
     this.color = '',
     this.quotes = 0,
+    this.serverId,
+    this.syncedHash,
+    this.serverRow = const {},
   });
 
   final int id;
   final String name;
+
+  /// The board's id on the paired server, once the two are linked.
+  final int? serverId;
+
+  /// What the name and colour read at the last agreement with the server (see `boardFields`).
+  final String? syncedHash;
+
+  /// The server's own row for the board as last seen. The server's board edit replaces the whole board, so what
+  /// the phone does not hold (description, kind, languages, picture) is sent back from here, not wiped.
+  final Map<String, Object?> serverRow;
 
   /// One of [quoteColors], or '' for none.
   final String color;

@@ -56,6 +56,13 @@ class FakeServer {
 
   var _nextId = 100;
 
+  /// The server's boards, as `GET /boards` lists them.
+  final boards = <Map<String, Object?>>[];
+
+  /// Every board edit and delete the server was sent.
+  final boardWrites = <Map<String, Object?>>[];
+  final boardDeletes = <Map<String, Object?>>[];
+
   /// A title the server refuses with a 400, as it does for a field it cannot take.
   String? refuseTitle;
 
@@ -252,6 +259,74 @@ class FakeServer {
     return omitId ? _json({'ok': true}, 201) : _json(row, 201);
   }
 
+  /// The server's boards: `GET/POST /boards`, `PUT/DELETE /boards/{id}`. A board that holds quotes can only be
+  /// deleted with `move_to`, as on the real server. Null when [path] is not a board route.
+  http.Response? _boardRoute(http.Request r, String path) {
+    if (path == '/boards') {
+      if (r.method == 'GET') {
+        return _json({'boards': boards, 'total': 0});
+      }
+      if (r.method == 'POST') {
+        final body = jsonDecode(r.body) as Map;
+        final name = (body['name'] as String? ?? '').trim();
+        if (name.isEmpty) return _json({'error': 'name is required'}, 400);
+        if (boards.any(
+          (b) => (b['name'] as String).toLowerCase() == name.toLowerCase(),
+        )) {
+          return _json({'error': 'a board called that already exists'}, 409);
+        }
+        final row = <String, Object?>{
+          'id': _nextId++,
+          'name': name,
+          'description': '',
+          'color': (body['color'] as String?)?.isNotEmpty == true
+              ? body['color']
+              : 'yellow',
+          'image_path': '',
+          'hidden': false,
+          'pos': boards.length,
+          'quotes': 0,
+          'kind': 'plain',
+          'languages': <String>[],
+          'text_order': '',
+        };
+        boards.add(row);
+        return _json(row, 201);
+      }
+    }
+    final one = RegExp(r'^/boards/(\d+)$').firstMatch(path);
+    if (one == null) return null;
+    final id = int.parse(one[1]!);
+    final i = boards.indexWhere((b) => b['id'] == id);
+    if (i < 0) return _json({'error': 'board not found'}, 404);
+    if (r.method == 'PUT') {
+      final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+      boardWrites.add({...body, 'id': id});
+      boards[i] = {...boards[i], ...body};
+      return http.Response('', 204);
+    }
+    if (r.method == 'DELETE') {
+      final held = (created['/quotes'] ?? []).where((q) => q['board_id'] == id);
+      Map? body;
+      if (r.body.isNotEmpty) body = jsonDecode(r.body) as Map;
+      final moveTo = body?['move_to'];
+      if (held.isNotEmpty) {
+        if (moveTo is! int ||
+            moveTo == id ||
+            !boards.any((b) => b['id'] == moveTo)) {
+          return _json({'error': 'say where its quotes go (move_to)'}, 400);
+        }
+        for (final q in held.toList()) {
+          q['board_id'] = moveTo;
+        }
+      }
+      boards.removeAt(i);
+      boardDeletes.add({'id': id, 'move_to': moveTo});
+      return http.Response('', 204);
+    }
+    return null;
+  }
+
   http.Response _json(Object body, [int status = 200]) => http.Response(
     jsonEncode(body),
     status,
@@ -350,6 +425,8 @@ class FakeServer {
       rows[i][upload[1] == '/books' ? 'cover_path' : 'poster_path'] = name;
       return _json({'cover_path': name});
     }
+    final board = _boardRoute(r, path);
+    if (board != null) return board;
     if (r.method == 'POST' && _createRoutes.contains(path)) {
       return _create(path, jsonDecode(r.body) as Map);
     }
