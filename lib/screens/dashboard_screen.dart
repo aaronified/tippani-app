@@ -13,6 +13,7 @@ import '../sync/auto_sync.dart';
 import 'library_widgets.dart' show QuoteTile;
 import 'quiz_screen.dart';
 import 'quote_screen.dart';
+import 'search_screen.dart';
 
 /// The words at the top of Home for [now]: a greeting for the time of day (with [name] when the phone knows who it is
 /// paired as), and one line about keeping quotes for the day.
@@ -311,6 +312,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: scheme.onSurfaceVariant,
                 fontStyle: FontStyle.italic,
               ),
+            ),
+          ),
+          SearchPill(
+            onTap: () => openSearch(
+              context,
+              store: widget.store,
+              picker: widget.picker,
+              anthologies: widget.anthologies,
             ),
           ),
           _tiles(context),
