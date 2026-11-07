@@ -93,6 +93,30 @@ class FakeServer {
   /// Every DELETE of a work or quote answers with this status instead (409, 500...), when set.
   int? failDeletesWith;
 
+  /// What `GET /review/daily` answers (the whole body).
+  Map<String, Object?> reviewDaily = {'items': <Object?>[]};
+
+  /// What `GET /review/practice` answers.
+  Map<String, Object?> reviewPractice = {'items': <Object?>[]};
+
+  /// What `GET /review/scores` answers.
+  Map<String, Object?> reviewScores = {};
+
+  /// Every `POST /review/answer` body taken, in order.
+  final reviewAnswers = <Map<String, Object?>>[];
+
+  /// Every `POST /review/seen` body taken.
+  final reviewSeen = <Map<String, Object?>>[];
+
+  /// How many times `DELETE /review/practice` was asked.
+  int practiceResets = 0;
+
+  /// While true, an answer cannot reach the server (the network went away).
+  bool reviewOffline = false;
+
+  /// A status the answer route refuses with (e.g. 404 for a quote that is gone), or null to take it.
+  int? reviewAnswerRefusal;
+
   /// The server's tags: id, name, color, style, annotations, dialogues. `GET/POST /tags`, `PUT/DELETE /tags/{id}`,
   /// `POST /tags/merge`, with the real server's rules (a name is unique in any capitals: 409).
   final tags = <Map<String, Object?>>[];
@@ -481,6 +505,48 @@ class FakeServer {
         'actor_role': 'actor',
         'cast': casts['${castRoute[1]}/${castRoute[2]}'] ?? [],
       });
+    }
+    if (path.startsWith('/review/')) {
+      if (r.method == 'GET' && path == '/review/daily') {
+        return _json(reviewDaily);
+      }
+      if (r.method == 'GET' && path == '/review/practice') {
+        return _json(reviewPractice);
+      }
+      if (r.method == 'GET' && path == '/review/scores') {
+        return _json(reviewScores);
+      }
+      if (r.method == 'DELETE' && path == '/review/practice') {
+        practiceResets++;
+        return _json({'ok': true});
+      }
+      if (r.method == 'POST' && path == '/review/seen') {
+        reviewSeen.add(Map<String, Object?>.from(jsonDecode(r.body) as Map));
+        return _json({'ok': true});
+      }
+      if (r.method == 'POST' && path == '/review/answer') {
+        if (reviewOffline) {
+          throw const SocketException('the network went away');
+        }
+        if (reviewAnswerRefusal != null) {
+          return _json({'error': 'refused'}, reviewAnswerRefusal!);
+        }
+        final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+        reviewAnswers.add(body);
+        final attempt = body['attempt'];
+        return _json({
+          'ok': true,
+          'result': attempt == null
+              ? body['result']
+              : (attempt == 'woods' ? 'got' : 'forgot'),
+          if (attempt != null) 'answer': 'woods',
+          'mode': body['mode'],
+          'answered': reviewAnswers.length,
+          'got': 0,
+          'forgot': 0,
+          if (body['mode'] == 'daily') 'remaining': 0,
+        });
+      }
     }
     if (r.method == 'GET' && path == '/people') {
       peopleReads++;

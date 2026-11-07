@@ -61,6 +61,14 @@ class SettingsStore {
   Future<void> setLastSeenVersion(String version) =>
       _prefs.setString(_seenKey, version);
 
+  static const _quizKey = 'quiz_answers';
+
+  /// The quiz answers made and not yet taken by the server (JSON), kept so they survive the app closing.
+  String? get quizAnswers => _prefs.getString(_quizKey);
+
+  Future<void> setQuizAnswers(String json) =>
+      json.isEmpty ? _prefs.remove(_quizKey) : _prefs.setString(_quizKey, json);
+
   static const _userKey = 'paired_user';
 
   /// Who this phone is paired as, for display. The server's answer at pairing; never a credential.

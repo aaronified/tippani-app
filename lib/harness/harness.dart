@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../people/people_directory.dart';
 import '../people/people_service.dart';
+import '../quiz/quiz.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
 import '../library/cover_cache.dart';
@@ -95,6 +96,7 @@ class Harness {
     this.people,
     this.directory,
     this.peopleService,
+    this.quiz,
     this.details,
     this.contexts,
     this.anthologies,
@@ -148,6 +150,10 @@ class Harness {
 
   /// Fetches the stored context of a quote from the paired server. Null in a test about something else.
   final QuoteContextSource? contexts;
+
+  /// The paired server's Daily Quiz and Practice. Null in a test that is about something else; without it the app
+  /// has no Home tab.
+  final QuizService? quiz;
 
   /// The paired server's anthologies. Null in a test that is about something else.
   final AnthologyService? anthologies;
@@ -219,6 +225,7 @@ class Harness {
       people: PairedSharePeople(controller, directory),
       directory: directory,
       peopleService: PairedPeopleService(controller),
+      quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
       anthologies: ServerAnthologies(controller),
@@ -243,6 +250,7 @@ class Harness {
     SharePeopleSource? people,
     PeopleDirectory? directory,
     PeopleService? peopleService,
+    QuizService? quiz,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
     AnthologyService? anthologies,
@@ -287,6 +295,7 @@ class Harness {
       people: people,
       directory: directory,
       peopleService: peopleService,
+      quiz: quiz,
       details: details,
       contexts: contexts,
       anthologies: anthologies,

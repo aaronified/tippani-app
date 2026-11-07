@@ -27,6 +27,7 @@ Future<void> open(WidgetTester tester, {bool anthologies = true}) async {
   await lib.addWork(const WorkDraft(title: 'Dark', kind: WorkKind.show));
   await lib.addWork(const WorkDraft(title: 'Hades', kind: WorkKind.game));
   await lib.addQuote(QuoteDraft(text: 'Simplify, simplify.', workId: book.id));
+  await lib.addQuote(const QuoteDraft(text: 'A stitch in time.'));
   final store = SettingsStore(
     await SharedPreferences.getInstance(),
     MemoryTokenVault(),
@@ -166,7 +167,9 @@ void main() {
   ) async {
     await open(tester);
     await go(tester, 'Quotes');
-    expect(find.text('Simplify, simplify.'), findsOneWidget);
+    // the board holds quotes with no work; a book's quote stays with its book
+    expect(find.text('A stitch in time.'), findsOneWidget);
+    expect(find.text('Simplify, simplify.'), findsNothing);
     expect(find.text('Add a quote'), findsOneWidget);
     expect(find.byTooltip('Boards'), findsOneWidget);
     expect(find.text('Group by board'), findsOneWidget);

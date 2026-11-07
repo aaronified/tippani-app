@@ -16,6 +16,13 @@ version. Write each entry for the person using the app, in plain words. **Start 
 - Faces on work cards and the work page: a work's card shows round portraits of its author or director, the work's page shows them as pills
   in its header, and each row of the cast has the character's picture (or the actor's). On a work's own page the author is not named again on
   every quote.
+- Home, with the Daily Quiz and Practice: the app now opens on Home. It greets you for the time of day with the date and a line to think on,
+  counts what you keep (books and quotes, titles and lines), and has your Daily Quiz: the few quotes your server has set for today, each one a
+  question (which book or film is this from, which quote is from this work, who said it, who wrote it, fill in the blank by typing or by choosing).
+  After each answer you see where every option came from, with covers and portraits. Practice goes through your whole library for as long as you
+  like and lets you skip. An answer given with no network waits on the phone and is sent later, counting for the day it was given. Under the cards
+  are where you stand (remembered, forgetting, probably forgotten, unseen), a Shuffle button for one line at random, the quotes you saved on this
+  day in earlier years, and your favourites, each with the portrait pills.
 - Tags page: every tag with its colour, how many quotes wear it and its style, in Settings and under the Tag chip in the library ("Manage
   tags"). Rename a tag, change its colour and style, make a new one, delete it, or long-press several and merge them into one. A change is made
   on your server and on every quote on the phone together, so the next sync has nothing to settle; with no server the phone's quotes are still
@@ -36,6 +43,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
   or the actor's if it has none. The photos are kept on the phone, so they are there without the server.
 
 ### Fixed
+- The Quotes tab is the quote board again: it showed every quote, including the ones from your books and films. It now shows only quotes that
+  belong to no work (a line from a speech, a proverb, something someone said), as on the web; the quotes of a book are in that book.
 - The bottom bar no longer cuts words off: "Anthologies" was clipped on narrower phones or with large text. The labels are a little smaller, and
   when the bar is crowded only the open tab keeps its label.
 - Signatures on the share picture: a signature your server keeps as a drawn (vector) picture, which is how most are stored, was left off the
