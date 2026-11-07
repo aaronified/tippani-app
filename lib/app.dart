@@ -169,6 +169,15 @@ class _ShellState extends State<Shell> {
           ),
         ),
         bottomNavigationBar: NavigationBar(
+          // A word like "Anthologies" is cut off when the bar is crowded (many tabs, a narrow phone, large text):
+          // then only the open tab keeps its label, and the others are the icon alone.
+          labelBehavior:
+              MediaQuery.sizeOf(context).width /
+                      tabs.length /
+                      MediaQuery.textScalerOf(context).scale(1) <
+                  66
+              ? NavigationDestinationLabelBehavior.onlyShowSelected
+              : NavigationDestinationLabelBehavior.alwaysShow,
           selectedIndex: _index,
           onDestinationSelected: (i) => setState(() => _index = i),
           destinations: [for (final t in tabs) t.destination],
