@@ -204,6 +204,14 @@ in Copy or in Share, and the server's lines are redacted on the way out like the
 The pull (once the conflict screen exists), the daily quiz and the rest of phases 1 to 4, then capture, the offline queue, donation, bug reports and the first
 signed release (the workflow exists; the keys do not), are the rest of the [plan](Plan.md)'s task list, in that order.
 
+## Sync, in four parts
+
+`lib/sync/`: `push_sync.dart` (sends what is only on the phone, linking a twin the server already has), `pull_sync.dart` (reads the server, applies
+changes both ways, deletes, conflicts), `fingerprint.dart` (what counts as the same item and as a change), and `auto_sync.dart` (when to run). The
+decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/support/fake_server.dart`; `auto_sync_test.dart` drives the timers
+with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
+and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
+
 ## Testing against a real server
 
 `test/live/live_sync_test.dart` runs the real push and pull code against a real Tippani server (it checks what the server really holds

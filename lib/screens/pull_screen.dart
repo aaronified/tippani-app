@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
+import '../sync/auto_sync.dart';
 import '../sync/pull_sync.dart';
+import 'conflicts_screen.dart';
 
 String _count(int n, String noun) => '$n ${n == 1 ? noun : '${noun}s'}';
 
@@ -93,204 +95,81 @@ List<String> describePull(PullResult r) {
   return lines;
 }
 
-/// Syncs with the paired server and lets the reader settle each conflict: for each quote and each work that
-/// changed on both sides, keep the phone's or keep the server's. Nothing is overwritten until they choose.
-class PullScreen extends StatefulWidget {
-  const PullScreen({super.key, required this.sync});
+/// The state of the sync with the paired server: whether it runs by itself, when it last finished, what it did, and
+/// the way to settle conflicts (their own screen, because they can wait). The reader can also sync right now.
+class PullScreen extends StatelessWidget {
+  const PullScreen({super.key, required this.auto});
 
-  final PullSync sync;
+  final AutoSync auto;
 
-  @override
-  State<PullScreen> createState() => _PullScreenState();
-}
-
-class _PullScreenState extends State<PullScreen> {
-  PullResult? _result;
-  bool _running = false;
-  final _conflicts = <SyncConflict>[];
-  final _problems = <SyncConflict, String>{};
-  final _busy = <SyncConflict>{};
-
-  Future<void> _run() async {
-    setState(() {
-      _running = true;
-      _result = null;
-      _conflicts.clear();
-      _problems.clear();
-    });
-    final r = await widget.sync.sync();
-    if (!mounted) return;
-    setState(() {
-      _running = false;
-      _result = r;
-      _conflicts.addAll(r.conflicts);
-    });
-  }
-
-  Future<void> _choose(SyncConflict c, ConflictSide side) async {
-    setState(() {
-      _busy.add(c);
-      _problems.remove(c);
-    });
-    final problem = await widget.sync.resolve(c, side);
-    if (!mounted) return;
-    setState(() {
-      _busy.remove(c);
-      if (problem == null) {
-        _conflicts.remove(c);
-      } else {
-        _problems[c] = problem;
-      }
-    });
-  }
-
-  Future<void> _chooseAll(ConflictSide side) async {
-    final phone = side == ConflictSide.phone;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(
-          phone ? 'Keep the phone’s for all?' : 'Keep the server’s for all?',
-        ),
-        content: Text(
-          phone
-              ? 'The server’s version of all ${_conflicts.length} will be replaced by what is on this phone.'
-              : 'This phone’s version of all ${_conflicts.length} will be replaced by what is on the server.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(phone ? 'Keep the phone’s' : 'Keep the server’s'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    for (final c in List.of(_conflicts)) {
-      if (!mounted) return;
-      await _choose(c, side);
-    }
+  String _when(DateTime t) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final l = t.toLocal();
+    return '${l.year}-${two(l.month)}-${two(l.day)} ${two(l.hour)}:${two(l.minute)}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final r = _result;
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Sync with server')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Brings down what is new or changed on your server, and sends up what you changed here. '
-            'Deleting follows both ways: what you delete here is deleted on the server (its bin keeps it for a while), and what you delete on the server is removed here. If the same quote or work changed in both places, you choose which version to keep.',
-          ),
-          const SizedBox(height: 16),
-          if (_running)
-            const LinearProgressIndicator()
-          else
-            FilledButton(onPressed: _run, child: const Text('Sync now')),
-          if (r != null) ...[
-            const SizedBox(height: 24),
-            for (final line in describePull(r))
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(line),
+      body: ListenableBuilder(
+        listenable: auto,
+        builder: (context, _) {
+          final r = auto.lastResult;
+          final n = auto.conflicts.length;
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const Text(
+                'Brings down what is new or changed on your server, sends up what you changed here, and carries deletes both ways. '
+                'If the same quote or work changed in both places, it waits in Sync conflicts for you to choose.',
               ),
-          ],
-          if (_conflicts.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text('Changed on both sides', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            if (_conflicts.length > 1)
-              Wrap(
-                spacing: 8,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => _chooseAll(ConflictSide.phone),
-                    child: const Text('Keep the phone’s for all'),
-                  ),
-                  OutlinedButton(
-                    onPressed: () => _chooseAll(ConflictSide.server),
-                    child: const Text('Keep the server’s for all'),
-                  ),
-                ],
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Sync automatically'),
+                subtitle: const Text(
+                  'When the app opens, after you change something, and every few minutes while it is open',
+                ),
+                value: auto.enabled,
+                onChanged: auto.setEnabled,
               ),
-            for (final c in _conflicts)
-              _ConflictCard(
-                conflict: c,
-                busy: _busy.contains(c),
-                problem: _problems[c],
-                onChoose: (side) => _choose(c, side),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ConflictCard extends StatelessWidget {
-  const _ConflictCard({
-    required this.conflict,
-    required this.busy,
-    required this.problem,
-    required this.onChoose,
-  });
-
-  final SyncConflict conflict;
-  final bool busy;
-  final String? problem;
-  final void Function(ConflictSide) onChoose;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              conflict.isWork ? 'Work' : 'Quote',
-              style: theme.textTheme.labelMedium,
-            ),
-            Text(conflict.title, style: theme.textTheme.titleSmall),
-            for (final d in conflict.diffs) ...[
-              const SizedBox(height: 10),
-              Text(d.label, style: theme.textTheme.labelLarge),
-              Text('Phone: ${d.phone}'),
-              Text('Server: ${d.server}'),
-            ],
-            if (problem != null) ...[
               const SizedBox(height: 8),
-              Text(problem!, style: TextStyle(color: theme.colorScheme.error)),
+              if (auto.syncing)
+                const LinearProgressIndicator()
+              else
+                FilledButton(
+                  onPressed: auto.syncNow,
+                  child: const Text('Sync now'),
+                ),
+              const SizedBox(height: 16),
+              if (auto.lastSynced != null)
+                Text('Last synced ${_when(auto.lastSynced!)}.'),
+              if (n > 0) ...[
+                const SizedBox(height: 8),
+                FilledButton.tonal(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ConflictsScreen(auto: auto),
+                    ),
+                  ),
+                  child: Text(
+                    n == 1
+                        ? '1 conflict waiting: settle it'
+                        : '$n conflicts waiting: settle them',
+                  ),
+                ),
+              ],
+              if (r != null) ...[
+                const SizedBox(height: 16),
+                for (final line in describePull(r))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(line),
+                  ),
+              ],
             ],
-            const SizedBox(height: 12),
-            if (busy)
-              const LinearProgressIndicator()
-            else
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilledButton.tonal(
-                    onPressed: () => onChoose(ConflictSide.phone),
-                    child: const Text('Keep the phone’s'),
-                  ),
-                  FilledButton.tonal(
-                    onPressed: () => onChoose(ConflictSide.server),
-                    child: const Text('Keep the server’s'),
-                  ),
-                ],
-              ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

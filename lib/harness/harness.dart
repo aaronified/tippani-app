@@ -9,6 +9,7 @@ import '../tools/work_lookup.dart';
 import '../app_controller.dart';
 import '../library/library_backup.dart';
 import '../library/library_store.dart';
+import '../sync/auto_sync.dart';
 import '../sync/pull_sync.dart';
 import '../sync/push_sync.dart';
 import '../settings/settings_backup.dart';
@@ -81,6 +82,8 @@ class Harness {
     this.library,
     this.sync,
     this.pull,
+    this.auto,
+    this.runAutoSync = false,
     this.anthologies,
     this.tools,
     this.lookup,
@@ -106,6 +109,13 @@ class Harness {
   /// Brings the server's library down and sends the phone's edits up. One for the whole app, for the same
   /// reason as [sync].
   final PullSync? pull;
+
+  /// Keeps the phone and the server in step by itself and holds the conflicts it finds. Null in a test that is
+  /// about something else.
+  final AutoSync? auto;
+
+  /// Whether the app starts [auto] when it opens. Off in tests, where a timer left running fails the test.
+  final bool runAutoSync;
 
   /// The paired server's anthologies. Null in a test that is about something else.
   final AnthologyService? anthologies;
@@ -133,6 +143,12 @@ class Harness {
     LibraryStore? library,
   }) {
     const files = ChannelAppFiles();
+    final push = library == null
+        ? null
+        : PushSync(library, controller, log: appLog);
+    final pull = library == null
+        ? null
+        : PullSync(library, controller, log: appLog);
     return Harness(
       files: files,
       log: appLog,
@@ -151,8 +167,17 @@ class Harness {
       picker: const SystemBackupPicker(),
       settings: settings,
       library: library,
-      sync: library == null ? null : PushSync(library, controller, log: appLog),
-      pull: library == null ? null : PullSync(library, controller, log: appLog),
+      sync: push,
+      pull: pull,
+      auto: push == null || pull == null
+          ? null
+          : AutoSync(
+              push: push,
+              pull: pull,
+              controller: controller,
+              log: appLog,
+            ),
+      runAutoSync: true,
       anthologies: ServerAnthologies(controller),
       tools: PairedServerTools(controller),
       lookup: PairedWorkLookup(controller),
@@ -178,6 +203,12 @@ class Harness {
   }) {
     final f = files ?? MemoryAppFiles();
     final l = log ?? AppLog();
+    final push = library == null || controller == null
+        ? null
+        : PushSync(library, controller, log: l);
+    final pull = library == null || controller == null
+        ? null
+        : PullSync(library, controller, log: l);
     return Harness(
       files: f,
       log: l,
@@ -196,12 +227,11 @@ class Harness {
       picker: picker ?? const _NoPicker(),
       settings: settings,
       library: library,
-      sync: library == null || controller == null
+      sync: push,
+      pull: pull,
+      auto: push == null || pull == null || controller == null
           ? null
-          : PushSync(library, controller, log: l),
-      pull: library == null || controller == null
-          ? null
-          : PullSync(library, controller, log: l),
+          : AutoSync(push: push, pull: pull, controller: controller, log: l),
       anthologies: anthologies,
       tools: tools,
       lookup: lookup,

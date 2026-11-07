@@ -8,6 +8,12 @@ version. Write each entry for the person using the app, in plain words.
 
 ### Added
 
+- Sync now runs by itself once a server is paired: when the app opens, when you come back to it, a few seconds after you change something, and
+  every few minutes while it is open. If the server cannot be reached it tries again after 30 seconds, then a minute, two, five. You can turn
+  it off in Settings > Sync with server, which also shows when it last finished and has Sync now.
+- Sync conflicts has its own place: Settings > Sync conflicts, and a badge on the Library's top bar. When the same quote or work was changed on
+  the phone and on the server, it waits there, untouched. Settle one, some or none whenever you like; the rest of your library keeps syncing in
+  the meantime.
 - A book, film or quote that is on both the phone and the server is now one item after the first sync, not two. Before, a work you typed here
   that your server already had (or the other way round) came down as a second copy. Now they are joined; if they differ you see both
   versions in Sync and choose.

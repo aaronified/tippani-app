@@ -1,4 +1,5 @@
 import 'anthologies_screen.dart';
+import 'conflicts_screen.dart';
 import 'read_aloud_settings_screen.dart';
 import 'tools_screens.dart';
 
@@ -167,18 +168,62 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
               ],
-              if (harness.pull != null)
-                ListTile(
-                  leading: const Icon(Icons.sync),
-                  title: const Text('Sync with server'),
-                  subtitle: const Text(
-                    'Brings down changes, sends yours up, and lets you settle clashes',
-                  ),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => PullScreen(sync: harness.pull!),
-                    ),
-                  ),
+              if (harness.auto != null)
+                ListenableBuilder(
+                  listenable: harness.auto!,
+                  builder: (context, _) {
+                    final auto = harness.auto!;
+                    final n = auto.conflicts.length;
+                    return Column(
+                      children: [
+                        ListTile(
+                          leading: auto.syncing
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.sync),
+                          title: const Text('Sync with server'),
+                          subtitle: Text(
+                            auto.failure != null
+                                ? 'The last try did not finish'
+                                : auto.lastSynced != null
+                                ? (auto.enabled
+                                      ? 'Automatic · up to date'
+                                      : 'Automatic sync is off')
+                                : (auto.enabled
+                                      ? 'Automatic'
+                                      : 'Automatic sync is off'),
+                          ),
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => PullScreen(auto: auto),
+                            ),
+                          ),
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.sync_problem_outlined),
+                          title: const Text('Sync conflicts'),
+                          subtitle: Text(
+                            n == 0
+                                ? 'Nothing to settle'
+                                : n == 1
+                                ? '1 waiting for you'
+                                : '$n waiting for you',
+                          ),
+                          trailing: n == 0 ? null : Badge(label: Text('$n')),
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => ConflictsScreen(auto: auto),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               if (harness.sync != null)
                 ListTile(

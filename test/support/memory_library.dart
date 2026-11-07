@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:tippani/library/library_store.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/sync/fingerprint.dart';
@@ -17,6 +19,15 @@ class MemoryLibrary implements LibraryStore {
   var _next = 1;
   final _deletions = <PendingDeletion>[];
   var _deletionId = 1;
+  var _quiet = false;
+  final _changes = StreamController<void>.broadcast(sync: true);
+
+  @override
+  Stream<void> get changes => _changes.stream;
+
+  void _notify() {
+    if (!_quiet) _changes.add(null);
+  }
 
   @override
   Future<Work> addWork(WorkDraft d) async {
@@ -33,7 +44,9 @@ class MemoryLibrary implements LibraryStore {
       createdAt: now,
       updatedAt: now,
     );
-    return _works[w.id] = w;
+    _works[w.id] = w;
+    _notify();
+    return w;
   }
 
   @override
@@ -45,7 +58,7 @@ class MemoryLibrary implements LibraryStore {
     if (old == null) throw const LibraryException('no such work');
     final title = d.title.trim();
     if (title.isEmpty) throw const LibraryException('a work needs a title');
-    return _works[id] = Work(
+    final updated = Work(
       id: id,
       kind: d.kind,
       title: title,
@@ -57,6 +70,9 @@ class MemoryLibrary implements LibraryStore {
       serverId: old.serverId,
       syncedHash: old.syncedHash,
     );
+    _works[id] = updated;
+    _notify();
+    return updated;
   }
 
   @override
@@ -70,6 +86,7 @@ class MemoryLibrary implements LibraryStore {
       }
     }
     await dropWork(id);
+    _notify();
   }
 
   void _remember(String route, int serverId) =>
@@ -156,7 +173,9 @@ class MemoryLibrary implements LibraryStore {
   @override
   Future<Quote> addQuote(QuoteDraft d) async {
     final q = _make(_next++, d, _clock());
-    return _quotes[q.id] = q;
+    _quotes[q.id] = q;
+    _notify();
+    return q;
   }
 
   @override
@@ -166,7 +185,9 @@ class MemoryLibrary implements LibraryStore {
   Future<Quote> updateQuote(int id, QuoteDraft d) async {
     final old = _quotes[id];
     if (old == null) throw const LibraryException('no such quote');
-    return _quotes[id] = _make(id, d, old.createdAt, old);
+    final q = _quotes[id] = _make(id, d, old.createdAt, old);
+    _notify();
+    return q;
   }
 
   @override
@@ -177,6 +198,7 @@ class MemoryLibrary implements LibraryStore {
       _remember(quoteRoute(realmOfQuote(w)), q.serverId!);
     }
     _quotes.remove(id);
+    _notify();
   }
 
   @override
@@ -296,13 +318,17 @@ class MemoryLibrary implements LibraryStore {
 
   @override
   Future<Work> adoptWork(WorkDraft d, int serverId, String hash) async {
+    _quiet = true;
     final w = (await addWork(d)).withServerId(serverId).withSyncedHash(hash);
+    _quiet = false;
     return _works[w.id] = w;
   }
 
   @override
   Future<Quote> adoptQuote(QuoteDraft d, int serverId, String hash) async {
+    _quiet = true;
     final q = (await addQuote(d)).withServerId(serverId).withSyncedHash(hash);
+    _quiet = false;
     return _quotes[q.id] = q;
   }
 

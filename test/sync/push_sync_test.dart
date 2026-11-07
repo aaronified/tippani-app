@@ -368,15 +368,24 @@ void main() {
     expect(seen, [(1, 3), (2, 3), (3, 3)]);
   });
 
-  test('two pushes at once are refused: the second would send the same items again', () async {
-    final r = await rig();
-    await r.lib.addQuote(const QuoteDraft(text: 'a'));
-    final running = r.sync.push();
-    expect(() => r.sync.push(), throwsStateError);
-    await running;
-    expect(r.sync.running, isFalse);
-    await r.sync.push(); // and it can run again afterwards
-  });
+  test(
+    'a second push while one runs joins it: nothing is sent twice',
+    () async {
+      final r = await rig();
+      await r.lib.addWork(const WorkDraft(title: 'Dune'));
+
+      final first = r.sync.push();
+      final second = r.sync.push();
+      expect(r.sync.running, isTrue);
+
+      final a = await first;
+      final b = await second;
+      expect(identical(a, b), isTrue);
+      expect(a.worksSent, 1);
+      expect(r.server.created['/books'], hasLength(1));
+      expect(r.sync.running, isFalse);
+    },
+  );
 
   test('the log says how many went and which items were refused, never what anything said', () async {
     final r = await rig();
