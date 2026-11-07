@@ -441,6 +441,9 @@ class _Photos implements PhotoSource {
 class _Reader implements TextRecogniser {
   final read1 = <String>[];
   @override
+  Future<String> hocr(String imagePath, String language) async => '';
+
+  @override
   Future<String> read(String imagePath, String language) async {
     read1.add(imagePath);
     return 'Hello there.';

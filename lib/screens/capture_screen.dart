@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../capture/page_adjuster.dart';
 import '../capture/photo_source.dart';
+import '../capture/recognised_page.dart';
 import '../capture/text_recogniser.dart';
 import 'adjust_screen.dart';
+import 'page_selector.dart';
 
 /// Text read from a page, handed back to the quote form: [text] as the reader corrected it, and how it was
 /// captured ([source]: "ocr").
@@ -51,6 +53,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
   final _text = TextEditingController();
   String _language = 'eng';
   String? _image;
+  RecognisedPage? _page;
   bool _busy = false;
   String? _problem;
 
@@ -89,10 +92,24 @@ class _CaptureScreenState extends State<CaptureScreen> {
   Future<void> _recognise(String path) async {
     setState(() {
       _image = path;
+      _page = null;
+      _text.clear();
       _busy = true;
       _problem = null;
     });
     try {
+      // The words with their places first, so the reader can pick on the picture; if that gives nothing, the plain text.
+      RecognisedPage? page;
+      try {
+        page = parseHocr(await widget.recogniser.hocr(path, _language));
+      } on Object {
+        page = null;
+      }
+      if (!mounted) return;
+      if (page != null && !page.isEmpty) {
+        setState(() => _page = page);
+        return;
+      }
       final raw = await widget.recogniser.read(path, _language);
       if (!mounted) return;
       final text = tidyRecognisedText(raw);
@@ -154,7 +171,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
               ),
             ],
           ),
-          if (_image != null) ...[
+          if (_image != null && _page == null) ...[
             const SizedBox(height: 16),
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -177,6 +194,15 @@ class _CaptureScreenState extends State<CaptureScreen> {
           if (_problem != null) ...[
             const SizedBox(height: 16),
             Text(_problem!, style: TextStyle(color: theme.colorScheme.error)),
+          ],
+          if (_page != null && !_busy) ...[
+            const SizedBox(height: 16),
+            PageSelector(
+              key: ValueKey(_image),
+              imagePath: _image!,
+              page: _page!,
+              onChanged: (t) => setState(() => _text.text = t),
+            ),
           ],
           if (_image != null && !_busy) ...[
             const SizedBox(height: 16),

@@ -30,6 +30,9 @@ class _Reader implements TextRecogniser {
   final calls = <(String, String)>[];
 
   @override
+  Future<String> hocr(String imagePath, String language) async => '';
+
+  @override
   Future<String> read(String imagePath, String language) async {
     calls.add((imagePath, language));
     if (boom) throw Exception('bad data');

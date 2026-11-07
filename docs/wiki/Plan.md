@@ -246,6 +246,10 @@ synced account's theme preferences are ignored here.
       server, the owner's decision): list, make, rename (the server's own row is sent back with only the title and introduction changed, so
       its display switches survive), delete, read, share as text, take a passage out, and Add to anthology from a synced quote.
       Checked against a real server in `test/live`. **Not yet:** reordering, per-passage commentary, sections, grouping, the cover, boards.
+- [x] **Scan: choose words on the picture** (done 7 November 2026): Tesseract's hOCR (`extractHocr`) is parsed (`lib/capture/recognised_page.dart`,
+      `parseHocr`) into lines and words with boxes; `PageSelector` draws them over the page and `PageSelection` turns the chosen words into text (reading
+      order, hyphens mended, a gap kept as a paragraph break). Falls back to plain `read` text when hOCR gives no words. **Not done:** proposing a page
+      number and chapter from the page, and zooming the picture.
 - [x] **Scan: straighten and crop** (done 7 November 2026): before a photographed page is read, `AdjustScreen` shows it with the tilt and the text's
       area the app worked out (`lib/capture/page_geometry.dart`: `estimateSkewDegrees` by row projection, `textBounds` by the ink's 1st to 99th
       percentile) and lets the reader turn it (-15 to 15 degrees) and drag the frame's corners; `DevicePageAdjuster` renders the turned and cut picture
