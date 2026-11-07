@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../library/models.dart';
 import '../library/quote_chips.dart';
+import '../people/people_directory.dart';
 
 /// The people on a quote as a row of chips that scrolls sideways rather than wrapping (as on the web, so a long name
 /// never pushes the words down): the author of the book, and each character or speaker with the actor under their
@@ -99,21 +100,25 @@ class PersonChip extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircleAvatar(
+                  PersonFace(
+                    chip: chip,
                     radius: r,
-                    backgroundColor: switch (chip.kind) {
-                      ChipKind.author => scheme.primaryContainer,
-                      ChipKind.character => scheme.tertiaryContainer,
-                      ChipKind.speaker => scheme.secondaryContainer,
-                    },
-                    child: Text(
-                      _initial,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: switch (chip.kind) {
-                          ChipKind.author => scheme.onPrimaryContainer,
-                          ChipKind.character => scheme.onTertiaryContainer,
-                          ChipKind.speaker => scheme.onSecondaryContainer,
-                        },
+                    fallback: CircleAvatar(
+                      radius: r,
+                      backgroundColor: switch (chip.kind) {
+                        ChipKind.author => scheme.primaryContainer,
+                        ChipKind.character => scheme.tertiaryContainer,
+                        ChipKind.speaker => scheme.secondaryContainer,
+                      },
+                      child: Text(
+                        _initial,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: switch (chip.kind) {
+                            ChipKind.author => scheme.onPrimaryContainer,
+                            ChipKind.character => scheme.onTertiaryContainer,
+                            ChipKind.speaker => scheme.onSecondaryContainer,
+                          },
+                        ),
                       ),
                     ),
                   ),

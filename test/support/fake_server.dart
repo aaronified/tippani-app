@@ -93,6 +93,16 @@ class FakeServer {
   /// Every DELETE of a work or quote answers with this status instead (409, 500...), when set.
   int? failDeletesWith;
 
+  /// The people the server knows, by kind ('author', 'actor', 'speaker'): rows of name, image_path, signature_path.
+  /// `GET /people?kind=` lists one kind.
+  final people = <String, List<Map<String, Object?>>>{};
+
+  /// The characters the server knows (name, image_path). `GET /characters` lists them.
+  final characterRows = <Map<String, Object?>>[];
+
+  /// How many times `GET /people` was asked.
+  int peopleReads = 0;
+
   /// The cover pictures the server holds, by file name. `GET /covers/{name}` serves them.
   final covers = <String, List<int>>{};
 
@@ -389,6 +399,13 @@ class FakeServer {
         'actor_role': 'actor',
         'cast': casts['${castRoute[1]}/${castRoute[2]}'] ?? [],
       });
+    }
+    if (r.method == 'GET' && path == '/people') {
+      peopleReads++;
+      return _json({'people': people[r.url.queryParameters['kind']] ?? []});
+    }
+    if (r.method == 'GET' && path == '/characters') {
+      return _json({'characters': characterRows});
     }
     final cover = RegExp(r'^/covers/([^/]+)$').firstMatch(path);
     if (r.method == 'GET' && cover != null) {

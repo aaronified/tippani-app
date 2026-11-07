@@ -22,7 +22,7 @@ abstract class CoverSource {
 
 /// The server's own cover names: sixteen hex digits and a picture extension. Anything else is never fetched, so
 /// a name from the server can not point anywhere but the cover folder.
-final coverName = RegExp(r'^[0-9a-f]{16}\.(jpg|png|webp|gif)$');
+final coverName = RegExp(r'^[0-9a-f]{16}\.(jpg|png|webp|gif|svg)$');
 
 /// Covers fetched from the paired server and kept in the app's own storage. The server names a cover file
 /// once and never reuses the name, so a cover fetched is good for good and a changed cover is a new name.

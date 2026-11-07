@@ -223,7 +223,6 @@ class _ShareScreenState extends State<ShareScreen> {
       _on.contains(widget.work == null || _screenWork ? 'speaker' : 'author');
 
   bool get _useCharacters =>
-      _screenWork &&
       _people.characterFaces.isNotEmpty &&
       (_characters || _people.faces.isEmpty);
 

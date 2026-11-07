@@ -7,6 +7,18 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Portraits on the people pills: the round pill on a quote (the author of a book, the speaker, the character with the actor under their name) now
+  shows the photo your server holds for them, as on the web, in the library, on the quote and on every card. A character shows its own picture,
+  or the actor's if it has none. The photos are kept on the phone, so they are there without the server.
+
+### Fixed
+
+- Signatures on the share picture: a signature your server keeps as a drawn (vector) picture, which is how most are stored, was left off the
+  picture. It is drawn now. The share picture also takes the portraits and signature from the phone's own copy, so it can be made without the
+  server, and a book's character can show its picture too.
+
 ## [0.6.0] - 2026-11-07
 
 ### Added
