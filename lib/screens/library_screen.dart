@@ -23,6 +23,7 @@ import 'quote_screen.dart';
 import 'search_screen.dart';
 import 'work_form_screen.dart';
 import 'work_screen.dart';
+import 'works_view.dart';
 import '../l10n/l10n.dart';
 
 enum _Mode { quotes, works }
@@ -770,21 +771,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
             : 'Add one with the button below.',
       );
     }
+    if (_mode == _Mode.works) {
+      return WorksView(
+        works: _works,
+        selected: _picked,
+        onLongPress: (w) => _toggle(w.id),
+        onOpen: (w) => _selecting ? _toggle(w.id) : _openWork(w),
+        sectionKey: widget.section == LibrarySection.catalogue
+            ? 'catalogue'
+            : 'books',
+      );
+    }
     return ListView(
       padding: const EdgeInsets.only(bottom: 88),
-      children: _mode == _Mode.quotes
-          ? _groupByBoard
-                ? _groupedQuotes()
-                : [for (final q in _quotes) _quoteTile(q)]
-          : [
-              for (final w in _works)
-                WorkTile(
-                  work: w,
-                  selected: _picked.contains(w.id),
-                  onLongPress: () => _toggle(w.id),
-                  onTap: () => _selecting ? _toggle(w.id) : _openWork(w),
-                ),
-            ],
+      children: _groupByBoard
+          ? _groupedQuotes()
+          : [for (final q in _quotes) _quoteTile(q)],
     );
   }
 }

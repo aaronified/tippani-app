@@ -9,6 +9,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Library browsing: the Library and Catalogue lists can be sorted (title, author or maker, year either way, recently added), grouped under
+  headings (author or maker, decade, where you are with it, genre, language), filtered by where you are with each work (in progress, not
+  started, paused, finished, abandoned), and shown as a list or as a wall of covers whose size you set. The count of works shown is on top, and your
+  choices are kept for next time.
 - Find a cover online: on a work's page, Choose a cover now offers From my photos or Find one online. The online search starts with the work's own
   title and author (you can change them, and search a book by ISBN), shows what the catalogues and picture suppliers have with the name of each,
   lets you narrow to one supplier, and uses the one you press for the cover. Films, shows and games search for posters.
