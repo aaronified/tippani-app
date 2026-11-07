@@ -13,6 +13,9 @@ version. Write each entry for the person using the app, in plain words. **Start 
   headings (author or maker, decade, where you are with it, genre, language), filtered by where you are with each work (in progress, not
   started, paused, finished, abandoned), and shown as a list or as a wall of covers whose size you set. The count of works shown is on top, and your
   choices are kept for next time.
+- Find a cover online: on a work's page, Choose a cover now offers From my photos or Find one online. The online search starts with the work's own
+  title and author (you can change them, and search a book by ISBN), shows what the catalogues and picture suppliers have with the name of each,
+  lets you narrow to one supplier, and uses the one you press for the cover. Films, shows and games search for posters.
 - Details and duplicates (Settings, Your library): the works that still lack a cover, an author, a year, a synopsis or a source, with filters for
   each gap. Press one (or press and hold to choose several) to have the server look them up again on the web and show what differs: fields that are
   empty are ticked for you, ones that would replace what you have are left for you to tick, you can pick which supplier's answer to take, and a
