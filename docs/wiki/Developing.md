@@ -232,7 +232,7 @@ transitions and scrolling feel on iOS):
     flutter create --platforms=web .        # once; web/ is not committed
     flutter build web -t tool/preview/main.dart
 
-`tool/preview/main.dart` runs the real app over made-up books, films, boards and quotes held in memory, with no server. `flutter build web` adds
+`tool/preview/main.dart` runs the real app over made-up books, films, boards and quotes held in memory, and a made-up server (the tests' `FakeServer`, `FakeAnthologies` and `FakeTools`, already paired), so the screens that need a server have something to show. `flutter build web` adds
 `web/**` to `analysis_options.yaml`: restore the file before committing.
 
 ## The sections

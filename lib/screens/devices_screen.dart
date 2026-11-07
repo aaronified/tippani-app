@@ -100,22 +100,26 @@ class _DevicesScreenState extends State<DevicesScreen> {
                 ),
               ),
             for (final d in devices ?? const <DeviceInfo>[])
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(d.name.isEmpty ? 'Unnamed device' : d.name),
-                subtitle: Text(
-                  d.current
-                      ? 'This phone'
-                      : d.lastSeenAt.isEmpty
-                      ? 'Paired ${d.createdAt}. Not used yet.'
-                      : 'Last used ${d.lastSeenAt}',
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Card(
+                  child: ListTile(
+                    title: Text(d.name.isEmpty ? 'Unnamed device' : d.name),
+                    subtitle: Text(
+                      d.current
+                          ? 'This phone'
+                          : d.lastSeenAt.isEmpty
+                          ? 'Paired ${d.createdAt}. Not used yet.'
+                          : 'Last used ${d.lastSeenAt}',
+                    ),
+                    trailing: d.current
+                        ? const Icon(Icons.smartphone)
+                        : TextButton(
+                            onPressed: () => _revoke(d),
+                            child: const Text('Unpair'),
+                          ),
+                  ),
                 ),
-                trailing: d.current
-                    ? const Icon(Icons.smartphone)
-                    : TextButton(
-                        onPressed: () => _revoke(d),
-                        child: const Text('Unpair'),
-                      ),
               ),
           ],
         ),
