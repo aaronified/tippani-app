@@ -243,6 +243,8 @@ void main() {
         300,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.ensureVisible(find.text('Backup and restore'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Backup and restore'));
       await tester.pumpAndSettle();
     }

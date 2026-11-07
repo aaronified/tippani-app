@@ -110,6 +110,9 @@ Future<void> goSettings(WidgetTester tester, String entry) async {
     300,
     scrollable: find.byType(Scrollable).first,
   );
+  // a group of settings is built whole, so it is found before it is on screen
+  await tester.ensureVisible(find.text(entry));
+  await tester.pumpAndSettle();
   await tester.tap(find.text(entry));
   await tester.pumpAndSettle();
 }
