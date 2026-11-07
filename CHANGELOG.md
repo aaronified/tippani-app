@@ -9,6 +9,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Source files (Settings, Your library): the ebooks and subtitle files your quotes came from, which give a quote the lines around it. See what is
+  attached to each work, read a file again, free the space of one you uploaded (after a preview of what stays), or remove one. Scan a folder on the
+  server for files that fit your works: exact matches attach in one press, and the rest you look over, attach or turn down. Attach one by hand from
+  the server's folders, or send one from the phone (up to 25 MB), for a book, a film or a show's episode.
 - Quote screen: a Copy button puts the quote and its credit on the clipboard, and after you delete a quote an Undo button brings it back, with
   its note, tags, colour and place.
 - The quote form suggests as you write: the characters of the work you chose (and who else was already quoted from it) under "Who said it", the

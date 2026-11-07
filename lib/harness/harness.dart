@@ -10,6 +10,8 @@ import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
 import '../people/people_directory.dart';
+import '../sources/source_picker.dart';
+import '../sources/sources_service.dart';
 import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
@@ -111,6 +113,8 @@ class Harness {
     this.account,
     this.contextRules,
     this.peopleService,
+    this.sources,
+    this.sourcePicker = const SystemSourcePicker(),
     this.quiz,
     this.details,
     this.contexts,
@@ -185,6 +189,13 @@ class Harness {
 
   /// The pages of people and characters (and edits to a person) from the paired server.
   final PeopleService? peopleService;
+
+  /// The source files (ebooks, subtitles) works' quotes were found in, on the paired server. Null in a test about
+  /// something else.
+  final SourcesService? sources;
+
+  /// Choosing a source file from the phone.
+  final SourcePicker sourcePicker;
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
@@ -281,6 +292,7 @@ class Harness {
       account: PairedAccount(controller),
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
+      sources: PairedSourcesService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
@@ -314,6 +326,8 @@ class Harness {
     AccountService? account,
     ContextRules? contextRules,
     PeopleService? peopleService,
+    SourcesService? sources,
+    SourcePicker? sourcePicker,
     QuizService? quiz,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
@@ -367,6 +381,8 @@ class Harness {
       account: account,
       contextRules: contextRules,
       peopleService: peopleService,
+      sources: sources,
+      sourcePicker: sourcePicker ?? const SystemSourcePicker(),
       quiz: quiz,
       details: details,
       contexts: contexts,
