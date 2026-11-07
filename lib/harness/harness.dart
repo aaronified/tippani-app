@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
+import '../people/people_directory.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
 import '../library/cover_cache.dart';
@@ -90,6 +91,7 @@ class Harness {
     this.runAutoSync = false,
     this.covers,
     this.people,
+    this.directory,
     this.details,
     this.contexts,
     this.anthologies,
@@ -131,6 +133,9 @@ class Harness {
   /// Where the pictures of people (portraits, characters, signatures) for a shared quote come from.
   final SharePeopleSource? people;
 
+  /// Everyone with a face on the server, kept on the phone, for the round portraits on a quote's chips.
+  final PeopleDirectory? directory;
+
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
 
@@ -169,6 +174,8 @@ class Harness {
     final pull = library == null
         ? null
         : PullSync(library, controller, log: appLog);
+    final covers = CoverCache(controller);
+    final directory = PairedPeopleDirectory(controller, covers);
     return Harness(
       files: files,
       log: appLog,
@@ -198,8 +205,9 @@ class Harness {
               log: appLog,
             ),
       runAutoSync: true,
-      covers: CoverCache(controller),
-      people: PairedSharePeople(controller),
+      covers: covers,
+      people: PairedSharePeople(controller, directory),
+      directory: directory,
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
       anthologies: ServerAnthologies(controller),
@@ -221,6 +229,7 @@ class Harness {
     LibraryStore? library,
     CoverSource? covers,
     SharePeopleSource? people,
+    PeopleDirectory? directory,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
     AnthologyService? anthologies,
@@ -262,6 +271,7 @@ class Harness {
           : AutoSync(push: push, pull: pull, controller: controller, log: l),
       covers: covers,
       people: people,
+      directory: directory,
       details: details,
       contexts: contexts,
       anthologies: anthologies,

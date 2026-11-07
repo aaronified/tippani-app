@@ -6,6 +6,8 @@ import '../api/api_client.dart';
 import '../app_controller.dart';
 import '../library/models.dart';
 import '../library/quote_chips.dart';
+import '../people/people_directory.dart';
+import '../people/svg_raster.dart';
 
 /// One picture of a person or a character, with the name it belongs to.
 class ShareFace {
@@ -70,12 +72,15 @@ class PeopleScope extends InheritedWidget {
 /// Reads people's pictures from the paired server: `GET /people?kind=&name=` for a portrait and a signature,
 /// `GET /dialogues?movie_id=` for the pictures of a film's characters, and `GET /covers/<file>` for the files.
 class PairedSharePeople implements SharePeopleSource {
-  PairedSharePeople(this._controller);
+  PairedSharePeople(this._controller, [this._directory]);
 
   final AppController _controller;
 
+  /// The phone's own copy of everyone's pictures; used first, so a picture can be made with no server in reach.
+  final PeopleDirectory? _directory;
+
   @override
-  bool get available => _controller.paired;
+  bool get available => _controller.paired || _directory != null;
 
   static final _file = RegExp(r'^[A-Za-z0-9._-]+$');
 
@@ -83,14 +88,30 @@ class PairedSharePeople implements SharePeopleSource {
   Future<SharePeople> forQuote(Quote quote, Work? work) async {
     if (!available) return SharePeople.none;
     try {
+      await _directory?.ready();
+      if (!_controller.paired) return await _gather(null, quote, work);
       final got = await _controller.withClient((c) => _gather(c, quote, work));
-      return got ?? SharePeople.none;
+      return got ?? await _gather(null, quote, work);
     } on Object {
       return SharePeople.none;
     }
   }
 
-  Future<SharePeople> _gather(ApiClient c, Quote q, Work? w) async {
+  /// A picture the phone already holds (read from its own copy), or null.
+  Future<Uint8List?> _held(String name) async {
+    if (name.isEmpty) return null;
+    try {
+      final f = await _directory?.file(name);
+      if (f == null) return null;
+      final b = await f.readAsBytes();
+      if (b.isEmpty) return null;
+      return looksLikeSvg(b) ? await svgToPng(b) : b;
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<SharePeople> _gather(ApiClient? c, Quote q, Work? w) async {
     final screen =
         w != null &&
         (w.kind == WorkKind.film ||
@@ -116,18 +137,36 @@ class PairedSharePeople implements SharePeopleSource {
     final faces = <ShareFace>[];
     ShareFace? signature;
     for (final name in names) {
-      final person = await _person(c, kind, name);
-      if (person == null) continue;
-      final image = await _bytes(c, person['image_path']);
-      if (image != null) faces.add(ShareFace(name, image));
-      if (signature == null) {
-        final sig = await _bytes(c, person['signature_path']);
-        if (sig != null) signature = ShareFace(name, sig);
+      final held = _directory?.person(kind, name);
+      Uint8List? image, sig;
+      if (held != null) {
+        image = await _held(held.image);
+        if (signature == null) sig = await _held(held.signature);
       }
+      if (c != null && (image == null || (signature == null && sig == null))) {
+        final person = await _person(c, kind, name);
+        if (person != null) {
+          image ??= await _bytes(c, person['image_path']);
+          if (signature == null) {
+            sig ??= await _bytes(c, person['signature_path']);
+          }
+        }
+      }
+      if (image != null) faces.add(ShareFace(name, image));
+      if (signature == null && sig != null) signature = ShareFace(name, sig);
     }
 
     final characters = <ShareFace>[];
-    if (screen && q.serverId != null && w.serverId != null) {
+    // the pictures of the characters named as speaking, from the phone's copy (a book has them too)
+    for (final name in speakerNames(q.speaker)) {
+      final bytes = await _held(_directory?.characterImage(name) ?? '');
+      if (bytes != null) characters.add(ShareFace(name, bytes));
+    }
+    if (c != null &&
+        characters.isEmpty &&
+        screen &&
+        q.serverId != null &&
+        w.serverId != null) {
       final rows = await c.getJson('/dialogues?movie_id=${w.serverId}');
       final list = rows is Map ? rows['dialogues'] : null;
       if (list is List) {
@@ -169,7 +208,9 @@ class PairedSharePeople implements SharePeopleSource {
     if (file is! String || !_file.hasMatch(file)) return null;
     try {
       final b = await c.getBytes('/covers/$file');
-      return b.isEmpty ? null : b;
+      if (b.isEmpty) return null;
+      // a signature is often a vector picture; the share picture draws bitmaps, so draw it into one here
+      return looksLikeSvg(b) ? await svgToPng(b) : b;
     } on Object {
       return null;
     }
