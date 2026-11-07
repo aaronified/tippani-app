@@ -9,6 +9,11 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Details and duplicates (Settings, Your library): the works that still lack a cover, an author, a year, a synopsis or a source, with filters for
+  each gap. Press one (or press and hold to choose several) to have the server look them up again on the web and show what differs: fields that are
+  empty are ticked for you, ones that would replace what you have are left for you to tick, you can pick which supplier's answer to take, and a
+  field that changed since the check is left alone. The server can also fill every work's gaps by itself, and an admin can ask it to fetch missing
+  covers. A second tab lists works saved twice, to merge into the one you keep (the others go to the Bin).
 - Run the server from your phone (admin accounts only, in Settings): add a reader, make an account an admin or step down, and remove an account;
   watch the server's jobs as they run and wait (with Stop, Run again, each job's log, and the common jobs to start); make a backup of the server, keep
   it on the phone, and put one back, from the server's own copy or from a file on the phone, after keeping a safety copy of what is there now; see the
