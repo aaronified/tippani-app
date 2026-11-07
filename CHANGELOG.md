@@ -13,6 +13,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
   headings (author or maker, decade, where you are with it, genre, language), filtered by where you are with each work (in progress, not
   started, paused, finished, abandoned), and shown as a list or as a wall of covers whose size you set. The count of works shown is on top, and your
   choices are kept for next time.
+- Source files (Settings, Your library): the ebooks and subtitle files your quotes came from, which give a quote the lines around it. See what is
+  attached to each work, read a file again, free the space of one you uploaded (after a preview of what stays), or remove one. Scan a folder on the
+  server for files that fit your works: exact matches attach in one press, and the rest you look over, attach or turn down. Attach one by hand from
+  the server's folders, or send one from the phone (up to 25 MB), for a book, a film or a show's episode.
 - People and characters console (Settings, Your library): every person and character your server keeps, with search that also finds other
   spellings, filters for no photo or no links and by kind, and counts of works and quotes. Open one, edit its spellings (the first line is the
   name shown), merge two that are the same (you choose the name that stays; the Bin can undo it), remove one, make a new character, ask the

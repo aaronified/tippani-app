@@ -13,6 +13,8 @@ import '../account/preferences.dart';
 import '../l10n/l10n.dart';
 import '../people/people_console.dart';
 import '../people/people_directory.dart';
+import '../sources/source_picker.dart';
+import '../sources/sources_service.dart';
 import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
@@ -115,6 +117,8 @@ class Harness {
     this.account,
     this.contextRules,
     this.peopleService,
+    this.sources,
+    this.sourcePicker = const SystemSourcePicker(),
     this.peopleConsole,
     this.admin,
     this.serverFiles = const SystemServerFiles(),
@@ -193,6 +197,13 @@ class Harness {
 
   /// The pages of people and characters (and edits to a person) from the paired server.
   final PeopleService? peopleService;
+
+  /// The source files (ebooks, subtitles) works' quotes were found in, on the paired server. Null in a test about
+  /// something else.
+  final SourcesService? sources;
+
+  /// Choosing a source file from the phone.
+  final SourcePicker sourcePicker;
 
   /// Every person and character the server keeps, for the metadata console and the editing on their pages.
   final PeopleConsole? peopleConsole;
@@ -302,6 +313,7 @@ class Harness {
       account: PairedAccount(controller),
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
+      sources: PairedSourcesService(controller),
       peopleConsole: PairedPeopleConsole(controller),
       admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
@@ -338,6 +350,8 @@ class Harness {
     AccountService? account,
     ContextRules? contextRules,
     PeopleService? peopleService,
+    SourcesService? sources,
+    SourcePicker? sourcePicker,
     PeopleConsole? peopleConsole,
     AdminService? admin,
     ServerFiles? serverFiles,
@@ -395,6 +409,8 @@ class Harness {
       account: account,
       contextRules: contextRules,
       peopleService: peopleService,
+      sources: sources,
+      sourcePicker: sourcePicker ?? const SystemSourcePicker(),
       peopleConsole: peopleConsole,
       admin: admin,
       serverFiles: serverFiles ?? const SystemServerFiles(),
