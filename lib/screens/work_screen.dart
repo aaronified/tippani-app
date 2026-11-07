@@ -17,10 +17,8 @@ import '../library/models.dart';
 import '../tools/work_lookup.dart';
 import '../library/work_order.dart';
 import 'library_widgets.dart';
-import 'capture_screen.dart';
 import 'quote_form_screen.dart';
 import 'quote_screen.dart';
-import 'voice_screen.dart';
 import 'work_form_screen.dart';
 import 'work_read_screen.dart';
 
@@ -120,25 +118,6 @@ class _WorkScreenState extends State<WorkScreen> {
       MaterialPageRoute(
         builder: (_) =>
             QuoteFormScreen(store: widget.store, workId: widget.workId),
-      ),
-    );
-    await _load();
-  }
-
-  Future<void> _scan() async {
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) =>
-            CaptureScreen(store: widget.store, workId: widget.workId),
-      ),
-    );
-    await _load();
-  }
-
-  Future<void> _say() async {
-    await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => VoiceScreen(store: widget.store, workId: widget.workId),
       ),
     );
     await _load();
@@ -272,16 +251,6 @@ class _WorkScreenState extends State<WorkScreen> {
         title: Text(w?.title ?? ''),
         actions: [
           if (w != null) ...[
-            IconButton(
-              tooltip: 'Say a quote',
-              icon: const Icon(Icons.mic_none),
-              onPressed: _say,
-            ),
-            IconButton(
-              tooltip: 'Scan a page',
-              icon: const Icon(Icons.document_scanner_outlined),
-              onPressed: _scan,
-            ),
             IconButton(
               tooltip: 'Edit',
               icon: const Icon(Icons.edit_outlined),

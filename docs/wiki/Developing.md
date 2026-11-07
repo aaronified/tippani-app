@@ -212,6 +212,12 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## Capture
+
+`CaptureScreen` (a photographed page, read by Tesseract) and `VoiceScreen` (speech to text through the phone's recogniser) each pop a `CapturedText`;
+`QuoteFormScreen` puts it in the words (`_put`) and is the only place a quote is made from them. They take a `PhotoSource`, a `TextRecogniser` and a
+`VoiceListener`, so a test stands in for the camera, Tesseract and the microphone.
+
 ## Boards
 
 A board (`Board` in `models.dart`, table `boards`, `quotes.board_id` with `ON DELETE SET NULL`) is a shelf for standalone quotes, mirroring the server's.
