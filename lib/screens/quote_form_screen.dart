@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../capture/page_adjuster.dart';
 import '../capture/photo_source.dart';
 import '../capture/text_recogniser.dart';
 import '../capture/voice_listener.dart';
@@ -31,7 +32,13 @@ class QuoteFormScreen extends StatefulWidget {
     this.photos,
     this.recogniser = const TesseractRecogniser(),
     this.listener,
+    this.adjuster,
+    this.adjustPage = true,
   });
+
+  /// Straightens and crops a scanned page; null uses the phone's own. A test passes a stand-in, or turns it off.
+  final PageAdjuster? adjuster;
+  final bool adjustPage;
 
   /// Where a scanned page's picture comes from, how its text is read, and what listens when the reader speaks.
   /// Null uses the phone's own; a test passes stand-ins.
@@ -139,8 +146,12 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   Future<void> _scan() async {
     final t = await Navigator.of(context).push<CapturedText>(
       MaterialPageRoute(
-        builder: (_) =>
-            CaptureScreen(photos: widget.photos, recogniser: widget.recogniser),
+        builder: (_) => CaptureScreen(
+          photos: widget.photos,
+          recogniser: widget.recogniser,
+          adjuster: widget.adjuster,
+          adjust: widget.adjustPage,
+        ),
       ),
     );
     if (t != null) _put(t);
