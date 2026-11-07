@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../sync/auto_sync.dart';
+import 'library_widgets.dart' show EmptyState;
 import '../sync/pull_sync.dart';
 
 /// What changed on both the phone and the server, waiting for the reader. Nothing here is urgent and nothing has
@@ -74,14 +75,10 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
         builder: (context, _) {
           final conflicts = widget.auto.conflicts;
           if (conflicts.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Nothing to settle. If the same quote or work is changed here and on the server, it will wait here for you.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
+            return const EmptyState(
+              icon: Icons.task_alt_rounded,
+              title: 'Nothing to settle.',
+              hint: 'If the same quote or work is changed here and on the server, it will wait here for you.',
             );
           }
           return ListView(

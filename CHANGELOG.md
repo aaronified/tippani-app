@@ -34,6 +34,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Changed
 
+- Statistics, the Bin, Anthologies and Paired devices follow the new look: the numbers are cards, the bin and the lists are cards, and an empty
+  Sync conflicts says so with an icon instead of a bare line.
 - The picture of a quote is drawn as the web app draws it: Newsreader set on a card with a paper grain and a thin border, the Tippani mark and
   "made with tippani" at the foot, the author and work in the credit and the chapter in a small line beneath, tags as pills, your note in
   handwriting, and Bengali and Devanagari in their own fonts. You can choose Light or Dark and one of the web's eight materials (Manuscript, Film
