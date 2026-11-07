@@ -78,6 +78,7 @@ flutter:
     - CHANGELOG.md
     - assets/tessdata_config.json
     - assets/tessdata/
+    - assets/share/
 
   # Inter for the interface and Source Serif 4 for the words of a quote, both SIL OFL (licences beside them).
   # They are variable fonts: the weight is set from the axis.
@@ -92,6 +93,26 @@ flutter:
           weight: 600
         - asset: assets/fonts/Inter.ttf
           weight: 700
+    - family: Newsreader
+      fonts:
+        - asset: assets/fonts/share/Newsreader.ttf
+        - asset: assets/fonts/share/Newsreader-Italic.ttf
+          style: italic
+    - family: NotoSerifBengali
+      fonts:
+        - asset: assets/fonts/share/NotoSerifBengali.ttf
+    - family: NotoSerifDevanagari
+      fonts:
+        - asset: assets/fonts/share/NotoSerifDevanagari.ttf
+    - family: IBMPlexMono
+      fonts:
+        - asset: assets/fonts/share/IBMPlexMono-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/share/IBMPlexMono-SemiBold.ttf
+          weight: 600
+    - family: Caveat
+      fonts:
+        - asset: assets/fonts/share/Caveat.ttf
     - family: SourceSerif4
       fonts:
         - asset: assets/fonts/SourceSerif4.ttf

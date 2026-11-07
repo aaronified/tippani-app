@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText;
 import '../library/models.dart';
 import '../library/share_format.dart';
-import 'quote_card.dart';
+import '../share/share_picture.dart';
+import 'quote_card.dart' show captureCard;
 import 'quote_screen.dart' show ShareImage;
 
 /// Puts text on the clipboard. A function so a test can stand in for the clipboard.
@@ -48,8 +50,49 @@ class _ShareScreenState extends State<ShareScreen> {
   late Set<String> _on = shareDefaults(_fields);
   ShareFormat _format = ShareFormat.picture;
   Brightness? _look;
+  ShareMaterial _material = ShareMaterial.manuscript;
+  bool _tint = false;
   late final _text = TextEditingController(text: _build());
   bool _busy = false;
+
+  // What the reader picked last time for the picture, kept on the phone (the web keeps the same three).
+  static const _kTheme = 'share_image_theme';
+  static const _kMaterial = 'share_image_material';
+  static const _kTint = 'share_image_tint';
+
+  @override
+  void initState() {
+    super.initState();
+    _restore();
+  }
+
+  Future<void> _restore() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      final t = p.getString(_kTheme);
+      if (!mounted) return;
+      setState(() {
+        if (t == 'light') _look = Brightness.light;
+        if (t == 'dark') _look = Brightness.dark;
+        _material = ShareMaterial.named(p.getString(_kMaterial));
+        _tint = p.getBool(_kTint) ?? false;
+      });
+    } on Object {
+      // nothing remembered: the defaults stand
+    }
+  }
+
+  Future<void> _remember() async {
+    final dark = (_look ?? Theme.of(context).brightness) == Brightness.dark;
+    try {
+      final p = await SharedPreferences.getInstance();
+      await p.setString(_kTheme, dark ? 'dark' : 'light');
+      await p.setString(_kMaterial, _material.name);
+      await p.setBool(_kTint, _tint);
+    } on Object {
+      // not remembered this time
+    }
+  }
 
   String _build() => buildShareText(
     widget.quote,
@@ -97,7 +140,7 @@ class _ShareScreenState extends State<ShareScreen> {
   }
 
   Future<Uint8List?> _picture() async {
-    final png = await captureCard(_cardKey);
+    final png = await captureCard(_cardKey, width: shareWidth * shareScale);
     if (png == null && mounted) _say('The picture could not be made.');
     return png;
   }
@@ -140,12 +183,6 @@ class _ShareScreenState extends State<ShareScreen> {
     final theme = Theme.of(context);
     final picture = _format == ShareFormat.picture;
     final look = _look ?? theme.brightness;
-    final cardTheme = theme.copyWith(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFFB4482D),
-        brightness: look,
-      ),
-    );
     return Scaffold(
       appBar: AppBar(title: const Text('Share')),
       body: ListView(
@@ -199,7 +236,47 @@ class _ShareScreenState extends State<ShareScreen> {
                   ],
                   selected: {look},
                   showSelectedIcon: false,
-                  onSelectionChanged: (s) => setState(() => _look = s.single),
+                  onSelectionChanged: (s) {
+                    setState(() => _look = s.single);
+                    _remember();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Text('Material', style: theme.textTheme.labelLarge),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DropdownButtonFormField<ShareMaterial>(
+                    initialValue: _material,
+                    isExpanded: true,
+                    items: [
+                      for (final m in ShareMaterial.values)
+                        DropdownMenuItem(value: m, child: Text(m.label)),
+                    ],
+                    onChanged: (m) {
+                      if (m == null) return;
+                      setState(() => _material = m);
+                      _remember();
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              children: [
+                FilterChip(
+                  label: const Text('Quote colour'),
+                  tooltip: "Adds the quote's colour to the picture, as a stripe beside the words.",
+                  selected: _tint,
+                  onSelected: (v) {
+                    setState(() => _tint = v);
+                    _remember();
+                  },
                 ),
               ],
             ),
@@ -207,20 +284,18 @@ class _ShareScreenState extends State<ShareScreen> {
             Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
-                child: RepaintBoundary(
-                  key: _cardKey,
-                  child: Theme(
-                    data: cardTheme,
-                    child: Container(
-                      // A solid ground, so the rounded corners of the picture are not transparent (a chat app
-                      // paints transparency black).
-                      color: cardTheme.colorScheme.surface,
-                      padding: const EdgeInsets.all(16),
-                      child: QuoteCard(
-                        quote: widget.quote,
-                        work: widget.work,
-                        show: _on,
-                      ),
+                // Drawn at its own width and scaled to fit; the file is made from the unscaled picture.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: RepaintBoundary(
+                    key: _cardKey,
+                    child: SharePicture(
+                      quote: widget.quote,
+                      work: widget.work,
+                      on: _on,
+                      dark: look == Brightness.dark,
+                      material: _material,
+                      tint: _tint,
                     ),
                   ),
                 ),
