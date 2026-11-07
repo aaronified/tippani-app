@@ -7,6 +7,7 @@ import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
 import '../people/people_directory.dart';
+import '../quiz/quiz.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
 import '../library/cover_cache.dart';
@@ -101,6 +102,7 @@ class Harness {
     this.localeFetch,
     this.account,
     this.contextRules,
+    this.quiz,
     this.details,
     this.contexts,
     this.anthologies,
@@ -167,6 +169,10 @@ class Harness {
 
   /// Fetches the stored context of a quote from the paired server. Null in a test about something else.
   final QuoteContextSource? contexts;
+
+  /// The paired server's Daily Quiz and Practice. Null in a test that is about something else; without it the app
+  /// has no Home tab.
+  final QuizService? quiz;
 
   /// The paired server's anthologies. Null in a test that is about something else.
   final AnthologyService? anthologies;
@@ -246,6 +252,7 @@ class Harness {
           controller.withClient<Object?>((c) => c.getJson('/locales')),
       account: PairedAccount(controller),
       contextRules: PairedContextRules(controller),
+      quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
       anthologies: ServerAnthologies(controller),
@@ -273,6 +280,7 @@ class Harness {
     L10n? l10n,
     AccountService? account,
     ContextRules? contextRules,
+    QuizService? quiz,
     WorkDetailsSource? details,
     QuoteContextSource? contexts,
     AnthologyService? anthologies,
@@ -320,6 +328,7 @@ class Harness {
       l10n: l10n,
       account: account,
       contextRules: contextRules,
+      quiz: quiz,
       details: details,
       contexts: contexts,
       anthologies: anthologies,

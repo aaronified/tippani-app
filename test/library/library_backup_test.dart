@@ -67,6 +67,7 @@ class _MemoryLibrary implements LibraryStore {
     String? tag,
     int? boardId,
     bool unfiled = false,
+    bool standalone = false,
     int limit = 200,
     int offset = 0,
   }) async => [];

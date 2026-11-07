@@ -28,6 +28,9 @@ abstract interface class LibraryStore {
 
   /// Quotes, newest met first. [query] matches the words, the translation, the note, who said it, the
   /// work's title and creator, and the tags; [tag] keeps only quotes with that tag.
+  ///
+  /// [standalone] keeps only quotes with no work behind them (a line from a speech, a proverb, something a
+  /// friend said): the quote board.
   Future<List<Quote>> quotes({
     int? workId,
     String query = '',
@@ -35,6 +38,7 @@ abstract interface class LibraryStore {
     String? tag,
     int? boardId,
     bool unfiled = false,
+    bool standalone = false,
     int limit = 200,
     int offset = 0,
   });
@@ -685,6 +689,7 @@ class SqliteLibraryStore implements LibraryStore {
     String? tag,
     int? boardId,
     bool unfiled = false,
+    bool standalone = false,
     int limit = 200,
     int offset = 0,
   }) async {
@@ -694,6 +699,7 @@ class SqliteLibraryStore implements LibraryStore {
       where.add('q.work_id = ?');
       args.add(workId);
     }
+    if (standalone) where.add('q.work_id IS NULL');
     if (favouritesOnly) where.add('q.favorite = 1');
     if (boardId != null) {
       where.add('q.board_id = ?');

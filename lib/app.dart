@@ -11,6 +11,7 @@ import 'tools/quote_context.dart';
 import 'tools/work_details_source.dart';
 import 'harness/update_ui.dart';
 import 'screens/anthologies_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/nav_icons.dart';
 import 'screens/home_screen.dart';
 import 'screens/library_screen.dart';
@@ -118,6 +119,20 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _index = 0;
 
+  /// The tabs as last drawn: which are there depends on the sections the reader hid, so "open the Library" asks here
+  /// for where it is rather than counting.
+  List<({Widget screen, NavigationDestination destination})> _tabsNow =
+      const [];
+
+  void _goTo(LibrarySection part) {
+    final i = _tabsNow.indexWhere(
+      (t) =>
+          t.screen is LibraryScreen &&
+          (t.screen as LibraryScreen).section == part,
+    );
+    if (i >= 0) setState(() => _index = i);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -152,7 +167,27 @@ class _ShellState extends State<Shell> {
           LibrarySection.quotes => prefs.hideQuotes,
           LibrarySection.all => false,
         };
+    final quiz = widget.harness.quiz;
     final tabs = <({Widget screen, NavigationDestination destination})>[
+      // Home comes first where the app has the quiz to put on it: the day's cards, the favourites, a line at random.
+      if (library != null && quiz != null)
+        (
+          screen: DashboardScreen(
+            store: library,
+            quiz: quiz,
+            controller: widget.controller,
+            picker: widget.harness.picker,
+            anthologies: widget.harness.anthologies,
+            auto: widget.harness.auto,
+            onOpenLibrary: () => _goTo(LibrarySection.books),
+            onOpenCatalogue: () => _goTo(LibrarySection.catalogue),
+          ),
+          destination: NavigationDestination(
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home_rounded),
+            label: context.tr('Home'),
+          ),
+        ),
       if (library != null)
         for (final (nav, part) in [
           (NavSection.library, LibrarySection.books),
@@ -211,6 +246,7 @@ class _ShellState extends State<Shell> {
         ),
       ),
     ];
+    _tabsNow = tabs;
     return UpdateHost(
       harness: widget.harness,
       child: Scaffold(
