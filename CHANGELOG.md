@@ -9,6 +9,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Boards stay the same on the phone and on the server: the boards you make here go up, the ones on your server (the Proverbs, Speeches
+  and Others it starts with, and any you made on the web) come down, and a rename, a colour or a delete on one side reaches the other. The
+  board a quote is filed on goes both ways too. When you delete a board here that has quotes, the server moves them to one of its other
+  boards, since it will not leave a quote without one. If you change a board on both sides before a sync, the server's version is kept.
 - Context from your server: a quote that is on the server has a Context section on its screen. Show where it comes from asks the server for what it stored
   around the quote in its source file (the paragraphs before and after, or a film's subtitle lines), with Show more before and after up to what is stored,
   and a note where the chapter or scene ends. It is asked for when you press it and is not kept on the phone.

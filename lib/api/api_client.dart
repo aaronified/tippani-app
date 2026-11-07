@@ -119,9 +119,17 @@ class ApiClient {
     ),
   );
 
-  /// DELETE [path]. A 204 is an empty answer, so this returns null on success.
-  Future<Object?> delete(String path) =>
-      _send(() => _client.delete(_uri(path), headers: _headers));
+  /// DELETE [path], with [body] as JSON when there is one. A 204 is an empty answer, so this returns null on
+  /// success.
+  Future<Object?> delete(String path, {Map<String, Object?>? body}) => _send(
+    () => body == null
+        ? _client.delete(_uri(path), headers: _headers)
+        : _client.delete(
+            _uri(path),
+            headers: {..._headers, 'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          ),
+  );
 
   /// GET [path] and decode the JSON answer.
   Future<Object?> getJson(String path) =>

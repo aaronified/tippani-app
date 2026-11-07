@@ -96,12 +96,63 @@ abstract interface class LibraryStore {
   /// Deletes a board. Its quotes are kept, and are no longer on any board.
   Future<void> deleteBoard(int id);
 
+  /// Board sync. [linkBoard] records the server's id, the agreed fingerprint and the server's row;
+  /// [adoptBoard] makes a board that came from the server; [applyBoard] writes the server's name and colour
+  /// over a board; [dropBoard] removes a board the server no longer has (no pending deletion is left).
+  /// None of them fires [changes]: that is for what the reader does.
+  Future<void> linkBoard(int id, int serverId, String hash, Map row);
+  Future<Board> adoptBoard(
+    String name,
+    String color,
+    int serverId,
+    String hash,
+    Map row,
+  );
+  Future<void> applyBoard(
+    int id,
+    String name,
+    String color,
+    String hash,
+    Map row,
+  );
+  Future<void> dropBoard(int id);
+
+  /// Forgets that a board is on the server, so the next sync sends it as new.
+  Future<void> unlinkBoard(int id);
+
+  /// Where the standalone quotes that are on the server are filed, here and there, and where they were filed
+  /// when the two last agreed.
+  Future<List<Filing>> filings();
+
+  /// Files a quote on a board here ([boardId] null: on none). No `updated_at`, no [changes].
+  Future<void> setQuoteBoard(int quoteId, int? boardId);
+
+  /// Records the server's board the quote was filed on at the last agreement.
+  Future<void> markQuoteFiled(int quoteId, int? serverBoard);
+
   /// Fires after the reader changes the library (add, edit, delete, favourite). Not for what a sync writes.
   Stream<void> get changes;
 
   /// Replaces everything with what [exportAll] gave. Validated first and written in one transaction, so a
   /// damaged file changes nothing.
   Future<void> replaceAll(Map<String, Object?> data);
+}
+
+/// One standalone quote that is on the server: which board it is on here ([boardServerId] is that board's id
+/// on the server), and the server's board at the last agreement ([agreed]).
+class Filing {
+  const Filing({
+    required this.quoteId,
+    required this.quoteServerId,
+    required this.boardId,
+    required this.boardServerId,
+    required this.agreed,
+  });
+  final int quoteId;
+  final int quoteServerId;
+  final int? boardId;
+  final int? boardServerId;
+  final int? agreed;
 }
 
 /// A delete the server has yet to hear of: [route] is the server's collection (`/books`, `/annotations`...).
@@ -128,7 +179,7 @@ class SqliteLibraryStore implements LibraryStore {
   final Database _db;
   final DateTime Function() _clock;
 
-  static const schemaVersion = 6;
+  static const schemaVersion = 7;
 
   /// The longest a quote's text or a title may be. A pasted book is not a quote.
   static const maxText = 20000;
@@ -155,6 +206,18 @@ class SqliteLibraryStore implements LibraryStore {
           await db.execute('ALTER TABLE quotes ADD COLUMN synced_hash TEXT');
         }
         if (from < 3) await _createDeletions(db);
+        if (from < 7) {
+          if (from >= 6) {
+            await db.execute('ALTER TABLE boards ADD COLUMN server_id INTEGER');
+            await db.execute('ALTER TABLE boards ADD COLUMN synced_hash TEXT');
+            await db.execute(
+              "ALTER TABLE boards ADD COLUMN server_row TEXT NOT NULL DEFAULT ''",
+            );
+          }
+          await db.execute(
+            'ALTER TABLE quotes ADD COLUMN board_synced INTEGER',
+          );
+        }
         if (from < 6) {
           await _createBoards(db);
           await db.execute(
@@ -186,7 +249,10 @@ class SqliteLibraryStore implements LibraryStore {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE COLLATE NOCASE,
         color TEXT NOT NULL DEFAULT '',
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        server_id INTEGER,
+        synced_hash TEXT,
+        server_row TEXT NOT NULL DEFAULT ''
       )''');
 
   static Future<void> _createDeletions(Database db) => db.execute('''
@@ -232,7 +298,8 @@ class SqliteLibraryStore implements LibraryStore {
         updated_at TEXT NOT NULL,
         server_id INTEGER,
         synced_hash TEXT,
-        board_id INTEGER REFERENCES boards(id) ON DELETE SET NULL
+        board_id INTEGER REFERENCES boards(id) ON DELETE SET NULL,
+        board_synced INTEGER
       )''');
     await db.execute('CREATE INDEX quotes_work ON quotes(work_id)');
     await db.execute('CREATE INDEX quotes_noted ON quotes(noted_at)');
@@ -716,15 +783,143 @@ class SqliteLibraryStore implements LibraryStore {
   @override
   Future<List<Board>> boards() async => [
     for (final r in await _db.rawQuery(
-      'SELECT b.id, b.name, b.color, (SELECT COUNT(*) FROM quotes q WHERE q.board_id = b.id) AS n FROM boards b ORDER BY b.name COLLATE NOCASE',
+      'SELECT b.id, b.name, b.color, b.server_id, b.synced_hash, b.server_row, (SELECT COUNT(*) FROM quotes q WHERE q.board_id = b.id) AS n FROM boards b ORDER BY b.name COLLATE NOCASE',
     ))
       Board(
         id: r['id']! as int,
         name: r['name']! as String,
         color: r['color']! as String,
         quotes: r['n']! as int,
+        serverId: r['server_id'] as int?,
+        syncedHash: r['synced_hash'] as String?,
+        serverRow: _row(r['server_row']),
       ),
   ];
+
+  static Map<String, Object?> _row(Object? raw) {
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final d = jsonDecode(raw);
+        if (d is Map) return Map<String, Object?>.from(d);
+      } on FormatException {
+        // an unreadable row is the same as none: the next sync writes it again
+      }
+    }
+    return const {};
+  }
+
+  @override
+  Future<void> linkBoard(int id, int serverId, String hash, Map row) async {
+    await _db.update(
+      'boards',
+      {
+        'server_id': serverId,
+        'synced_hash': hash,
+        'server_row': jsonEncode(row),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
+  Future<Board> adoptBoard(
+    String name,
+    String color,
+    int serverId,
+    String hash,
+    Map row,
+  ) async {
+    final c = quoteColors.contains(color) ? color : '';
+    final id = await _db.insert('boards', {
+      'name': name,
+      'color': c,
+      'created_at': _now(),
+      'server_id': serverId,
+      'synced_hash': hash,
+      'server_row': jsonEncode(row),
+    });
+    return Board(
+      id: id,
+      name: name,
+      color: c,
+      serverId: serverId,
+      syncedHash: hash,
+      serverRow: Map<String, Object?>.from(row),
+    );
+  }
+
+  @override
+  Future<void> applyBoard(
+    int id,
+    String name,
+    String color,
+    String hash,
+    Map row,
+  ) async {
+    await _db.update(
+      'boards',
+      {
+        'name': name,
+        'color': quoteColors.contains(color) ? color : '',
+        'synced_hash': hash,
+        'server_row': jsonEncode(row),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
+  Future<void> dropBoard(int id) async {
+    await _db.delete('boards', where: 'id = ?', whereArgs: [id]);
+  }
+
+  @override
+  Future<void> unlinkBoard(int id) async {
+    await _db.update(
+      'boards',
+      {'server_id': null, 'synced_hash': null, 'server_row': ''},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
+  Future<List<Filing>> filings() async => [
+    for (final r in await _db.rawQuery(
+      'SELECT q.id, q.server_id, q.board_id, q.board_synced, b.server_id AS bsid '
+      'FROM quotes q LEFT JOIN boards b ON b.id = q.board_id '
+      'WHERE q.work_id IS NULL AND q.server_id IS NOT NULL',
+    ))
+      Filing(
+        quoteId: r['id']! as int,
+        quoteServerId: r['server_id']! as int,
+        boardId: r['board_id'] as int?,
+        boardServerId: r['bsid'] as int?,
+        agreed: r['board_synced'] as int?,
+      ),
+  ];
+
+  @override
+  Future<void> setQuoteBoard(int quoteId, int? boardId) async {
+    await _db.update(
+      'quotes',
+      {'board_id': boardId},
+      where: 'id = ?',
+      whereArgs: [quoteId],
+    );
+  }
+
+  @override
+  Future<void> markQuoteFiled(int quoteId, int? serverBoard) async {
+    await _db.update(
+      'quotes',
+      {'board_synced': serverBoard},
+      where: 'id = ?',
+      whereArgs: [quoteId],
+    );
+  }
 
   String _boardName(String raw) {
     final n = raw.trim();
@@ -782,7 +977,17 @@ class SqliteLibraryStore implements LibraryStore {
 
   @override
   Future<void> deleteBoard(int id) async {
-    await _db.delete('boards', where: 'id = ?', whereArgs: [id]);
+    await _db.transaction((tx) async {
+      final r = await tx.query(
+        'boards',
+        columns: ['server_id'],
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      final sid = r.isEmpty ? null : r.first['server_id'] as int?;
+      if (sid != null) await _note(tx, '/boards', sid);
+      await tx.delete('boards', where: 'id = ?', whereArgs: [id]);
+    });
     _changes.add(null);
   }
 

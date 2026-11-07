@@ -3,6 +3,7 @@ import '../app_controller.dart';
 import '../harness/app_log.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
+import 'board_sync.dart';
 import 'fingerprint.dart';
 import 'push_sync.dart' show PushRefusal;
 
@@ -63,8 +64,12 @@ class PullResult {
     this.relinked = 0,
     this.heldBack = 0,
     this.linked = 0,
+    this.boards = 0,
     this.stoppedBy,
   });
+
+  /// Boards and board filings that changed, either way.
+  final int boards;
 
   /// Brought down: new on the server, or changed only there.
   final int worksAdded, quotesAdded, worksUpdated, quotesUpdated;
@@ -98,7 +103,8 @@ class PullResult {
   final int skipped;
   final ApiFailure? stoppedBy;
 
-  int get brought => worksAdded + quotesAdded + worksUpdated + quotesUpdated;
+  int get brought =>
+      worksAdded + quotesAdded + worksUpdated + quotesUpdated + boards;
   int get sent => worksSent + quotesSent;
 }
 
@@ -131,6 +137,7 @@ class _Tally {
   int worksAdded = 0, quotesAdded = 0, worksUpdated = 0, quotesUpdated = 0;
   int worksSent = 0, quotesSent = 0, gone = 0, skipped = 0;
   int deletedThere = 0, deletedHere = 0, relinked = 0, heldBack = 0, linked = 0;
+  int boards = 0;
   final conflicts = <SyncConflict>[];
   final refused = <PushRefusal>[];
   ApiFailure? stopped;
@@ -213,6 +220,7 @@ class PullSync {
     }
     await _syncWorks(got, t);
     if (t.stopped == null) await _syncQuotes(got, t);
+    if (t.stopped == null) await _syncBoards(got, t);
     if (t.stopped == null) await _syncGone(got, t);
     return _finish(t);
   }
@@ -234,6 +242,7 @@ class PullSync {
       relinked: t.relinked,
       heldBack: t.heldBack,
       linked: t.linked,
+      boards: t.boards,
       stoppedBy: t.stopped,
     );
     _log?.info(
@@ -249,6 +258,30 @@ class PullSync {
       _log?.warn('sync: ${r.what} refused: ${r.reason}');
     }
     return result;
+  }
+
+  // ---- boards -------------------------------------------------------------------------------------
+
+  Future<void> _syncBoards(_Fetched got, _Tally t) async {
+    final sync = BoardSync(_store, _controller, log: _log);
+    final b = await sync.boards();
+    t.boards += b.changed;
+    for (final r in b.refused) {
+      t.refused.add(PushRefusal('a board', r));
+    }
+    if (b.stoppedBy != null) {
+      t.stopped = b.stoppedBy;
+      return;
+    }
+    final f = await sync.filing(
+      got.quotes[Realm.loose]!,
+      stale: b.removedThere > 0,
+    );
+    t.boards += f.changed;
+    for (final r in f.refused) {
+      t.refused.add(PushRefusal('a quote\'s board', r));
+    }
+    if (f.stoppedBy != null) t.stopped = f.stoppedBy;
   }
 
   // ---- works --------------------------------------------------------------------------------------
@@ -475,6 +508,8 @@ class PullSync {
   /// reported and the item may come back down on the pull that follows; anything else stops the sync.
   Future<void> _sendDeletions(_Tally t) async {
     for (final d in await _store.pendingDeletions()) {
+      // A board is deleted with the quotes moved first, which needs the server's board list (see BoardSync).
+      if (d.route == '/boards') continue;
       final p = await _write((c) async {
         await c.delete('${d.route}/${d.serverId}');
       });
