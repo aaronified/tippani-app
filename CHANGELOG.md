@@ -30,6 +30,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Fixed
 
+- The Quotes tab is the quote board again: it showed every quote, including the ones from your books and films. It now shows only quotes that
+  belong to no work (a line from a speech, a proverb, something someone said), as on the web; the quotes of a book are in that book.
 - The bottom bar no longer cuts words off: "Anthologies" was clipped on narrower phones or with large text. The labels are a little smaller, and
   when the bar is crowded only the open tab keeps its label.
 - Signatures on the share picture: a signature your server keeps as a drawn (vector) picture, which is how most are stored, was left off the
