@@ -11,6 +11,7 @@ import '../imports/import_service.dart';
 import '../account/account_service.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
+import '../metadata/metadata_service.dart';
 import '../people/people_console.dart';
 import '../people/people_directory.dart';
 import '../sources/source_picker.dart';
@@ -117,6 +118,7 @@ class Harness {
     this.account,
     this.contextRules,
     this.peopleService,
+    this.metadata,
     this.sources,
     this.sourcePicker = const SystemSourcePicker(),
     this.peopleConsole,
@@ -197,6 +199,10 @@ class Harness {
 
   /// The pages of people and characters (and edits to a person) from the paired server.
   final PeopleService? peopleService;
+
+  /// What the server could still find out about the library's works, and the works saved twice. Null in a test
+  /// about something else.
+  final MetadataService? metadata;
 
   /// The source files (ebooks, subtitles) works' quotes were found in, on the paired server. Null in a test about
   /// something else.
@@ -313,6 +319,7 @@ class Harness {
       account: PairedAccount(controller),
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
+      metadata: PairedMetadataService(controller),
       sources: PairedSourcesService(controller),
       peopleConsole: PairedPeopleConsole(controller),
       admin: PairedAdminService(controller),
@@ -350,6 +357,7 @@ class Harness {
     AccountService? account,
     ContextRules? contextRules,
     PeopleService? peopleService,
+    MetadataService? metadata,
     SourcesService? sources,
     SourcePicker? sourcePicker,
     PeopleConsole? peopleConsole,
@@ -409,6 +417,7 @@ class Harness {
       account: account,
       contextRules: contextRules,
       peopleService: peopleService,
+      metadata: metadata,
       sources: sources,
       sourcePicker: sourcePicker ?? const SystemSourcePicker(),
       peopleConsole: peopleConsole,
