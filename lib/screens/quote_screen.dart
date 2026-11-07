@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../anthologies/anthologies.dart';
@@ -8,6 +7,7 @@ import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../library/models.dart';
+import '../library/share_format.dart';
 import '../speech/speaker.dart';
 import '../sync/fingerprint.dart' show realmOfQuote;
 import 'anthologies_screen.dart' show addToAnthologyDialog;
@@ -168,6 +168,11 @@ class _QuoteScreenState extends State<QuoteScreen> {
   }
 
   Future<void> _delete() async {
+    final gone = _quote;
+    final deleted = context.tr('Quote deleted.');
+    final undo = context.tr('Undo');
+    // the messenger belongs to the app, so the Undo outlives this screen
+    final messenger = ScaffoldMessenger.of(context);
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -188,8 +193,52 @@ class _QuoteScreenState extends State<QuoteScreen> {
       ),
     );
     if (sure != true) return;
-    await widget.store.deleteQuote(widget.quoteId);
+    final store = widget.store;
+    await store.deleteQuote(widget.quoteId);
     if (mounted) Navigator.of(context).pop(true);
+    if (gone == null) return;
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(deleted),
+          action: SnackBarAction(
+            label: undo,
+            onPressed: () => store.addQuote(
+              QuoteDraft(
+                text: gone.text,
+                workId: gone.workId,
+                translation: gone.translation,
+                language: gone.language,
+                speaker: gone.speaker,
+                chapter: gone.chapter,
+                location: gone.location,
+                note: gone.note,
+                color: gone.color,
+                favorite: gone.favorite,
+                notedAt: gone.notedAt,
+                source: gone.source,
+                tags: gone.tags,
+                boardId: gone.boardId,
+              ),
+            ),
+          ),
+        ),
+      );
+  }
+
+  /// Puts the quote on the clipboard the way the web's copy button does: its words with the credit line.
+  Future<void> _copy() async {
+    final q = _quote;
+    if (q == null) return;
+    final on = shareDefaults(shareFieldsOf(q, _work));
+    await Clipboard.setData(
+      ClipboardData(text: buildShareText(q, _work, on, ShareFormat.plain)),
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(context.tr('Copied'))));
   }
 
   void _share() {
@@ -234,6 +283,11 @@ class _QuoteScreenState extends State<QuoteScreen> {
             tooltip: q.favorite ? 'Remove from favourites' : 'Favourite',
             icon: Icon(q.favorite ? Icons.star : Icons.star_border),
             onPressed: _favourite,
+          ),
+          IconButton(
+            tooltip: context.tr('Copy'),
+            icon: const Icon(Icons.copy_rounded),
+            onPressed: _copy,
           ),
           IconButton(
             tooltip: context.tr('Edit'),

@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
@@ -217,6 +216,77 @@ void main() {
         expect(await lib.quote(quote.id), isNull);
       },
     );
+
+    testWidgets('copy puts the words and the credit on the clipboard', (
+      tester,
+    ) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied = (call.arguments as Map)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await open(tester);
+      await tester.tap(find.byTooltip('Copy'));
+      await tester.pumpAndSettle();
+      expect(copied, contains('Simplify, simplify.'));
+      expect(copied, contains('Thoreau'));
+      expect(find.text('Copied'), findsOneWidget);
+    });
+
+    testWidgets('a deleted quote comes back with Undo, with all it had', (
+      tester,
+    ) async {
+      await open(tester);
+      // opened from a page that stays behind it, as in the app: the message is shown on that page
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (_) => QuoteScreen(
+                      store: lib,
+                      quoteId: quote.id,
+                      picker: picker,
+                      share: out.text,
+                      shareImage: out.image,
+                    ),
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(await lib.quotes(), isEmpty);
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      final back = (await lib.quotes()).single;
+      expect(back.text, 'Simplify, simplify.');
+      expect(back.workId, work.id);
+      expect(back.note, 'my margin');
+      expect(back.tags, ['life']);
+      expect(back.color, 'blue');
+    });
 
     testWidgets('edit opens the form, and the screen shows what was saved', (
       tester,
