@@ -157,9 +157,13 @@ class _BinScreenState extends State<BinScreen> {
                           [
                             _kindWords(e.kind),
                             if (e.childCount > 0)
-                              'with ${e.childCount} ${e.childCount == 1 ? 'quote' : 'quotes'}',
+                              context.tr('app.tools.with_quotes', {
+                                'quotes': countWords('quote', e.childCount),
+                              }),
                             if (e.deletedAt.isNotEmpty)
-                              'deleted ${e.deletedAt}',
+                              context.tr('app.tools.deleted_at', {
+                                'when': e.deletedAt,
+                              }),
                           ].join(' · '),
                         ),
                         trailing: Row(
@@ -182,7 +186,7 @@ class _BinScreenState extends State<BinScreen> {
                                   context.tr(
                                     'app.tools.it_cannot_be_brought_back_after',
                                   ),
-                                  'Delete',
+                                  context.tr('common.action.delete.label'),
                                 )) {
                                   await _act(
                                     () => widget.tools.deleteForever(e.id),

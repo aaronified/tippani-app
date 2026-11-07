@@ -93,7 +93,9 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
         return episode.isEmpty ? w.title : '${w.title} · $episode';
       }
     }
-    return episode.isEmpty ? 'A work not on this phone' : 'A show · $episode';
+    return episode.isEmpty
+        ? tx('app.source_files.a_work_not_on_this_phone')
+        : tx('app.source_files.a_show_episode', {'episode': episode});
   }
 
   Future<void> _read() async {
@@ -170,7 +172,14 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
     if (!ok || !mounted) return;
     _say(
       context,
-      '${r.attached} attached${r.skipped > 0 ? ', ${r.skipped} skipped' : ''}${r.failed > 0 ? ', ${r.failed} could not be read' : ''}.',
+      [
+            tx('app.source_files.attached_n', {'n': r.attached}),
+            if (r.skipped > 0)
+              tx('app.source_files.skipped_n', {'n': r.skipped}),
+            if (r.failed > 0)
+              tx('app.source_files.unreadable_n', {'n': r.failed}),
+          ].join(', ') +
+          tx('app.source_files.full_stop'),
     );
     await _read();
   }
@@ -225,10 +234,9 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
           context.tr('app.source_files.the_file_x_is_deleted_from', {
             'x': _size(p.bytes),
             'x2': _size(p.keptBytes),
-            'with_context': p.withContext,
-            'x3': p.withContext == 1 ? 'quote keeps' : 'quotes keep',
-            'x4': p.withoutContext > 0
-                ? ' ${p.withoutContext} ${p.withoutContext == 1 ? 'quote has' : 'quotes have'} none to keep.'
+            'keeps': trn('app.source_files.keeps', p.withContext),
+            'none': p.withoutContext > 0
+                ? ' ${trn('app.source_files.none_to_keep', p.withoutContext)}'
                 : '',
           }),
         ),
@@ -584,16 +592,30 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
               'queued' => context.tr(
                 'app.source_files.waiting_for_the_server_to_start',
               ),
-              'running' =>
-                'Looking… ${_scan.scanned} files read, ${_scan.found} found.',
-              'partial' =>
-                'Stopped part-way: ${_scan.scanned} files read. Scan again to carry on.',
-              'failed' || 'interrupted' => tx(
-                'app.source_files.the_scan_did_not_finishx',
-                {'x': _scan.error.isEmpty ? '' : ': ${_scan.error}'},
-              ),
+              'running' => tx('app.source_files.looking', {
+                'read': _scan.scanned,
+                'found': _scan.found,
+              }),
+              'partial' => tx('app.source_files.stopped_part_way', {
+                'read': _scan.scanned,
+              }),
+              'failed' || 'interrupted' =>
+                _scan.error.isEmpty
+                    ? tx('app.source_files.the_scan_did_not_finish')
+                    : tx('app.source_files.the_scan_did_not_finish_why', {
+                        'detail': _scan.error,
+                      }),
               _ =>
-                '${_scan.scanned} files read, ${_scan.found} fit a work${_scan.unclaimed > 0 ? ', ${_scan.unclaimed} fit none' : ''}.',
+                _scan.unclaimed > 0
+                    ? tx('app.source_files.scan_done_some_unclaimed', {
+                        'read': _scan.scanned,
+                        'found': _scan.found,
+                        'none': _scan.unclaimed,
+                      })
+                    : tx('app.source_files.scan_done', {
+                        'read': _scan.scanned,
+                        'found': _scan.found,
+                      }),
             }, style: text.bodySmall),
           ),
           if (_scan.live) const LinearProgressIndicator(),
@@ -644,11 +666,12 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
               style: Theme.of(context).textTheme.titleSmall,
             ),
             Text(
-              context.tr('app.source_files.rel_to_upper_case_x', {
-                'rel': f.rel,
-                'to_upper_case': f.format.toUpperCase(),
-                'x': f.exact ? 'matched by its ids' : 'matched by its name',
-              }),
+              context.tr(
+                f.exact
+                    ? 'app.source_files.found_by_ids'
+                    : 'app.source_files.found_by_name',
+                {'rel': f.rel, 'format': f.format.toUpperCase()},
+              ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             Align(
@@ -731,7 +754,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                   : 'Attached (${attached.length})',
             ),
             Tab(text: _found.isEmpty ? 'Found' : 'Found (${_found.length})'),
-            const Tab(text: 'Add'),
+            Tab(text: context.tr('common.action.add.label')),
           ],
         ),
       ),

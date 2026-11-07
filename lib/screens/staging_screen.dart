@@ -213,7 +213,7 @@ class _StagingScreenState extends State<StagingScreen> {
     if (!await _confirm(
       n == 1 ? 'Discard this quote?' : 'Discard $n quotes?',
       context.tr('staging.discard.confirm.body'),
-      'Discard',
+      context.tr('common.unsaved.discard.label'),
     )) {
       return;
     }
@@ -497,7 +497,9 @@ class _StagingScreenState extends State<StagingScreen> {
               onFavourite: (on) => _edit(
                 _selection,
                 StagedEdit(favorite: on),
-                on ? 'Favourited' : 'Un-favourited',
+                on
+                    ? context.tr('quiz.card.favourite.on.label')
+                    : 'Un-favourited',
               ),
               onFields: () => _bulkFields(_selection, _picked.length),
               onShift: () => _shift(_selection, _picked.length),
@@ -978,15 +980,19 @@ class _QuoteSheetState extends State<_QuoteSheet> {
         value: _fav,
         onChanged: (v) => setState(() => _fav = v),
       ),
-      field('Chapter', _chapter, 'optional'),
-      field('Location', _location, 'p.142'),
+      field(context.tr('board.sort.chapter.label'), _chapter, 'optional'),
+      field(context.tr('common.field.location.label'), _location, 'p.142'),
       field(
-        'Character',
+        context.tr('common.field.character.label'),
         _character,
         context.tr('staging.form.character.placeholder'),
       ),
-      field('Actor', _actor, context.tr('staging.form.actor.placeholder')),
-      field('Timestamp', _timestamp, '01:02:03'),
+      field(
+        context.tr('common.field.actor.label'),
+        _actor,
+        context.tr('staging.form.actor.placeholder'),
+      ),
+      field(context.tr('common.field.timestamp.label'), _timestamp, '01:02:03'),
       Align(
         alignment: Alignment.centerRight,
         child: FilledButton(

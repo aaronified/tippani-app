@@ -95,7 +95,7 @@ class SettingsScreen extends StatelessWidget {
             bottom: 24,
           ),
           children: [
-            const _Section('Server'),
+            _Section(context.tr('settings.section.server.label')),
             _Group(
               children: [
                 ListTile(

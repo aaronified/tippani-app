@@ -40,32 +40,61 @@ app.adjust.turned_angle = {angle}° ঘোরানো
 app.adjust.use_as_is = যেমন আছে তেমন ব্যবহার করুন
 app.adjust.use_this = এটি ব্যবহার করুন
 
+# --- admin_backup ---
+app.admin_backup.sealed_with_unknown = এই ব্যাকআপটি যে অ্যাকাউন্ট বানিয়েছে তার পাসওয়ার্ড দিয়ে সিল করা।
+
+# --- admin_folders ---
+app.admin_folders.removed_files.one = ১টি সংরক্ষিত ফাইল সরানো হয়েছে।
+app.admin_folders.removed_files.other = {n}টি সংরক্ষিত ফাইল সরানো হয়েছে।
+
+# --- admin_sources ---
+app.admin_sources.supplied = {works}, {people} জোগানো হয়েছে
+
 # --- admin_update ---
 app.admin_update.check_again = আবার দেখুন
+app.admin_update.newest_prerelease = প্রি-রিলিজ ধারায় সবচেয়ে নতুন: {latest}
+app.admin_update.newest_stable = স্থিতিশীল ধারায় সবচেয়ে নতুন: {latest}
+app.admin_update.unknown = অজানা
 
 # --- anthologies ---
 app.anthologies.a_new_anthology = নতুন সংকলন…
+app.anthologies.added_n_passages = {n}টি অংশ যোগ হয়েছে।
+app.anthologies.added_one_passage = ১টি অংশ যোগ হয়েছে।
 app.anthologies.keep_it = রেখে দিন
 app.anthologies.no_anthologies_yet = এখনও কোনো সংকলন নেই।
 app.anthologies.remove_from_anthology = সংকলন থেকে সরান
 app.anthologies.the_anthology_is_removed_from_the = সংকলনটি সার্ভার থেকে সরে যায়। এর উক্তিগুলো আপনার গ্রন্থাগারে থেকে যায়।
 
+# --- anthology_tools ---
+app.anthology_tools.preview_many = {n}টি অংশ মেলে। {add}টি যোগ হতো।
+app.anthology_tools.preview_one = ১টি অংশ মেলে। {add}টি যোগ হতো।
+
 # --- backup ---
 app.backup.backup_and_restore = ব্যাকআপ ও পুনরুদ্ধার
 app.backup.copies_on_this_phone = এই ফোনের কপি
+app.backup.made_by_version_it_replaces_the_settings = {first} সময়ে {version} সংস্করণে বানানো। এটি এই ফোনের সেটিংস ও লাইব্রেরি ফাইলের বিষয়বস্তু দিয়ে বদলে দেয়।
+app.backup.made_it_replaces_the_settings = {first} সময়ে বানানো। এটি এই ফোনের সেটিংস ও লাইব্রেরি ফাইলের বিষয়বস্তু দিয়ে বদলে দেয়।
 app.backup.none_yet = এখনও কিছু নেই।
 app.backup.restore_from_a_file = ফাইল থেকে ফিরিয়ে আনুন…
 app.backup.restore_this_backup = এই ব্যাকআপ ফিরিয়ে আনবেন?
+app.backup.restored_with_ignored.one = ফিরিয়ে আনা হয়েছে। ফাইলে অ্যাপের এই সংস্করণের অজানা ১টি অংশও ছিল, সেটি বাদ দেওয়া হয়েছে।
+app.backup.restored_with_ignored.other = ফিরিয়ে আনা হয়েছে। ফাইলে অ্যাপের এই সংস্করণের অজানা {n}টি অংশও ছিল, সেগুলো বাদ দেওয়া হয়েছে।
 app.backup.save_a_copy_somewhere = কোথাও একটি কপি রাখুন…
 
 # --- board ---
 app.board.group = গোষ্ঠী
 
 # --- boards ---
+app.boards.language_count = {language} ({count})
+app.boards.language_count_here = {language} ({count}) · এই বোর্ড
 app.boards.no_boards_yet_a_board_is = এখনও কোনো বোর্ড নেই। বোর্ড হলো আলাদা উক্তির তাক: একটি বানান, তারপর উক্তির ফর্ম থেকে তাতে উক্তি রাখুন।
+app.boards.removed_keeps.one = বোর্ডটি সরানো হবে। তার ১টি উক্তি আপনার লাইব্রেরিতে থাকবে, কোনো বোর্ডে নয়।
+app.boards.removed_keeps.other = বোর্ডটি সরানো হবে। তার {n}টি উক্তি আপনার লাইব্রেরিতে থাকবে, কোনো বোর্ডে নয়।
 
 # --- bulk_bar ---
 app.bulk_bar.add_a_tag = একটি ট্যাগ যোগ করুন
+app.bulk_bar.added_to = {n}টি {title}-এ যোগ হয়েছে।
+app.bulk_bar.already_there = {n}টি আগে থেকেই আছে।
 app.bulk_bar.delete_n_quotes = {n}টি উক্তি মুছবেন?
 app.bulk_bar.delete_n_works = {n}টি রচনা মুছবেন?
 app.bulk_bar.favourite_them = প্রিয় করুন
@@ -76,6 +105,7 @@ app.bulk_bar.merge_into_title = “{title}”-এ মিলিয়ে দে�
 app.bulk_bar.move_to_a_board = বোর্ডে সরান…
 app.bulk_bar.n_quotes_deleted = {n}টি উক্তি মুছে ফেলা হয়েছে।
 app.bulk_bar.no_board = কোনো বোর্ড নয়
+app.bulk_bar.not_on_server = {n}টি এখনও সার্ভারে নেই (আগে সিঙ্ক করুন)।
 app.bulk_bar.nothing_to_change = বদলানোর কিছু নেই।
 app.bulk_bar.set_one_field = একটি ঘর ঠিক করুন…
 app.bulk_bar.set_one_field_2 = একটি ঘর ঠিক করুন
@@ -107,6 +137,34 @@ app.changelog.no_changelog_is_bundled_with_this = এই সংস্করণ�
 app.changelog.the_link_could_not_be_opened = লিংকটি খোলা যায়নি। এটি github.com/aaronified/tippani-app-এ আছে।
 app.changelog.what_s_new = নতুন কী
 
+# --- checks ---
+app.checks.added_quotes = এই ফোনে {quotes} যোগ হয়েছে।
+app.checks.added_quotes_and_works = এই ফোনে {quotes} ও {works} যোগ হয়েছে।
+app.checks.already_here = {n}টি আগে থেকেই আছে।
+app.checks.near_duplicates = {n}টি দেখতে আপনার আগের উক্তির মতো।
+app.checks.not_read_here = {n}টি এখানে পড়া হয়নি (সংকলন সার্ভারের জন্য)।
+app.checks.nothing_new_local.one = নতুন কিছু নেই: ১টি উক্তি আগে থেকেই এই ফোনে আছে।
+app.checks.nothing_new_local.other = নতুন কিছু নেই: {n}টি উক্তি আগে থেকেই এই ফোনে আছে।
+app.checks.read_as_nothing_new = {what} হিসেবে পড়া হয়েছে। নতুন কিছু নেই: সবই আগে থেকে আপনার লাইব্রেরিতে বা সারিতে আছে।
+app.checks.read_as_staged = {what} হিসেবে পড়া হয়েছে। {works} থেকে {quotes} আপনার অনুমোদনের অপেক্ষায়।
+
+# --- checks_service ---
+app.checks_service.duplicated.one = ১টি আপনার আগের একটি উক্তির প্রতিলিপি হয়ে যেত
+app.checks_service.duplicated.other = {n}টি আপনার আগের উক্তির প্রতিলিপি হয়ে যেত
+app.checks_service.edited_left_alone = আপনার সম্পাদনা করা {n}টি যেমন ছিল তেমনই রাখা হয়েছে
+app.checks_service.other_group.one = ১টি অন্য দলের ছিল, তাই বাদ গেছে
+app.checks_service.other_group.other = {n}টি অন্য দলের ছিল, তাই বাদ গেছে
+app.checks_service.stale.one = ১টি আপনার দেখার পর বদলে গিয়েছিল, তাই যেমন ছিল তেমনই রাখা হয়েছে
+app.checks_service.stale.other = {n}টি আপনার দেখার পর বদলে গিয়েছিল, তাই যেমন ছিল তেমনই রাখা হয়েছে
+app.checks_service.updated = {quotes} হালনাগাদ হয়েছে
+
+# --- checks_tabs ---
+app.checks_tabs.rule_field = {rule} · {field}
+app.checks_tabs.rule_field_places = {rule} · {field} · {places}
+
+# --- common ---
+app.common.ok = ঠিক আছে
+
 # --- conflicts ---
 app.conflicts.changed_on_both_sides = দুই দিকেই বদলেছে
 app.conflicts.keep_the_phone_s = ফোনেরটি রাখুন
@@ -121,8 +179,44 @@ app.conflicts.sync_conflicts = সিঙ্কের অমিল
 # --- connect ---
 app.connect.check_and_connect = দেখুন ও যুক্ত হোন
 app.connect.server_address = সার্ভারের ঠিকানা
+app.connect.the_server_refused_the_question = সার্ভার প্রশ্নটি নাকচ করেছে।
+app.connect.the_server_refused_the_question_why = সার্ভার প্রশ্নটি নাকচ করেছে: {detail}।
 app.connect.tippani_runs_on_a_server_you = টিপ্পনী আপনার নিজের সার্ভারে চলে। তার ঠিকানা লিখুন, যেটি ব্রাউজারে খোলেন।
 app.connect.your_tippani_server = আপনার টিপ্পনী সার্ভার
+
+# --- count ---
+app.count.book_word.one = বই
+app.count.book_word.other = বই
+app.count.changed_quote.one = ১টি বদলানো উক্তি
+app.count.changed_quote.other = {n}টি বদলানো উক্তি
+app.count.changed_work.one = ১টি বদলানো রচনা
+app.count.changed_work.other = {n}টি বদলানো রচনা
+app.count.chapter.one = ১টি অধ্যায়
+app.count.chapter.other = {n}টি অধ্যায়
+app.count.character.one = ১টি চরিত্র
+app.count.character.other = {n}টি চরিত্র
+app.count.favourite.one = ১টি প্রিয়
+app.count.favourite.other = {n}টি প্রিয়
+app.count.new_quote.one = ১টি নতুন উক্তি
+app.count.new_quote.other = {n}টি নতুন উক্তি
+app.count.new_work.one = ১টি নতুন রচনা
+app.count.new_work.other = {n}টি নতুন রচনা
+app.count.passage.one = ১টি অংশ
+app.count.passage.other = {n}টি অংশ
+app.count.person.one = ১ জন মানুষ
+app.count.person.other = {n} জন মানুষ
+app.count.place.one = ১টি জায়গা
+app.count.place.other = {n}টি জায়গা
+app.count.quote.one = ১টি উক্তি
+app.count.quote.other = {n}টি উক্তি
+app.count.work.one = ১টি রচনা
+app.count.work.other = {n}টি রচনা
+
+# --- dashboard ---
+app.dashboard.a_few_minutes = কয়েক মিনিট, এর বেশি নয়।
+app.dashboard.answered_so_far = এ পর্যন্ত {n}টির উত্তর দেওয়া হয়েছে
+app.dashboard.cards_due.one = আজ ১টি কার্ড বাকি
+app.dashboard.cards_due.other = আজ {n}টি কার্ড বাকি
 
 # --- devices ---
 app.devices.no_devices_are_paired = কোনো ডিভাইস যুক্ত নেই।
@@ -149,6 +243,9 @@ app.library.share_as_markdown = Markdown হিসেবে শেয়ার �
 app.library.the_export_could_not_be_written = রপ্তানি লেখা যায়নি।
 app.library.there_are_no_quotes_to_export = রপ্তানি করার মতো উক্তি এখনও নেই।
 
+# --- list ---
+app.list.and = {a} ও {b}
+
 # --- log ---
 app.log.clear_the_log = লগ খালি করবেন?
 app.log.include_earlier_runs = আগের বারগুলোও রাখুন
@@ -156,6 +253,9 @@ app.log.log = লগ
 app.log.log_copied = লগ কপি হয়েছে
 app.log.the_log_is_empty = লগ খালি।
 app.log.this_empties_the_log_on_this = এটি এই ফোনের লগ খালি করে, আগের বারগুলোসহ। আর কিছু বদলায় না।
+
+# --- metadata_tools ---
+app.metadata_tools.has_a_cover = প্রচ্ছদ আছে
 
 # --- page_selector ---
 app.page_selector.tap_a_word_to_take_it = একটি শব্দে ট্যাপ করে নিন বা বাদ দিন। কয়েকটি শব্দের ওপর দিয়ে বাক্স টেনে সেগুলো নিন।
@@ -165,6 +265,13 @@ app.pair.name_for_this_phone = এই ফোনের নাম
 app.pair.on_a_computer_open_tippani_go = কম্পিউটারে টিপ্পনী খুলুন, সেটিংস, তারপর সার্ভার, তারপর ডিভাইস-এ গিয়ে "ডিভাইস যুক্ত করুন" বেছে নিন। একটি কোড দেখাবে। সেটি এখানে লিখুন।
 app.pair.pair = যুক্ত করুন
 app.pair.shown_in_the_device_list_so = ডিভাইসের তালিকায় দেখানো হয়, যাতে আপনার ফোনগুলো আলাদা করে চেনা যায়।
+
+# --- people_console ---
+app.people_console.orphans = {people} ও {characters} কোনো রচনায় বা উক্তিতে নেই। মোট {n}টি সরানো হবে।
+
+# --- person ---
+app.person.shared_more.one = আরও ১টি উক্তিতে তাঁর নাম অন্য কারও সঙ্গে আছে, তাই সেটি এখানে তালিকাভুক্ত নয়।
+app.person.shared_more.other = আরও {n}টি উক্তিতে তাঁর নাম অন্য কারও সঙ্গে আছে, তাই সেগুলো এখানে তালিকাভুক্ত নয়।
 
 # --- prefs ---
 app.prefs.a_credit_such_as_pratchett_gaiman = "Pratchett & Gaiman"-এর মতো কৃতিত্ব-লেখা, আপনার চালু করা বিভাজক দিয়ে ভাগ হয়ে দুজন মানুষ হয়ে যায়।
@@ -231,14 +338,42 @@ app.prefs.what_shows_at_the_bottom_and = নিচে কী দেখায়,
 
 # --- pull ---
 app.pull.a_few_seconds_after_you_change = কিছু বদলানোর কয়েক সেকেন্ড পরে, আর দিনে একবার (অ্যাপ খুললে, বা নেটওয়ার্ক ফিরলে)
+app.pull.brought_down = নামানো হয়েছে: {x}।
+app.pull.conflicts.one = ১টি জিনিস দুই দিকেই বদলেছে। এর জন্য কিছু বদলানো হয়নি: নিচে বেছে নিন।
+app.pull.conflicts.other = {n}টি জিনিস দুই দিকেই বদলেছে। সেগুলোর জন্য কিছু বদলানো হয়নি: নিচে বেছে নিন।
+app.pull.deleted_here.one = সার্ভারে মুছে ফেলা ১টি জিনিস এখানেও সরানো হয়েছে।
+app.pull.deleted_here.other = সার্ভারে মুছে ফেলা {n}টি জিনিস এখানেও সরানো হয়েছে।
+app.pull.deleted_there.one = এখানে আপনার মুছে ফেলা ১টি জিনিস সার্ভারেও মুছেছে (কিছুদিন তার বিনে থাকে)।
+app.pull.deleted_there.other = এখানে আপনার মুছে ফেলা {n}টি জিনিস সার্ভারেও মুছেছে (কিছুদিন তার বিনে থাকে)।
+app.pull.gone_on_server.one = সিঙ্কের সময় ১টি জিনিস সার্ভারে সরে গেছে; এখানে যেমন ছিল তেমনই রাখা হয়েছে।
+app.pull.gone_on_server.other = সিঙ্কের সময় {n}টি জিনিস সার্ভারে সরে গেছে; এখানে যেমন ছিল তেমনই রাখা হয়েছে।
+app.pull.held_back = সার্ভারে {n}টি জিনিস নেই। এত বেশি যে এখানে কিছুই সরানো হয়নি: সার্ভারটি ঠিক কি না এবং পুরনো কপি থেকে ফেরানো হয়নি তো, দেখে নিন।
 app.pull.last_synced_when = শেষ সিঙ্ক হয়েছে {when}।
+app.pull.linked.one = এখানকার ১টি জিনিস সার্ভারের একটির সঙ্গে মিলেছে, তাই জোড়া লাগানো হয়েছে, কপি করা হয়নি।
+app.pull.linked.other = এখানকার {n}টি জিনিস সার্ভারের জিনিসের সঙ্গে মিলেছে, তাই জোড়া লাগানো হয়েছে, কপি করা হয়নি।
+app.pull.refused = সার্ভার {what} নাকচ করেছে: {reason}।
+app.pull.relinked.one = সার্ভারে মুছে ফেলা কিন্তু এখানে বদলানো ১টি জিনিস রাখা হয়েছে এবং আবার পাঠানো হবে।
+app.pull.relinked.other = সার্ভারে মুছে ফেলা কিন্তু এখানে বদলানো {n}টি জিনিস রাখা হয়েছে এবং আবার পাঠানো হবে।
+app.pull.skipped.one = সার্ভারের ১টি জিনিস নামানো যায়নি (কথা নেই, বা তার রচনা এখানে নেই)।
+app.pull.skipped.other = সার্ভারের {n}টি জিনিস নামানো যায়নি (কথা নেই, বা তাদের রচনা এখানে নেই)।
 app.pull.sync_automatically = নিজে নিজে সিঙ্ক করুন
 app.pull.sync_now = এখনই সিঙ্ক করুন
 app.pull.sync_with_server = সার্ভারের সঙ্গে সিঙ্ক করুন
+app.pull.unreachable = সার্ভারে পৌঁছানো যায়নি। আর কিছু বদলানো হয়নি; সার্ভার সাড়া দিলে আবার চেষ্টা করুন।
+
+# --- quiz ---
+app.quiz.from_source = {source} থেকে
+app.quiz.missed_n = {n}টি ভুল
+app.quiz.recalled_n = {n}টি মনে পড়েছে
+app.quiz.skipped_n = {n}টি বাদ
 
 # --- quote ---
 app.quote.quote_deleted = উক্তিটি মুছে ফেলা হয়েছে।
 app.quote.this_quote_is_not_here_any = এই উক্তিটি আর এখানে নেই।
+
+# --- quote_chips ---
+app.quote_chips.what_name = {what} {name}
+app.quote_chips.what_name_actor = {what} {name}, অভিনয়ে {actor}
 
 # --- quote_context ---
 app.quote_context.context = প্রসঙ্গ
@@ -331,19 +466,51 @@ app.shelf.in_progress = চলছে
 app.shelf.not_started = শুরু হয়নি
 app.shelf.the_shelf_is_kept_on_your = তাক আপনার সার্ভারে রাখা হয়। বদলাতে এই ফোনটি যুক্ত করুন এবং এই রচনাটি সিঙ্ক করুন।
 
+# --- source_files ---
+app.source_files.a_show_episode = একটি ধারাবাহিক · {episode}
+app.source_files.a_work_not_on_this_phone = এই ফোনে নেই এমন একটি রচনা
+app.source_files.attached_n = {n}টি যুক্ত হয়েছে
+app.source_files.found_by_ids = {rel} · {format} · আইডি দিয়ে মেলানো
+app.source_files.found_by_name = {rel} · {format} · নাম দিয়ে মেলানো
+app.source_files.full_stop = ।
+app.source_files.keeps.one = ১টি উক্তি তার আশপাশ রাখে।
+app.source_files.keeps.other = {n}টি উক্তি তাদের আশপাশ রাখে।
+app.source_files.looking = খোঁজা হচ্ছে… {read}টি ফাইল পড়া হয়েছে, {found}টি পাওয়া গেছে।
+app.source_files.none_to_keep.one = ১টি উক্তির রাখার মতো কিছু নেই।
+app.source_files.none_to_keep.other = {n}টি উক্তির রাখার মতো কিছু নেই।
+app.source_files.scan_done = {read}টি ফাইল পড়া হয়েছে, {found}টি কোনো রচনার সঙ্গে মিলেছে।
+app.source_files.scan_done_some_unclaimed = {read}টি ফাইল পড়া হয়েছে, {found}টি কোনো রচনার সঙ্গে মিলেছে, {none}টি কোনোটার সঙ্গে নয়।
+app.source_files.skipped_n = {n}টি বাদ
+app.source_files.stopped_part_way = মাঝপথে থেমেছে: {read}টি ফাইল পড়া হয়েছে। চালিয়ে যেতে আবার স্ক্যান করুন।
+app.source_files.the_file_x_is_deleted_from = ফাইলটি ({x}) সার্ভার থেকে মুছে যায়; {x2} আশপাশ থেকে যায়। {keeps}{none}
+app.source_files.the_scan_did_not_finish = স্ক্যান শেষ হয়নি।
+app.source_files.the_scan_did_not_finish_why = স্ক্যান শেষ হয়নি: {detail}
+app.source_files.unreadable_n = {n}টি পড়া যায়নি
+
 # --- sync ---
+app.sync.already_there.one = ১টি উক্তি আগে থেকেই সার্ভারে ছিল এবং এখন জোড়া লাগানো হয়েছে, কপি করা হয়নি।
+app.sync.already_there.other = {n}টি উক্তি আগে থেকেই সার্ভারে ছিল এবং এখন জোড়া লাগানো হয়েছে, কপি করা হয়নি।
+app.sync.everything_is_already_there = আপনার লাইব্রেরির সবকিছু আগে থেকেই আপনার সার্ভারে আছে।
 app.sync.send_to_server = সার্ভারে পাঠান
 app.sync.sends_the_works_and_quotes_that = শুধু এই ফোনে থাকা রচনা ও উক্তি আপনার টিপ্পনী সার্ভারে পাঠায়। এটি শুধু যোগ করে: সার্ভারের কিছু বদলায় না বা মোছে না, আর যা আগেই আছে তা আবার পাঠায় না।
+app.sync.unreachable = সার্ভারে পৌঁছানো যায়নি, তাই বাকিটা পাঠানো হয়নি। যা পাঠানো হয়েছে তা সেখানেই থাকবে; সার্ভার সাড়া দিলে আবার চেষ্টা করুন।
+app.sync.waiting.one = ১টি উক্তি এখনও পাঠানোর অপেক্ষায়।
+app.sync.waiting.other = {n}টি উক্তি এখনও পাঠানোর অপেক্ষায়।
+app.sync.waiting_to_be_sent = পাঠানোর অপেক্ষায়: {works} ও {quotes}।
 
 # --- tools ---
 app.tools.delete_for_good = চিরতরে মুছুন
+app.tools.deleted_at = {when} মুছেছে
 app.tools.empty_the_bin = ঝুড়ি খালি করুন
 app.tools.the_bin_is_empty = ঝুড়ি খালি।
+app.tools.with_quotes = {quotes} সহ
 
 # --- update_ui ---
 app.update_ui.android_is_asking_you_to_install = অ্যান্ড্রয়েড আপনাকে আপডেটটি ইনস্টল করতে বলছে। এর মধ্যে টিপ্পনী বন্ধ হয়ে যাবে।
+app.update_ui.checking = দেখা হচ্ছে…
 app.update_ui.downloading_version = {version} নামানো হচ্ছে
 app.update_ui.later = পরে
+app.update_ui.latest_version = আপনার কাছে সর্বশেষ সংস্করণ ({version}) আছে।
 app.update_ui.new_in_version = {version}-এ নতুন
 app.update_ui.ready_to_install = ইনস্টলের জন্য তৈরি
 app.update_ui.the_update_did_not_install = আপডেট ইনস্টল হয়নি
@@ -376,6 +543,9 @@ app.work_form.look_up_details = বিবরণ খুঁজুন
 app.work_form.the_year_must_be_a_number = বছর একটি সংখ্যা হতে হবে।
 app.work_form.what_it_is_written_or_spoken = এটি কোন ভাষায় লেখা বা বলা, যদি বলতে চান।
 app.work_form.which_one = কোনটি?
+
+# --- work_order ---
+app.work_order.month_noted = যে মাসে লেখা
 
 # --- work_read ---
 app.work_read.my_notes = আমার টীকা

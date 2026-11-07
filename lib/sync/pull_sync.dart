@@ -743,21 +743,21 @@ class PullSync {
     return true;
   }
 
-  static const _labels = {
+  static final _labels = {
     'text': 'Words',
-    'translation': 'Translation',
-    'language': 'Language',
-    'speaker': 'Speaker',
-    'chapter': 'Chapter',
-    'location': 'Place',
-    'note': 'Note',
-    'color': 'Colour',
-    'favorite': 'Favourite',
-    'tags': 'Tags',
-    'kind': 'Kind',
-    'title': 'Title',
+    'translation': tx('common.field.translation.label'),
+    'language': tx('common.field.language.label'),
+    'speaker': tx('common.field.speaker.label'),
+    'chapter': tx('board.sort.chapter.label'),
+    'location': tx('common.field.place.label'),
+    'note': tx('common.field.note.label'),
+    'color': tx('common.field.colour.label'),
+    'favorite': tx('common.field.favourite.label'),
+    'tags': tx('common.field.tags.label'),
+    'kind': tx('quotes.form.kind.label'),
+    'title': tx('common.field.title.label'),
     'creator': 'By',
-    'year': 'Year',
+    'year': tx('common.field.year.label'),
   };
 
   static String _show(Object? v) {

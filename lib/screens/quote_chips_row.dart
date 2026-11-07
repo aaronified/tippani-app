@@ -125,11 +125,16 @@ class PersonChip extends StatelessWidget {
     final r = dense ? 11.0 : 14.0;
     return Semantics(
       button: true,
-      label: context.tr('app.quote_chips.what_namex', {
-        'what': _what,
-        'name': chip.name,
-        'x': chip.actor.isEmpty ? '' : ', played by ${chip.actor}',
-      }),
+      label: chip.actor.isEmpty
+          ? context.tr('app.quote_chips.what_name', {
+              'what': _what,
+              'name': chip.name,
+            })
+          : context.tr('app.quote_chips.what_name_actor', {
+              'what': _what,
+              'name': chip.name,
+              'actor': chip.actor,
+            }),
       child: Tooltip(
         message: chip.actor.isEmpty
             ? chip.name

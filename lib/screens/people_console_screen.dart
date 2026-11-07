@@ -176,11 +176,9 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
       builder: (context) => AlertDialog(
         title: Text(context.tr('app.people_console.remove_what_nothing_uses')),
         content: Text(
-          context.tr('app.people_console.people_x_and_characters_x2_are', {
-            'people': _orphans.people,
-            'x': _orphans.people == 1 ? 'person' : 'people',
-            'characters': _orphans.characters,
-            'x2': _orphans.characters == 1 ? 'character' : 'characters',
+          context.tr('app.people_console.orphans', {
+            'people': countWords('person', _orphans.people),
+            'characters': countWords('character', _orphans.characters),
             'n': n,
           }),
         ),
@@ -204,7 +202,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
     final e = await characterForm(
       context,
       title: context.tr('app.people_console.a_new_character'),
-      yes: 'Add',
+      yes: context.tr('common.action.add.label'),
     );
     if (e == null || !mounted) return;
     var id = 0;
@@ -515,10 +513,10 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
   }
 
   String _kindName(String k) => switch (k) {
-    'author' => 'Authors',
-    'actor' => 'Actors',
-    'director' => 'Directors',
-    'speaker' => 'Speakers',
+    'author' => context.tr('stats.breakdown.authors.label'),
+    'actor' => context.tr('stats.breakdown.actors.label'),
+    'director' => context.tr('stats.breakdown.directors.label'),
+    'speaker' => context.tr('stats.breakdown.speakers.label'),
     'creator' => 'Creators',
     _ => k.isEmpty ? k : '${k[0].toUpperCase()}${k.substring(1)}',
   };
@@ -595,12 +593,12 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                 tabs: [
                   Tab(
                     text: people == null
-                        ? 'People'
+                        ? context.tr('common.field.people.label')
                         : 'People (${people.length})',
                   ),
                   Tab(
                     text: characters == null
-                        ? 'Characters'
+                        ? context.tr('stats.breakdown.characters.label')
                         : 'Characters (${characters.length})',
                   ),
                 ],

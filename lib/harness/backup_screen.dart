@@ -114,10 +114,15 @@ class _BackupScreenState extends State<BackupScreen> {
       builder: (context) => AlertDialog(
         title: Text(context.tr('app.backup.restore_this_backup')),
         content: Text(
-          context.tr('app.backup.made_firstx_it_replaces_the_settings_2', {
-            'first': doc.createdAt.toLocal().toString().split('.').first,
-            'x': doc.appVersion.isEmpty ? '' : ' by version ${doc.appVersion}',
-          }),
+          context.tr(
+            doc.appVersion.isEmpty
+                ? 'app.backup.made_it_replaces_the_settings'
+                : 'app.backup.made_by_version_it_replaces_the_settings',
+            {
+              'first': doc.createdAt.toLocal().toString().split('.').first,
+              'version': doc.appVersion,
+            },
+          ),
         ),
         actions: [
           TextButton(
@@ -148,7 +153,7 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() {
       _message = r.ignored.isEmpty
           ? context.tr('app.backup.restored_pair_this_phone_again_to')
-          : 'Restored. The file also held ${r.ignored.length} part${r.ignored.length == 1 ? '' : 's'} this version of the app does not know, which were left out.';
+          : trn('app.backup.restored_with_ignored', r.ignored.length);
     });
   }
 

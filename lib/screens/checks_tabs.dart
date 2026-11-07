@@ -541,7 +541,11 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                             ? null
                             : () =>
                                   answer(chosen, fix: false, ignore: !_ignored),
-                        child: Text(_ignored ? 'Restore' : 'Ignore'),
+                        child: Text(
+                          _ignored
+                              ? context.tr('common.action.restore.label')
+                              : context.tr('cleanup.ignore.label'),
+                        ),
                       ),
                       if (!_ignored)
                         FilledButton(
@@ -613,11 +617,16 @@ class _FindingRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  context.tr('app.checks_tabs.rule_fieldx', {
-                    'rule': words?.$1 ?? finding.rule,
-                    'field': field,
-                    'x': finding.count > 1 ? ' · ${finding.count} places' : '',
-                  }),
+                  finding.count > 1
+                      ? context.tr('app.checks_tabs.rule_field_places', {
+                          'rule': words?.$1 ?? finding.rule,
+                          'field': field,
+                          'places': countWords('place', finding.count),
+                        })
+                      : context.tr('app.checks_tabs.rule_field', {
+                          'rule': words?.$1 ?? finding.rule,
+                          'field': field,
+                        }),
                   style: theme.textTheme.labelLarge,
                 ),
                 if (words != null)
@@ -655,7 +664,11 @@ class _FindingRow extends StatelessWidget {
                       ),
                     TextButton(
                       onPressed: busy ? null : () => onIgnore(!finding.ignored),
-                      child: Text(finding.ignored ? 'Restore' : 'Ignore'),
+                      child: Text(
+                        finding.ignored
+                            ? context.tr('common.action.restore.label')
+                            : context.tr('cleanup.ignore.label'),
+                      ),
                     ),
                   ],
                 ),

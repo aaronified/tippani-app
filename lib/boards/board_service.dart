@@ -26,17 +26,17 @@ class StarterOffer {
 }
 
 /// The kinds of board the server knows, with the words for each.
-const boardKinds = <(String, String)>[
-  ('plain', 'Plain'),
-  ('proverb', 'Proverbs'),
-  ('speech', 'Speeches'),
+final boardKinds = <(String, String)>[
+  ('plain', tx('share.format.plaintext.name')),
+  ('proverb', tx('quotes.board.kind.proverb.label')),
+  ('speech', tx('quotes.starter.speeches.name')),
   ('letter', 'Letters'),
   ('essay', 'Essays'),
 ];
 
 String boardKindLabel(String kind) =>
     boardKinds.where((k) => k.$1 == kind).map((k) => k.$2).firstOrNull ??
-    'Plain';
+    tx('share.format.plaintext.name');
 
 /// What the server holds for a board beyond its name and colour: a description, a picture, its kind and languages,
 /// whether it is hidden, and where it sits in the order. An interface so a test can stand in for the server.

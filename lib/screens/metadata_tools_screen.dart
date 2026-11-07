@@ -213,8 +213,9 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                           [
                             if (w.creator.isNotEmpty) w.creator,
                             if (w.year > 0) '${w.year}',
-                            '${w.quotes} ${w.quotes == 1 ? 'quote' : 'quotes'}',
-                            if (w.hasCover) 'has a cover',
+                            countWords('quote', w.quotes),
+                            if (w.hasCover)
+                              tx('app.metadata_tools.has_a_cover'),
                           ].join(' · '),
                         ),
                       ),
@@ -423,16 +424,12 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                         Padding(
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Text(
-                            context.tr(
-                              'app.metadata_tools.titlex_x2_quotes_x3',
-                              {
-                                'title': w.title,
-                                'x': w.creator.isEmpty ? '' : ' · ${w.creator}',
-                                'x2': w.year > 0 ? ' · ${w.year}' : '',
-                                'quotes': w.quotes,
-                                'x3': w.quotes == 1 ? 'quote' : 'quotes',
-                              },
-                            ),
+                            [
+                              w.title,
+                              if (w.creator.isNotEmpty) w.creator,
+                              if (w.year > 0) '${w.year}',
+                              countWords('quote', w.quotes),
+                            ].join(' · '),
                           ),
                         ),
                       Align(

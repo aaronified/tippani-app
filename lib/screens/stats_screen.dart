@@ -153,14 +153,24 @@ class _StatsScreenState extends State<StatsScreen> {
                     crossAxisSpacing: 10,
                     childAspectRatio: 2.1,
                     children: [
-                      big('Quotes', s.quotes),
-                      big('Favourites', s.favourites),
-                      big('Books', s.books),
-                      big('Films', s.films),
-                      big('Shows', s.shows),
-                      if (s.games > 0) big('Games', s.games),
-                      big('Tags', s.tags),
-                      big('Anthologies', s.anthologies),
+                      big(context.tr('nav.tab.quotes.label'), s.quotes),
+                      big(
+                        context.tr('stats.overview.favourites.label'),
+                        s.favourites,
+                      ),
+                      big(context.tr('library.group.none.label'), s.books),
+                      big(context.tr('stats.breakdown.films.label'), s.films),
+                      big(context.tr('stats.breakdown.shows.label'), s.shows),
+                      if (s.games > 0)
+                        big(
+                          context.tr('movies.filters.media.game.label'),
+                          s.games,
+                        ),
+                      big(context.tr('common.field.tags.label'), s.tags),
+                      big(
+                        context.tr('nav.tab.anthologies.label'),
+                        s.anthologies,
+                      ),
                     ],
                   ),
                   if (s.saves.any((d) => d.count > 0) ||
@@ -351,9 +361,9 @@ class _ActivityState extends State<_Activity> {
                   ButtonSegment(
                     value: k,
                     label: Text(switch (k) {
-                      _Stream.saves => 'Saved',
-                      _Stream.quiz => 'Quiz',
-                      _Stream.practice => 'Practice',
+                      _Stream.saves => context.tr('settings.keys.saved.tip'),
+                      _Stream.quiz => context.tr('stats.activity.quiz.label'),
+                      _Stream.practice => context.tr('quiz.practice.label'),
                     }),
                   ),
               ],
@@ -547,8 +557,16 @@ class _Memory extends StatelessWidget {
         spacing: 10,
         runSpacing: 10,
         children: [
-          tile('Remembered', recall.remembered, _green),
-          tile('Forgetting', recall.forgetting, _amber),
+          tile(
+            context.tr('common.status.remembered.label'),
+            recall.remembered,
+            _green,
+          ),
+          tile(
+            context.tr('common.status.forgetting.label'),
+            recall.forgetting,
+            _amber,
+          ),
           tile(
             context.tr('common.status.probably-forgotten.label'),
             recall.probablyForgotten,
@@ -854,7 +872,7 @@ class _Timeline extends StatelessWidget {
 
 // ---- breakdown -------------------------------------------------------------------------------------------
 
-const _kinds = <(String, String, bool, bool)>[
+final _kinds = <(String, String, bool, bool)>[
   // key, label, spans several works, a work (cover) rather than a person
   ('authors', 'Authors', true, false),
   ('books', 'Books', false, true),
@@ -1047,18 +1065,12 @@ class _BreakdownRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  context.tr('app.stats.quotes_x', {
-                    'quotes': t.quotes,
-                    'x': t.quotes == 1 ? 'quote' : 'quotes',
-                  }),
+                  countWords('quote', t.quotes),
                   style: theme.textTheme.labelMedium,
                 ),
                 if (spansWorks && t.works > 0)
                   Text(
-                    context.tr('app.stats.works_x', {
-                      'works': t.works,
-                      'x': t.works == 1 ? 'work' : 'works',
-                    }),
+                    countWords('work', t.works),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),

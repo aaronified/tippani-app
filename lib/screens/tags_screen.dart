@@ -398,7 +398,7 @@ class _TagsScreenState extends State<TagsScreen> {
     if (svc == null) return;
     final got = (await _ask(
       context.tr('tags.new.title'),
-      action: 'Add',
+      action: context.tr('common.action.add.label'),
     ))?.trim().replaceAll(RegExp(r'^#+'), '').trim();
     if (got == null || got.isEmpty) return;
     try {
@@ -435,7 +435,11 @@ class _TagsScreenState extends State<TagsScreen> {
     ];
     return Scaffold(
       appBar: AppBar(
-        title: Text(selecting ? '${picked.length} selected' : 'Tags'),
+        title: Text(
+          selecting
+              ? '${picked.length} selected'
+              : context.tr('common.field.tags.label'),
+        ),
         leading: selecting
             ? IconButton(
                 tooltip: context.tr('app.tags.clear_selection'),

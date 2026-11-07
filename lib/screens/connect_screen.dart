@@ -164,9 +164,11 @@ String describeCheck(ServerCheck check) {
     case ApiFailure.unauthorised:
     case ApiFailure.forbidden:
     case ApiFailure.server:
-      return tx('app.connect.the_server_refused_the_questionx', {
-        'x': check.detail.isEmpty ? '' : ': ${check.detail}',
-      });
+      return check.detail.isEmpty
+          ? tx('app.connect.the_server_refused_the_question')
+          : tx('app.connect.the_server_refused_the_question_why', {
+              'detail': check.detail,
+            });
     case null:
       return tx('app.connect.could_not_ask_the_server');
   }

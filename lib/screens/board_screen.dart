@@ -174,7 +174,7 @@ class _BoardScreenState extends State<BoardScreen> {
         BoardGroup.language => context.tr(
           'quotes.group.residual.language.label',
         ),
-        _ => 'Other',
+        _ => context.tr('vocab.quote-kind.other.label'),
       };
     }
     return _group == BoardGroup.colour
@@ -228,7 +228,7 @@ class _BoardScreenState extends State<BoardScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(b?.name ?? 'Board'),
+        title: Text(b?.name ?? context.tr('common.field.board.label')),
         actions: [
           PopupMenuButton<BoardSort>(
             tooltip: context.tr('common.filters.sort.aria'),

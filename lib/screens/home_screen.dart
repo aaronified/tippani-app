@@ -22,7 +22,7 @@ class HomeScreen extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text(context.tr('Tippani'), style: text.headlineMedium),
+            Text('Tippani', style: text.headlineMedium),
             const SizedBox(height: 8),
             if (url == null) ...[
               Text(context.tr('app.home.not_connected_to_a_server_yet')),

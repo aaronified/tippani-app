@@ -65,7 +65,7 @@ const _weekdays = [
   'Saturday',
   'Sunday',
 ];
-const _months = [
+final _months = [
   'January',
   'February',
   'March',
@@ -339,7 +339,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             for (final q in today.take(5)) _quoteTile(q),
           ],
           if (favourites.isNotEmpty) ...[
-            _heading(context, 'Favourites', '★ ${favourites.length}'),
+            _heading(
+              context,
+              context.tr('stats.overview.favourites.label'),
+              '★ ${favourites.length}',
+            ),
             for (final q in shownFavourites) _quoteTile(q),
             if (favourites.length > _favouritesShown)
               Center(
@@ -423,8 +427,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               context,
               icon: Icons.auto_stories_outlined,
               big: '$books',
-              label: books == 1 ? 'book' : 'books',
-              small: '$bookQuotes ${bookQuotes == 1 ? 'quote' : 'quotes'}',
+              label: books == 1
+                  ? context.tr('app.count.book_word.one')
+                  : context.tr('app.count.book_word.other'),
+              small: countWords('quote', bookQuotes),
               onTap: widget.onOpenLibrary,
             ),
           ),
@@ -569,8 +575,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         headline = context.tr('app.dashboard.nothing_due_today');
         sub = context.tr('app.dashboard.add_or_review_more_quotes_to');
       } else {
-        headline = due == 1 ? '1 card due today' : '$due cards due today';
-        sub = done > 0 ? '$done answered so far' : 'A few minutes, no more.';
+        headline = trn('app.dashboard.cards_due', due);
+        sub = done > 0
+            ? context.tr('app.dashboard.answered_so_far', {'n': done})
+            : context.tr('app.dashboard.a_few_minutes');
       }
       body = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -598,7 +606,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             FilledButton.icon(
               onPressed: () => _play(QuizMode.daily),
               icon: const Icon(Icons.play_arrow_rounded),
-              label: Text(done > 0 ? 'Continue' : 'Start'),
+              label: Text(
+                done > 0
+                    ? context.tr('home.daily.resume.label')
+                    : context.tr('home.daily.start.label'),
+              ),
             ),
           ],
         ],

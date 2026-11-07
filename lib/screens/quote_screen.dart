@@ -284,7 +284,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
           IconButton(
             tooltip: q.favorite
                 ? context.tr('common.action.favourite.off.label')
-                : 'Favourite',
+                : context.tr('common.field.favourite.label'),
             icon: Icon(q.favorite ? Icons.star : Icons.star_border),
             onPressed: _favourite,
           ),
@@ -351,7 +351,9 @@ class _QuoteScreenState extends State<QuoteScreen> {
                 onPressed: _speak,
                 icon: Icon(_speaking ? Icons.stop : Icons.volume_up_outlined),
                 label: Text(
-                  _speaking ? 'Stop' : context.tr('speech.play.aria'),
+                  _speaking
+                      ? context.tr('settings.jobs.current.stop.label')
+                      : context.tr('speech.play.aria'),
                 ),
               ),
               FilledButton.tonalIcon(

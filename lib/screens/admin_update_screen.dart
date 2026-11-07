@@ -72,7 +72,7 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
         'app.admin_update.the_server_pulls_latest_restarts_and',
         {'latest': i.latest},
       ),
-      yes: 'Update',
+      yes: context.tr('settings.jobs.kind.update-apply'),
     );
     if (!ok || !mounted) return;
     setState(
@@ -181,17 +181,20 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
                     const SizedBox(height: 8),
                     Text(
                       context.tr('app.admin_update.running_current', {
-                        'current': i.current.isEmpty ? 'unknown' : i.current,
+                        'current': i.current.isEmpty
+                            ? context.tr('app.admin_update.unknown')
+                            : i.current,
                       }),
                     ),
                     Text(
                       context.tr(
-                        'app.admin_update.newest_on_the_x_line_latest',
+                        i.channel == 'prerelease'
+                            ? 'app.admin_update.newest_prerelease'
+                            : 'app.admin_update.newest_stable',
                         {
-                          'x': i.channel == 'prerelease'
-                              ? 'pre-release'
-                              : 'stable',
-                          'latest': i.latest.isEmpty ? 'unknown' : i.latest,
+                          'latest': i.latest.isEmpty
+                              ? context.tr('app.admin_update.unknown')
+                              : i.latest,
                         },
                       ),
                     ),
@@ -240,7 +243,9 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
                           await Clipboard.setData(
                             ClipboardData(text: i.guidedCommand),
                           );
-                          if (context.mounted) say(context, 'Copied');
+                          if (context.mounted) {
+                            say(context, context.tr('account.widget.copied'));
+                          }
                         },
                         icon: const Icon(Icons.copy_rounded),
                         label: Text(

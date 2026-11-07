@@ -26,11 +26,11 @@ String coverSourceName(String slug) =>
     {
       'google': tx('vocab.source.google.label'),
       'openlibrary': tx('vocab.source.openlibrary.label'),
-      'amazon': 'Amazon',
+      'amazon': tx('vocab.source.amazon.label'),
       'tmdb': 'TMDB',
       'tvdb': 'TheTVDB',
       'igdb': 'IGDB',
-      'wikidata': 'Wikidata',
+      'wikidata': tx('vocab.source.wikidata.label'),
       'google-images': tx('app.cover_search.web_images'),
       'images': tx('app.cover_search.web_images'),
     }[slug] ??

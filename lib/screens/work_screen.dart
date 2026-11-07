@@ -524,15 +524,11 @@ class _WorkScreenState extends State<WorkScreen> {
                       ],
                       const SizedBox(height: 4),
                       Text(
-                        context.tr('app.work.n_x_x2_favourites_x3', {
-                          'n': _quotes.length,
-                          'x': _quotes.length == 1 ? 'quote' : 'quotes',
-                          'x2': chapters > 0
-                              ? ' · $chapters ${chapters == 1 ? 'chapter' : 'chapters'}'
-                              : '',
-                          'favourites': favourites,
-                          'x3': favourites == 1 ? 'favourite' : 'favourites',
-                        }),
+                        [
+                          countWords('quote', _quotes.length),
+                          if (chapters > 0) countWords('chapter', chapters),
+                          countWords('favourite', favourites),
+                        ].join(' · '),
                         style: text.bodySmall,
                       ),
                       if (_quotes.isNotEmpty) ...[

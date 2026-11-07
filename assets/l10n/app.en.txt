@@ -86,6 +86,7 @@ app.admin_backup.restore_the_kept_backup = Restore the kept backup
 app.admin_backup.restoring_the_server_will_be_busy = Restoring. The server will be busy for a while…
 app.admin_backup.save_on_this_phone = Save on this phone
 app.admin_backup.saved_name = Saved {name}.
+app.admin_backup.sealed_with_unknown = This backup is sealed with the password of the account that made it.
 app.admin_backup.server_backup = Server backup
 app.admin_backup.starting_the_backup = Starting the backup…
 app.admin_backup.the_backup_did_not_finish = The backup did not finish.
@@ -107,6 +108,8 @@ app.admin_folders.no_saved_file_is_unused = No saved file is unused
 app.admin_folders.nothing_to_tidy = Nothing to tidy.
 app.admin_folders.path_on_the_server_like_books = Path on the server, like /books
 app.admin_folders.put_the_saved_files_in_backups = Put the saved files in backups
+app.admin_folders.removed_files.one = Removed 1 saved file.
+app.admin_folders.removed_files.other = Removed {n} saved files.
 app.admin_folders.stop_reading_label = Stop reading {label}?
 app.admin_folders.the_files_attached_to_works_are = The files attached to works are copied into each backup. Backups get bigger.
 app.admin_folders.the_folder_itself_is_not_touched = The folder itself is not touched. Files already attached from it stay saved.
@@ -171,6 +174,7 @@ app.admin_sources.needs_a_key = Needs a key
 app.admin_sources.not_set = Not set
 app.admin_sources.read_google_books_pages = Read Google Books pages
 app.admin_sources.rebuild_the_search_index = Rebuild the search index
+app.admin_sources.supplied = {works}, {people} supplied
 app.admin_sources.test_every_source = Test every source
 app.admin_sources.test_x = Test {x}
 app.admin_sources.the_search_index_is_rebuilt = The search index is rebuilt.
@@ -183,6 +187,8 @@ app.admin_update.an_update_is_ready = An update is ready
 app.admin_update.check_again = Check again
 app.admin_update.copy_the_command = Copy the command
 app.admin_update.newest_on_the_x_line_latest = Newest on the {x} line: {latest}
+app.admin_update.newest_prerelease = Newest on the pre-release line: {latest}
+app.admin_update.newest_stable = Newest on the stable line: {latest}
 app.admin_update.pre_release = Pre-release
 app.admin_update.published_first = Published {first}
 app.admin_update.release_line = Release line
@@ -195,6 +201,7 @@ app.admin_update.the_server_is_restarting = The server is restarting…
 app.admin_update.the_server_now_runs_current = The server now runs {current}.
 app.admin_update.the_server_pulls_latest_restarts_and = The server pulls {latest}, restarts, and is out of reach for a minute or two. Every reader is disconnected meanwhile.
 app.admin_update.this_server_cannot_update_itself_run = This server cannot update itself. Run this on its computer:
+app.admin_update.unknown = unknown
 app.admin_update.up_to_date = Up to date
 app.admin_update.update_the_server = Update the server?
 app.admin_update.update_to_latest = Update to {latest}
@@ -216,6 +223,8 @@ app.anthologies.a_new_anthology = A new anthology…
 app.anthologies.add_a_heading = Add a heading
 app.anthologies.add_a_heading_after = Add a heading after
 app.anthologies.added_added_x = Added {added} {x}.
+app.anthologies.added_n_passages = Added {n} passages.
+app.anthologies.added_one_passage = Added 1 passage.
 app.anthologies.added_to_title = Added to {title}.
 app.anthologies.already_in_title = Already in {title}.
 app.anthologies.commentary = Commentary
@@ -260,6 +269,8 @@ app.anthology_tools.group_passages_by = Group passages by
 app.anthology_tools.keep_adding_as_new_quotes_arrive = Keep adding as new quotes arrive
 app.anthology_tools.nothing_was_taken_out_of_this = Nothing was taken out of this anthology.
 app.anthology_tools.preview = Preview
+app.anthology_tools.preview_many = {n} passages match. It would add {add}.
+app.anthology_tools.preview_one = 1 passage matches. It would add {add}.
 app.anthology_tools.put_back = Put back
 app.anthology_tools.remove_cover = Remove cover
 app.anthology_tools.save_as_label = Save as {label}
@@ -277,13 +288,17 @@ app.backup.backed_up_as_name_this_phone = Backed up as {name}. This phone could 
 app.backup.backup_and_restore = Backup and restore
 app.backup.backup_saved = Backup saved.
 app.backup.copies_on_this_phone = Copies on this phone
+app.backup.made_by_version_it_replaces_the_settings = Made {first} by version {version}. It replaces the settings and library on this phone with what is in the file.
 app.backup.made_firstx_it_replaces_the_settings = Made {first}{x}.
 app.backup.made_firstx_it_replaces_the_settings_2 = Made {first}{x}.
+app.backup.made_it_replaces_the_settings = Made {first}. It replaces the settings and library on this phone with what is in the file.
 app.backup.none_yet = None yet.
 app.backup.part_of_that_backup_is_damaged = Part of that backup is damaged, so none of it was restored. Nothing on this phone has changed.
 app.backup.restore_from_a_file = Restore from a file…
 app.backup.restore_this_backup = Restore this backup?
 app.backup.restored_pair_this_phone_again_to = Restored. Pair this phone again to use it.
+app.backup.restored_with_ignored.one = Restored. The file also held 1 part this version of the app does not know, which was left out.
+app.backup.restored_with_ignored.other = Restored. The file also held {n} parts this version of the app does not know, which were left out.
 app.backup.save_a_copy_somewhere = Save a copy somewhere…
 app.backup.that_backup_holds_nothing_to_restore = That backup holds nothing to restore.
 app.backup.that_backup_was_made_by_a = That backup was made by a newer version of the app. Update the app, then restore it.
@@ -310,10 +325,14 @@ app.board_service.the_server_no_longer_accepts_this = The server no longer accep
 # --- boards ---
 app.boards.add_a_picture = Add a picture
 app.boards.add_starter_proverbs = Add starter proverbs
+app.boards.language_count = {language} ({count})
+app.boards.language_count_here = {language} ({count}) · this board
 app.boards.language_count_x = {language} ({count}){x}
 app.boards.more_for_name = More for {name}
 app.boards.no_boards_yet_a_board_is = No boards yet. A board is a shelf for standalone quotes: make one, then file quotes on it from the quote form.
 app.boards.remove_picture = Remove picture
+app.boards.removed_keeps.one = The board is removed. Its 1 quote stays in your library, on no board.
+app.boards.removed_keeps.other = The board is removed. Its {n} quotes stay in your library, on no board.
 app.boards.separate_with_commas_bengali_hindi = Separate with commas: Bengali, Hindi
 app.boards.the_board_is_removed = The board is removed.
 app.boards.the_server_has_no_starter_proverbs = The server has no starter proverbs.
@@ -321,6 +340,8 @@ app.boards.those_proverbs_are_already_there = Those proverbs are already there.
 
 # --- bulk_bar ---
 app.bulk_bar.add_a_tag = Add a tag
+app.bulk_bar.added_to = {n} added to {title}.
+app.bulk_bar.already_there = {n} already there.
 app.bulk_bar.delete_n_quotes = Delete {n} quotes?
 app.bulk_bar.delete_n_works = Delete {n} works?
 app.bulk_bar.favourite_them = Favourite them
@@ -331,6 +352,7 @@ app.bulk_bar.merge_into_title = Merge into “{title}”?
 app.bulk_bar.move_to_a_board = Move to a board…
 app.bulk_bar.n_quotes_deleted = {n} quotes deleted.
 app.bulk_bar.no_board = No board
+app.bulk_bar.not_on_server = {n} not on the server yet (sync first).
 app.bulk_bar.nothing_to_change = Nothing to change.
 app.bulk_bar.set_one_field = Set one field…
 app.bulk_bar.set_one_field_2 = Set one field
@@ -367,13 +389,22 @@ app.changelog.the_link_could_not_be_opened = The link could not be opened. It is
 app.changelog.what_s_new = What's new
 
 # --- checks ---
+app.checks.added_quotes = Added {quotes} to this phone.
+app.checks.added_quotes_and_works = Added {quotes} and {works} to this phone.
+app.checks.already_here = {n} already here.
 app.checks.choose_a_file = Choose a file
 app.checks.choose_a_markdown_file = Choose a Markdown file
 app.checks.how_to_get_a_file_from = How to get a file from…
 app.checks.import_a_file = Import a file
 app.checks.import_markdown_into_this_phone = Import Markdown into this phone
 app.checks.importing_to_a_server_needs_a = Importing to a server needs a paired server
+app.checks.near_duplicates = {n} look like quotes you already have.
+app.checks.not_read_here = {n} not read here (anthologies are for the server).
+app.checks.nothing_new_local.one = Nothing new: 1 quote is already on this phone.
+app.checks.nothing_new_local.other = Nothing new: {n} quotes are already on this phone.
 app.checks.pair_this_phone_in_settings_a = Pair this phone in Settings. A Markdown file can still be imported here.
+app.checks.read_as_nothing_new = Read as {what}. Nothing new in it: everything is already in your library or the queue.
+app.checks.read_as_staged = Read as {what}. {quotes} from {works} wait for your approval.
 app.checks.read_it = Read it
 app.checks.reading_busy = Reading {busy}…
 app.checks.review_the_queue = Review the queue
@@ -386,7 +417,15 @@ app.checks_entry.pending = {pending}
 
 # --- checks_service ---
 app.checks_service.an_invisible_space_or_hyphen_from = An invisible space or hyphen, from HTML, a justified PDF, or a word broken across lines.
+app.checks_service.duplicated.one = 1 would have duplicated a quote you already have
+app.checks_service.duplicated.other = {n} would have duplicated quotes you already have
+app.checks_service.edited_left_alone = {n} you had edited were left alone
+app.checks_service.other_group.one = 1 belonged to the other group and was skipped
+app.checks_service.other_group.other = {n} belonged to the other group and were skipped
+app.checks_service.stale.one = 1 had changed since you looked and was left alone
+app.checks_service.stale.other = {n} had changed since you looked and were left alone
 app.checks_service.two_or_more_spaces_in_a = Two or more spaces in a row, from justified text, or typed on purpose after a full stop.
+app.checks_service.updated = Updated {quotes}
 
 # --- checks_tabs ---
 app.checks_tabs.a_subtitle_file_knows_when_each = A subtitle file knows when each line is spoken. A book’s EPUB knows each highlight’s chapter and how far in it sits. Nothing changes until you accept.
@@ -420,6 +459,8 @@ app.checks_tabs.quote_on_its_own = Quote on its own
 app.checks_tabs.quotes_can_carry_things_that_came = Quotes can carry things that came from the page rather than the writer. They are invisible on a card but still in the search index, so a phrase you can see may not be found.
 app.checks_tabs.quotes_on_their_own = Quotes on their own
 app.checks_tabs.restored_n = Restored {n}
+app.checks_tabs.rule_field = {rule} · {field}
+app.checks_tabs.rule_field_places = {rule} · {field} · {places}
 app.checks_tabs.rule_fieldx = {rule} · {field}{x}
 app.checks_tabs.something_went_wrong = Something went wrong.
 app.checks_tabs.the_attached_file_is_probably_not = The attached file is probably not this book’s. Check it on the server.
@@ -432,6 +473,9 @@ app.checks_tabs.where_a_quote_differs_from_the = Where a quote differs from the 
 app.checks_tabs.work_title_differing_of_total_quotes = {work_title}: {differing} of {total} quotes differ
 app.checks_tabs.you_edited_this_quote_yourself = You edited this quote yourself.
 app.checks_tabs.your_library_is_large_so_only = Your library is large, so only the first of these are listed. Answer them and look again for the rest.
+
+# --- common ---
+app.common.ok = OK
 
 # --- conflicts ---
 app.conflicts.changed_on_both_sides = Changed on both sides
@@ -459,11 +503,41 @@ app.connect.server_address = Server address
 app.connect.something_answered_but_it_is_not = Something answered, but it is not a Tippani server. Check the address and the port.
 app.connect.the_server_did_not_answer_in = The server did not answer in time. If it was asleep, wait a moment and try again.
 app.connect.the_server_is_asking_you_to = The server is asking you to slow down. Wait a moment and try again.
+app.connect.the_server_refused_the_question = The server refused the question.
+app.connect.the_server_refused_the_question_why = The server refused the question: {detail}.
 app.connect.the_server_refused_the_questionx = The server refused the question{x}.
 app.connect.this_tippani_server_is_newer_than = This Tippani server is newer than this app understands. Update the app, then try again.
 app.connect.this_tippani_server_is_older_than = This Tippani server is older than this app needs. Update the server, then try again.
 app.connect.tippani_runs_on_a_server_you = Tippani runs on a server you own. Enter its address, the one you open in a browser.
 app.connect.your_tippani_server = Your Tippani server
+
+# --- count ---
+app.count.book_word.one = book
+app.count.book_word.other = books
+app.count.changed_quote.one = 1 changed quote
+app.count.changed_quote.other = {n} changed quotes
+app.count.changed_work.one = 1 changed work
+app.count.changed_work.other = {n} changed works
+app.count.chapter.one = 1 chapter
+app.count.chapter.other = {n} chapters
+app.count.character.one = 1 character
+app.count.character.other = {n} characters
+app.count.favourite.one = 1 favourite
+app.count.favourite.other = {n} favourites
+app.count.new_quote.one = 1 new quote
+app.count.new_quote.other = {n} new quotes
+app.count.new_work.one = 1 new work
+app.count.new_work.other = {n} new works
+app.count.passage.one = 1 passage
+app.count.passage.other = {n} passages
+app.count.person.one = 1 person
+app.count.person.other = {n} people
+app.count.place.one = 1 place
+app.count.place.other = {n} places
+app.count.quote.one = 1 quote
+app.count.quote.other = {n} quotes
+app.count.work.one = 1 work
+app.count.work.other = {n} works
 
 # --- cover_search ---
 app.cover_search.find_a_cover_online = Find a cover online
@@ -474,7 +548,11 @@ app.cover_search.use_this_cover = Use this cover?
 app.cover_search.web_images = Web images
 
 # --- dashboard ---
+app.dashboard.a_few_minutes = A few minutes, no more.
 app.dashboard.add_or_review_more_quotes_to = Add or review more quotes to build your schedule.
+app.dashboard.answered_so_far = {n} answered so far
+app.dashboard.cards_due.one = 1 card due today
+app.dashboard.cards_due.other = {n} cards due today
 app.dashboard.connect_to_your_server_in_settings = Connect to your server in Settings to get a few quotes to recall each day.
 app.dashboard.could_not_load_today_s_quiz = Could not load today’s quiz.
 app.dashboard.daily_quiz = DAILY QUIZ
@@ -568,6 +646,9 @@ app.library.there_are_no_quotes_to_export = There are no quotes to export yet.
 app.library.tippani_quotes = Tippani quotes
 app.library.try_fewer_words_or_clear_a = Try fewer words, or clear a filter.
 
+# --- list ---
+app.list.and = {a} and {b}
+
 # --- log ---
 app.log.clear_the_log = Clear the log?
 app.log.include_earlier_runs = Include earlier runs
@@ -582,6 +663,7 @@ app.metadata_tools.every_work_has_all_its_details = Every work has all its detai
 app.metadata_tools.fetch_missing_covers = Fetch missing covers
 app.metadata_tools.fill_every_work_s_gaps = Fill every work's gaps
 app.metadata_tools.from_source = from {source}
+app.metadata_tools.has_a_cover = has a cover
 app.metadata_tools.merge_n = Merge {n}
 app.metadata_tools.no_g_n = No {g} ({n})
 app.metadata_tools.no_work_looks_saved_twice = No work looks saved twice.
@@ -621,6 +703,7 @@ app.people_console.no_one_matches = No one matches.
 app.people_console.no_photo_n = No photo ({n})
 app.people_console.no_picture_n = No picture ({n})
 app.people_console.nothing_unused_to_remove = Nothing unused to remove
+app.people_console.orphans = {people} and {characters} are in no work and on no quote. {n} in all are removed.
 app.people_console.people_x_and_characters_x2_are = {people} {x} and {characters} {x2} are in no work and on no quote. {n} in all are removed.
 app.people_console.remove_what_nothing_uses = Remove what nothing uses?
 app.people_console.search_names_and_spellings = Search names and spellings
@@ -664,6 +747,8 @@ app.person.remove_the_portrait = Remove the portrait
 app.person.remove_the_signature = Remove the signature
 app.person.remove_this_character = Remove this character
 app.person.remove_this_person = Remove this person
+app.person.shared_more.one = 1 more quote names them alongside someone else, so it is not listed here.
+app.person.shared_more.other = {n} more quotes name them alongside someone else, so they are not listed here.
 app.person.shared_more_x_them_alongside_someone = {shared} more {x} them alongside someone else, so {x2} not listed here.
 app.person.show_the_picture_of_name = Show the picture of {name}
 app.person.show_their_quotes = Show their quotes
@@ -740,8 +825,25 @@ app.prefs.what_shows_at_the_bottom_and = What shows at the bottom, and how long 
 # --- pull ---
 app.pull.a_few_seconds_after_you_change = A few seconds after you change something, and once a day (when the app opens, or the network comes back)
 app.pull.brings_down_what_is_new_or = Brings down what is new or changed on your server, sends up what you changed here, and carries deletes both ways. If the same quote or work changed in both places, it waits in Sync conflicts for you to choose.
+app.pull.brought_down = Brought down: {x}.
+app.pull.conflicts.one = 1 item changed on both sides. Nothing was changed for it: choose below.
+app.pull.conflicts.other = {n} items changed on both sides. Nothing was changed for them: choose below.
+app.pull.deleted_here.one = 1 item deleted on the server was removed here too.
+app.pull.deleted_here.other = {n} items deleted on the server were removed here too.
+app.pull.deleted_there.one = 1 item you deleted here was deleted on the server too (it is in its bin for a while).
+app.pull.deleted_there.other = {n} items you deleted here were deleted on the server too (they are in its bin for a while).
+app.pull.gone_on_server.one = 1 item was removed on the server while syncing, and left alone here.
+app.pull.gone_on_server.other = {n} items were removed on the server while syncing, and left alone here.
+app.pull.held_back = {n} items are missing from the server. That is so many that nothing was removed here: check that the server is the right one and has not been restored from an old copy.
 app.pull.last_synced_when = Last synced {when}.
+app.pull.linked.one = 1 item here matched one already on the server, so it was joined, not copied.
+app.pull.linked.other = {n} items here matched ones already on the server, so they were joined, not copied.
+app.pull.refused = The server refused {what}: {reason}.
+app.pull.relinked.one = 1 item deleted on the server but changed here was kept, and will be sent up again.
+app.pull.relinked.other = {n} items deleted on the server but changed here were kept, and will be sent up again.
 app.pull.sent_up_your_changes_to_x = Sent up your changes to {x}.
+app.pull.skipped.one = 1 item on the server could not be brought down (no words, or its work is not here).
+app.pull.skipped.other = {n} items on the server could not be brought down (no words, or their work is not here).
 app.pull.sync_automatically = Sync automatically
 app.pull.sync_now = Sync now
 app.pull.sync_with_server = Sync with server
@@ -749,6 +851,7 @@ app.pull.the_server_answered_with_an_error = The server answered with an error. 
 app.pull.the_server_asked_the_app_to = The server asked the app to slow down. Try again in a minute.
 app.pull.the_server_does_not_accept_this = The server does not accept this phone. Pair it again in Settings.
 app.pull.this_account_is_not_allowed_to = This account is not allowed to do that.
+app.pull.unreachable = The server could not be reached. Nothing more was changed; try again when it answers.
 app.pull.your_phone_and_your_server_already = Your phone and your server already agree.
 
 # --- pull_sync ---
@@ -762,12 +865,16 @@ app.quiz.add_more_quotes_or_come_back = Add more quotes, or come back tomorrow.
 app.quiz.answer_kept_on_this_phone_it = Answer kept on this phone; it goes to the server when it can.
 app.quiz.could_not_load_the_cards = Could not load the cards.
 app.quiz.forgotten_lapses_times = forgotten {lapses} times
+app.quiz.from_source = from {source}
+app.quiz.missed_n = {n} missed
 app.quiz.no_quotes_here_to_practise = No quotes here to practise.
 app.quiz.nothing_due_today = Nothing due today.
 app.quiz.nothing_was_marked = Nothing was marked.
+app.quiz.recalled_n = {n} recalled
 app.quiz.round_finished = Round finished.
 app.quiz.save_a_highlight_a_line_or = Save a highlight, a line or a quote first.
 app.quiz.skip = Skip
+app.quiz.skipped_n = {n} skipped
 app.quiz.that_is_today_done = That is today done.
 app.quiz.the_ones_you_missed_come_back = The ones you missed come back sooner.
 app.quiz.what_you_wrote_typed = what you wrote: {typed}
@@ -782,6 +889,8 @@ app.quote.the_quote_could_not_be_read = The quote could not be read aloud.
 app.quote.this_quote_is_not_here_any = This quote is not here any more.
 
 # --- quote_chips ---
+app.quote_chips.what_name = {what} {name}
+app.quote_chips.what_name_actor = {what} {name}, played by {actor}
 app.quote_chips.what_namex = {what} {name}{x}
 
 # --- quote_context ---
@@ -927,18 +1036,29 @@ app.shelf.round = {round}%
 app.shelf.the_shelf_is_kept_on_your = The shelf is kept on your server. Pair this phone and sync this work to change it.
 
 # --- source_files ---
+app.source_files.a_show_episode = A show · {episode}
 app.source_files.a_work_has_one_file_a = A work has one file. A book takes an ebook or a text file; a film or a show's episode takes subtitles.
+app.source_files.a_work_not_on_this_phone = A work not on this phone
 app.source_files.attach_all = Attach all
+app.source_files.attached_n = {n} attached
 app.source_files.attached_to_title = Attached to {title}.
 app.source_files.browse_the_server_s_folders_and = Browse the server's folders and choose the file. It is read in place, not copied.
 app.source_files.folder = Folder
+app.source_files.found_by_ids = {rel} · {format} · matched by its ids
+app.source_files.found_by_name = {rel} · {format} · matched by its name
 app.source_files.free_the_space = Free the space
 app.source_files.free_the_space_of_this_file = Free the space of this file?
 app.source_files.from_a_folder_on_the_server = From a folder on the server
 app.source_files.from_this_phone = From this phone
+app.source_files.full_stop = .
+app.source_files.keeps.one = 1 quote keeps its surroundings.
+app.source_files.keeps.other = {n} quotes keep their surroundings.
 app.source_files.like_s01e04_a_show_s_subtitles = Like s01e04. A show's subtitles cover one episode.
+app.source_files.looking = Looking… {read} files read, {found} found.
 app.source_files.no_file_is_attached_yet_scan = No file is attached yet. Scan a folder on the Found tab, or attach one by hand on the Add tab, and quotes can show the lines around them.
 app.source_files.none_of_your_works_is_on = None of your works is on the server yet. Sync first, then attach a file.
+app.source_files.none_to_keep.one = 1 quote has none to keep.
+app.source_files.none_to_keep.other = {n} quotes have none to keep.
 app.source_files.not_scanned_yet_a_scan_looks = Not scanned yet. A scan looks for ebooks and subtitle files that fit your works.
 app.source_files.nothing_here_an_ebook_or_subtitle = Nothing here an ebook or subtitle file could be.
 app.source_files.nothing_new_fits_works_that_have = Nothing new fits. Works that have no quotes, or already have a file, are left out.
@@ -947,15 +1067,22 @@ app.source_files.read_again_quotes_now_have_the = Read again. Quotes now have th
 app.source_files.rel_to_upper_case_x = {rel}
 app.source_files.remove_the_file = Remove the file
 app.source_files.remove_this_file = Remove this file?
+app.source_files.scan_done = {read} files read, {found} fit a work.
+app.source_files.scan_done_some_unclaimed = {read} files read, {found} fit a work, {none} fit none.
 app.source_files.search_your_works = Search your works
 app.source_files.send_an_ebook_or_a_subtitle = Send an ebook or a subtitle file (up to 25 MB). The server keeps a copy.
+app.source_files.skipped_n = {n} skipped
+app.source_files.stopped_part_way = Stopped part-way: {read} files read. Scan again to carry on.
 app.source_files.the_file_is_taken_off_x = The file is taken off {x}. Quotes keep the surroundings already cut from it; new quotes will have none.
-app.source_files.the_file_x_is_deleted_from = The file ({x}) is deleted from the server; {x2} of surroundings stay. {with_context} {x3} its surroundings.{x4}
+app.source_files.the_file_x_is_deleted_from = The file ({x}) is deleted from the server; {x2} of surroundings stay. {keeps}{none}
+app.source_files.the_scan_did_not_finish = The scan did not finish.
+app.source_files.the_scan_did_not_finish_why = The scan did not finish: {detail}
 app.source_files.the_scan_did_not_finishx = The scan did not finish{x}
 app.source_files.the_server_has_no_folder_to = The server has no folder to look in. An admin adds them under Server administration, Library folders.
 app.source_files.the_server_has_no_folder_to_2 = The server has no folder to browse. An admin adds them in Library folders.
 app.source_files.title_episode = {title} · {episode}
 app.source_files.turn_all_down = Turn all down
+app.source_files.unreadable_n = {n} could not be read
 app.source_files.waiting_for_the_server_to_start = Waiting for the server to start…
 app.source_files.which_work_is_it_for = Which work is it for?
 
@@ -1028,6 +1155,9 @@ app.stats.x_x2_quotes_from_x3_works = {x}: {x2} quotes from {x3} works
 app.stats.year_the_works_came_out = Year the works came out
 
 # --- sync ---
+app.sync.already_there.one = 1 quote was already on the server and is now linked, not copied.
+app.sync.already_there.other = {n} quotes were already on the server and are now linked, not copied.
+app.sync.everything_is_already_there = Everything in your library is already on your server.
 app.sync.nothing_is_waiting = Nothing is waiting.
 app.sync.send_to_server = Send to server
 app.sync.sends_the_works_and_quotes_that = Sends the works and quotes that are only on this phone to your Tippani server. It only adds: nothing on the server is changed or deleted, and what is already there is not sent again.
@@ -1035,6 +1165,10 @@ app.sync.sent_x_to_your_server = Sent {x} to your server.
 app.sync.the_server_answered_with_an_error = The server answered with an error, so the rest was not sent. Try again later.
 app.sync.the_server_does_not_accept_this = The server does not accept this phone. Pair it again in Settings, then send what is left.
 app.sync.this_account_is_not_allowed_to = This account is not allowed to add to the library.
+app.sync.unreachable = The server could not be reached, so the rest was not sent. What went up stays there; try again when it answers.
+app.sync.waiting.one = 1 quote is still waiting to be sent.
+app.sync.waiting.other = {n} quotes are still waiting to be sent.
+app.sync.waiting_to_be_sent = Waiting to be sent: {works} and {quotes}.
 
 # --- tags ---
 app.tags.by_name = By name
@@ -1054,18 +1188,22 @@ app.tags.tag_name = Tag name
 # --- tools ---
 app.tools.delete_for_good = Delete for good
 app.tools.delete_for_good_2 = Delete for good?
+app.tools.deleted_at = deleted {when}
 app.tools.empty_the_bin = Empty the bin
 app.tools.everything_in_it_is_deleted_for = Everything in it is deleted for good. This cannot be undone.
 app.tools.it_cannot_be_brought_back_after = It cannot be brought back after this.
 app.tools.the_bin_is_empty = The bin is empty.
 app.tools.things_you_delete_are_kept_here = Things you delete are kept here for {kept_days} days.
+app.tools.with_quotes = with {quotes}
 
 # --- update_ui ---
 app.update_ui.android_is_asking_you_to_install = Android is asking you to install the update. Tippani will close while it does.
 app.update_ui.android_s_installer_would_not_open = Android's installer would not open. Try again, or download the update from the project's releases page.
+app.update_ui.checking = Checking…
 app.update_ui.could_not_reach_github_check_your = Could not reach GitHub. Check your connection.
 app.update_ui.downloading_version = Downloading {version}
 app.update_ui.later = Later
+app.update_ui.latest_version = You have the latest version ({version}).
 app.update_ui.new_in_version = New in {version}
 app.update_ui.percent = {percent}%
 app.update_ui.ready_to_install = Ready to install
@@ -1117,6 +1255,9 @@ app.work_form.the_year_must_be_a_number = The year must be a number.
 app.work_form.type_a_title_to_look_up = Type a title to look up.
 app.work_form.what_it_is_written_or_spoken = What it is written or spoken in, if you want to say.
 app.work_form.which_one = Which one?
+
+# --- work_order ---
+app.work_order.month_noted = Month noted
 
 # --- work_read ---
 app.work_read.my_notes = My notes

@@ -84,7 +84,7 @@ class _ChecksScreenState extends State<ChecksScreen> {
     final checks = widget.checks;
     final tabs = <(Widget, Widget)>[
       (
-        _tab('Imports', _pending),
+        _tab(context.tr('checks.tab.imports.label'), _pending),
         ImportsTab(
           imports: widget.imports,
           library: widget.library,
@@ -465,15 +465,32 @@ class _ResultCardState extends State<_ResultCard> {
     } else if (o != null) {
       final what = sourceName(o.source);
       line = o.staged == 0
-          ? 'Read as $what. Nothing new in it: everything is already in your library or the queue.'
-          : 'Read as $what. ${o.staged} ${o.staged == 1 ? 'quote' : 'quotes'} from ${o.works} ${o.works == 1 ? 'work' : 'works'} wait for your approval.';
+          ? tx('app.checks.read_as_nothing_new', {'what': what})
+          : tx('app.checks.read_as_staged', {
+              'what': what,
+              'quotes': countWords('quote', o.staged),
+              'works': countWords('work', o.works),
+            });
       if (o.nearDuplicates > 0) {
-        line += ' ${o.nearDuplicates} look like quotes you already have.';
+        line += ' ${tx('app.checks.near_duplicates', {'n': o.nearDuplicates})}';
       }
     } else if (l != null) {
       line = l.quotes == 0 && l.works == 0
-          ? 'Nothing new: ${l.duplicates} ${l.duplicates == 1 ? 'quote is' : 'quotes are'} already on this phone.'
-          : 'Added ${l.quotes} ${l.quotes == 1 ? 'quote' : 'quotes'}${l.works > 0 ? ' and ${l.works} new ${l.works == 1 ? 'work' : 'works'}' : ''} to this phone.${l.duplicates > 0 ? ' ${l.duplicates} already here.' : ''}${l.skippedBlocks > 0 ? ' ${l.skippedBlocks} not read here (anthologies are for the server).' : ''}';
+          ? trn('app.checks.nothing_new_local', l.duplicates)
+          : [
+              l.works > 0
+                  ? tx('app.checks.added_quotes_and_works', {
+                      'quotes': countWords('quote', l.quotes),
+                      'works': countWords('new work', l.works),
+                    })
+                  : tx('app.checks.added_quotes', {
+                      'quotes': countWords('quote', l.quotes),
+                    }),
+              if (l.duplicates > 0)
+                tx('app.checks.already_here', {'n': l.duplicates}),
+              if (l.skippedBlocks > 0)
+                tx('app.checks.not_read_here', {'n': l.skippedBlocks}),
+            ].join(' ');
     } else {
       line = '';
     }

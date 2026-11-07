@@ -223,12 +223,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
                           ),
                         ),
                         title: Text(a.title),
-                        subtitle: Text(
-                          context.tr('app.anthologies.entries_x', {
-                            'entries': a.entries,
-                            'x': a.entries == 1 ? 'passage' : 'passages',
-                          }),
-                        ),
+                        subtitle: Text(countWords('passage', a.entries)),
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => _open(a),
                       ),
@@ -743,7 +738,9 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     final slots = d?.slots ?? const <AnthologySlot>[];
     return Scaffold(
       appBar: AppBar(
-        title: Text(d?.anthology.title ?? 'Anthology'),
+        title: Text(
+          d?.anthology.title ?? context.tr('common.field.anthology.label'),
+        ),
         actions: [
           if (d != null) ...[
             IconButton(

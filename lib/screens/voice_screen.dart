@@ -16,7 +16,7 @@ class VoiceScreen extends StatefulWidget {
 }
 
 /// Languages offered, as the phone's recogniser names them.
-const voiceLocales = {
+final voiceLocales = {
   'en_IN': 'English (India)',
   'en_US': 'English (US)',
   'en_GB': 'English (UK)',
@@ -114,7 +114,9 @@ class _VoiceScreenState extends State<VoiceScreen> {
               onPressed: _toggle,
               icon: Icon(_listening ? Icons.stop : Icons.mic),
               label: Text(
-                _listening ? 'Stop' : context.tr('app.voice.start_speaking'),
+                _listening
+                    ? context.tr('settings.jobs.current.stop.label')
+                    : context.tr('app.voice.start_speaking'),
               ),
             ),
           ),

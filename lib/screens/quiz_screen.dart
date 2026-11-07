@@ -177,7 +177,9 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _daily ? context.tr('quiz.daily.label') : 'Practice';
+    final title = _daily
+        ? context.tr('quiz.daily.label')
+        : context.tr('quiz.practice.label');
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -238,8 +240,12 @@ class _QuizScreenState extends State<QuizScreen> {
         Text(
           total == 0
               ? context.tr('app.quiz.nothing_was_marked')
-              : '$_got recalled · $_missed missed'
-                    '${_skipped > 0 ? ' · $_skipped skipped' : ''}',
+              : [
+                  context.tr('app.quiz.recalled_n', {'n': _got}),
+                  context.tr('app.quiz.missed_n', {'n': _missed}),
+                  if (_skipped > 0)
+                    context.tr('app.quiz.skipped_n', {'n': _skipped}),
+                ].join(' · '),
           textAlign: TextAlign.center,
           style: theme.textTheme.titleMedium?.copyWith(
             color: scheme.onSurfaceVariant,
@@ -637,7 +643,8 @@ class _QuizScreenState extends State<QuizScreen> {
   ) {
     final theme = Theme.of(context);
     final lines = <String>[
-      if (m.source.isNotEmpty && m.source != c.options[i]) 'from ${m.source}',
+      if (m.source.isNotEmpty && m.source != c.options[i])
+        context.tr('app.quiz.from_source', {'source': m.source}),
       [
         if (m.creator.isNotEmpty) m.creator,
         if (m.year != 0) '${m.year}',
@@ -856,7 +863,11 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_graded) {
       primary = FilledButton(
         onPressed: _next,
-        child: Text(last ? 'Finish' : 'Next'),
+        child: Text(
+          last
+              ? context.tr('quiz.finish.label')
+              : context.tr('common.date.picker.next.aria'),
+        ),
       );
     } else if (c.isFlip) {
       primary = _flipShown
@@ -905,7 +916,9 @@ class _QuizScreenState extends State<QuizScreen> {
         onPressed: _sending || _typed.trim().isEmpty
             ? null
             : () => _checkTyped(c),
-        child: Text(_sending ? 'checking…' : 'Check'),
+        child: Text(
+          _sending ? 'checking…' : context.tr('quiz.cloze.check.label'),
+        ),
       );
     } else {
       primary = FilledButton(

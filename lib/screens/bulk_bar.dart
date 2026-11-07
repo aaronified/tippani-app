@@ -188,7 +188,9 @@ class QuoteBulkActions {
           : context.tr('app.bulk_bar.take_a_tag_off'),
       label: context.tr('common.field.tag.label'),
       offer: offer,
-      action: add ? 'Add' : context.tr('app.bulk_bar.take_off'),
+      action: add
+          ? context.tr('common.action.add.label')
+          : context.tr('app.bulk_bar.take_off'),
     );
     if (name == null || name.trim().isEmpty || !context.mounted) return;
     final r = add
@@ -328,10 +330,14 @@ class QuoteBulkActions {
           SnackBar(
             content: Text(
               [
-                '$added added to ${target.title}.',
-                if (already > 0) '$already already there.',
+                tx('app.bulk_bar.added_to', {
+                  'n': added,
+                  'title': target.title,
+                }),
+                if (already > 0)
+                  tx('app.bulk_bar.already_there', {'n': already}),
                 if (notOnServer > 0)
-                  '$notOnServer not on the server yet (sync first).',
+                  tx('app.bulk_bar.not_on_server', {'n': notOnServer}),
               ].join(' '),
             ),
           ),

@@ -153,7 +153,7 @@ class QuoteTile extends StatelessWidget {
                     IconButton(
                       tooltip: quote.favorite
                           ? context.tr('common.action.favourite.off.label')
-                          : 'Favourite',
+                          : context.tr('common.field.favourite.label'),
                       visualDensity: VisualDensity.compact,
                       icon: Icon(
                         quote.favorite

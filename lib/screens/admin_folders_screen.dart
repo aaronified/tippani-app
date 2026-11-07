@@ -55,7 +55,7 @@ class _Folders extends StatelessWidget {
       context,
       title: context.tr('app.admin_folders.a_folder_on_the_server'),
       label: context.tr('app.admin_folders.path_on_the_server_like_books'),
-      yes: 'Next',
+      yes: context.tr('common.date.picker.next.aria'),
     );
     if (path == null || path.trim().isEmpty || !context.mounted) return;
     final guess = path.trim().split('/').where((p) => p.isNotEmpty).lastOrNull;
@@ -64,7 +64,7 @@ class _Folders extends StatelessWidget {
       title: context.tr('app.admin_folders.what_to_call_it'),
       label: context.tr('common.field.name.label'),
       initial: guess ?? path.trim(),
-      yes: 'Add',
+      yes: context.tr('common.action.add.label'),
     );
     if (label == null || !context.mounted) return;
     final name = label.trim().isEmpty ? (guess ?? path.trim()) : label.trim();
@@ -90,7 +90,7 @@ class _Folders extends StatelessWidget {
         'label': m.label,
       }),
       body: context.tr('app.admin_folders.the_folder_itself_is_not_touched'),
-      yes: 'Remove',
+      yes: context.tr('common.action.remove.label'),
     );
     if (!ok || !context.mounted) return;
     final done = await attempt(
@@ -113,7 +113,7 @@ class _Folders extends StatelessWidget {
         context,
         removed == 0
             ? context.tr('app.admin_folders.nothing_to_tidy')
-            : 'Removed $removed saved ${removed == 1 ? 'file' : 'files'}.',
+            : trn('app.admin_folders.removed_files', removed),
       );
       await reload();
     }
@@ -166,7 +166,7 @@ class _Folders extends StatelessWidget {
                     ),
                   ),
                 ),
-              const AdminHeading('Backups'),
+              AdminHeading(context.tr('account.notify.event.backup.title')),
               Card(
                 child: SwitchListTile(
                   title: Text(

@@ -60,7 +60,7 @@ class AdminScreen extends StatelessWidget {
           ),
           row(
             Icons.work_history_outlined,
-            'Jobs',
+            context.tr('settings.section.jobs.label'),
             context.tr('app.admin.what_is_running_and_waiting_what'),
             () => AdminJobsScreen(service: service),
           ),

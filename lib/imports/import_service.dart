@@ -29,7 +29,7 @@ class ImportSource {
 final importSources = <ImportSource>[
   ImportSource(
     'markdown',
-    'Markdown',
+    tx('share.format.markdown.name'),
     ['md', 'markdown', 'txt'],
     tx('app.import_service.tippani_exports_of_books_or_the'),
     [
@@ -39,7 +39,7 @@ final importSources = <ImportSource>[
   ),
   ImportSource(
     'readest',
-    'Readest',
+    tx('import.source.readest.title'),
     ['json'],
     tx('app.import_service.readest_s_annotation_export_colours_and'),
     [
@@ -49,7 +49,7 @@ final importSources = <ImportSource>[
   ),
   ImportSource(
     'bookcision',
-    'Bookcision',
+    tx('import.source.bookcision.title'),
     ['json'],
     tx(
       'app.import_service.kindle_highlights_through_the_bookcision_bookmarklet',
@@ -62,7 +62,7 @@ final importSources = <ImportSource>[
   ),
   ImportSource(
     'hardcover-html',
-    'Hardcover',
+    tx('import.source.hardcover-html.title'),
     ['html', 'htm'],
     tx('import.source.hardcover-html.desc'),
     [
@@ -73,7 +73,7 @@ final importSources = <ImportSource>[
   ),
   ImportSource(
     'goodreads-html',
-    'Goodreads',
+    tx('import.source.goodreads-html.title'),
     ['html', 'htm'],
     "A book's public Quotes page. Quote tags come across too.",
     [

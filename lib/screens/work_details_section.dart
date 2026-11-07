@@ -83,10 +83,13 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
     final isBook =
         widget.work.kind == WorkKind.book || widget.work.kind == WorkKind.other;
     final facts = <(String, String)>[
-      if (d.subtitle.isNotEmpty) ('Subtitle', d.subtitle),
-      if (d.series.isNotEmpty) ('Series', d.series),
-      if (d.publisher.isNotEmpty) ('Publisher', d.publisher),
-      if (d.pages > 0) ('Pages', '${d.pages}'),
+      if (d.subtitle.isNotEmpty)
+        (context.tr('common.field.subtitle.label'), d.subtitle),
+      if (d.series.isNotEmpty)
+        (context.tr('common.field.series.label'), d.series),
+      if (d.publisher.isNotEmpty)
+        (context.tr('common.field.publisher.label'), d.publisher),
+      if (d.pages > 0) (context.tr('common.field.pages.label'), '${d.pages}'),
       if (d.isbn.isNotEmpty) ('ISBN', d.isbn),
     ];
     final cast = _allCast ? d.cast : d.cast.take(castShown).toList();
@@ -142,7 +145,9 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
           if (d.cast.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              isBook ? 'Characters' : 'Cast',
+              isBook
+                  ? context.tr('stats.breakdown.characters.label')
+                  : context.tr('common.field.cast.label'),
               style: theme.textTheme.titleSmall,
             ),
             const SizedBox(height: 4),

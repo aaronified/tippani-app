@@ -169,10 +169,10 @@ Future<String?> askGrouping(BuildContext context, String current) =>
             child: Column(
               children: [
                 for (final (value, label) in [
-                  ('', 'Nothing'),
+                  ('', context.tr('anthologies.group.none')),
                   ('work', context.tr('app.anthology_tools.book_or_film')),
-                  ('person', 'Person'),
-                  ('character', 'Character'),
+                  ('person', context.tr('bin.kind.person.label')),
+                  ('character', context.tr('common.field.character.label')),
                 ])
                   RadioListTile<String>(value: value, title: Text(label)),
               ],
@@ -401,8 +401,8 @@ Future<({bool epub, ExportAction action})?> askExport(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final (epub, label) in const [
-          (false, 'Markdown'),
+        for (final (epub, label) in [
+          (false, context.tr('share.format.markdown.name')),
           (true, 'EPUB book'),
         ]) ...[
           ListTile(
@@ -682,7 +682,7 @@ class _FillScreenState extends State<FillScreen> {
                 expandedInsets: EdgeInsets.zero,
                 enableFilter: true,
                 requestFocusOnTap: true,
-                label: Text(_source.label),
+                label: Text(context.tr(_source.label)),
                 dropdownMenuEntries: [
                   for (final o in options)
                     DropdownMenuEntry(value: o.key, label: o.name),
@@ -700,7 +700,7 @@ class _FillScreenState extends State<FillScreen> {
                       onPressed: () => _pickDate(true),
                       child: Text(
                         _from.isEmpty
-                            ? 'From'
+                            ? context.tr('anthologies.fill.from.label')
                             : context.tr('app.anthology_tools.from_from', {
                                 'from': _from,
                               }),
@@ -749,8 +749,15 @@ class _FillScreenState extends State<FillScreen> {
               Text(
                 _preview!.matched == 0
                     ? context.tr('app.search.nothing_matches')
-                    : '${_preview!.matched} ${_preview!.matched == 1 ? 'passage matches' : 'passages match'}. '
-                          'It would add ${_preview!.matched - _preview!.skipped}.',
+                    : context.tr(
+                        _preview!.matched == 1
+                            ? 'app.anthology_tools.preview_one'
+                            : 'app.anthology_tools.preview_many',
+                        {
+                          'n': _preview!.matched,
+                          'add': _preview!.matched - _preview!.skipped,
+                        },
+                      ),
                 style: theme.textTheme.titleSmall,
               ),
               for (final e in _preview!.items.take(5))

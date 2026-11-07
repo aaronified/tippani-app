@@ -164,7 +164,7 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
               icon: Icon(_testing ? Icons.stop : Icons.volume_up_outlined),
               label: Text(
                 _testing
-                    ? 'Stop'
+                    ? context.tr('settings.jobs.current.stop.label')
                     : context.tr('app.read_aloud_settings.try_this_voice'),
               ),
             ),

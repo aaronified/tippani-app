@@ -183,6 +183,27 @@ String tx(String token, [Map<String, Object?>? args]) {
   return fill(englishTokens[token] ?? token, args);
 }
 
+/// "1 quote" / "5 quotes": the noun's tokens `app.count.<noun>.one` and `.other`, each with `{n}`. A noun of two
+/// words is written with an underscore (`new_work`).
+String countWords(String noun, int n) => tx(
+  'app.count.${noun.replaceAll(' ', '_')}.${n == 1 ? 'one' : 'other'}',
+  {'n': n},
+);
+
+/// A sentence that reads differently for one and for many: the tokens `<base>.one` and `<base>.other`, with `{n}`.
+String trn(String base, int n, [Map<String, Object?>? args]) =>
+    tx('$base.${n == 1 ? 'one' : 'other'}', {'n': n, ...?args});
+
+/// "a", "a and b", "a, b and c": the pieces of a list put together in the language of the app.
+String andList(List<String> items) {
+  if (items.isEmpty) return '';
+  if (items.length == 1) return items.first;
+  return tx('app.list.and', {
+    'a': items.sublist(0, items.length - 1).join(', '),
+    'b': items.last,
+  });
+}
+
 /// Puts [args] into the `{name}` places of [text].
 String fill(String text, Map<String, Object?>? args) {
   if (args == null) return text;

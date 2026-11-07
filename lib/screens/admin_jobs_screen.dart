@@ -42,7 +42,7 @@ String jobKindName(String kind) =>
       'reset': tx('app.admin_jobs.reset_the_library'),
       'notify.daily': tx('app.admin_jobs.daily_note'),
     }[kind] ??
-    'Job';
+    tx('settings.jobs.kind.other');
 
 /// What the common-job rows are called.
 String commonJobName(String id) =>
@@ -57,12 +57,12 @@ String commonJobName(String id) =>
     jobKindName(id);
 
 String _stateName(String s) => switch (s) {
-  'queued' => 'Waiting',
-  'running' => 'Running',
-  'succeeded' => 'Done',
-  'failed' => 'Failed',
-  'stopped' => 'Stopped',
-  'interrupted' => 'Interrupted',
+  'queued' => tx('settings.jobs.state.queued'),
+  'running' => tx('settings.jobs.state.running'),
+  'succeeded' => tx('common.action.done.label'),
+  'failed' => tx('settings.jobs.state.failed'),
+  'stopped' => tx('settings.jobs.state.stopped'),
+  'interrupted' => tx('settings.jobs.state.interrupted'),
   _ => s,
 };
 
@@ -396,7 +396,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
             tabs: [
               Tab(
                 text: cur == null || cur.jobs.isEmpty
-                    ? 'Now'
+                    ? tx('locators.now')
                     : 'Now (${cur.jobs.length})',
               ),
               const Tab(text: 'Past'),

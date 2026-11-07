@@ -43,19 +43,18 @@ class ChangeResult {
   /// The sentence for a snackbar, or '' when nothing happened.
   String get words {
     final parts = <String>[
-      if (applied > 0) 'Updated ${_n(applied, 'quote')}',
-      if (skippedEdited > 0) '$skippedEdited you had edited were left alone',
-      if (stale > 0)
-        '$stale had changed since you looked and ${stale == 1 ? 'was' : 'were'} left alone',
-      if (skipped > 0)
-        '$skipped belonged to the other group and ${skipped == 1 ? 'was' : 'were'} skipped',
-      if (duplicates > 0)
-        '$duplicates would have duplicated a quote you already have',
+      if (applied > 0)
+        tx('app.checks_service.updated', {
+          'quotes': countWords('quote', applied),
+        }),
+      if (skippedEdited > 0)
+        tx('app.checks_service.edited_left_alone', {'n': skippedEdited}),
+      if (stale > 0) trn('app.checks_service.stale', stale),
+      if (skipped > 0) trn('app.checks_service.other_group', skipped),
+      if (duplicates > 0) trn('app.checks_service.duplicated', duplicates),
     ];
     return parts.join(' · ');
   }
-
-  static String _n(int n, String noun) => '$n ${n == 1 ? noun : '${noun}s'}';
 }
 
 // ------------------------------------------------------------------ stray marks
@@ -290,7 +289,7 @@ final correctionBuckets = <String, (String, String)>{
   ),
   'capitalisation': ('Capitalisation', 'The same words in a different case.'),
   'accents': (
-    'Accents',
+    tx('corrections.bucket.accents.title'),
     'The same letters; the accents differ. A file can lack them altogether.',
   ),
   'marks': (

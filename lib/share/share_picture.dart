@@ -455,7 +455,7 @@ class _SharePictureState extends State<SharePicture> {
           child: Text(
             m.note,
             style: TextStyle(
-              fontFamily: 'Caveat',
+              fontFamily: context.tr('vocab.face.caveat.name'),
               fontFamilyFallback: const [
                 'NotoSerifBengali',
                 'NotoSerifDevanagari',

@@ -67,8 +67,6 @@ String _years(BuildContext context, String born, String died) {
   return '${born.isEmpty ? '?' : born} – $died';
 }
 
-String _plural(int n, String one, String many) => '$n ${n == 1 ? one : many}';
-
 /// What the people pages share: the big round picture, a section heading, the quotes and the links.
 class _Parts {
   static Widget heading(BuildContext context, String text) => Padding(
@@ -204,7 +202,7 @@ class _Parts {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        heading(context, 'Quotes'),
+        heading(context, context.tr('nav.tab.quotes.label')),
         for (final l in lines)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -266,11 +264,7 @@ class _Parts {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
             child: Text(
-              context.tr('app.person.shared_more_x_them_alongside_someone', {
-                'shared': shared,
-                'x': shared == 1 ? 'quote names' : 'quotes name',
-                'x2': shared == 1 ? 'it is' : 'they are',
-              }),
+              trn('app.person.shared_more', shared),
               style: theme.textTheme.bodySmall,
             ),
           ),
@@ -714,8 +708,11 @@ class _PersonScreenState extends State<PersonScreen> {
                             if (p != null) ...[
                               const SizedBox(height: 4),
                               Text(
-                                '${_plural(p.quotes + p.sharedLines, 'quote', 'quotes')}'
-                                '${p.favourites > 0 ? ' · ${p.favourites} favourite${p.favourites == 1 ? '' : 's'}' : ''}',
+                                [
+                                  countWords('quote', p.quotes + p.sharedLines),
+                                  if (p.favourites > 0)
+                                    countWords('favourite', p.favourites),
+                                ].join(' · '),
                                 style: theme.textTheme.bodySmall,
                               ),
                             ],
@@ -784,11 +781,17 @@ class _PersonScreenState extends State<PersonScreen> {
                     ),
                 ],
                 if (p != null && p.links.isNotEmpty) ...[
-                  _Parts.heading(context, 'Links'),
+                  _Parts.heading(
+                    context,
+                    context.tr('common.field.links.label'),
+                  ),
                   _Parts.links(context, p.links),
                 ],
                 if (p != null && p.signature.isNotEmpty) ...[
-                  _Parts.heading(context, 'Signature'),
+                  _Parts.heading(
+                    context,
+                    context.tr('common.field.signature.label'),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: StoredPicture(
@@ -806,7 +809,10 @@ class _PersonScreenState extends State<PersonScreen> {
                     onSplit: _console == null ? null : _split,
                   ),
                 if (credits.isNotEmpty) ...[
-                  _Parts.heading(context, 'Works'),
+                  _Parts.heading(
+                    context,
+                    context.tr('metadata.section.works.label'),
+                  ),
                   SizedBox(
                     height: 216,
                     child: ListView(
@@ -1277,8 +1283,11 @@ class _CharacterScreenState extends State<CharacterScreen> {
                             if (c != null) ...[
                               const SizedBox(height: 4),
                               Text(
-                                '${_plural(c.quotes + c.sharedLines, 'quote', 'quotes')}'
-                                '${c.favourites > 0 ? ' · ${c.favourites} favourite${c.favourites == 1 ? '' : 's'}' : ''}',
+                                [
+                                  countWords('quote', c.quotes + c.sharedLines),
+                                  if (c.favourites > 0)
+                                    countWords('favourite', c.favourites),
+                                ].join(' · '),
                                 style: theme.textTheme.bodySmall,
                               ),
                             ],
@@ -1379,7 +1388,10 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     ),
                 ],
                 if (c != null && c.links.isNotEmpty) ...[
-                  _Parts.heading(context, 'Links'),
+                  _Parts.heading(
+                    context,
+                    context.tr('common.field.links.label'),
+                  ),
                   _Parts.links(context, c.links),
                 ],
                 if (c != null)

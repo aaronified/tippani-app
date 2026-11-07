@@ -60,9 +60,9 @@ List<ChapterGroup> groupByChapter(List<Quote> quotes) {
 
 /// How the quotes of a work are ordered.
 enum QuoteOrder {
-  reading('In reading order'),
-  newest('Newest first'),
-  oldest('Oldest first');
+  reading('app.work.in_reading_order'),
+  newest('app.board.newest_first'),
+  oldest('app.board.oldest_first');
 
   const QuoteOrder(this.label);
   final String label;
@@ -70,12 +70,12 @@ enum QuoteOrder {
 
 /// What the quotes of a work are gathered under.
 enum QuoteGroup {
-  chapter('Chapter'),
-  colour('Colour'),
-  tag('Tag'),
-  speaker('Who said it'),
-  month('Month noted'),
-  none('No grouping');
+  chapter('board.sort.chapter.label'),
+  colour('common.field.colour.label'),
+  tag('common.field.tag.label'),
+  speaker('anthologies.form.fields.credit.label'),
+  month('app.work_order.month_noted'),
+  none('app.works_view.no_grouping');
 
   const QuoteGroup(this.label);
   final String label;

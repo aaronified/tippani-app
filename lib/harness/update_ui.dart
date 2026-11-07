@@ -32,9 +32,9 @@ String checkResultText(UpdateController u) {
         'version': u.release?.version,
       });
     case UpdateStage.upToDate:
-      return 'You have the latest version ($appVersion).';
+      return tx('app.update_ui.latest_version', {'version': appVersion});
     case UpdateStage.checking:
-      return 'Checking…';
+      return tx('app.update_ui.checking');
     default:
       return switch (u.checkFailure) {
         CheckFailure.offline => tx(
@@ -135,7 +135,7 @@ Future<void> showWhatsNewDialog(BuildContext context, ChangelogEntry entry) {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(context.tr('OK')),
+          child: Text(context.tr('app.common.ok')),
         ),
       ],
     ),
@@ -236,7 +236,7 @@ class _UpdateDialog extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(context.tr('OK')),
+                  child: Text(context.tr('app.common.ok')),
                 ),
               ],
             );
@@ -298,7 +298,7 @@ class _UpdateDialog extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(context.tr('OK')),
+                  child: Text(context.tr('app.common.ok')),
                 ),
               ],
             );

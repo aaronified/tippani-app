@@ -55,7 +55,7 @@ Future<BackupSecret?> askBackupSecret(
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: passphrase
-                      ? 'Passphrase'
+                      ? context.tr('common.field.passphrase.label')
                       : account.isEmpty
                       ? context.tr('settings.restore.password.label')
                       : tx('app.admin_backup.password_of_account', {
@@ -291,7 +291,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
           : tx('app.admin_backup.every_reader_s_library_on_the_2', {
               'created': info!.created,
             }),
-      yes: 'Continue',
+      yes: context.tr('home.daily.resume.label'),
       danger: true,
     );
     if (!ok || !mounted) return;
@@ -304,15 +304,15 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
           : info!.needsPassphrase
           ? context.tr('app.admin_backup.this_backup_is_sealed_with_a')
           : info.needsPassword
-          ? tx('app.admin_backup.this_backup_is_sealed_with_the', {
-              'account': info.account.isEmpty
-                  ? 'the account that made it'
-                  : info.account,
-            })
+          ? info.account.isEmpty
+                ? tx('app.admin_backup.sealed_with_unknown')
+                : tx('app.admin_backup.this_backup_is_sealed_with_the', {
+                    'account': info.account,
+                  })
           : context.tr('app.admin_backup.this_backup_is_not_sealed_press'),
       mode: fromPhone ? null : (info!.key == 'none' ? 'password' : info.key),
       account: fromPhone ? '' : info!.account,
-      yes: 'Restore',
+      yes: context.tr('common.action.restore.label'),
     );
     if (secret == null || !mounted) return;
     setState(

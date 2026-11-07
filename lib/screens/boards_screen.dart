@@ -275,7 +275,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
         content: Text(
           b.quotes == 0
               ? context.tr('app.boards.the_board_is_removed')
-              : 'The board is removed. Its ${b.quotes} ${b.quotes == 1 ? 'quote stays' : 'quotes stay'} in your library, on no board.',
+              : trn('app.boards.removed_keeps', b.quotes),
         ),
         actions: [
           TextButton(
@@ -344,13 +344,12 @@ class _BoardsScreenState extends State<BoardsScreen> {
               SimpleDialogOption(
                 onPressed: () => Navigator.of(context).pop(o.language),
                 child: Text(
-                  context.tr('app.boards.language_count_x', {
-                    'language': o.language,
-                    'count': o.count,
-                    'x': wanted.contains(o.language.toLowerCase())
-                        ? ' · this board'
-                        : '',
-                  }),
+                  context.tr(
+                    wanted.contains(o.language.toLowerCase())
+                        ? 'app.boards.language_count_here'
+                        : 'app.boards.language_count',
+                    {'language': o.language, 'count': o.count},
+                  ),
                 ),
               ),
           ],
@@ -397,9 +396,9 @@ class _BoardsScreenState extends State<BoardsScreen> {
           : quoteColour(b.color),
     );
     final facts = [
-      '${b.quotes} ${b.quotes == 1 ? 'quote' : 'quotes'}',
+      countWords('quote', b.quotes),
       if (b.kind != 'plain') boardKindLabel(b.kind),
-      if (b.hidden) 'Hidden',
+      if (b.hidden) tx('app.board.hidden'),
     ].join(' · ');
     return Padding(
       key: ValueKey('board-${b.id}'),
@@ -471,7 +470,11 @@ class _BoardsScreenState extends State<BoardsScreen> {
                   ),
                 PopupMenuItem(
                   value: 'hide',
-                  child: Text(b.hidden ? 'Show' : 'Hide'),
+                  child: Text(
+                    b.hidden
+                        ? context.tr('common.action.show.label')
+                        : context.tr('common.action.hide.label'),
+                  ),
                 ),
                 if (i > 0)
                   PopupMenuItem(

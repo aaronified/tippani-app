@@ -47,7 +47,7 @@ extension WorkAsDraft on Work {
 /// A field of a quote the reader can set on many at once.
 enum QuoteField {
   speaker('anthologies.form.fields.credit.label'),
-  chapter('Chapter'),
+  chapter('board.sort.chapter.label'),
   location('app.bulk_ops.page_or_position'),
   language('app.quote_form.language_of_the_words');
 
@@ -58,8 +58,8 @@ enum QuoteField {
 /// A field of a work the reader can set on many at once.
 enum WorkField {
   creator('app.bulk_ops.author_director_or_studio'),
-  language('Language'),
-  year('Year');
+  language('common.field.language.label'),
+  year('common.field.year.label');
 
   const WorkField(this.label);
   final String label;

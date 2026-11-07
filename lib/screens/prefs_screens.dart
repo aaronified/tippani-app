@@ -189,7 +189,7 @@ class ReadingScreen extends StatelessWidget {
 
   static String _faceName(BuildContext context, String token) =>
       switch (token) {
-        'newsreader' => 'Newsreader',
+        'newsreader' => context.tr('vocab.face.newsreader.name'),
         'noto-serif-bengali' => context.tr(
           'vocab.face.noto-serif-bengali.name',
         ),
@@ -223,7 +223,7 @@ class ReadingScreen extends StatelessWidget {
 class ColoursScreen extends StatelessWidget {
   const ColoursScreen({super.key});
 
-  static const palette = [
+  static final palette = [
     ('#E5C355', 'Sun'),
     ('#DF9A5B', 'Amber'),
     ('#D98CA6', 'Rose'),

@@ -126,15 +126,15 @@ final _providers = <(String, String)>[
   (r'(^|\.)imdb\.com$', 'IMDb'),
   (r'(^|\.)themoviedb\.org$', 'TMDB'),
   (r'(^|\.)thetvdb\.com$', 'TheTVDB'),
-  (r'(^|\.)letterboxd\.com$', 'Letterboxd'),
+  (r'(^|\.)letterboxd\.com$', tx('vocab.source.letterboxd.label')),
   (r'(^|\.)igdb\.com$', 'IGDB'),
-  (r'(^|\.)wikipedia\.org$', 'Wikipedia'),
-  (r'(^|\.)(fandom|wikia)\.com$', 'Fandom'),
-  (r'(^|\.)wikidata\.org$', 'Wikidata'),
-  (r'(^|\.)wikimedia\.org$', 'Wikimedia'),
+  (r'(^|\.)wikipedia\.org$', tx('vocab.source.wikipedia.label')),
+  (r'(^|\.)(fandom|wikia)\.com$', tx('vocab.source.fandom.label')),
+  (r'(^|\.)wikidata\.org$', tx('vocab.source.wikidata.label')),
+  (r'(^|\.)wikimedia\.org$', tx('vocab.source.wikimedia.label')),
   (r'(^|\.)openlibrary\.org$', tx('vocab.source.openlibrary.label')),
   (r'^books\.google\.[a-z.]+$', tx('vocab.source.google.label')),
-  (r'(^|\.)amazon\.[a-z.]+$', 'Amazon'),
+  (r'(^|\.)amazon\.[a-z.]+$', tx('vocab.source.amazon.label')),
 ];
 
 /// The stored links field (free text, an address per line, an optional ` | name` after it) as chips: a recognised

@@ -49,7 +49,7 @@ class _Users extends StatelessWidget {
       context,
       title: context.tr('app.admin_users.new_user'),
       label: context.tr('common.field.username.label'),
-      yes: 'Next',
+      yes: context.tr('common.date.picker.next.aria'),
     );
     if (name == null || name.trim().isEmpty || !context.mounted) return;
     final pass = await askText(
@@ -59,7 +59,7 @@ class _Users extends StatelessWidget {
       }),
       label: context.tr('common.field.password.label'),
       secret: true,
-      yes: 'Add',
+      yes: context.tr('common.action.add.label'),
     );
     if (pass == null || pass.isEmpty || !context.mounted) return;
     if (await attempt(context, () => service.addUser(name.trim(), pass)) &&
@@ -103,7 +103,7 @@ class _Users extends StatelessWidget {
         'username': u.username,
       }),
       body: 'Their whole library goes with them: every work, quote and tag. This cannot be undone.',
-      yes: 'Remove',
+      yes: context.tr('common.action.remove.label'),
       danger: true,
     );
     if (!ok || !context.mounted) return;

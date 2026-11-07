@@ -107,14 +107,17 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
       label: f.secret ? 'New value (kept secret)' : 'Value',
       secret: f.secret,
       initial: f.secret ? '' : (_keys?.text(f.field) ?? ''),
-      yes: 'Save',
+      yes: context.tr('common.action.save.label'),
     );
     if (v == null || !mounted) return;
     final ok = await attempt(context, () async {
       _keys = await widget.service.saveMetadataKey(f.field, v.trim());
     });
     if (ok && mounted) {
-      say(context, v.trim().isEmpty ? 'Cleared' : 'Saved');
+      say(
+        context,
+        v.trim().isEmpty ? 'Cleared' : context.tr('settings.keys.saved.tip'),
+      );
       await _read();
     }
   }
@@ -182,7 +185,10 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                               _stateWords(s.state),
                               if (s.areas.isNotEmpty) s.areas.join(', '),
                               if (s.works > 0 || s.people > 0)
-                                '${s.works} works, ${s.people} people supplied',
+                                tx('app.admin_sources.supplied', {
+                                  'works': countWords('work', s.works),
+                                  'people': countWords('person', s.people),
+                                }),
                             ].join(' · '),
                           ),
                           trailing: _asking == s.source
@@ -229,7 +235,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                           subtitle: Text(
                             f.secret
                                 ? (keys.isSet(f.field)
-                                      ? 'Saved'
+                                      ? context.tr('settings.keys.saved.tip')
                                       : context.tr('app.admin_sources.not_set'))
                                 : (keys.text(f.field).isEmpty
                                       ? context.tr('app.admin_sources.not_set')
@@ -271,7 +277,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                       ),
                     ),
                   ),
-                  const AdminHeading('Search'),
+                  AdminHeading(context.tr('common.help.topbar.search.term')),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,

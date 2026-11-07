@@ -441,9 +441,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
   AppBar _normalBar(BuildContext context) {
     return AppBar(
       title: Text(switch (widget.section) {
-        LibrarySection.catalogue => 'Catalogue',
-        LibrarySection.quotes => 'Quotes',
-        _ => 'Library',
+        LibrarySection.catalogue => context.tr('nav.tab.movies.label'),
+        LibrarySection.quotes => context.tr('nav.tab.quotes.label'),
+        _ => context.tr('nav.tab.library.label'),
       }),
       actions: [
         IconButton(
@@ -645,14 +645,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     InputChip(
                       label: Text(
                         _boardFilter == null
-                            ? 'Board'
+                            ? context.tr('common.field.board.label')
                             : _boardFilter == _noBoard
                             ? context.tr('app.bulk_bar.no_board')
                             : _boards
                                       .where((b) => b.id == _boardFilter)
                                       .map((b) => b.name)
                                       .firstOrNull ??
-                                  'Board',
+                                  context.tr('common.field.board.label'),
                       ),
                       selected: _boardFilter != null,
                       onPressed: _pickBoard,

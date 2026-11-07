@@ -305,7 +305,7 @@ Future<bool> removeRecord(
             foregroundColor: Theme.of(context).colorScheme.onError,
           ),
           onPressed: () => Navigator.pop(context, true),
-          child: Text(context.tr('common.action.remove.label')),
+          child: Text('Remove'),
         ),
       ],
     ),

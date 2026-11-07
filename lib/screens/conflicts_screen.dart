@@ -162,7 +162,9 @@ class ConflictCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              conflict.isWork ? 'Work' : 'Quote',
+              conflict.isWork
+                  ? context.tr('anthologies.group.work')
+                  : context.tr('common.field.quote.label'),
               style: theme.textTheme.labelMedium,
             ),
             Text(conflict.title, style: theme.textTheme.titleSmall),
