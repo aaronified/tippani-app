@@ -4,6 +4,7 @@ import '../api/api_client.dart';
 import '../api/capabilities.dart';
 import '../app_controller.dart';
 import '../settings/server_url.dart';
+import '../l10n/l10n.dart';
 
 /// Where the reader says which Tippani server is theirs. It asks the server what it is before it keeps
 /// anything, so a typo, a sleeping NAS, a web page that is not Tippani and a server too old or too new
@@ -72,12 +73,14 @@ class _ConnectScreenState extends State<ConnectScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Your Tippani server')),
+      appBar: AppBar(title: Text(context.tr('Your Tippani server'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            'Tippani runs on a server you own. Enter its address, the one you open in a browser.',
+            context.tr(
+              'Tippani runs on a server you own. Enter its address, the one you open in a browser.',
+            ),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 16),
@@ -88,8 +91,8 @@ class _ConnectScreenState extends State<ConnectScreen> {
             autocorrect: false,
             textInputAction: TextInputAction.go,
             onSubmitted: (_) => _check(),
-            decoration: const InputDecoration(
-              labelText: 'Server address',
+            decoration: InputDecoration(
+              labelText: context.tr('Server address'),
               hintText: '192.168.1.20:8124',
               border: OutlineInputBorder(),
             ),
@@ -103,7 +106,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Check and connect'),
+                : Text(context.tr('Check and connect')),
           ),
           if (_problem != null) ...[
             const SizedBox(height: 16),
@@ -115,7 +118,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Continue'),
+              child: Text(context.tr('Continue')),
             ),
           ],
         ],

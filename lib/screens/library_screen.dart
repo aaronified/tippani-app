@@ -21,6 +21,7 @@ import 'tags_screen.dart';
 import 'quote_screen.dart';
 import 'work_form_screen.dart';
 import 'work_screen.dart';
+import '../l10n/l10n.dart';
 
 enum _Mode { quotes, works }
 
@@ -272,13 +273,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
           shrinkWrap: true,
           children: [
             ListTile(
-              title: const Text('No board'),
+              title: Text(context.tr('No board')),
               selected: _boardFilter == _noBoard,
               onTap: () => Navigator.of(context).pop(_noBoard),
             ),
             if (_boards.isEmpty)
-              const ListTile(
-                title: Text('No boards yet. Make one from the Boards button.'),
+              ListTile(
+                title: Text(
+                  context.tr('No boards yet. Make one from the Boards button.'),
+                ),
               )
             else
               // a hidden board is left out, unless it is the one being filtered by
@@ -311,7 +314,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           shrinkWrap: true,
           children: [
             if (tags.isEmpty)
-              const ListTile(title: Text('No tags yet.'))
+              ListTile(title: Text(context.tr('No tags yet.')))
             else
               for (final t in tags)
                 ListTile(
@@ -374,7 +377,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           if (widget.section == LibrarySection.all ||
               widget.section == LibrarySection.quotes)
             IconButton(
-              tooltip: 'Boards',
+              tooltip: context.tr('Boards'),
               icon: const Icon(Icons.dashboard_customize_outlined),
               onPressed: _manageBoards,
             ),
@@ -412,17 +415,17 @@ class _LibraryScreenState extends State<LibraryScreen> {
               },
             ),
           PopupMenuButton<ExportKind>(
-            tooltip: 'Export',
+            tooltip: context.tr('Export'),
             icon: const Icon(Icons.ios_share),
             onSelected: _export,
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               PopupMenuItem(
                 value: ExportKind.share,
-                child: Text('Share as Markdown'),
+                child: Text(context.tr('Share as Markdown')),
               ),
               PopupMenuItem(
                 value: ExportKind.save,
-                child: Text('Save as Markdown file'),
+                child: Text(context.tr('Save as Markdown file')),
               ),
             ],
           ),
@@ -458,7 +461,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 suffixIcon: _search.text.isEmpty
                     ? null
                     : IconButton(
-                        tooltip: 'Clear',
+                        tooltip: context.tr('Clear'),
                         icon: const Icon(Icons.close),
                         onPressed: () {
                           _search.clear();
@@ -516,7 +519,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   spacing: 8,
                   children: [
                     FilterChip(
-                      label: const Text('Favourites'),
+                      label: Text(context.tr('Favourites')),
                       selected: _favourites,
                       onSelected: (v) {
                         setState(() => _favourites = v);
@@ -556,7 +559,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             },
                     ),
                     FilterChip(
-                      label: const Text('Group by board'),
+                      label: Text(context.tr('Group by board')),
                       selected: _groupByBoard,
                       onSelected: (v) => setState(() => _groupByBoard = v),
                     ),

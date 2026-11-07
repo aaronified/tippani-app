@@ -5,6 +5,7 @@ import 'changelog.dart';
 import 'harness.dart';
 import 'update_ui.dart';
 import 'version.dart';
+import '../l10n/l10n.dart';
 
 /// Opens a web address in the phone's browser; false if nothing could. A function so a test can stand in for it.
 typedef OpenLink = Future<bool> Function(Uri url);
@@ -28,7 +29,7 @@ class ChangelogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('What\'s new')),
+      appBar: AppBar(title: Text(context.tr('What\'s new'))),
       body: FutureBuilder<List<ChangelogEntry>>(
         future: harness.changelog(),
         builder: (context, snap) {
@@ -37,8 +38,10 @@ class ChangelogScreen extends StatelessWidget {
           }
           final entries = snap.data!;
           if (entries.isEmpty) {
-            return const Center(
-              child: Text('No changelog is bundled with this build.'),
+            return Center(
+              child: Text(
+                context.tr('No changelog is bundled with this build.'),
+              ),
             );
           }
           return ListView(
@@ -54,15 +57,17 @@ class ChangelogScreen extends StatelessWidget {
                 ),
               ListTile(
                 leading: const Icon(Icons.open_in_new),
-                title: const Text('Full changelog on GitHub'),
-                subtitle: const Text('Every change in full'),
+                title: Text(context.tr('Full changelog on GitHub')),
+                subtitle: Text(context.tr('Every change in full')),
                 onTap: () async {
                   final ok = await openLink(Uri.parse(changelogUrl));
                   if (!ok && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text(
-                          'The link could not be opened. It is at github.com/aaronified/tippani-app.',
+                          context.tr(
+                            'The link could not be opened. It is at github.com/aaronified/tippani-app.',
+                          ),
                         ),
                       ),
                     );

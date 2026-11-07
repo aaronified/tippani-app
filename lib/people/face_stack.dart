@@ -3,16 +3,6 @@ import 'package:flutter/material.dart';
 import '../library/quote_chips.dart';
 import 'people_directory.dart';
 
-/// The names in a credit ("Neil Gaiman & Terry Pratchett"), one each, split the way the web splits them.
-List<String> creditNames(String credit) {
-  final seen = <String>{};
-  return [
-    for (final part in credit.split(RegExp(r'\s*(?:,|;|&|\band\b)\s*')))
-      if (part.trim().isNotEmpty && seen.add(part.trim().toLowerCase()))
-        part.trim(),
-  ];
-}
-
 /// Round faces laid over one another, the first on top (as the web's face cluster), each ringed in the card's colour
 /// so they read apart. Shows only the people the server has a picture for; draws nothing when there is none.
 /// [more] is how many further faces were left out, shown as a count.

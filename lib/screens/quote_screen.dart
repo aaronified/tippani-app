@@ -17,6 +17,7 @@ import 'quote_context_section.dart';
 import 'quote_form_screen.dart';
 import 'share_screen.dart';
 import 'work_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Shares a picture through Android's share sheet. A function so a test can stand in for it.
 typedef ShareImage = Future<void> Function(
@@ -170,18 +171,18 @@ class _QuoteScreenState extends State<QuoteScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete this quote?'),
-        content: const Text(
-          'It is removed from this phone. This cannot be undone.',
+        title: Text(context.tr('Delete this quote?')),
+        content: Text(
+          context.tr('It is removed from this phone. This cannot be undone.'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep it'),
+            child: Text(context.tr('Keep it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.tr('Delete')),
           ),
         ],
       ),
@@ -215,7 +216,9 @@ class _QuoteScreenState extends State<QuoteScreen> {
       return Scaffold(
         appBar: AppBar(),
         body: _loaded
-            ? const Center(child: Text('This quote is not here any more.'))
+            ? Center(
+                child: Text(context.tr('This quote is not here any more.')),
+              )
             : const Center(child: CircularProgressIndicator()),
       );
     }
@@ -225,7 +228,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
     ].where((s) => s.isNotEmpty).join(' · ');
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quote'),
+        title: Text(context.tr('Quote')),
         actions: [
           IconButton(
             tooltip: q.favorite ? 'Remove from favourites' : 'Favourite',
@@ -233,12 +236,12 @@ class _QuoteScreenState extends State<QuoteScreen> {
             onPressed: _favourite,
           ),
           IconButton(
-            tooltip: 'Edit',
+            tooltip: context.tr('Edit'),
             icon: const Icon(Icons.edit_outlined),
             onPressed: _edit,
           ),
           IconButton(
-            tooltip: 'Delete',
+            tooltip: context.tr('Delete'),
             icon: const Icon(Icons.delete_outline),
             onPressed: _delete,
           ),
@@ -284,7 +287,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                     itemId: q.serverId!,
                   ),
                   icon: const Icon(Icons.collections_bookmark_outlined),
-                  label: const Text('Add to anthology'),
+                  label: Text(context.tr('Add to anthology')),
                 ),
               FilledButton.tonalIcon(
                 onPressed: _speak,
@@ -294,13 +297,13 @@ class _QuoteScreenState extends State<QuoteScreen> {
               FilledButton.tonalIcon(
                 onPressed: _share,
                 icon: const Icon(Icons.ios_share),
-                label: const Text('Share'),
+                label: Text(context.tr('Share')),
               ),
             ],
           ),
           const SizedBox(height: 24),
           if (q.note.isNotEmpty) ...[
-            Text('Your note', style: theme.textTheme.titleSmall),
+            Text(context.tr('Your note'), style: theme.textTheme.titleSmall),
             const SizedBox(height: 4),
             Text(q.note),
             const SizedBox(height: 16),

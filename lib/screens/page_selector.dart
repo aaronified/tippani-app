@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../capture/recognised_page.dart';
+import '../l10n/l10n.dart';
 
 /// A scanned page with every word Tesseract found drawn over it, so the reader picks the passage they want right on
 /// the picture: tap a word to take it or leave it out, drag a box across several to take them, Select all or Clear.
@@ -121,7 +122,9 @@ class _PageSelectorState extends State<PageSelector> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Tap a word to take it or leave it out. Drag a box across words to take them.',
+          context.tr(
+            'Tap a word to take it or leave it out. Drag a box across words to take them.',
+          ),
           style: theme.textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
@@ -130,11 +133,11 @@ class _PageSelectorState extends State<PageSelector> {
           children: [
             OutlinedButton(
               onPressed: () => _changed(_sel.selectAll),
-              child: const Text('Select all'),
+              child: Text(context.tr('Select all')),
             ),
             OutlinedButton(
               onPressed: () => _changed(_sel.clear),
-              child: const Text('Clear'),
+              child: Text(context.tr('Clear')),
             ),
           ],
         ),

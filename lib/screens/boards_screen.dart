@@ -12,6 +12,7 @@ import '../library/models.dart';
 import '../sync/auto_sync.dart';
 import 'board_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
+import '../l10n/l10n.dart';
 
 /// The picture of a board, or [fallback] while there is none (and while it loads).
 class BoardPicture extends StatelessWidget {
@@ -142,7 +143,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
                   autofocus: true,
                   textCapitalization: TextCapitalization.sentences,
                   onChanged: (_) => setState(() {}),
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: InputDecoration(labelText: context.tr('Name')),
                 ),
                 if (onServer) ...[
                   const SizedBox(height: 12),
@@ -157,13 +158,13 @@ class _BoardsScreenState extends State<BoardsScreen> {
                   ),
                 ],
                 const SizedBox(height: 16),
-                const Text('Colour'),
+                Text(context.tr('Colour')),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: [
                     ChoiceChip(
-                      label: const Text('None'),
+                      label: Text(context.tr('None')),
                       selected: colour.isEmpty,
                       onSelected: (_) => setState(() => colour = ''),
                     ),
@@ -212,13 +213,13 @@ class _BoardsScreenState extends State<BoardsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(context.tr('Cancel')),
             ),
             FilledButton(
               onPressed: name.text.trim().isEmpty
                   ? null
                   : () => Navigator.of(context).pop(true),
-              child: const Text('Save'),
+              child: Text(context.tr('Save')),
             ),
           ],
         ),
@@ -260,7 +261,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete ${b.name}?'),
+        title: Text(context.tr('Delete {name}?', {'name': b.name})),
         content: Text(
           b.quotes == 0
               ? 'The board is removed.'
@@ -269,11 +270,11 @@ class _BoardsScreenState extends State<BoardsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep it'),
+            child: Text(context.tr('Keep it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(context.tr('Delete')),
           ),
         ],
       ),
@@ -474,20 +475,22 @@ class _BoardsScreenState extends State<BoardsScreen> {
     final boards = _boards;
     final canOrder = _service != null && (boards?.length ?? 0) > 1;
     return Scaffold(
-      appBar: AppBar(title: const Text('Boards')),
+      appBar: AppBar(title: Text(context.tr('Boards'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _edit(),
         icon: const Icon(Icons.add),
-        label: const Text('New board'),
+        label: Text(context.tr('New board')),
       ),
       body: boards == null
           ? const Center(child: CircularProgressIndicator())
           : boards.isEmpty
-          ? const Center(
+          ? Center(
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  'No boards yet. A board is a shelf for standalone quotes: make one, then file quotes on it from the quote form.',
+                  context.tr(
+                    'No boards yet. A board is a shelf for standalone quotes: make one, then file quotes on it from the quote form.',
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),

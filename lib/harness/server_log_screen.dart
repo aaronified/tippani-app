@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../app_controller.dart';
 import 'log_screen.dart' show ShareText, shareThroughSheet;
 import 'server_log.dart';
+import '../l10n/l10n.dart';
 
 const _windows = <(String, Duration)>[
   ('Last hour', Duration(hours: 1)),
@@ -118,20 +119,20 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Server log'),
+        title: Text(context.tr('Server log')),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: context.tr('Refresh'),
             icon: const Icon(Icons.refresh),
             onPressed: _loading ? null : () => _load(reset: true),
           ),
           IconButton(
-            tooltip: 'Copy',
+            tooltip: context.tr('Copy'),
             icon: const Icon(Icons.copy),
             onPressed: _lines.isEmpty ? null : _copy,
           ),
           IconButton(
-            tooltip: 'Share',
+            tooltip: context.tr('Share'),
             icon: const Icon(Icons.share),
             onPressed: _lines.isEmpty
                 ? null
@@ -157,10 +158,10 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
               onSubmitted: (v) => _apply(_filter.copyWith(query: v)),
               decoration: InputDecoration(
                 isDense: true,
-                labelText: 'Search the log',
+                labelText: context.tr('Search the log'),
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
-                  tooltip: 'Search',
+                  tooltip: context.tr('Search'),
                   icon: const Icon(Icons.search),
                   onPressed: () => _apply(_filter.copyWith(query: _query.text)),
                 ),
@@ -217,7 +218,7 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
             ),
           Expanded(
             child: _lines.isEmpty && !_loading && _problem == null
-                ? const Center(child: Text('No lines match.'))
+                ? Center(child: Text(context.tr('No lines match.')))
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     itemCount: _lines.length + 1,
@@ -232,7 +233,7 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
                         if (!_more) return const SizedBox.shrink();
                         return TextButton(
                           onPressed: () => _load(reset: false),
-                          child: const Text('Load older lines'),
+                          child: Text(context.tr('Load older lines')),
                         );
                       }
                       final l = _lines[i];
