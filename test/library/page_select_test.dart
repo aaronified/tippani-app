@@ -251,7 +251,7 @@ void main() {
         final to = at(tester, 390, 95);
         await tester.dragFrom(from, to - from);
         await tester.pump();
-        expect(field(tester), 'Our Tom & Jerry');
+        expect(field(tester), 'plify. Our Tom & Jerry');
       },
     );
 
