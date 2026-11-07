@@ -13,6 +13,15 @@ version. Write each entry for the person using the app, in plain words. **Start 
   attached to each work, read a file again, free the space of one you uploaded (after a preview of what stays), or remove one. Scan a folder on the
   server for files that fit your works: exact matches attach in one press, and the rest you look over, attach or turn down. Attach one by hand from
   the server's folders, or send one from the phone (up to 25 MB), for a book, a film or a show's episode.
+- People and characters console (Settings, Your library): every person and character your server keeps, with search that also finds other
+  spellings, filters for no photo or no links and by kind, and counts of works and quotes. Open one, edit its spellings (the first line is the
+  name shown), merge two that are the same (you choose the name that stays; the Bin can undo it), remove one, make a new character, ask the
+  server to fetch the photos and details that are missing, and clear out people and characters nothing uses. Press and hold to choose two to merge.
+- A character's page can be edited: its details, its picture (from the phone, or taken away), its spellings (press one to make it a record of its
+  own), merging it into another character, and removing it. A person's page gains the same for spellings, merging and removing.
+- The shelf: on a work's page, say where you are with it: Reading (Watching, Playing), Paused, Abandoned or Finished, with a bar for how far you
+  are, and how many times you have finished it. It is the same shelf the web keeps, so a change on either shows on the other; the library list
+  shows each work's status and bar. Changing it needs your server (it is kept there), and a refusal comes back in the server's own words.
 - Search is a page of its own, like the web's: a search button on the Library, Catalogue and Quotes screens and a search box on Home open it.
   With your server it forgives typos ("showing results for ..."), and reads names, tags and genres as well as the words; without one it
   searches what is on the phone, and it says which it did. Results come in sections (titles, people, characters, tags, genres, notes, quotes)

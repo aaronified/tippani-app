@@ -1,6 +1,8 @@
 import 'admin_screen.dart';
 import 'checks_entry.dart';
 import 'source_files_screen.dart';
+import 'filtered_quotes_screen.dart';
+import 'people_console_screen.dart';
 import 'conflicts_screen.dart';
 import 'read_aloud_settings_screen.dart';
 import 'tools_screens.dart';
@@ -305,6 +307,32 @@ class SettingsScreen extends StatelessWidget {
                             service: harness.sources!,
                             library: harness.library!,
                             picker: harness.sourcePicker,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (harness.peopleConsole != null && harness.library != null)
+                    ListTile(
+                      leading: const Icon(Icons.groups_2_outlined),
+                      title: const Text('People and characters'),
+                      subtitle: const Text(
+                        'Authors, actors, speakers and characters: spellings, photos, merging',
+                      ),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (context) => PeopleConsoleScreen(
+                            console: harness.peopleConsole!,
+                            onFilter: (f) => Navigator.of(context).push<void>(
+                              MaterialPageRoute(
+                                builder: (_) => FilteredQuotesScreen(
+                                  store: harness.library!,
+                                  picker: harness.picker,
+                                  title: f.name,
+                                  query: f.name,
+                                  anthologies: harness.anthologies,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),

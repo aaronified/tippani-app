@@ -172,6 +172,9 @@ class FakeServer {
   /// Every write to a person: the route (`PUT /people/id/3`) and what was sent.
   final personWrites = <(String, Object?)>[];
 
+  /// Every shelf change accepted (`PUT /books|movies/{id}/status`): the route, the id and the body.
+  final statusWrites = <Map<String, Object?>>[];
+
   /// How many times `GET /people` was asked.
   int peopleReads = 0;
 
@@ -708,6 +711,39 @@ class FakeServer {
       return _create(path, jsonDecode(r.body) as Map);
     }
     if (r.method == 'GET' && _listKeys.containsKey(path)) return _read(path);
+    final shelf = RegExp(r'^(/books|/movies)/(\d+)/status$').firstMatch(path);
+    if (shelf != null && r.method == 'PUT') {
+      final rows = created[shelf[1]!] ?? [];
+      final hit = rows.where((x) => x['id'] == int.parse(shelf[2]!));
+      if (hit.isEmpty) return _json({'error': 'not found'}, 404);
+      final row = hit.first;
+      final body = jsonDecode(r.body) as Map;
+      final to = body['status'] as String? ?? '';
+      if (row['status'] == 'completed' &&
+          to != '' &&
+          to != 'reading' &&
+          to != 'watching' &&
+          to != 'completed') {
+        return _json({
+          'error':
+              'a completed book can only be started again (reading) or cleared',
+        }, 409);
+      }
+      statusWrites.add({'route': shelf[1], 'id': row['id'], ...body});
+      final reads = [...((row['reads'] as List?) ?? const [])];
+      if (to == 'completed') {
+        reads.add({
+          'started_at': '2026-11-01',
+          'finished_at': '2026-11-07',
+          'outcome': 'finished',
+        });
+      }
+      row
+        ..['status'] = to
+        ..['progress'] = body['progress'] ?? 0
+        ..['reads'] = reads;
+      return _json(row);
+    }
     final one = RegExp(
       r'^(/books|/movies|/annotations|/dialogues|/quotes)/(\d+)$',
     ).firstMatch(path);
