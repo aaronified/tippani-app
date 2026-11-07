@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../anthologies/anthologies.dart';
 import '../library/cover_cache.dart';
+import '../tools/work_details_source.dart';
 import '../tools/server_tools.dart';
 import '../tools/work_lookup.dart';
 import '../app_controller.dart';
@@ -86,6 +87,7 @@ class Harness {
     this.auto,
     this.runAutoSync = false,
     this.covers,
+    this.details,
     this.anthologies,
     this.tools,
     this.lookup,
@@ -121,6 +123,9 @@ class Harness {
 
   /// Fetches and keeps cover pictures from the paired server. Null in a test that is about something else.
   final CoverSource? covers;
+
+  /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
+  final WorkDetailsSource? details;
 
   /// The paired server's anthologies. Null in a test that is about something else.
   final AnthologyService? anthologies;
@@ -184,6 +189,7 @@ class Harness {
             ),
       runAutoSync: true,
       covers: CoverCache(controller),
+      details: PairedWorkDetails(controller),
       anthologies: ServerAnthologies(controller),
       tools: PairedServerTools(controller),
       lookup: PairedWorkLookup(controller),
@@ -202,6 +208,7 @@ class Harness {
     BackupPicker? picker,
     LibraryStore? library,
     CoverSource? covers,
+    WorkDetailsSource? details,
     AnthologyService? anthologies,
     ServerTools? tools,
     WorkLookup? lookup,
@@ -240,6 +247,7 @@ class Harness {
           ? null
           : AutoSync(push: push, pull: pull, controller: controller, log: l),
       covers: covers,
+      details: details,
       anthologies: anthologies,
       tools: tools,
       lookup: lookup,
