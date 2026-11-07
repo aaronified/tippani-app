@@ -29,7 +29,7 @@ class ChangelogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('What\'s new'))),
+      appBar: AppBar(title: Text(context.tr('app.changelog.what_s_new'))),
       body: FutureBuilder<List<ChangelogEntry>>(
         future: harness.changelog(),
         builder: (context, snap) {
@@ -40,7 +40,7 @@ class ChangelogScreen extends StatelessWidget {
           if (entries.isEmpty) {
             return Center(
               child: Text(
-                context.tr('No changelog is bundled with this build.'),
+                context.tr('app.changelog.no_changelog_is_bundled_with_this'),
               ),
             );
           }
@@ -57,8 +57,12 @@ class ChangelogScreen extends StatelessWidget {
                 ),
               ListTile(
                 leading: const Icon(Icons.open_in_new),
-                title: Text(context.tr('Full changelog on GitHub')),
-                subtitle: Text(context.tr('Every change in full')),
+                title: Text(
+                  context.tr('app.changelog.full_changelog_on_github'),
+                ),
+                subtitle: Text(
+                  context.tr('app.changelog.every_change_in_full'),
+                ),
                 onTap: () async {
                   final ok = await openLink(Uri.parse(changelogUrl));
                   if (!ok && context.mounted) {
@@ -66,7 +70,7 @@ class ChangelogScreen extends StatelessWidget {
                       SnackBar(
                         content: Text(
                           context.tr(
-                            'The link could not be opened. It is at github.com/aaronified/tippani-app.',
+                            'app.changelog.the_link_could_not_be_opened',
                           ),
                         ),
                       ),

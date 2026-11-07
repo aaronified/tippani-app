@@ -5,6 +5,7 @@ import '../library/quote_chips.dart';
 import '../people/people_directory.dart';
 import '../people/people_service.dart';
 import 'person_screen.dart';
+import '../l10n/l10n.dart';
 
 /// What the server knows about a work, laid out under its title: description, genres, the small facts (publisher,
 /// pages, ISBN, series) and the cast or characters. Draws nothing for a work with nothing to show.
@@ -105,7 +106,11 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
                 alignment: Alignment.centerLeft,
                 child: TextButton(
                   onPressed: () => setState(() => _moreText = !_moreText),
-                  child: Text(_moreText ? 'Show less' : 'Show more'),
+                  child: Text(
+                    _moreText
+                        ? context.tr('common.action.show-less.label')
+                        : context.tr('context.more'),
+                  ),
                 ),
               ),
           ],
@@ -146,7 +151,9 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
               TextButton(
                 onPressed: () => setState(() => _allCast = !_allCast),
                 child: Text(
-                  _allCast ? 'Show fewer' : 'Show all ${d.cast.length}',
+                  _allCast
+                      ? context.tr('app.dashboard.show_fewer')
+                      : 'Show all ${d.cast.length}',
                 ),
               ),
           ],

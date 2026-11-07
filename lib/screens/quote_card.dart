@@ -9,6 +9,7 @@ import '../library/quote_text.dart';
 import '../library/share_format.dart';
 import '../theme/app_theme.dart';
 import 'quote_form_screen.dart' show quoteColour;
+import '../l10n/l10n.dart';
 
 /// A quote drawn as a card: the words large, the translation under them, who and what it is from, and an
 /// edge in the quote's own colour. The same widget is what the reader sees and what becomes the picture
@@ -63,7 +64,9 @@ class QuoteCard extends StatelessWidget {
                           context,
                           24,
                           Text(
-                            '“${quote.text.trim()}”',
+                            context.tr('app.anthologies.trim', {
+                              'trim': quote.text.trim(),
+                            }),
                             style: quoteStyle(
                               context,
                               size: 24,
@@ -89,7 +92,7 @@ class QuoteCard extends StatelessWidget {
                       if (from.isNotEmpty) ...[
                         const SizedBox(height: 20),
                         Text(
-                          '— $from',
+                          context.tr('app.anthologies.from', {'from': from}),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),

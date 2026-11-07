@@ -205,7 +205,7 @@ class _ShellState extends State<Shell> {
           destination: NavigationDestination(
             icon: const Icon(Icons.home_outlined),
             selectedIcon: const Icon(Icons.home_rounded),
-            label: context.tr('Home'),
+            label: context.tr('nav.tab.home.label'),
           ),
         ),
       if (library != null)
@@ -252,7 +252,7 @@ class _ShellState extends State<Shell> {
           destination: NavigationDestination(
             icon: const Icon(Icons.home_outlined),
             selectedIcon: const Icon(Icons.home),
-            label: context.tr('Home'),
+            label: context.tr('nav.tab.home.label'),
           ),
         ),
       (
@@ -263,7 +263,7 @@ class _ShellState extends State<Shell> {
         destination: NavigationDestination(
           icon: const Icon(Icons.settings_outlined),
           selectedIcon: const Icon(Icons.settings),
-          label: context.tr('Settings'),
+          label: context.tr('nav.tab.settings.label'),
         ),
       ),
     ];

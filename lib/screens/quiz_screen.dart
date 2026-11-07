@@ -6,6 +6,7 @@ import '../quiz/quiz.dart';
 import '../theme/app_theme.dart';
 import 'library_widgets.dart' show EmptyState;
 import 'quote_form_screen.dart' show quoteColour;
+import '../l10n/l10n.dart';
 
 /// Which deck a round is.
 enum QuizMode { daily, practice }
@@ -176,7 +177,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _daily ? 'Daily quiz' : 'Practice';
+    final title = _daily ? context.tr('quiz.daily.label') : 'Practice';
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -184,7 +185,7 @@ class _QuizScreenState extends State<QuizScreen> {
           if (!_daily && !_loading && !_finished && _cards.isNotEmpty)
             TextButton(
               onPressed: () => setState(() => _finished = true),
-              child: const Text('End round'),
+              child: Text(context.tr('quiz.practice.end.label')),
             ),
         ],
       ),
@@ -197,17 +198,19 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_error != null) {
       return EmptyState(
         icon: Icons.cloud_off_rounded,
-        title: 'Could not load the cards.',
+        title: context.tr('app.quiz.could_not_load_the_cards'),
         hint: _error,
       );
     }
     if (_cards.isEmpty) {
       return EmptyState(
         icon: _daily ? Icons.task_alt_rounded : Icons.menu_book_outlined,
-        title: _daily ? 'Nothing due today.' : 'No quotes here to practise.',
+        title: _daily
+            ? context.tr('app.quiz.nothing_due_today')
+            : context.tr('app.quiz.no_quotes_here_to_practise'),
         hint: _daily
-            ? 'Add more quotes, or come back tomorrow.'
-            : 'Save a highlight, a line or a quote first.',
+            ? context.tr('app.quiz.add_more_quotes_or_come_back')
+            : context.tr('app.quiz.save_a_highlight_a_line_or'),
       );
     }
     if (_finished) return _summary(context);
@@ -225,14 +228,16 @@ class _QuizScreenState extends State<QuizScreen> {
         Icon(Icons.check_circle_rounded, size: 64, color: scheme.primary),
         const SizedBox(height: 16),
         Text(
-          _daily ? 'That is today done.' : 'Round finished.',
+          _daily
+              ? context.tr('app.quiz.that_is_today_done')
+              : context.tr('app.quiz.round_finished'),
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineSmall,
         ),
         const SizedBox(height: 8),
         Text(
           total == 0
-              ? 'Nothing was marked.'
+              ? context.tr('app.quiz.nothing_was_marked')
               : '$_got recalled · $_missed missed'
                     '${_skipped > 0 ? ' · $_skipped skipped' : ''}',
           textAlign: TextAlign.center,
@@ -243,7 +248,7 @@ class _QuizScreenState extends State<QuizScreen> {
         if (_daily && _missed > 0) ...[
           const SizedBox(height: 8),
           Text(
-            'The ones you missed come back sooner.',
+            context.tr('app.quiz.the_ones_you_missed_come_back'),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
@@ -255,12 +260,12 @@ class _QuizScreenState extends State<QuizScreen> {
           FilledButton.icon(
             onPressed: _load,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Another round'),
+            label: Text(context.tr('quiz.round.again.label')),
           ),
         const SizedBox(height: 8),
         OutlinedButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Done'),
+          child: Text(context.tr('common.action.done.label')),
         ),
       ],
     );
@@ -269,11 +274,11 @@ class _QuizScreenState extends State<QuizScreen> {
   String _stem(QuizCard c) => switch (c.direction) {
     'source' => 'Which ${c.noun} is this quote from?',
     'quote' => 'Which quote is from this ${c.noun}?',
-    'cloze' => 'Fill in the blank',
-    'cloze-mcq' => 'Which words belong in the blank?',
-    'speaker' => 'Who says this?',
-    'author' => 'Who wrote this?',
-    _ => 'Where is this from?',
+    'cloze' => context.tr('quiz.question.cloze.label'),
+    'cloze-mcq' => context.tr('quiz.question.cloze-mcq.stem'),
+    'speaker' => context.tr('quiz.question.speaker.stem'),
+    'author' => context.tr('quiz.question.author.label'),
+    _ => context.tr('quiz.question.flip.stem'),
   };
 
   Widget _question(BuildContext context) {
@@ -299,7 +304,10 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
               const SizedBox(width: 12),
               Text(
-                '${_before + _index + 1} of $total',
+                context.tr('app.quiz.x_of_total', {
+                  'x': _before + _index + 1,
+                  'total': total,
+                }),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -667,9 +675,9 @@ class _QuizScreenState extends State<QuizScreen> {
       textInputAction: TextInputAction.done,
       onChanged: (v) => setState(() => _typed = v),
       onSubmitted: (_) => _checkTyped(c),
-      decoration: const InputDecoration(
-        labelText: 'The missing words',
-        hintText: 'type what belongs in the blank',
+      decoration: InputDecoration(
+        labelText: context.tr('quiz.cloze.field.label'),
+        hintText: context.tr('quiz.cloze.placeholder'),
       ),
     );
   }
@@ -692,7 +700,7 @@ class _QuizScreenState extends State<QuizScreen> {
     if (!_flipShown) {
       return FilledButton.tonal(
         onPressed: () => setState(() => _flipShown = true),
-        child: const Text('Show me'),
+        child: Text(context.tr('quiz.flip.reveal.label')),
       );
     }
     return _source(context, c);
@@ -787,7 +795,10 @@ class _QuizScreenState extends State<QuizScreen> {
         ),
         if (c.isCloze && o != null && o.answer.isNotEmpty) ...[
           const SizedBox(height: 6),
-          Text('the missing words', style: theme.textTheme.labelMedium),
+          Text(
+            context.tr('quiz.cloze.answer.label'),
+            style: theme.textTheme.labelMedium,
+          ),
           Text(
             o.answer,
             style: quoteStyle(context, size: 18, weight: FontWeight.w600),
@@ -795,7 +806,7 @@ class _QuizScreenState extends State<QuizScreen> {
           if (!_correct && _typed.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              'what you wrote: $_typed',
+              context.tr('app.quiz.what_you_wrote_typed', {'typed': _typed}),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -803,7 +814,7 @@ class _QuizScreenState extends State<QuizScreen> {
           ],
           if (o.synonym)
             Text(
-              'counted as a synonym — worth less than the words themselves',
+              context.tr('quiz.cloze.synonym.note'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -811,7 +822,7 @@ class _QuizScreenState extends State<QuizScreen> {
         ],
         if (_kept && !c.isCloze)
           Text(
-            'Answer kept on this phone; it goes to the server when it can.',
+            context.tr('app.quiz.answer_kept_on_this_phone_it'),
             style: theme.textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -820,7 +831,9 @@ class _QuizScreenState extends State<QuizScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'forgotten ${o.lapses} times',
+              context.tr('app.quiz.forgotten_lapses_times', {
+                'lapses': o.lapses,
+              }),
               style: theme.textTheme.bodySmall?.copyWith(color: scheme.error),
             ),
           ),
@@ -862,7 +875,9 @@ class _QuizScreenState extends State<QuizScreen> {
                             ),
                             localCorrect: false,
                           ),
-                    child: const Text('Forgot'),
+                    child: Text(
+                      context.tr('common.recall.result.forgot.label'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -879,7 +894,7 @@ class _QuizScreenState extends State<QuizScreen> {
                             ),
                             localCorrect: true,
                           ),
-                    child: const Text('Got it'),
+                    child: Text(context.tr('common.action.got-it.label')),
                   ),
                 ),
               ],
@@ -918,7 +933,7 @@ class _QuizScreenState extends State<QuizScreen> {
           if (!_daily && !_graded)
             TextButton(
               onPressed: _sending ? null : _skip,
-              child: const Text('Skip'),
+              child: Text(context.tr('app.quiz.skip')),
             ),
           if (!_daily && !_graded) const SizedBox(width: 8),
           Expanded(child: primary),

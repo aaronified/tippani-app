@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/server_call.dart';
 import '../metadata/metadata_service.dart';
 import '../people/picture.dart';
+import '../l10n/l10n.dart';
 
 void _say(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
@@ -163,7 +164,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
       _say(
         context,
         summary.isEmpty
-            ? 'The web had nothing new.'
+            ? context.tr('app.metadata_tools.the_web_had_nothing_new')
             : 'Nothing to change: $summary.',
       );
       return;
@@ -189,13 +190,15 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, set) => AlertDialog(
-          title: const Text('Merge into one'),
+          title: Text(context.tr('app.bulk_bar.merge_into_one')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Quotes, tags and credits move to the one you keep. The others go to the Bin.',
+              Text(
+                context.tr(
+                  'app.metadata_tools.quotes_tags_and_credits_move_to',
+                ),
               ),
               RadioGroup<int>(
                 groupValue: keep,
@@ -223,11 +226,11 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: Text(context.tr('common.action.cancel.label')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Merge'),
+              child: Text(context.tr('staging.move.merge.button.label')),
             ),
           ],
         ),
@@ -283,7 +286,10 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                     padding: const EdgeInsets.only(right: 8),
                     child: FilterChip(
                       label: Text(
-                        'No $g (${all.where((w) => w.gaps.contains(g)).length})',
+                        context.tr('app.metadata_tools.no_g_n', {
+                          'g': g,
+                          'n': all.where((w) => w.gaps.contains(g)).length,
+                        }),
                       ),
                       selected: _gap == g,
                       onSelected: (v) => setState(() => _gap = v ? g : ''),
@@ -303,8 +309,12 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                         padding: const EdgeInsets.all(48),
                         child: Text(
                           all.every((w) => w.gaps.isEmpty)
-                              ? 'Every work has all its details.'
-                              : 'No work matches.',
+                              ? context.tr(
+                                  'app.metadata_tools.every_work_has_all_its_details',
+                                )
+                              : context.tr(
+                                  'app.metadata_tools.no_work_matches',
+                                ),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -384,11 +394,11 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
     final groups = _dups!;
     if (groups.isEmpty) {
       return ListView(
-        children: const [
+        children: [
           Padding(
             padding: EdgeInsets.all(48),
             child: Text(
-              'No work looks saved twice.',
+              context.tr('app.metadata_tools.no_work_looks_saved_twice'),
               textAlign: TextAlign.center,
             ),
           ),
@@ -413,14 +423,27 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                         Padding(
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Text(
-                            '${w.title}${w.creator.isEmpty ? '' : ' · ${w.creator}'}${w.year > 0 ? ' · ${w.year}' : ''} · ${w.quotes} ${w.quotes == 1 ? 'quote' : 'quotes'}',
+                            context.tr(
+                              'app.metadata_tools.titlex_x2_quotes_x3',
+                              {
+                                'title': w.title,
+                                'x': w.creator.isEmpty ? '' : ' · ${w.creator}',
+                                'x2': w.year > 0 ? ' · ${w.year}' : '',
+                                'quotes': w.quotes,
+                                'x3': w.quotes == 1 ? 'quote' : 'quotes',
+                              },
+                            ),
                           ),
                         ),
                       Align(
                         alignment: Alignment.centerRight,
                         child: FilledButton.tonal(
                           onPressed: () => _merge(g),
-                          child: Text('Merge ${g.length}'),
+                          child: Text(
+                            context.tr('app.metadata_tools.merge_n', {
+                              'n': g.length,
+                            }),
+                          ),
                         ),
                       ),
                     ],
@@ -441,13 +464,15 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
       appBar: AppBar(
         leading: selecting
             ? IconButton(
-                tooltip: 'Clear the choice',
+                tooltip: context.tr('app.metadata_tools.clear_the_choice'),
                 icon: const Icon(Icons.close_rounded),
                 onPressed: () => setState(_picked.clear),
               )
             : null,
         title: Text(
-          selecting ? '${_picked.length} chosen' : 'Details and duplicates',
+          selecting
+              ? '${_picked.length} chosen'
+              : context.tr('app.settings.details_and_duplicates'),
         ),
         actions: [
           if (selecting)
@@ -463,11 +488,11 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                       _check(chosen);
                     },
               icon: const Icon(Icons.travel_explore_rounded),
-              label: const Text('Re-check'),
+              label: Text(context.tr('app.metadata_tools.re_check')),
             )
           else
             PopupMenuButton<String>(
-              tooltip: 'More',
+              tooltip: context.tr('settings.appearance.contrast.more.label'),
               onSelected: (v) {
                 if (v == 'fill') {
                   _job(
@@ -477,19 +502,25 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                 } else if (v == 'covers') {
                   _job(
                     widget.service.fetchCovers,
-                    'The server is fetching the missing covers.',
+                    context.tr(
+                      'app.metadata_tools.the_server_is_fetching_the_missing',
+                    ),
                   );
                 }
               },
               itemBuilder: (_) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'fill',
-                  child: Text('Fill every work\'s gaps'),
+                  child: Text(
+                    context.tr('app.metadata_tools.fill_every_work_s_gaps'),
+                  ),
                 ),
                 if (widget.admin)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'covers',
-                    child: Text('Fetch missing covers'),
+                    child: Text(
+                      context.tr('app.metadata_tools.fetch_missing_covers'),
+                    ),
                   ),
               ],
             ),
@@ -501,7 +532,9 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: SearchBar(
-                  hintText: 'Search titles and creators',
+                  hintText: context.tr(
+                    'app.metadata_tools.search_titles_and_creators',
+                  ),
                   leading: const Icon(Icons.search),
                   elevation: const WidgetStatePropertyAll(0),
                   onChanged: (v) => setState(() => _query = v.trim()),
@@ -537,7 +570,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _read,
-                      child: const Text('Try again'),
+                      child: Text(context.tr('common.source.retry')),
                     ),
                   ],
                 ),
@@ -655,7 +688,9 @@ class _ReverifyReviewScreenState extends State<ReverifyReviewScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('What the web says')),
+      appBar: AppBar(
+        title: Text(context.tr('app.metadata_tools.what_the_web_says')),
+      ),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 96),
         children: [
@@ -689,13 +724,17 @@ class _ReverifyReviewScreenState extends State<ReverifyReviewScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Now: ${valueText(d.stored)}',
+                          context.tr('app.checks_tabs.now_x', {
+                            'x': valueText(d.stored),
+                          }),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(color: scheme.onSurfaceVariant),
                         ),
                         Text(
-                          'Web: ${valueText(_pick(i, d).value)}',
+                          context.tr('app.metadata_tools.web_x', {
+                            'x': valueText(_pick(i, d).value),
+                          }),
                           maxLines: 6,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -715,7 +754,9 @@ class _ReverifyReviewScreenState extends State<ReverifyReviewScreen> {
                           )
                         else if (_pick(i, d).source.isNotEmpty)
                           Text(
-                            'from ${_pick(i, d).source}',
+                            context.tr('app.metadata_tools.from_source', {
+                              'source': _pick(i, d).source,
+                            }),
                             style: theme.textTheme.labelSmall,
                           ),
                       ],

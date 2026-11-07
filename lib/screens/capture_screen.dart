@@ -43,7 +43,7 @@ class CaptureScreen extends StatefulWidget {
 }
 
 /// The languages whose data is bundled with the app, as Tesseract names them.
-const captureLanguages = {
+final captureLanguages = {
   'eng': 'English',
   'hin': 'Hindi',
   'eng+hin': 'English and Hindi',
@@ -70,7 +70,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
       path = await fetch();
     } on Object {
       if (mounted) {
-        setState(() => _problem = 'The picture could not be opened.');
+        setState(
+          () =>
+              _problem = context.tr('app.work.the_picture_could_not_be_opened'),
+        );
       }
       return;
     }
@@ -117,13 +120,13 @@ class _CaptureScreenState extends State<CaptureScreen> {
       setState(() {
         _text.text = text;
         if (text.isEmpty) {
-          _problem = 'No text was found on that picture. Try again, closer and in better light.';
+          _problem = context.tr('app.capture.no_text_was_found_on_that');
         }
       });
     } on Object {
       if (mounted) {
         setState(
-          () => _problem = 'The text could not be read from that picture.',
+          () => _problem = context.tr('app.capture.the_text_could_not_be_read'),
         );
       }
     } finally {
@@ -138,14 +141,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Scan a page'))),
+      appBar: AppBar(title: Text(context.tr('app.capture.scan_a_page'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           DropdownButtonFormField<String>(
             initialValue: _language,
             decoration: InputDecoration(
-              labelText: context.tr('Language of the page'),
+              labelText: context.tr('app.capture.language_of_the_page'),
             ),
             items: [
               for (final e in captureLanguages.entries)
@@ -163,12 +166,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
               FilledButton.icon(
                 onPressed: _busy ? null : () => _get(_photos.take),
                 icon: const Icon(Icons.photo_camera_outlined),
-                label: Text(context.tr('Take a photo')),
+                label: Text(context.tr('app.capture.take_a_photo')),
               ),
               FilledButton.tonalIcon(
                 onPressed: _busy ? null : () => _get(_photos.choose),
                 icon: const Icon(Icons.photo_library_outlined),
-                label: Text(context.tr('Choose a picture')),
+                label: Text(context.tr('anthologies.front.cover.choose')),
               ),
             ],
           ),
@@ -190,7 +193,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
             const SizedBox(height: 16),
             const LinearProgressIndicator(),
             const SizedBox(height: 8),
-            Text(context.tr('Reading the page on this phone…')),
+            Text(context.tr('app.capture.reading_the_page_on_this_phone')),
           ],
           if (_problem != null) ...[
             const SizedBox(height: 16),
@@ -213,9 +216,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
               maxLines: 14,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: context.tr('The text, as read'),
+                labelText: context.tr('app.capture.the_text_as_read'),
                 helperText: context.tr(
-                  'Correct anything it got wrong, and delete what you do not want to keep.',
+                  'app.capture.correct_anything_it_got_wrong_and',
                 ),
                 alignLabelWithHint: true,
               ),
@@ -223,7 +226,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _text.text.trim().isEmpty ? null : _use,
-              child: Text(context.tr('Use this text')),
+              child: Text(context.tr('app.capture.use_this_text')),
             ),
           ],
         ],

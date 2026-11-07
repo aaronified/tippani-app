@@ -14,6 +14,7 @@ import 'library_widgets.dart' show QuoteTile;
 import 'quiz_screen.dart';
 import 'quote_screen.dart';
 import 'search_screen.dart';
+import '../l10n/l10n.dart';
 
 /// The words at the top of Home for [now]: a greeting for the time of day (with [name] when the phone knows who it is
 /// paired as), and one line about keeping quotes for the day.
@@ -36,7 +37,7 @@ String greetingFor(DateTime now, String? name) {
   return name == null || name.isEmpty ? hello : '$hello, $name';
 }
 
-const _epigraphs = [
+final _epigraphs = [
   'A margin is a promise: that there is always room to answer back.',
   'The book is the author’s. The margin is yours.',
   'Nothing is really read until something is written beside it.',
@@ -330,7 +331,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _states(context, _scores!),
           _shuffleSection(context),
           if (today.isNotEmpty) ...[
-            _heading(context, 'On this day', '${today.length}'),
+            _heading(
+              context,
+              context.tr('app.dashboard.on_this_day'),
+              '${today.length}',
+            ),
             for (final q in today.take(5)) _quoteTile(q),
           ],
           if (favourites.isNotEmpty) ...[
@@ -343,7 +348,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       setState(() => _allFavourites = !_allFavourites),
                   child: Text(
                     _allFavourites
-                        ? 'Show fewer'
+                        ? context.tr('app.dashboard.show_fewer')
                         : 'View more (${favourites.length - _favouritesShown})',
                   ),
                 ),
@@ -353,7 +358,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(32, 32, 32, 0),
               child: Text(
-                'Nothing saved yet. Add a quote from the Quotes tab, or scan a page, and it will show up here.',
+                context.tr('app.dashboard.nothing_saved_yet_add_a_quote'),
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
@@ -473,7 +478,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               Text(
-                '$label · $small',
+                context.tr('app.dashboard.label_small', {
+                  'label': label,
+                  'small': small,
+                }),
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: scheme.onSecondaryContainer,
                 ),
@@ -506,7 +514,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           trailing: TextButton(
             onPressed: widget.quiz.drain,
-            child: const Text('Send now'),
+            child: Text(context.tr('app.dashboard.send_now')),
           ),
         ),
       ),
@@ -520,7 +528,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Widget body;
     if (!widget.quiz.available) {
       body = Text(
-        'Connect to your server in Settings to get a few quotes to recall each day.',
+        context.tr('app.dashboard.connect_to_your_server_in_settings'),
         style: theme.textTheme.bodyMedium?.copyWith(
           color: scheme.onSurfaceVariant,
         ),
@@ -535,13 +543,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Expanded(
             child: Text(
-              _scoresError ?? 'Could not load today’s quiz.',
+              _scoresError ??
+                  context.tr('app.dashboard.could_not_load_today_s_quiz'),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
             ),
           ),
-          TextButton(onPressed: _loadScores, child: const Text('Try again')),
+          TextButton(
+            onPressed: _loadScores,
+            child: Text(context.tr('common.source.retry')),
+          ),
         ],
       );
     } else {
@@ -554,8 +566,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         sub =
             '${s.dailyGot} recalled · ${s.dailyAnswered - s.dailyGot} to resurface · back tomorrow';
       } else if (due == 0) {
-        headline = 'Nothing due today';
-        sub = 'Add or review more quotes to build your schedule.';
+        headline = context.tr('app.dashboard.nothing_due_today');
+        sub = context.tr('app.dashboard.add_or_review_more_quotes_to');
       } else {
         headline = due == 1 ? '1 card due today' : '$due cards due today';
         sub = done > 0 ? '$done answered so far' : 'A few minutes, no more.';
@@ -605,7 +617,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Icon(Icons.bolt_rounded, color: scheme.primary, size: 20),
                   const SizedBox(width: 6),
                   Text(
-                    'DAILY QUIZ',
+                    context.tr('app.dashboard.daily_quiz'),
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: scheme.primary,
                       fontWeight: FontWeight.w700,
@@ -620,7 +632,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Icons.local_fire_department_rounded,
                         size: 18,
                       ),
-                      label: Text('${s.streak}-day streak'),
+                      label: Text(
+                        context.tr('app.dashboard.streak_day_streak', {
+                          'streak': s.streak,
+                        }),
+                      ),
                     ),
                 ],
               ),
@@ -655,7 +671,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'PRACTICE',
+                    context.tr('app.dashboard.practice'),
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: scheme.primary,
                       fontWeight: FontWeight.w700,
@@ -664,7 +680,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const Spacer(),
                   Text(
-                    'unlimited',
+                    context.tr('home.practice.unlimited.label'),
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -675,7 +691,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(
                 s != null && s.practiceAnswered > 0
                     ? '${s.practiceGot} of ${s.practiceAnswered} recalled'
-                    : 'Go through your library as long as you like, and skip whatever you like.',
+                    : context.tr(
+                        'app.dashboard.go_through_your_library_as_long',
+                      ),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -688,13 +706,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? () => _play(QuizMode.practice)
                         : null,
                     icon: const Icon(Icons.play_arrow_rounded),
-                    label: const Text('Start practice'),
+                    label: Text(context.tr('home.practice.start.label')),
                   ),
                   if (s != null && s.practiceAnswered > 0) ...[
                     const SizedBox(width: 8),
                     TextButton(
                       onPressed: _resetPractice,
-                      child: const Text('Reset score'),
+                      child: Text(context.tr('app.dashboard.reset_score')),
                     ),
                   ],
                 ],
@@ -736,7 +754,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'WHERE YOU STAND',
+                context.tr('app.dashboard.where_you_stand'),
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: scheme.primary,
                   fontWeight: FontWeight.w700,
@@ -782,7 +800,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               if (s.capacity > 0 && st.total > s.capacity) ...[
                 const SizedBox(height: 10),
                 Text(
-                  'Your library is bigger than the schedule can keep up with: about ${s.capacity} quotes stay current, and you have ${st.total}. The quiz still leads with the stalest.',
+                  context.tr('app.dashboard.your_library_is_bigger_than_the', {
+                    'capacity': s.capacity,
+                    'total': st.total,
+                  }),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),

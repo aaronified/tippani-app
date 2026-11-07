@@ -122,9 +122,7 @@ class _PageSelectorState extends State<PageSelector> {
         ),
         const SizedBox(height: 8),
         Text(
-          context.tr(
-            'Tap a word to take it or leave it out. Drag a box across words to take them.',
-          ),
+          context.tr('app.page_selector.tap_a_word_to_take_it'),
           style: theme.textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
@@ -133,11 +131,11 @@ class _PageSelectorState extends State<PageSelector> {
           children: [
             OutlinedButton(
               onPressed: () => _changed(_sel.selectAll),
-              child: Text(context.tr('Select all')),
+              child: Text(context.tr('search.table.select-all.aria')),
             ),
             OutlinedButton(
               onPressed: () => _changed(_sel.clear),
-              child: Text(context.tr('Clear')),
+              child: Text(context.tr('common.selection.shelf.clear.label')),
             ),
           ],
         ),

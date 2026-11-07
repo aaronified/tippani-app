@@ -46,7 +46,9 @@ Future<({String title, String intro})?> askAnthologyText(
               controller: t,
               autofocus: true,
               onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(labelText: context.tr('Title')),
+              decoration: InputDecoration(
+                labelText: context.tr('common.field.title.label'),
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -54,7 +56,7 @@ Future<({String title, String intro})?> askAnthologyText(
               minLines: 2,
               maxLines: 5,
               decoration: InputDecoration(
-                labelText: context.tr('Introduction'),
+                labelText: context.tr('anthologies.form.intro.label'),
               ),
             ),
           ],
@@ -62,7 +64,7 @@ Future<({String title, String intro})?> askAnthologyText(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: t.text.trim().isEmpty
@@ -70,7 +72,7 @@ Future<({String title, String intro})?> askAnthologyText(
                 : () =>
                       Navigator.of(context)
                           .pop((title: t.text.trim(), intro: i.text.trim())),
-            child: Text(context.tr('Save')),
+            child: Text(context.tr('common.action.save.label')),
           ),
         ],
       ),
@@ -128,7 +130,10 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
   }
 
   Future<void> _create() async {
-    final text = await askAnthologyText(context, heading: 'New anthology');
+    final text = await askAnthologyText(
+      context,
+      heading: context.tr('anthologies.list.new.label'),
+    );
     if (text == null) return;
     try {
       await widget.service.create(text.title, text.intro);
@@ -159,12 +164,12 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
   Widget build(BuildContext context) {
     final all = _all;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Anthologies'))),
+      appBar: AppBar(title: Text(context.tr('nav.tab.anthologies.label'))),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'add-anthology',
         onPressed: _create,
         icon: const Icon(Icons.add),
-        label: Text(context.tr('New anthology')),
+        label: Text(context.tr('anthologies.list.new.label')),
       ),
       body: _problem != null
           ? Center(
@@ -177,7 +182,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _load,
-                      child: Text(context.tr('Try again')),
+                      child: Text(context.tr('common.source.retry')),
                     ),
                   ],
                 ),
@@ -186,7 +191,9 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
           : all == null
           ? const Center(child: CircularProgressIndicator())
           : all.isEmpty
-          ? Center(child: Text(context.tr('No anthologies yet.')))
+          ? Center(
+              child: Text(context.tr('app.anthologies.no_anthologies_yet')),
+            )
           : ListView(
               padding: const EdgeInsets.only(top: 8, bottom: 88),
               children: [
@@ -217,7 +224,10 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
                         ),
                         title: Text(a.title),
                         subtitle: Text(
-                          '${a.entries} ${a.entries == 1 ? 'passage' : 'passages'}',
+                          context.tr('app.anthologies.entries_x', {
+                            'entries': a.entries,
+                            'x': a.entries == 1 ? 'passage' : 'passages',
+                          }),
                         ),
                         trailing: const Icon(Icons.chevron_right_rounded),
                         onTap: () => _open(a),
@@ -305,7 +315,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     final a = _detail!.anthology;
     final text = await askAnthologyText(
       context,
-      heading: 'Edit anthology',
+      heading: context.tr('anthologies.form.edit.title'),
       title: a.title,
       intro: a.intro,
     );
@@ -320,21 +330,21 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          context.tr('Delete {name}?', {'name': _detail!.anthology.title}),
+          context.tr('quotes.board.delete.confirm.title', {
+            'name': _detail!.anthology.title,
+          }),
         ),
         content: Text(
-          context.tr(
-            'The anthology is removed from the server. The quotes in it stay in your library.',
-          ),
+          context.tr('app.anthologies.the_anthology_is_removed_from_the'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('Keep it')),
+            child: Text(context.tr('app.anthologies.keep_it')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('Delete')),
+            child: Text(context.tr('common.action.delete.label')),
           ),
         ],
       ),
@@ -358,7 +368,10 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
   }
 
   Future<void> _addHeading({AnthologySlot? after}) async {
-    final s = await askSection(context, heading: 'New heading');
+    final s = await askSection(
+      context,
+      heading: context.tr('app.anthologies.new_heading'),
+    );
     if (s == null) return;
     await _do(
       () => widget.service.addSection(
@@ -373,7 +386,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
   Future<void> _editHeading(AnthologySection s) async {
     final r = await askSection(
       context,
-      heading: 'Edit heading',
+      heading: context.tr('app.anthologies.edit_heading'),
       title: s.title,
       prose: s.prose,
     );
@@ -435,6 +448,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
         );
         if (changed) await _load();
       case _Menu.fill:
+        final nothingNew = context.tr('app.anthologies.nothing_new_to_add');
         final r = await Navigator.of(context).push<FillResult>(
           MaterialPageRoute(
             builder: (_) => FillScreen(service: widget.service, anthology: a),
@@ -444,7 +458,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           await _load();
           _say(
             r.added == 0
-                ? 'Nothing new to add.'
+                ? nothingNew
                 : 'Added ${r.added} ${r.added == 1 ? 'passage' : 'passages'}.',
           );
         }
@@ -487,7 +501,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     );
 
     final menu = PopupMenuButton<String>(
-      tooltip: 'More for this one',
+      tooltip: context.tr('app.anthologies.more_for_this_one'),
       onSelected: (v) async {
         switch (v) {
           case 'up':
@@ -505,16 +519,35 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
         }
       },
       itemBuilder: (_) => [
-        if (i > 0) const PopupMenuItem(value: 'up', child: Text('Move up')),
+        if (i > 0)
+          PopupMenuItem(
+            value: 'up',
+            child: Text(context.tr('common.action.move-up.label')),
+          ),
         if (i < slots.length - 1)
-          const PopupMenuItem(value: 'down', child: Text('Move down')),
+          PopupMenuItem(
+            value: 'down',
+            child: Text(context.tr('common.action.move-down.label')),
+          ),
         if (slot.entry != null)
-          const PopupMenuItem(value: 'note', child: Text('Commentary')),
-        if (slot.section != null) ...const [
-          PopupMenuItem(value: 'edit', child: Text('Edit heading')),
-          PopupMenuItem(value: 'delete', child: Text('Delete heading')),
+          PopupMenuItem(
+            value: 'note',
+            child: Text(context.tr('app.anthologies.commentary')),
+          ),
+        if (slot.section != null) ...[
+          PopupMenuItem(
+            value: 'edit',
+            child: Text(context.tr('app.anthologies.edit_heading')),
+          ),
+          PopupMenuItem(
+            value: 'delete',
+            child: Text(context.tr('app.anthologies.delete_heading')),
+          ),
         ],
-        const PopupMenuItem(value: 'after', child: Text('Add a heading after')),
+        PopupMenuItem(
+          value: 'after',
+          child: Text(context.tr('app.anthologies.add_a_heading_after')),
+        ),
       ],
     );
 
@@ -603,14 +636,16 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '“${e.quote.trim()}”',
+                        context.tr('app.anthologies.trim', {
+                          'trim': e.quote.trim(),
+                        }),
                         style: theme.textTheme.titleMedium,
                       ),
                       if (from.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 6),
                           child: Text(
-                            '— $from',
+                            context.tr('app.anthologies.from', {'from': from}),
                             style: theme.textTheme.bodySmall,
                           ),
                         ),
@@ -623,7 +658,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Remove from anthology',
+                  tooltip: context.tr('app.anthologies.remove_from_anthology'),
                   icon: const Icon(Icons.close),
                   onPressed: () => _remove(e),
                 ),
@@ -687,10 +722,10 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
             child: Text(a.intro, style: theme.textTheme.bodyLarge),
           ),
         if (d.entries.isEmpty && d.sections.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'Nothing in this anthology yet. Open a quote and choose Add to anthology, or use Fill from.',
+              context.tr('app.anthologies.nothing_in_this_anthology_yet_open'),
             ),
           ),
       ],
@@ -707,49 +742,58 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
         actions: [
           if (d != null) ...[
             IconButton(
-              tooltip: context.tr('Share'),
+              tooltip: context.tr('common.action.share.label'),
               icon: const Icon(Icons.ios_share),
               onPressed: () =>
                   widget.share(anthologyShareText(d), d.anthology.title),
             ),
             IconButton(
-              tooltip: context.tr('Edit'),
+              tooltip: context.tr('common.action.edit.label'),
               icon: const Icon(Icons.edit_outlined),
               onPressed: _edit,
             ),
             IconButton(
-              tooltip: context.tr('Delete'),
+              tooltip: context.tr('common.action.delete.label'),
               icon: const Icon(Icons.delete_outline),
               onPressed: _delete,
             ),
             PopupMenuButton<_Menu>(
-              tooltip: 'More',
+              tooltip: context.tr('settings.appearance.contrast.more.label'),
               onSelected: _menu,
               itemBuilder: (_) => [
                 if (widget.quiz?.available == true && d.entries.isNotEmpty)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: _Menu.practise,
-                    child: Text('Practise'),
+                    child: Text(context.tr('common.action.practise.label')),
                   ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: _Menu.fill,
-                  child: Text('Fill from…'),
+                  child: Text(context.tr('app.anthologies.fill_from')),
                 ),
                 PopupMenuItem(
                   value: _Menu.heading,
-                  child: Text('Add a heading'),
+                  child: Text(context.tr('app.anthologies.add_a_heading')),
                 ),
-                PopupMenuItem(value: _Menu.group, child: Text('Group by…')),
+                PopupMenuItem(
+                  value: _Menu.group,
+                  child: Text(context.tr('app.anthologies.group_by')),
+                ),
                 PopupMenuItem(
                   value: _Menu.display,
-                  child: Text('What it shows…'),
+                  child: Text(context.tr('app.anthologies.what_it_shows')),
                 ),
                 PopupMenuItem(
                   value: _Menu.front,
-                  child: Text('Cover and front…'),
+                  child: Text(context.tr('app.anthologies.cover_and_front')),
                 ),
-                PopupMenuItem(value: _Menu.removed, child: Text('Taken out…')),
-                PopupMenuItem(value: _Menu.export, child: Text('Export…')),
+                PopupMenuItem(
+                  value: _Menu.removed,
+                  child: Text(context.tr('app.anthologies.taken_out')),
+                ),
+                PopupMenuItem(
+                  value: _Menu.export,
+                  child: Text(context.tr('app.anthologies.export')),
+                ),
               ],
             ),
           ],
@@ -766,7 +810,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                     const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: _load,
-                      child: Text(context.tr('Try again')),
+                      child: Text(context.tr('common.source.retry')),
                     ),
                   ],
                 ),
@@ -804,7 +848,7 @@ Future<void> addToAnthologyDialog(
   final chosen = await showDialog<Object>(
     context: context,
     builder: (context) => SimpleDialog(
-      title: Text(context.tr('Add to anthology')),
+      title: Text(context.tr('common.action.anthology.label')),
       children: [
         for (final a in all)
           SimpleDialogOption(
@@ -813,7 +857,7 @@ Future<void> addToAnthologyDialog(
           ),
         SimpleDialogOption(
           onPressed: () => Navigator.of(context).pop('new'),
-          child: Text(context.tr('A new anthology…')),
+          child: Text(context.tr('app.anthologies.a_new_anthology')),
         ),
       ],
     ),
@@ -823,7 +867,10 @@ Future<void> addToAnthologyDialog(
     Anthology target;
     if (chosen == 'new') {
       if (!context.mounted) return;
-      final text = await askAnthologyText(context, heading: 'New anthology');
+      final text = await askAnthologyText(
+        context,
+        heading: context.tr('anthologies.list.new.label'),
+      );
       if (text == null) return;
       target = await service.create(text.title, text.intro);
     } else {

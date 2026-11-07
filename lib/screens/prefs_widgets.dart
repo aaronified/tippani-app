@@ -242,7 +242,7 @@ class PrefPage extends StatelessWidget {
 /// How a language switch reads in the pickers ("English", "বাংলা").
 String languageLabel(BuildContext context, String code) {
   final l = L10nScope.of(context);
-  if (code.isEmpty) return context.tr('The phone\'s own language');
+  if (code.isEmpty) return context.tr('app.prefs.the_phone_s_own_language');
   final hit = l?.choices.where((c) => c.code == code).firstOrNull;
   return hit?.name ?? code;
 }
@@ -308,11 +308,11 @@ class _TextDialogState extends State<_TextDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: Text(context.tr('Cancel')),
+        child: Text(context.tr('common.action.cancel.label')),
       ),
       FilledButton(
         onPressed: () => Navigator.pop(context, _c.text.trim()),
-        child: Text(context.tr('Save')),
+        child: Text(context.tr('common.action.save.label')),
       ),
     ],
   );

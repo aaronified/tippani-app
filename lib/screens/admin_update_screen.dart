@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../admin/admin_service.dart';
 import '../api/server_call.dart';
 import 'admin_widgets.dart';
+import '../l10n/l10n.dart';
 
 /// The server's own version: what it runs, what is newest on the release line it follows (stable or pre-release),
 /// and, where the server can update itself, a button that does it. Where it cannot, the command to run on the
@@ -66,13 +67,15 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
     if (i == null) return;
     final ok = await confirmDialog(
       context,
-      title: 'Update the server?',
+      title: context.tr('app.admin_update.update_the_server'),
       body:
           'The server pulls ${i.latest}, restarts, and is out of reach for a minute or two. Every reader is disconnected meanwhile.',
       yes: 'Update',
     );
     if (!ok || !mounted) return;
-    setState(() => _applying = 'Starting the update…');
+    setState(
+      () => _applying = context.tr('app.admin_update.starting_the_update'),
+    );
     try {
       // the answer to the apply rarely arrives (the server restarts under it), so a lost one is not a refusal
       await widget.service.applyUpdate().timeout(const Duration(seconds: 20));
@@ -107,15 +110,18 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
           setState(() => _applying = 'Updating… ($phase)');
         }
       } on ServerException {
-        if (mounted) setState(() => _applying = 'The server is restarting…');
+        if (mounted) {
+          setState(
+            () => _applying = context.tr(
+              'app.admin_update.the_server_is_restarting',
+            ),
+          );
+        }
       }
     }
     if (mounted) {
       setState(() => _applying = null);
-      say(
-        context,
-        'The server did not come back on a new version. Check it on its own computer.',
-      );
+      say(context, context.tr('app.admin_update.the_server_did_not_come_back'));
     }
   }
 
@@ -126,10 +132,10 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
     final i = _info;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Server updates'),
+        title: Text(context.tr('app.admin_update.server_updates')),
         actions: [
           IconButton(
-            tooltip: 'Check again',
+            tooltip: context.tr('app.admin_update.check_again'),
             icon: const Icon(Icons.refresh_rounded),
             onPressed: _busy || _applying != null ? null : _check,
           ),
@@ -160,30 +166,52 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      i.available ? 'An update is ready' : 'Up to date',
+                      i.available
+                          ? context.tr('app.admin_update.an_update_is_ready')
+                          : context.tr('app.admin_update.up_to_date'),
                       style: text.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Running: ${i.current.isEmpty ? 'unknown' : i.current}',
+                      context.tr('app.admin_update.running_current', {
+                        'current': i.current.isEmpty ? 'unknown' : i.current,
+                      }),
                     ),
                     Text(
-                      'Newest on the ${i.channel == 'prerelease' ? 'pre-release' : 'stable'} line: ${i.latest.isEmpty ? 'unknown' : i.latest}',
+                      context.tr(
+                        'app.admin_update.newest_on_the_x_line_latest',
+                        {
+                          'x': i.channel == 'prerelease'
+                              ? 'pre-release'
+                              : 'stable',
+                          'latest': i.latest.isEmpty ? 'unknown' : i.latest,
+                        },
+                      ),
                     ),
                     if (i.publishedAt.isNotEmpty)
-                      Text('Published ${i.publishedAt.split('T').first}'),
+                      Text(
+                        context.tr('app.admin_update.published_first', {
+                          'first': i.publishedAt.split('T').first,
+                        }),
+                      ),
                     const SizedBox(height: 12),
                     if (i.available && i.canSelfUpdate)
                       FilledButton.icon(
                         onPressed: _applying == null ? _apply : null,
                         icon: const Icon(Icons.system_update_alt_rounded),
-                        label: Text('Update to ${i.latest}'),
+                        label: Text(
+                          context.tr('app.admin_update.update_to_latest', {
+                            'latest': i.latest,
+                          }),
+                        ),
                       ),
                     if (i.available &&
                         !i.canSelfUpdate &&
                         i.guidedCommand.isNotEmpty) ...[
-                      const Text(
-                        'This server cannot update itself. Run this on its computer:',
+                      Text(
+                        context.tr(
+                          'app.admin_update.this_server_cannot_update_itself_run',
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Container(
@@ -208,7 +236,9 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
                           if (context.mounted) say(context, 'Copied');
                         },
                         icon: const Icon(Icons.copy_rounded),
-                        label: const Text('Copy the command'),
+                        label: Text(
+                          context.tr('app.admin_update.copy_the_command'),
+                        ),
                       ),
                     ],
                   ],
@@ -222,14 +252,22 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Release line', style: text.titleSmall),
+                    Text(
+                      context.tr('app.admin_update.release_line'),
+                      style: text.titleSmall,
+                    ),
                     const SizedBox(height: 8),
                     SegmentedButton<String>(
-                      segments: const [
-                        ButtonSegment(value: 'stable', label: Text('Stable')),
+                      segments: [
+                        ButtonSegment(
+                          value: 'stable',
+                          label: Text(context.tr('app.admin_update.stable')),
+                        ),
                         ButtonSegment(
                           value: 'prerelease',
-                          label: Text('Pre-release'),
+                          label: Text(
+                            context.tr('app.admin_update.pre_release'),
+                          ),
                         ),
                       ],
                       selected: {i.channel},

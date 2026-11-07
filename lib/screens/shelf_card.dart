@@ -16,13 +16,13 @@ String activeStatusOf(WorkKind kind) => switch (kind) {
 /// What a shelf status is called, in the reader's language.
 String shelfStatusLabel(BuildContext context, String status) =>
     switch (status) {
-      'reading' => context.tr('Reading'),
-      'watching' => context.tr('Watching'),
-      'playing' => context.tr('Playing'),
-      'paused' => context.tr('Paused'),
-      'abandoned' => context.tr('Abandoned'),
-      'completed' => context.tr('Finished'),
-      _ => context.tr('Not started'),
+      'reading' => context.tr('common.shelf.reading.book.label'),
+      'watching' => context.tr('common.shelf.reading.film.label'),
+      'playing' => context.tr('common.shelf.playing.book.label'),
+      'paused' => context.tr('common.shelf.paused.book.label'),
+      'abandoned' => context.tr('common.shelf.abandoned.book.label'),
+      'completed' => context.tr('common.field.finished.label'),
+      _ => context.tr('app.shelf.not_started'),
     };
 
 /// Where the reader is with a work: not started, in progress, paused, abandoned or finished, how far along, and
@@ -83,9 +83,9 @@ class _ShelfCardState extends State<ShelfCard> {
     final from = r.startedAt;
     final to = r.finishedAt;
     final end = switch (r.outcome) {
-      'abandoned' => context.tr('abandoned'),
-      'open' => context.tr('in progress'),
-      _ => context.tr('finished'),
+      'abandoned' => context.tr('common.read-log.outcome.abandoned.label'),
+      'open' => context.tr('app.shelf.in_progress'),
+      _ => context.tr('common.read-log.outcome.finished.label'),
     };
     if (from.isEmpty && to.isEmpty) return end;
     return [
@@ -123,15 +123,17 @@ class _ShelfCardState extends State<ShelfCard> {
                   Expanded(
                     child: Text(
                       status.isEmpty
-                          ? context.tr('Shelf')
-                          : '${context.tr('Shelf')} · ${_label(status)}',
+                          ? context.tr('common.action.shelf.label')
+                          : '${context.tr('common.action.shelf.label')} · ${_label(status)}',
                       style: theme.textTheme.titleSmall,
                     ),
                   ),
                   if (status.isNotEmpty && canSet)
                     TextButton(
                       onPressed: _busy ? null : () => _set(''),
-                      child: Text(context.tr('Clear')),
+                      child: Text(
+                        context.tr('common.selection.shelf.clear.label'),
+                      ),
                     ),
                 ],
               ),
@@ -163,7 +165,9 @@ class _ShelfCardState extends State<ShelfCard> {
                         value: (_dragging ?? _d.progress).toDouble(),
                         max: 100,
                         divisions: 20,
-                        label: '${(_dragging ?? _d.progress).round()}%',
+                        label: context.tr('app.shelf.round', {
+                          'round': (_dragging ?? _d.progress).round(),
+                        }),
                         onChanged: canSet && !_busy
                             ? (v) => setState(() => _dragging = v)
                             : null,
@@ -175,7 +179,9 @@ class _ShelfCardState extends State<ShelfCard> {
                     SizedBox(
                       width: 44,
                       child: Text(
-                        '${(_dragging ?? _d.progress).round()}%',
+                        context.tr('app.shelf.round', {
+                          'round': (_dragging ?? _d.progress).round(),
+                        }),
                         textAlign: TextAlign.end,
                         style: theme.textTheme.labelLarge,
                       ),
@@ -187,9 +193,7 @@ class _ShelfCardState extends State<ShelfCard> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    context.tr(
-                      'The shelf is kept on your server. Pair this phone and sync this work to change it.',
-                    ),
+                    context.tr('app.shelf.the_shelf_is_kept_on_your'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -199,8 +203,8 @@ class _ShelfCardState extends State<ShelfCard> {
                 const SizedBox(height: 8),
                 Text(
                   times == 1
-                      ? context.tr('Finished once.')
-                      : context.tr('Finished {n} times.', {'n': times}),
+                      ? context.tr('app.shelf.finished_once')
+                      : context.tr('app.shelf.finished_n_times', {'n': times}),
                   style: theme.textTheme.labelLarge,
                 ),
               ],

@@ -71,7 +71,10 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(context.tr('Context'), style: theme.textTheme.titleSmall),
+          Text(
+            context.tr('app.quote_context.context'),
+            style: theme.textTheme.titleSmall,
+          ),
           const SizedBox(height: 4),
           if (!_asked && !_busy)
             Align(
@@ -79,20 +82,21 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
               child: OutlinedButton.icon(
                 onPressed: _load,
                 icon: const Icon(Icons.article_outlined),
-                label: Text(context.tr('Show where it comes from')),
+                label: Text(
+                  context.tr('app.quote_context.show_where_it_comes_from'),
+                ),
               ),
             ),
           if (_busy) const LinearProgressIndicator(),
           if (_problem != null) ...[
             Text(_problem!, style: TextStyle(color: theme.colorScheme.error)),
-            TextButton(onPressed: _load, child: Text(context.tr('Try again'))),
+            TextButton(
+              onPressed: _load,
+              child: Text(context.tr('common.source.retry')),
+            ),
           ],
           if (_asked && c == null && _problem == null)
-            Text(
-              context.tr(
-                'The server has no context for this quote: it was not found in a file.',
-              ),
-            ),
+            Text(context.tr('app.quote_context.the_server_has_no_context_for')),
           if (c != null) ...[
             if (c.before.isNotEmpty)
               Text(
@@ -105,7 +109,7 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
-                  context.tr('The start of the chapter or scene.'),
+                  context.tr('app.quote_context.the_start_of_the_chapter_or'),
                   style: theme.textTheme.labelSmall,
                 ),
               ),
@@ -117,7 +121,7 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
                         before: c.shownBefore + contextStep,
                         after: c.shownAfter,
                       ),
-                child: Text(context.tr('Show more before')),
+                child: Text(context.tr('app.quote_context.show_more_before')),
               ),
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -149,13 +153,13 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
                         before: c.shownBefore,
                         after: c.shownAfter + contextStep,
                       ),
-                child: Text(context.tr('Show more after')),
+                child: Text(context.tr('app.quote_context.show_more_after')),
               ),
             if (c.boundAfter)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
-                  context.tr('The end of the chapter, scene or work.'),
+                  context.tr('app.quote_context.the_end_of_the_chapter_scene'),
                   style: theme.textTheme.labelSmall,
                 ),
               ),

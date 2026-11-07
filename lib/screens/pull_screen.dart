@@ -112,7 +112,7 @@ class PullScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Sync with server'))),
+      appBar: AppBar(title: Text(context.tr('app.pull.sync_with_server'))),
       body: ListenableBuilder(
         listenable: auto,
         builder: (context, _) {
@@ -121,17 +121,12 @@ class PullScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text(
-                'Brings down what is new or changed on your server, sends up what you changed here, and carries deletes both ways. '
-                'If the same quote or work changed in both places, it waits in Sync conflicts for you to choose.',
-              ),
+              Text(context.tr('app.pull.brings_down_what_is_new_or')),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(context.tr('Sync automatically')),
+                title: Text(context.tr('app.pull.sync_automatically')),
                 subtitle: Text(
-                  context.tr(
-                    'A few seconds after you change something, and once a day (when the app opens, or the network comes back)',
-                  ),
+                  context.tr('app.pull.a_few_seconds_after_you_change'),
                 ),
                 value: auto.enabled,
                 onChanged: auto.setEnabled,
@@ -142,12 +137,12 @@ class PullScreen extends StatelessWidget {
               else
                 FilledButton(
                   onPressed: auto.syncNow,
-                  child: Text(context.tr('Sync now')),
+                  child: Text(context.tr('app.pull.sync_now')),
                 ),
               const SizedBox(height: 16),
               if (auto.lastSynced != null)
                 Text(
-                  context.tr('Last synced {when}.', {
+                  context.tr('app.pull.last_synced_when', {
                     'when': _when(auto.lastSynced!),
                   }),
                 ),

@@ -94,18 +94,21 @@ class _AccountScreenState extends State<AccountScreen> {
     final name = path.split(RegExp(r'[\\/]')).last;
     await _run(
       () => widget.account.setAvatar(bytes, name),
-      context.tr('Picture changed.'),
+      context.tr('app.account.picture_changed'),
     );
   }
 
   Future<void> _rename() async {
     final name = await askText(
       context,
-      title: context.tr('Your name'),
+      title: context.tr('app.account.your_name'),
       initial: _me?.username ?? '',
     );
     if (name == null || name.isEmpty || !mounted) return;
-    await _run(() => widget.account.rename(name), context.tr('Name changed.'));
+    await _run(
+      () => widget.account.rename(name),
+      context.tr('app.account.name_changed'),
+    );
   }
 
   Future<void> _password() async {
@@ -113,7 +116,9 @@ class _AccountScreenState extends State<AccountScreen> {
       context: context,
       builder: (_) => _PasswordDialog(account: widget.account),
     );
-    if (done == true && mounted) _say(context.tr('Password changed.'));
+    if (done == true && mounted) {
+      _say(context.tr('app.account.password_changed'));
+    }
   }
 
   Future<void> _saveNotify() async {
@@ -127,7 +132,7 @@ class _AccountScreenState extends State<AccountScreen> {
     };
     await _run(
       () => widget.account.saveNotifications(patch),
-      context.tr('Notification settings saved.'),
+      context.tr('app.account.notification_settings_saved'),
     );
     _appToken.clear();
   }
@@ -145,16 +150,12 @@ class _AccountScreenState extends State<AccountScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(ctx.tr('Your widget key')),
+        title: Text(ctx.tr('app.account.your_widget_key')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              ctx.tr(
-                'This is shown once. Copy it into the widget now; the server keeps only a scrambled copy.',
-              ),
-            ),
+            Text(ctx.tr('app.account.this_is_shown_once_copy_it')),
             const SizedBox(height: 12),
             SelectableText(
               key,
@@ -166,11 +167,11 @@ class _AccountScreenState extends State<AccountScreen> {
         actions: [
           TextButton(
             onPressed: () => Clipboard.setData(ClipboardData(text: key)),
-            child: Text(ctx.tr('Copy')),
+            child: Text(ctx.tr('common.action.copy.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(ctx.tr('Done')),
+            child: Text(ctx.tr('common.action.done.label')),
           ),
         ],
       ),
@@ -183,7 +184,7 @@ class _AccountScreenState extends State<AccountScreen> {
     final me = _me;
     final theme = Theme.of(context);
     return PrefPage(
-      title: context.tr('Account'),
+      title: context.tr('bin.kind.account.label'),
       children: [
         if (_busy) const LinearProgressIndicator(),
         if (_problem != null) PrefNote(_problem!),
@@ -202,7 +203,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     OutlinedButton.icon(
                       onPressed: _busy ? null : _newPicture,
                       icon: const Icon(Icons.photo_camera_outlined),
-                      label: Text(context.tr('Change picture')),
+                      label: Text(context.tr('app.account.change_picture')),
                     ),
                     if (me.avatar.isNotEmpty)
                       TextButton(
@@ -210,9 +211,9 @@ class _AccountScreenState extends State<AccountScreen> {
                             ? null
                             : () => _run(
                                 widget.account.clearAvatar,
-                                context.tr('Picture removed.'),
+                                context.tr('app.account.picture_removed'),
                               ),
-                        child: Text(context.tr('Remove')),
+                        child: Text(context.tr('common.action.remove.label')),
                       ),
                   ],
                 ),
@@ -223,17 +224,17 @@ class _AccountScreenState extends State<AccountScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.badge_outlined),
-                title: Text(context.tr('Your name')),
+                title: Text(context.tr('app.account.your_name')),
                 subtitle: Text(me.username),
                 onTap: _rename,
               ),
               ListTile(
                 leading: const Icon(Icons.password_rounded),
-                title: Text(context.tr('Change password')),
+                title: Text(context.tr('account.password.label')),
                 subtitle: me.mustChangePassword
                     ? Text(
                         context.tr(
-                          'An admin chose this password. Choose your own.',
+                          'app.account.an_admin_chose_this_password_choose',
                         ),
                       )
                     : null,
@@ -244,17 +245,15 @@ class _AccountScreenState extends State<AccountScreen> {
         ],
         if (_notify != null)
           PrefGroup(
-            title: context.tr('Notifications'),
-            footer: context.tr(
-              'Pushover sends a note to your phone for the things you turn on.',
-            ),
+            title: context.tr('account.notify.label'),
+            footer: context.tr('app.account.pushover_sends_a_note_to_your'),
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: TextField(
                   controller: _pushUser,
                   decoration: InputDecoration(
-                    labelText: context.tr('Pushover user key'),
+                    labelText: context.tr('account.notify.user.label'),
                   ),
                 ),
               ),
@@ -265,32 +264,32 @@ class _AccountScreenState extends State<AccountScreen> {
                     controller: _appToken,
                     obscureText: true,
                     decoration: InputDecoration(
-                      labelText: context.tr('Pushover app token'),
+                      labelText: context.tr('app.account.pushover_app_token'),
                       helperText: _notify!.hasAppToken
-                          ? context.tr(
-                              'One is saved. Type a new one to replace it.',
-                            )
+                          ? context.tr('app.account.one_is_saved_type_a_new')
                           : null,
                     ),
                   ),
                 ),
               SwitchListTile(
-                title: Text(context.tr('Daily review is ready')),
+                title: Text(context.tr('app.account.daily_review_is_ready')),
                 value: _onDaily,
                 onChanged: (v) => setState(() => _onDaily = v),
               ),
               SwitchListTile(
-                title: Text(context.tr('An import is waiting')),
+                title: Text(context.tr('app.account.an_import_is_waiting')),
                 value: _onImport,
                 onChanged: (v) => setState(() => _onImport = v),
               ),
               SwitchListTile(
-                title: Text(context.tr('A metadata fetch finished')),
+                title: Text(
+                  context.tr('app.account.a_metadata_fetch_finished'),
+                ),
                 value: _onFetch,
                 onChanged: (v) => setState(() => _onFetch = v),
               ),
               SwitchListTile(
-                title: Text(context.tr('A backup finished')),
+                title: Text(context.tr('app.account.a_backup_finished')),
                 value: _onBackup,
                 onChanged: (v) => setState(() => _onBackup = v),
               ),
@@ -300,7 +299,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   children: [
                     FilledButton(
                       onPressed: _busy ? null : _saveNotify,
-                      child: Text(context.tr('Save')),
+                      child: Text(context.tr('common.action.save.label')),
                     ),
                     const SizedBox(width: 8),
                     OutlinedButton(
@@ -308,9 +307,9 @@ class _AccountScreenState extends State<AccountScreen> {
                           ? null
                           : () => _run(
                               widget.account.testNotification,
-                              context.tr('A test note was sent.'),
+                              context.tr('app.account.a_test_note_was_sent'),
                             ),
-                      child: Text(context.tr('Send a test')),
+                      child: Text(context.tr('account.notify.test.action')),
                     ),
                   ],
                 ),
@@ -319,17 +318,17 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
         if (me != null)
           PrefGroup(
-            title: context.tr('Widget key'),
-            footer: context.tr(
-              'A key lets a home-screen widget show a quote of the day without your password.',
-            ),
+            title: context.tr('app.account.widget_key'),
+            footer: context.tr('app.account.a_key_lets_a_home_screen'),
             children: [
               ListTile(
                 leading: const Icon(Icons.key_rounded),
                 title: Text(
                   _hasWidgetKey
-                      ? context.tr('Made {when}', {'when': _widgetKey ?? ''})
-                      : context.tr('No key yet'),
+                      ? context.tr('app.account.made_when', {
+                          'when': _widgetKey ?? '',
+                        })
+                      : context.tr('app.account.no_key_yet'),
                 ),
                 trailing: Wrap(
                   spacing: 4,
@@ -338,19 +337,19 @@ class _AccountScreenState extends State<AccountScreen> {
                       onPressed: _busy ? null : _makeKey,
                       child: Text(
                         _hasWidgetKey
-                            ? context.tr('Replace')
-                            : context.tr('Make a key'),
+                            ? context.tr('app.account.replace')
+                            : context.tr('account.widget.make.action'),
                       ),
                     ),
                     if (_hasWidgetKey)
                       IconButton(
-                        tooltip: context.tr('Remove'),
+                        tooltip: context.tr('common.action.remove.label'),
                         icon: const Icon(Icons.delete_outline),
                         onPressed: _busy
                             ? null
                             : () => _run(
                                 widget.account.removeWidgetKey,
-                                context.tr('Key removed.'),
+                                context.tr('app.account.key_removed'),
                               ),
                       ),
                   ],
@@ -429,7 +428,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
 
   Future<void> _submit() async {
     if (_next.text != _again.text) {
-      setState(() => _error = context.tr('The two do not match.'));
+      setState(() => _error = context.tr('app.account.the_two_do_not_match'));
       return;
     }
     setState(() => _busy = true);
@@ -447,7 +446,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text(context.tr('Change password')),
+    title: Text(context.tr('account.password.label')),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -458,21 +457,23 @@ class _PasswordDialogState extends State<_PasswordDialog> {
             obscureText: true,
             autofocus: true,
             decoration: InputDecoration(
-              labelText: context.tr('Current password'),
+              labelText: context.tr('app.account.current_password'),
             ),
           ),
           TextField(
             key: const ValueKey('password-new'),
             controller: _next,
             obscureText: true,
-            decoration: InputDecoration(labelText: context.tr('New password')),
+            decoration: InputDecoration(
+              labelText: context.tr('app.account.new_password'),
+            ),
           ),
           TextField(
             key: const ValueKey('password-again'),
             controller: _again,
             obscureText: true,
             decoration: InputDecoration(
-              labelText: context.tr('New password again'),
+              labelText: context.tr('app.account.new_password_again'),
               errorText: _error,
               errorMaxLines: 3,
             ),
@@ -483,11 +484,11 @@ class _PasswordDialogState extends State<_PasswordDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context, false),
-        child: Text(context.tr('Cancel')),
+        child: Text(context.tr('common.action.cancel.label')),
       ),
       FilledButton(
         onPressed: _busy ? null : _submit,
-        child: Text(context.tr('Change')),
+        child: Text(context.tr('settings.languages.iso.change.label')),
       ),
     ],
   );

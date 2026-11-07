@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
+import '../l10n/l10n.dart';
 
 String _slug(String s) {
   final out = s
@@ -29,7 +30,7 @@ class AdminFoldersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Library folders')),
+    appBar: AppBar(title: Text(context.tr('settings.library.folders.label'))),
     body: Loader<LibraryFolders>(
       load: service.folders,
       builder: (context, folders, reload) =>
@@ -52,16 +53,16 @@ class _Folders extends StatelessWidget {
   Future<void> _add(BuildContext context) async {
     final path = await askText(
       context,
-      title: 'A folder on the server',
-      label: 'Path on the server, like /books',
+      title: context.tr('app.admin_folders.a_folder_on_the_server'),
+      label: context.tr('app.admin_folders.path_on_the_server_like_books'),
       yes: 'Next',
     );
     if (path == null || path.trim().isEmpty || !context.mounted) return;
     final guess = path.trim().split('/').where((p) => p.isNotEmpty).lastOrNull;
     final label = await askText(
       context,
-      title: 'What to call it',
-      label: 'Name',
+      title: context.tr('app.admin_folders.what_to_call_it'),
+      label: context.tr('common.field.name.label'),
       initial: guess ?? path.trim(),
       yes: 'Add',
     );
@@ -85,8 +86,10 @@ class _Folders extends StatelessWidget {
   Future<void> _remove(BuildContext context, MountInfo m) async {
     final ok = await confirmDialog(
       context,
-      title: 'Stop reading ${m.label}?',
-      body: 'The folder itself is not touched. Files already attached from it stay saved.',
+      title: context.tr('app.admin_folders.stop_reading_label', {
+        'label': m.label,
+      }),
+      body: context.tr('app.admin_folders.the_folder_itself_is_not_touched'),
       yes: 'Remove',
     );
     if (!ok || !context.mounted) return;
@@ -109,7 +112,7 @@ class _Folders extends StatelessWidget {
       say(
         context,
         removed == 0
-            ? 'Nothing to tidy.'
+            ? context.tr('app.admin_folders.nothing_to_tidy')
             : 'Removed $removed saved ${removed == 1 ? 'file' : 'files'}.',
       );
       await reload();
@@ -128,10 +131,12 @@ class _Folders extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
             children: [
               if (folders.mounts.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(24),
                   child: Text(
-                    'No folder is shared with Tippani yet. Add one that holds your books or films, and quotes can show the text around them.',
+                    context.tr(
+                      'app.admin_folders.no_folder_is_shared_with_tippani',
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -154,7 +159,7 @@ class _Folders extends StatelessWidget {
                       ),
                       isThreeLine: !m.ok && m.error.isNotEmpty,
                       trailing: IconButton(
-                        tooltip: 'Remove',
+                        tooltip: context.tr('common.action.remove.label'),
                         icon: const Icon(Icons.close_rounded),
                         onPressed: () => _remove(context, m),
                       ),
@@ -164,9 +169,15 @@ class _Folders extends StatelessWidget {
               const AdminHeading('Backups'),
               Card(
                 child: SwitchListTile(
-                  title: const Text('Put the saved files in backups'),
-                  subtitle: const Text(
-                    'The files attached to works are copied into each backup. Backups get bigger.',
+                  title: Text(
+                    context.tr(
+                      'app.admin_folders.put_the_saved_files_in_backups',
+                    ),
+                  ),
+                  subtitle: Text(
+                    context.tr(
+                      'app.admin_folders.the_files_attached_to_works_are',
+                    ),
                   ),
                   value: folders.backupWithSources,
                   onChanged: (v) async {
@@ -178,17 +189,21 @@ class _Folders extends StatelessWidget {
                   },
                 ),
               ),
-              const AdminHeading('Tidy up'),
+              AdminHeading(context.tr('app.admin_folders.tidy_up')),
               Card(
                 child: ListTile(
                   title: Text(
                     folders.orphanFiles == 0
-                        ? 'No saved file is unused'
+                        ? context.tr(
+                            'app.admin_folders.no_saved_file_is_unused',
+                          )
                         : '${folders.orphanFiles} saved ${folders.orphanFiles == 1 ? 'file is' : 'files are'} unused (${_size(folders.orphanBytes)})',
                   ),
                   subtitle: Text(
                     folders.missingFiles == 0
-                        ? 'Every attached file is where it should be.'
+                        ? context.tr(
+                            'app.admin_folders.every_attached_file_is_where_it',
+                          )
                         : '${folders.missingFiles} attached ${folders.missingFiles == 1 ? 'file is' : 'files are'} missing from the disk.',
                     style: text.bodySmall,
                   ),
@@ -196,7 +211,7 @@ class _Folders extends StatelessWidget {
                     onPressed: folders.orphanFiles == 0
                         ? null
                         : () => _tidy(context),
-                    child: const Text('Tidy'),
+                    child: Text(context.tr('app.admin_folders.tidy')),
                   ),
                 ),
               ),
@@ -210,7 +225,7 @@ class _Folders extends StatelessWidget {
             heroTag: 'add-folder',
             onPressed: () => _add(context),
             icon: const Icon(Icons.create_new_folder_outlined),
-            label: const Text('Add a folder'),
+            label: Text(context.tr('settings.library.add.label')),
           ),
         ),
       ],

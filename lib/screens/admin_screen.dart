@@ -8,6 +8,7 @@ import 'admin_jobs_screen.dart';
 import 'admin_sources_screen.dart';
 import 'admin_update_screen.dart';
 import 'admin_users_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Running the server: its users, jobs, backups, updates, library folders and metadata sources. Only an admin
 /// account is offered this (Settings hides it for anyone else), and the server checks again on every call.
@@ -45,44 +46,46 @@ class AdminScreen extends StatelessWidget {
       ),
     );
     return Scaffold(
-      appBar: AppBar(title: const Text('Server administration')),
+      appBar: AppBar(
+        title: Text(context.tr('app.admin.server_administration')),
+      ),
       body: ListView(
         padding: const EdgeInsets.only(top: 8, bottom: 24),
         children: [
           row(
             Icons.group_outlined,
             'Users',
-            'Add a reader, make an admin, remove an account',
+            context.tr('app.admin.add_a_reader_make_an_admin'),
             () => AdminUsersScreen(service: service, myName: myName),
           ),
           row(
             Icons.work_history_outlined,
             'Jobs',
-            'What is running and waiting, what ran, and common jobs to start',
+            context.tr('app.admin.what_is_running_and_waiting_what'),
             () => AdminJobsScreen(service: service),
           ),
           row(
             Icons.backup_outlined,
-            'Server backup',
-            'Make a backup, keep it on this phone, put one back',
+            context.tr('app.admin_backup.server_backup'),
+            context.tr('app.admin.make_a_backup_keep_it_on'),
             () => AdminBackupScreen(service: service, files: files),
           ),
           row(
             Icons.system_update_alt_rounded,
-            'Server updates',
-            'The version it runs, and updating it',
+            context.tr('app.admin_update.server_updates'),
+            context.tr('app.admin.the_version_it_runs_and_updating'),
             () => AdminUpdateScreen(service: service),
           ),
           row(
             Icons.folder_open_outlined,
-            'Library folders',
-            'Folders on the server that quotes read their context from',
+            context.tr('settings.library.folders.label'),
+            context.tr('app.admin.folders_on_the_server_that_quotes'),
             () => AdminFoldersScreen(service: service),
           ),
           row(
             Icons.travel_explore_rounded,
-            'Metadata sources',
-            'Who the server asks for details, and its keys',
+            context.tr('metadata.help.metadata-sources.term'),
+            context.tr('app.admin.who_the_server_asks_for_details'),
             () => AdminSourcesScreen(service: service),
           ),
         ],

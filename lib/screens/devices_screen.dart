@@ -36,8 +36,8 @@ class _DevicesScreenState extends State<DevicesScreen> {
       if (!mounted) return;
       setState(() {
         _problem = e.failure == ApiFailure.unauthorised
-            ? 'The server no longer accepts this phone. Pair it again.'
-            : 'Could not load the devices. Check your connection and try again.';
+            ? context.tr('app.board_service.the_server_no_longer_accepts_this')
+            : context.tr('app.devices.could_not_load_the_devices_check');
       });
     }
   }
@@ -46,20 +46,16 @@ class _DevicesScreenState extends State<DevicesScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Unpair {name}?', {'name': d.name})),
-        content: Text(
-          context.tr(
-            'That device is signed out of Tippani and cannot be used again until it is paired with a new code. This cannot be undone.',
-          ),
-        ),
+        title: Text(context.tr('app.devices.unpair_name', {'name': d.name})),
+        content: Text(context.tr('app.devices.that_device_is_signed_out_of')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(context.tr('Unpair')),
+            child: Text(context.tr('app.devices.unpair')),
           ),
         ],
       ),
@@ -83,7 +79,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
     final scheme = Theme.of(context).colorScheme;
     final anyCurrent = devices?.any((d) => d.current) ?? false;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Paired devices'))),
+      appBar: AppBar(title: Text(context.tr('app.devices.paired_devices'))),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
@@ -94,14 +90,12 @@ class _DevicesScreenState extends State<DevicesScreen> {
             if (devices == null && _problem == null)
               const LinearProgressIndicator(),
             if (devices != null && devices.isEmpty)
-              Text(context.tr('No devices are paired.')),
+              Text(context.tr('app.devices.no_devices_are_paired')),
             if (devices != null && !anyCurrent && devices.isNotEmpty)
               Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(
-                  context.tr(
-                    'This server is too old to say which of these is this phone, so be careful which you unpair.',
-                  ),
+                  context.tr('app.devices.this_server_is_too_old_to'),
                 ),
               ),
             for (final d in devices ?? const <DeviceInfo>[])
@@ -109,10 +103,14 @@ class _DevicesScreenState extends State<DevicesScreen> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Card(
                   child: ListTile(
-                    title: Text(d.name.isEmpty ? 'Unnamed device' : d.name),
+                    title: Text(
+                      d.name.isEmpty
+                          ? context.tr('app.devices.unnamed_device')
+                          : d.name,
+                    ),
                     subtitle: Text(
                       d.current
-                          ? 'This phone'
+                          ? context.tr('app.devices.this_phone')
                           : d.lastSeenAt.isEmpty
                           ? 'Paired ${d.createdAt}. Not used yet.'
                           : 'Last used ${d.lastSeenAt}',
@@ -121,7 +119,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
                         ? const Icon(Icons.smartphone)
                         : TextButton(
                             onPressed: () => _revoke(d),
-                            child: Text(context.tr('Unpair')),
+                            child: Text(context.tr('app.devices.unpair')),
                           ),
                   ),
                 ),

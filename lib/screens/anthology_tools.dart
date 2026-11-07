@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../anthologies/anthologies.dart';
 import '../capture/photo_source.dart';
 import '../library/cover_cache.dart';
+import '../l10n/l10n.dart';
 
 /// Sends a file through Android's share sheet. A function so a test can stand in for it.
 typedef ShareFile = Future<void> Function(Uint8List bytes, String fileName);
@@ -86,14 +87,18 @@ Future<({String title, String prose})?> askSection(
                 autofocus: true,
                 maxLength: 200,
                 onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(labelText: 'Heading'),
+                decoration: InputDecoration(
+                  labelText: context.tr('anthologies.section.heading.label'),
+                ),
               ),
               TextField(
                 controller: p,
                 minLines: 2,
                 maxLines: 6,
-                decoration: const InputDecoration(
-                  labelText: 'Words under it (optional)',
+                decoration: InputDecoration(
+                  labelText: context.tr(
+                    'app.anthology_tools.words_under_it_optional',
+                  ),
                 ),
               ),
             ],
@@ -102,7 +107,7 @@ Future<({String title, String prose})?> askSection(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: t.text.trim().isEmpty
@@ -110,7 +115,7 @@ Future<({String title, String prose})?> askSection(
                 : () =>
                       Navigator.of(context)
                           .pop((title: t.text.trim(), prose: p.text.trim())),
-            child: const Text('Save'),
+            child: Text(context.tr('common.action.save.label')),
           ),
         ],
       ),
@@ -124,25 +129,27 @@ Future<String?> askCommentary(BuildContext context, String note) {
   return showDialog<String>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Commentary'),
+      title: Text(context.tr('app.anthologies.commentary')),
       content: TextField(
         controller: c,
         autofocus: true,
         minLines: 3,
         maxLines: 8,
         textCapitalization: TextCapitalization.sentences,
-        decoration: const InputDecoration(
-          hintText: 'Your words for this passage, shown before it.',
+        decoration: InputDecoration(
+          hintText: context.tr(
+            'app.anthology_tools.your_words_for_this_passage_shown',
+          ),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(context.tr('common.action.cancel.label')),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(c.text.trim()),
-          child: const Text('Save'),
+          child: Text(context.tr('common.action.save.label')),
         ),
       ],
     ),
@@ -154,16 +161,16 @@ Future<String?> askGrouping(BuildContext context, String current) =>
     showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Group passages by'),
+        title: Text(context.tr('app.anthology_tools.group_passages_by')),
         children: [
           RadioGroup<String>(
             groupValue: current,
             onChanged: (v) => Navigator.of(context).pop(v ?? ''),
             child: Column(
               children: [
-                for (final (value, label) in const [
+                for (final (value, label) in [
                   ('', 'Nothing'),
-                  ('work', 'Book or film'),
+                  ('work', context.tr('app.anthology_tools.book_or_film')),
                   ('person', 'Person'),
                   ('character', 'Character'),
                 ])
@@ -186,7 +193,7 @@ Future<Map<String, bool>?> askSwitches(BuildContext context, Anthology a) {
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('What it shows'),
+        title: Text(context.tr('app.anthology_tools.what_it_shows')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -202,14 +209,14 @@ Future<Map<String, bool>?> askSwitches(BuildContext context, Anthology a) {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop({
               for (final s in anthologySwitches)
                 s.key: s.hide ? !shown[s.key]! : shown[s.key]!,
             }),
-            child: const Text('Save'),
+            child: Text(context.tr('common.action.save.label')),
           ),
         ],
       ),
@@ -234,7 +241,7 @@ Future<bool> editFrontMatter(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('Front of the book'),
+        title: Text(context.tr('app.anthology_tools.front_of_the_book')),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -286,7 +293,11 @@ Future<bool> editFrontMatter(
                             }
                           },
                           child: Text(
-                            cover.isEmpty ? 'Add a cover' : 'Change cover',
+                            cover.isEmpty
+                                ? context.tr('app.anthology_tools.add_a_cover')
+                                : context.tr(
+                                    'app.anthology_tools.change_cover',
+                                  ),
                           ),
                         ),
                         if (cover.isNotEmpty)
@@ -303,7 +314,9 @@ Future<bool> editFrontMatter(
                                 setState(() => problem = e.message);
                               }
                             },
-                            child: const Text('Remove cover'),
+                            child: Text(
+                              context.tr('app.anthology_tools.remove_cover'),
+                            ),
                           ),
                       ],
                     ),
@@ -326,14 +339,18 @@ Future<bool> editFrontMatter(
                 minLines: 2,
                 maxLines: 4,
                 maxLength: 1000,
-                decoration: const InputDecoration(labelText: 'Epigraph'),
+                decoration: InputDecoration(
+                  labelText: context.tr('anthologies.front.epigraph.label'),
+                ),
               ),
               TextField(
                 controller: dedication,
                 minLines: 1,
                 maxLines: 3,
                 maxLength: 1000,
-                decoration: const InputDecoration(labelText: 'Dedication'),
+                decoration: InputDecoration(
+                  labelText: context.tr('anthologies.front.dedication.label'),
+                ),
               ),
             ],
           ),
@@ -341,11 +358,11 @@ Future<bool> editFrontMatter(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Close'),
+            child: Text(context.tr('common.action.close.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Save'),
+            child: Text(context.tr('common.action.save.label')),
           ),
         ],
       ),
@@ -375,37 +392,42 @@ Future<bool> editFrontMatter(
 enum ExportAction { save, send }
 
 /// Asks what to export and what to do with it. Null if the reader backs out.
-Future<({bool epub, ExportAction action})?> askExport(BuildContext context) =>
-    showModalBottomSheet<({bool epub, ExportAction action})>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final (epub, label) in const [
-              (false, 'Markdown'),
-              (true, 'EPUB book'),
-            ]) ...[
-              ListTile(
-                leading: const Icon(Icons.save_alt),
-                title: Text('Save as $label'),
-                onTap: () =>
-                    Navigator.of(context)
-                        .pop((epub: epub, action: ExportAction.save)),
-              ),
-              ListTile(
-                leading: const Icon(Icons.ios_share),
-                title: Text('Send as $label'),
-                onTap: () =>
-                    Navigator.of(context)
-                        .pop((epub: epub, action: ExportAction.send)),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+Future<({bool epub, ExportAction action})?> askExport(
+  BuildContext context,
+) => showModalBottomSheet<({bool epub, ExportAction action})>(
+  context: context,
+  showDragHandle: true,
+  builder: (context) => SafeArea(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final (epub, label) in const [
+          (false, 'Markdown'),
+          (true, 'EPUB book'),
+        ]) ...[
+          ListTile(
+            leading: const Icon(Icons.save_alt),
+            title: Text(
+              context.tr('app.anthology_tools.save_as_label', {'label': label}),
+            ),
+            onTap: () =>
+                Navigator.of(context)
+                    .pop((epub: epub, action: ExportAction.save)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.ios_share),
+            title: Text(
+              context.tr('app.anthology_tools.send_as_label', {'label': label}),
+            ),
+            onTap: () =>
+                Navigator.of(context)
+                    .pop((epub: epub, action: ExportAction.send)),
+          ),
+        ],
+      ],
+    ),
+  ),
+);
 
 /// The passages the reader took out, each with a button to put it back where it was.
 class RemovedScreen extends StatefulWidget {
@@ -463,14 +485,20 @@ class _RemovedScreenState extends State<RemovedScreen> {
         if (!didPop) Navigator.of(context).pop(_restored);
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Taken out')),
+        appBar: AppBar(
+          title: Text(context.tr('app.anthology_tools.taken_out')),
+        ),
         body: _problem != null
             ? Center(child: Text(_problem!))
             : all == null
             ? const Center(child: CircularProgressIndicator())
             : all.isEmpty
-            ? const Center(
-                child: Text('Nothing was taken out of this anthology.'),
+            ? Center(
+                child: Text(
+                  context.tr(
+                    'app.anthology_tools.nothing_was_taken_out_of_this',
+                  ),
+                ),
               )
             : ListView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -478,7 +506,9 @@ class _RemovedScreenState extends State<RemovedScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(
-                      'A passage you take out stays out when the anthology fills again. Put one back here.',
+                      context.tr(
+                        'app.anthology_tools.a_passage_you_take_out_stays',
+                      ),
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
@@ -486,7 +516,9 @@ class _RemovedScreenState extends State<RemovedScreen> {
                     Card(
                       child: ListTile(
                         title: Text(
-                          '“${p.quote.trim()}”',
+                          context.tr('app.anthologies.trim', {
+                            'trim': p.quote.trim(),
+                          }),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -498,7 +530,9 @@ class _RemovedScreenState extends State<RemovedScreen> {
                         ),
                         trailing: TextButton(
                           onPressed: () => _put(p),
-                          child: const Text('Put back'),
+                          child: Text(
+                            context.tr('app.anthology_tools.put_back'),
+                          ),
                         ),
                       ),
                     ),
@@ -612,12 +646,16 @@ class _FillScreenState extends State<FillScreen> {
     return PopScope(
       canPop: !_busy,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Fill from')),
+        appBar: AppBar(
+          title: Text(context.tr('app.anthology_tools.fill_from')),
+        ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: [
             Text(
-              'Choose where the passages come from. They are added now, after any that are already in it.',
+              context.tr(
+                'app.anthology_tools.choose_where_the_passages_come_from',
+              ),
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 16),
@@ -675,7 +713,11 @@ class _FillScreenState extends State<FillScreen> {
             const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Keep adding as new quotes arrive'),
+              title: Text(
+                context.tr(
+                  'app.anthology_tools.keep_adding_as_new_quotes_arrive',
+                ),
+              ),
               value: _auto,
               onChanged: (v) => setState(() {
                 _auto = v;
@@ -694,7 +736,7 @@ class _FillScreenState extends State<FillScreen> {
               const SizedBox(height: 8),
               Text(
                 _preview!.matched == 0
-                    ? 'Nothing matches.'
+                    ? context.tr('app.search.nothing_matches')
                     : '${_preview!.matched} ${_preview!.matched == 1 ? 'passage matches' : 'passages match'}. '
                           'It would add ${_preview!.matched - _preview!.skipped}.',
                 style: theme.textTheme.titleSmall,
@@ -703,7 +745,9 @@ class _FillScreenState extends State<FillScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    '“${e.quote.trim()}”',
+                    context.tr('app.anthologies.trim', {
+                      'trim': e.quote.trim(),
+                    }),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -717,7 +761,7 @@ class _FillScreenState extends State<FillScreen> {
                     onPressed: ready && !_busy
                         ? () => _run(preview: true)
                         : null,
-                    child: const Text('Preview'),
+                    child: Text(context.tr('app.anthology_tools.preview')),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -732,7 +776,7 @@ class _FillScreenState extends State<FillScreen> {
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Fill now'),
+                        : Text(context.tr('app.anthology_tools.fill_now')),
                   ),
                 ),
               ],

@@ -80,13 +80,13 @@ class _UpdateHostState extends State<UpdateHost> {
       ..showSnackBar(
         SnackBar(
           content: Text(
-            context.tr('Version {version} is available', {
+            context.tr('app.update_ui.version_version_is_available', {
               'version': release.version,
             }),
           ),
           duration: const Duration(seconds: 12),
           action: SnackBarAction(
-            label: context.tr('Download'),
+            label: context.tr('common.action.download.label'),
             onPressed: () =>
                 showUpdateDialog(context, _updates, startNow: true),
           ),
@@ -118,7 +118,9 @@ Future<void> showWhatsNewDialog(BuildContext context, ChangelogEntry entry) {
   return showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text(context.tr('New in {version}', {'version': entry.version})),
+      title: Text(
+        context.tr('app.update_ui.new_in_version', {'version': entry.version}),
+      ),
       content: SingleChildScrollView(child: ChangelogBody(entry: entry)),
       actions: [
         TextButton(
@@ -190,7 +192,9 @@ class _UpdateDialog extends StatelessWidget {
           case UpdateStage.downloading:
             return AlertDialog(
               title: Text(
-                context.tr('Downloading {version}', {'version': version}),
+                context.tr('app.update_ui.downloading_version', {
+                  'version': version,
+                }),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -199,23 +203,25 @@ class _UpdateDialog extends StatelessWidget {
                     value: updates.percent == 0 ? null : updates.percent / 100,
                   ),
                   const SizedBox(height: 8),
-                  Text('${updates.percent}%'),
+                  Text(
+                    context.tr('app.update_ui.percent', {
+                      'percent': updates.percent,
+                    }),
+                  ),
                 ],
               ),
               actions: [
                 TextButton(
                   onPressed: updates.cancel,
-                  child: Text(context.tr('Cancel')),
+                  child: Text(context.tr('common.action.cancel.label')),
                 ),
               ],
             );
           case UpdateStage.installing:
             return AlertDialog(
-              title: Text(context.tr('Ready to install')),
+              title: Text(context.tr('app.update_ui.ready_to_install')),
               content: Text(
-                context.tr(
-                  'Android is asking you to install the update. Tippani will close while it does.',
-                ),
+                context.tr('app.update_ui.android_is_asking_you_to_install'),
               ),
               actions: [
                 TextButton(
@@ -226,7 +232,9 @@ class _UpdateDialog extends StatelessWidget {
             );
           case UpdateStage.failed:
             return AlertDialog(
-              title: Text(context.tr('The update did not install')),
+              title: Text(
+                context.tr('app.update_ui.the_update_did_not_install'),
+              ),
               content: Text(
                 installFailureText(
                   updates.installFailure ?? InstallFailure.internal,
@@ -238,18 +246,18 @@ class _UpdateDialog extends StatelessWidget {
                     updates.dismiss();
                     Navigator.pop(context);
                   },
-                  child: Text(context.tr('Close')),
+                  child: Text(context.tr('common.action.close.label')),
                 ),
                 FilledButton(
                   onPressed: updates.download,
-                  child: Text(context.tr('Try again')),
+                  child: Text(context.tr('common.source.retry')),
                 ),
               ],
             );
           case UpdateStage.available:
             return AlertDialog(
               title: Text(
-                context.tr('Version {version} is available', {
+                context.tr('app.update_ui.version_version_is_available', {
                   'version': version,
                 }),
               ),
@@ -263,18 +271,20 @@ class _UpdateDialog extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(context.tr('Later')),
+                  child: Text(context.tr('app.update_ui.later')),
                 ),
                 FilledButton(
                   onPressed: updates.download,
-                  child: Text(context.tr('Download')),
+                  child: Text(context.tr('common.action.download.label')),
                 ),
               ],
             );
           default:
             // Nothing on offer any more (a check since found none): the dialog has nothing to say.
             return AlertDialog(
-              content: Text(context.tr('There is no update to install.')),
+              content: Text(
+                context.tr('app.update_ui.there_is_no_update_to_install'),
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),

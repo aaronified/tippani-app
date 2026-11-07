@@ -180,7 +180,7 @@ class _ShareScreenState extends State<ShareScreen> {
     try {
       await widget.share(_text.text, 'A quote');
     } on Object {
-      if (mounted) _say('The quote could not be shared.');
+      if (mounted) _say(context.tr('app.share.the_quote_could_not_be_shared'));
     }
   }
 
@@ -189,7 +189,7 @@ class _ShareScreenState extends State<ShareScreen> {
       await widget.copy(_text.text);
       if (mounted) _say('Copied.');
     } on Object {
-      if (mounted) _say('The quote could not be copied.');
+      if (mounted) _say(context.tr('app.share.the_quote_could_not_be_copied'));
     }
   }
 
@@ -211,7 +211,9 @@ class _ShareScreenState extends State<ShareScreen> {
         buildShareText(widget.quote, widget.work, _on, ShareFormat.plain),
       );
     } on Object {
-      if (mounted) _say('The picture could not be shared.');
+      if (mounted) {
+        _say(context.tr('app.share.the_picture_could_not_be_shared'));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -225,10 +227,16 @@ class _ShareScreenState extends State<ShareScreen> {
       if (png == null) return;
       final ok = await widget.copyImage(png, _fileName);
       if (mounted) {
-        _say(ok ? 'Picture copied.' : 'The picture could not be copied.');
+        _say(
+          ok
+              ? context.tr('app.share.picture_copied')
+              : context.tr('app.share.the_picture_could_not_be_copied'),
+        );
       }
     } on Object {
-      if (mounted) _say('The picture could not be copied.');
+      if (mounted) {
+        _say(context.tr('app.share.the_picture_could_not_be_copied'));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -241,9 +249,11 @@ class _ShareScreenState extends State<ShareScreen> {
       final png = await _picture();
       if (png == null) return;
       final saved = await widget.picker.save(_fileName, png);
-      if (mounted) _say(saved ? 'Saved.' : 'Nothing was saved.');
+      if (mounted) {
+        _say(saved ? 'Saved.' : context.tr('app.library.nothing_was_saved'));
+      }
     } on Object {
-      if (mounted) _say('The picture could not be saved.');
+      if (mounted) _say(context.tr('app.share.the_picture_could_not_be_saved'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -282,11 +292,14 @@ class _ShareScreenState extends State<ShareScreen> {
     final picture = _format == ShareFormat.picture;
     final look = _look ?? theme.brightness;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Share'))),
+      appBar: AppBar(title: Text(context.tr('common.action.share.label'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(context.tr('Format'), style: theme.textTheme.labelLarge),
+          Text(
+            context.tr('app.share.format'),
+            style: theme.textTheme.labelLarge,
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -301,7 +314,10 @@ class _ShareScreenState extends State<ShareScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Text(context.tr('Include'), style: theme.textTheme.labelLarge),
+          Text(
+            context.tr('app.share.include'),
+            style: theme.textTheme.labelLarge,
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -322,17 +338,20 @@ class _ShareScreenState extends State<ShareScreen> {
           if (picture) ...[
             Row(
               children: [
-                Text(context.tr('Look'), style: theme.textTheme.labelLarge),
+                Text(
+                  context.tr('app.share.look'),
+                  style: theme.textTheme.labelLarge,
+                ),
                 const SizedBox(width: 12),
                 SegmentedButton<Brightness>(
                   segments: [
                     ButtonSegment(
                       value: Brightness.light,
-                      label: Text(context.tr('Light')),
+                      label: Text(context.tr('share.image.theme.light.label')),
                     ),
                     ButtonSegment(
                       value: Brightness.dark,
-                      label: Text(context.tr('Dark')),
+                      label: Text(context.tr('share.image.theme.dark.label')),
                     ),
                   ],
                   selected: {look},
@@ -347,7 +366,10 @@ class _ShareScreenState extends State<ShareScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Text(context.tr('Material'), style: theme.textTheme.labelLarge),
+                Text(
+                  context.tr('app.share.material'),
+                  style: theme.textTheme.labelLarge,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<ShareMaterial>(
@@ -371,17 +393,20 @@ class _ShareScreenState extends State<ShareScreen> {
                 _people.characterFaces.isNotEmpty) ...[
               Row(
                 children: [
-                  Text(context.tr('Face'), style: theme.textTheme.labelLarge),
+                  Text(
+                    context.tr('share.image.facekind.info.title'),
+                    style: theme.textTheme.labelLarge,
+                  ),
                   const SizedBox(width: 12),
                   SegmentedButton<bool>(
                     segments: [
                       ButtonSegment(
                         value: false,
-                        label: Text(context.tr('Actor')),
+                        label: Text(context.tr('common.field.actor.label')),
                       ),
                       ButtonSegment(
                         value: true,
-                        label: Text(context.tr('Character')),
+                        label: Text(context.tr('common.field.character.label')),
                       ),
                     ],
                     selected: {_characters},
@@ -401,9 +426,11 @@ class _ShareScreenState extends State<ShareScreen> {
               children: [
                 if (_faces.isNotEmpty) ...[
                   FilterChip(
-                    label: Text(context.tr('Backdrop')),
+                    label: Text(
+                      context.tr('share.image.portrait.backdrop.label'),
+                    ),
                     tooltip: context.tr(
-                      'Chip: a small round photo beside the name. Backdrop: the same photo faded in from the edge.',
+                      'app.share.chip_a_small_round_photo_beside',
                     ),
                     selected: _backdrop,
                     onSelected: (v) {
@@ -412,10 +439,8 @@ class _ShareScreenState extends State<ShareScreen> {
                     },
                   ),
                   FilterChip(
-                    label: Text(context.tr('Swap')),
-                    tooltip: context.tr(
-                      'Which credited person comes first. On chips it changes whose face is in front; on a backdrop it swaps the sides.',
-                    ),
+                    label: Text(context.tr('share.image.sides.swap.label')),
+                    tooltip: context.tr('share.image.sides.info.body'),
                     selected: _swap,
                     onSelected: (v) {
                       setState(() => _swap = v);
@@ -425,8 +450,10 @@ class _ShareScreenState extends State<ShareScreen> {
                 ],
                 if (_signatureFace != null)
                   FilterChip(
-                    label: Text(context.tr('Signature')),
-                    tooltip: "Puts the credited person's signature in the picture's bottom right corner.",
+                    label: Text(context.tr('common.field.signature.label')),
+                    tooltip: context.tr(
+                      'app.share.puts_the_credited_person_s_signature',
+                    ),
                     selected: _signature,
                     onSelected: (v) {
                       setState(() => _signature = v);
@@ -434,8 +461,8 @@ class _ShareScreenState extends State<ShareScreen> {
                     },
                   ),
                 FilterChip(
-                  label: Text(context.tr('Quote colour')),
-                  tooltip: "Adds the quote's colour to the picture, as a stripe beside the words.",
+                  label: Text(context.tr('share.image.colour.info.title')),
+                  tooltip: context.tr('app.share.adds_the_quote_s_colour_to'),
                   selected: _tint,
                   onSelected: (v) {
                     setState(() => _tint = v);
@@ -479,17 +506,17 @@ class _ShareScreenState extends State<ShareScreen> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _sharePicture,
                   icon: const Icon(Icons.ios_share),
-                  label: Text(context.tr('Share')),
+                  label: Text(context.tr('common.action.share.label')),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _busy ? null : _copyPicture,
                   icon: const Icon(Icons.copy_rounded),
-                  label: const Text('Copy picture'),
+                  label: Text(context.tr('app.share.copy_picture')),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _busy ? null : _savePicture,
                   icon: const Icon(Icons.save_alt),
-                  label: Text(context.tr('Save picture')),
+                  label: Text(context.tr('app.share.save_picture')),
                 ),
               ],
             ),
@@ -499,8 +526,10 @@ class _ShareScreenState extends State<ShareScreen> {
               minLines: 6,
               maxLines: 14,
               decoration: InputDecoration(
-                labelText: context.tr('The text'),
-                helperText: context.tr('You can edit it before sending.'),
+                labelText: context.tr('app.share.the_text'),
+                helperText: context.tr(
+                  'app.share.you_can_edit_it_before_sending',
+                ),
                 alignLabelWithHint: true,
               ),
             ),
@@ -512,12 +541,12 @@ class _ShareScreenState extends State<ShareScreen> {
                 FilledButton.icon(
                   onPressed: _shareText,
                   icon: const Icon(Icons.ios_share),
-                  label: Text(context.tr('Share')),
+                  label: Text(context.tr('common.action.share.label')),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _copy,
                   icon: const Icon(Icons.copy_outlined),
-                  label: Text(context.tr('Copy')),
+                  label: Text(context.tr('common.action.copy.label')),
                 ),
               ],
             ),

@@ -122,22 +122,20 @@ class _SyncScreenState extends State<SyncScreen> {
     final p = _pending;
     final nothing = p != null && p.works == 0 && p.quotes == 0;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Send library to server'))),
+      appBar: AppBar(
+        title: Text(context.tr('app.settings.send_library_to_server')),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            context.tr(
-              'Sends the works and quotes that are only on this phone to your Tippani server. It only adds: nothing on the server is changed or deleted, and what is already there is not sent again.',
-            ),
-          ),
+          Text(context.tr('app.sync.sends_the_works_and_quotes_that')),
           const SizedBox(height: 16),
           if (p == null)
             const LinearProgressIndicator()
           else
             Text(
               nothing
-                  ? 'Nothing is waiting.'
+                  ? context.tr('app.sync.nothing_is_waiting')
                   : 'Waiting to be sent: ${_count(p.works, 'work')} and ${_count(p.quotes, 'quote')}.',
               style: Theme.of(context).textTheme.titleMedium,
             ),
@@ -149,7 +147,7 @@ class _SyncScreenState extends State<SyncScreen> {
           ] else
             FilledButton(
               onPressed: p == null || nothing ? null : _send,
-              child: Text(context.tr('Send to server')),
+              child: Text(context.tr('app.sync.send_to_server')),
             ),
           if (_result != null) ...[
             const SizedBox(height: 24),

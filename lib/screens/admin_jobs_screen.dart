@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
+import '../l10n/l10n.dart';
 
 /// What a kind of job is called, in words. A kind the app has no words for is shown as "Job".
 String jobKindName(String kind) =>
@@ -144,9 +145,9 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
   Future<void> _stopAll() async {
     final ok = await confirmDialog(
       context,
-      title: 'Stop every job?',
-      body: 'The running job and every waiting one are stopped.',
-      yes: 'Stop all',
+      title: context.tr('app.admin_jobs.stop_every_job'),
+      body: context.tr('app.admin_jobs.the_running_job_and_every_waiting'),
+      yes: context.tr('settings.jobs.current.stop-all.label'),
       danger: true,
     );
     if (!ok || !mounted) return;
@@ -178,7 +179,8 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
-            if (lines.isEmpty) const Text('This job logged nothing.'),
+            if (lines.isEmpty)
+              Text(context.tr('app.admin_jobs.this_job_logged_nothing')),
             for (final l in lines)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
@@ -253,10 +255,21 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                     value: (j.done / j.total).clamp(0, 1).toDouble(),
                   ),
                   const SizedBox(height: 4),
-                  Text('${j.done} of ${j.total}', style: text.labelSmall),
+                  Text(
+                    context.tr('quiz.progress.label', {
+                      'done': j.done,
+                      'total': j.total,
+                    }),
+                    style: text.labelSmall,
+                  ),
                 ],
                 if (j.state == 'queued' && j.ahead > 0)
-                  Text('${j.ahead} ahead of it', style: text.labelSmall),
+                  Text(
+                    context.tr('app.admin_jobs.ahead_ahead_of_it', {
+                      'ahead': j.ahead,
+                    }),
+                    style: text.labelSmall,
+                  ),
                 if (j.error.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -272,7 +285,13 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                       spacing: 12,
                       children: [
                         for (final e in counts)
-                          Text('${e.value} ${e.key}', style: text.labelSmall),
+                          Text(
+                            context.tr('app.admin_jobs.value_key', {
+                              'value': e.value,
+                              'key': e.key,
+                            }),
+                            style: text.labelSmall,
+                          ),
                       ],
                     ),
                   ),
@@ -280,7 +299,9 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
-                      'by ${j.username}',
+                      context.tr('app.admin_jobs.by_username', {
+                        'username': j.username,
+                      }),
                       style: text.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -296,13 +317,17 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                           TextButton.icon(
                             onPressed: () => _stop(j),
                             icon: const Icon(Icons.stop_rounded),
-                            label: const Text('Stop'),
+                            label: Text(
+                              context.tr('settings.jobs.current.stop.label'),
+                            ),
                           ),
                         if (j.rerunnable)
                           TextButton.icon(
                             onPressed: () => _rerun(j),
                             icon: const Icon(Icons.replay_rounded),
-                            label: const Text('Run again'),
+                            label: Text(
+                              context.tr('settings.jobs.past.rerun.label'),
+                            ),
                           ),
                       ],
                     ),
@@ -327,7 +352,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
             j.current != null
                 ? '${_stateName(j.current!.state)} now'
                 : last == null
-                ? 'Not run in the last thirty days'
+                ? context.tr('app.admin_jobs.not_run_in_the_last_thirty')
                 : 'Last: ${_stateName(last.state)}${last.finishedAt == null ? '' : ' on ${_day(last.finishedAt!)}'}',
           ),
           trailing: j.current != null
@@ -338,7 +363,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                 )
               : FilledButton.tonal(
                   onPressed: () => _start(j),
-                  child: const Text('Run'),
+                  child: Text(context.tr('settings.jobs.common.run.label')),
                 ),
           iconColor: scheme.primary,
         ),
@@ -356,11 +381,11 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Jobs'),
+          title: Text(context.tr('settings.section.jobs.label')),
           actions: [
             if (cur != null && cur.jobs.isNotEmpty)
               IconButton(
-                tooltip: 'Stop every job',
+                tooltip: context.tr('app.admin_jobs.stop_every_job_2'),
                 icon: const Icon(Icons.stop_circle_outlined),
                 onPressed: _stopAll,
               ),
@@ -388,7 +413,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                       const SizedBox(height: 12),
                       OutlinedButton(
                         onPressed: _read,
-                        child: const Text('Try again'),
+                        child: Text(context.tr('common.source.retry')),
                       ),
                     ],
                   ),
@@ -400,12 +425,12 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                 children: [
                   _list(
                     cur.jobs,
-                    'Nothing is running or waiting.',
+                    context.tr('settings.jobs.current.empty'),
                     () => _read(),
                   ),
                   _list(
                     past.jobs,
-                    'No job has ended in the last thirty days.',
+                    context.tr('app.admin_jobs.no_job_has_ended_in_the'),
                     () => _read(),
                   ),
                   RefreshIndicator(
@@ -415,10 +440,12 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                       children: [
                         for (final j in common) _commonCard(j),
                         if (common.isEmpty)
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.all(32),
                             child: Text(
-                              'This server has no queue, so there is nothing to start.',
+                              context.tr(
+                                'app.admin_jobs.this_server_has_no_queue_so',
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ),

@@ -49,7 +49,11 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
       ];
     } on Object {
       if (mounted) {
-        setState(() => _problem = 'The phone would not list its voices.');
+        setState(
+          () => _problem = context.tr(
+            'app.read_aloud_settings.the_phone_would_not_list_its',
+          ),
+        );
       }
     }
     if (!mounted) return;
@@ -78,14 +82,24 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
     setState(() => _testing = true);
     try {
       final ok = await _speaker.speak(
-        'Simplicity, simplicity, simplicity.',
+        context.tr('app.read_aloud_settings.simplicity_simplicity_simplicity'),
         _language ?? 'en',
       );
       if (!ok && mounted) {
-        setState(() => _problem = 'This phone has no voice for that language.');
+        setState(
+          () => _problem = context.tr(
+            'app.read_aloud_settings.this_phone_has_no_voice_for',
+          ),
+        );
       }
     } on Object {
-      if (mounted) setState(() => _problem = 'The voice could not be tried.');
+      if (mounted) {
+        setState(
+          () => _problem = context.tr(
+            'app.read_aloud_settings.the_voice_could_not_be_tried',
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _testing = false);
     }
@@ -111,17 +125,16 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             return a.name.compareTo(b.name);
           }));
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Read aloud'))),
+      appBar: AppBar(title: Text(context.tr('speech.play.aria'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'The app uses Android’s own speech service. Online voices usually sound the most natural. To get more, '
-            'or to change the speech service, open Android Settings and search for “Text-to-speech”.',
+          Text(
+            context.tr('app.read_aloud_settings.the_app_uses_android_s_own'),
           ),
           const SizedBox(height: 16),
           Text(
-            context.tr('Speed'),
+            context.tr('app.read_aloud_settings.speed'),
             style: Theme.of(context).textTheme.titleSmall,
           ),
           Slider(
@@ -133,7 +146,7 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             onChanged: (v) => _save(_prefs.copyWith(rate: v)),
           ),
           Text(
-            context.tr('Pitch'),
+            context.tr('app.read_aloud_settings.pitch'),
             style: Theme.of(context).textTheme.titleSmall,
           ),
           Slider(
@@ -149,7 +162,11 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             child: FilledButton.tonalIcon(
               onPressed: _test,
               icon: Icon(_testing ? Icons.stop : Icons.volume_up_outlined),
-              label: Text(_testing ? 'Stop' : 'Try this voice'),
+              label: Text(
+                _testing
+                    ? 'Stop'
+                    : context.tr('app.read_aloud_settings.try_this_voice'),
+              ),
             ),
           ),
           if (_problem != null) ...[
@@ -161,7 +178,7 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
           ],
           const SizedBox(height: 16),
           Text(
-            context.tr('Voice'),
+            context.tr('app.read_aloud_settings.voice'),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           ListTile(
@@ -170,9 +187,11 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
             ),
-            title: Text(context.tr('Automatic')),
+            title: Text(context.tr('app.read_aloud_settings.automatic')),
             subtitle: Text(
-              context.tr('The best voice installed for each language'),
+              context.tr(
+                'app.read_aloud_settings.the_best_voice_installed_for_each',
+              ),
             ),
             onTap: () => _save(_prefs.copyWith(automatic: true)),
           ),
@@ -184,12 +203,16 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
           else if (voices.isEmpty)
             Padding(
               padding: EdgeInsets.all(8),
-              child: Text(context.tr('The phone lists no voices.')),
+              child: Text(
+                context.tr('app.read_aloud_settings.the_phone_lists_no_voices'),
+              ),
             )
           else ...[
             DropdownButtonFormField<String>(
               initialValue: _language,
-              decoration: InputDecoration(labelText: context.tr('Language')),
+              decoration: InputDecoration(
+                labelText: context.tr('common.field.language.label'),
+              ),
               items: [
                 for (final l in languages)
                   DropdownMenuItem(value: l, child: Text(l)),
@@ -203,7 +226,12 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
                       ? Icons.radio_button_checked
                       : Icons.radio_button_unchecked,
                 ),
-                title: Text('${v.locale} · ${v.name}'),
+                title: Text(
+                  context.tr('app.read_aloud_settings.locale_name', {
+                    'locale': v.locale,
+                    'name': v.name,
+                  }),
+                ),
                 subtitle: Text(v.description),
                 onTap: () => _save(
                   _prefs.copyWith(voiceName: v.name, voiceLocale: v.locale),

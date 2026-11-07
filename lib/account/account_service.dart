@@ -107,7 +107,7 @@ class PairedAccount implements AccountService {
       }
       final v = await _controller.withClient(run);
       if (v == null && !_controller.paired) {
-        return const Outcome.fail('This phone is not paired.');
+        return Outcome.fail('This phone is not paired.');
       }
       return Outcome.ok(v);
     } on ApiException catch (e) {
@@ -117,9 +117,7 @@ class PairedAccount implements AccountService {
       return switch (e.failure) {
         ApiFailure.network ||
         ApiFailure.timeout => const Outcome.fail(_offline),
-        ApiFailure.forbidden => const Outcome.fail(
-          'The server does not allow that.',
-        ),
+        ApiFailure.forbidden => Outcome.fail('The server does not allow that.'),
         _ => Outcome.fail(
           e.detail.isEmpty ? 'The server refused that.' : e.detail,
         ),
@@ -263,7 +261,7 @@ class PairedContextRules implements ContextRules {
     try {
       final v = await _controller.withClient(run);
       if (v == null && !_controller.paired) {
-        return const Outcome.fail('This phone is not paired.');
+        return Outcome.fail('This phone is not paired.');
       }
       return Outcome.ok(v);
     } on ApiException catch (e) {

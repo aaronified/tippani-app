@@ -7,7 +7,7 @@ import '../l10n/l10n.dart';
 
 /// One plain sentence for each way a pairing can fail. Pure, so the words are tested.
 String pairFailureText(PairFailure f) => switch (f) {
-  PairFailure.invalidCode => "That code did not work. Codes last five minutes and work once. Make a new one in Tippani's Settings on your computer and try again.",
+  PairFailure.invalidCode => 'That code did not work. Codes last five minutes and work once. Make a new one in Tippani\'s Settings on your computer and try again.',
   PairFailure.rateLimited => 'Too many tries. Wait a minute, then try again.',
   PairFailure.unreachable => 'Could not reach the server. Check that your phone can see it, then try again.',
   PairFailure.unexpected => 'The server answered in a way this app does not understand. Update the app and the server, then try again.',
@@ -51,7 +51,9 @@ class _PairScreenState extends State<PairScreen> {
       _busy = true;
       _problem = null;
     });
-    final name = _name.text.trim().isEmpty ? 'My Android phone' : _name.text;
+    final name = _name.text.trim().isEmpty
+        ? context.tr('app.pair.my_android_phone')
+        : _name.text;
     final result = await widget.controller.pair(code, name);
     if (!mounted) return;
     if (result.ok) {
@@ -68,15 +70,11 @@ class _PairScreenState extends State<PairScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Pair this phone'))),
+      appBar: AppBar(title: Text(context.tr('app.home.pair_this_phone'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            context.tr(
-              'On a computer, open Tippani, go to Settings, then Server, then Devices, and choose Pair a device. It shows a code. Type it here.',
-            ),
-          ),
+          Text(context.tr('app.pair.on_a_computer_open_tippani_go')),
           const SizedBox(height: 16),
           TextField(
             controller: _code,
@@ -85,7 +83,7 @@ class _PairScreenState extends State<PairScreen> {
             textCapitalization: TextCapitalization.characters,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
-              labelText: context.tr('Pairing code'),
+              labelText: context.tr('settings.devices.code.info.title'),
               border: OutlineInputBorder(),
             ),
           ),
@@ -97,10 +95,8 @@ class _PairScreenState extends State<PairScreen> {
             textInputAction: TextInputAction.go,
             onSubmitted: (_) => _pair(),
             decoration: InputDecoration(
-              labelText: context.tr('Name for this phone'),
-              helperText: context.tr(
-                'Shown in the device list, so you can tell your phones apart.',
-              ),
+              labelText: context.tr('app.pair.name_for_this_phone'),
+              helperText: context.tr('app.pair.shown_in_the_device_list_so'),
               border: OutlineInputBorder(),
             ),
           ),
@@ -113,7 +109,7 @@ class _PairScreenState extends State<PairScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Text(context.tr('Pair')),
+                : Text(context.tr('app.pair.pair')),
           ),
           if (_problem != null) ...[
             const SizedBox(height: 16),

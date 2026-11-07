@@ -11,6 +11,7 @@ import '../library/library_store.dart';
 import '../sync/auto_sync.dart';
 import 'checks_tabs.dart';
 import 'staging_screen.dart';
+import '../l10n/l10n.dart';
 
 /// Where the things that wait on the reader are: files imported into the server's queue, stray marks in the
 /// words, corrections from a work's own file, and times and places from it. Each tab carries a count of what is
@@ -95,7 +96,7 @@ class _ChecksScreenState extends State<ChecksScreen> {
       ),
       if (checks != null) ...[
         (
-          _tab('Stray marks', _counts.strayMarks),
+          _tab(context.tr('checks.tab.marks.label'), _counts.strayMarks),
           StrayMarksTab(service: checks, onChanged: _pull),
         ),
         (
@@ -103,7 +104,7 @@ class _ChecksScreenState extends State<ChecksScreen> {
           CorrectionsTab(service: checks, onChanged: _pull),
         ),
         (
-          _tab('Times and places', _counts.locators),
+          _tab(context.tr('app.checks.times_and_places'), _counts.locators),
           LocatorsTab(service: checks, onChanged: _pull),
         ),
       ],
@@ -112,7 +113,7 @@ class _ChecksScreenState extends State<ChecksScreen> {
       length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Import and checks'),
+          title: Text(context.tr('app.checks_entry.import_and_checks')),
           bottom: tabs.length > 1
               ? TabBar(
                   isScrollable: true,
@@ -275,40 +276,44 @@ class _ImportsTabState extends State<ImportsTab> {
                     ),
                   ),
                 ),
-                child: const Text('Review'),
+                child: Text(context.tr('settings.section.review.label')),
               ),
             ),
           ),
         if (_server)
           _Panel(
             icon: Icons.cloud_download_outlined,
-            title: 'Import a file',
-            body: 'The server reads Kindle, Goodreads, Hardcover, IMDb, Readest, Bookcision and Markdown files, and holds what it finds for you to look over before it joins your library.',
+            title: context.tr('app.checks.import_a_file'),
+            body: context.tr(
+              'app.checks.the_server_reads_kindle_goodreads_hardcover',
+            ),
             action: FilledButton.icon(
               onPressed: _busy == null ? _chooseServerFile : null,
               icon: const Icon(Icons.upload_file),
-              label: const Text('Choose a file'),
+              label: Text(context.tr('app.checks.choose_a_file')),
             ),
           )
         else
           Card(
             child: ListTile(
               leading: const Icon(Icons.cloud_off_outlined),
-              title: const Text('Importing to a server needs a paired server'),
-              subtitle: const Text(
-                'Pair this phone in Settings. A Markdown file can still be imported here.',
+              title: Text(
+                context.tr('app.checks.importing_to_a_server_needs_a'),
+              ),
+              subtitle: Text(
+                context.tr('app.checks.pair_this_phone_in_settings_a'),
               ),
             ),
           ),
         if (widget.library != null)
           _Panel(
             icon: Icons.description_outlined,
-            title: 'Import Markdown into this phone',
+            title: context.tr('app.checks.import_markdown_into_this_phone'),
             body: 'A file in the form the app exports (a "---" block naming each book or film, then its quotes). It goes straight into the library on this phone, and a book or quote you already have is left as it is.',
             action: OutlinedButton.icon(
               onPressed: _busy == null ? _chooseLocalFile : null,
               icon: const Icon(Icons.file_open_outlined),
-              label: const Text('Choose a Markdown file'),
+              label: Text(context.tr('app.checks.choose_a_markdown_file')),
             ),
           ),
         if (_busy != null)
@@ -317,7 +322,10 @@ class _ImportsTabState extends State<ImportsTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Reading $_busy…', style: theme.textTheme.bodyMedium),
+                Text(
+                  context.tr('app.checks.reading_busy', {'busy': _busy}),
+                  style: theme.textTheme.bodyMedium,
+                ),
                 const SizedBox(height: 6),
                 LinearProgressIndicator(value: _progress),
               ],
@@ -347,7 +355,7 @@ class _ImportsTabState extends State<ImportsTab> {
             shape: const Border(),
             collapsedShape: const Border(),
             leading: const Icon(Icons.help_outline),
-            title: const Text('How to get a file from…'),
+            title: Text(context.tr('app.checks.how_to_get_a_file_from')),
             children: [
               for (final s in importSources)
                 ExpansionTile(
@@ -500,7 +508,7 @@ class _ResultCardState extends State<_ResultCard> {
             if (widget.onReadAs != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Nothing in this file says what it is. Pick its format and it will be read again.',
+                context.tr('import.unknown.body'),
                 style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: 8),
@@ -510,8 +518,8 @@ class _ResultCardState extends State<_ResultCard> {
                     child: DropdownButtonFormField<String>(
                       initialValue: _as,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Read this as…',
+                      decoration: InputDecoration(
+                        labelText: context.tr('import.read-as.label'),
                         border: OutlineInputBorder(),
                       ),
                       items: [
@@ -526,7 +534,7 @@ class _ResultCardState extends State<_ResultCard> {
                     onPressed: _as == null
                         ? null
                         : () => widget.onReadAs!(_as!),
-                    child: const Text('Read it'),
+                    child: Text(context.tr('app.checks.read_it')),
                   ),
                 ],
               ),
@@ -536,7 +544,7 @@ class _ResultCardState extends State<_ResultCard> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: widget.onReview,
-                  child: const Text('Review the queue'),
+                  child: Text(context.tr('app.checks.review_the_queue')),
                 ),
               ),
           ],

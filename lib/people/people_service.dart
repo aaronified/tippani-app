@@ -121,7 +121,7 @@ class PageLink {
 }
 
 /// The providers a link is recognised by, in the order the web lists them: a name for the chip.
-const _providers = <(String, String)>[
+final _providers = <(String, String)>[
   (r'(^|\.)imdb\.com$', 'IMDb'),
   (r'(^|\.)themoviedb\.org$', 'TMDB'),
   (r'(^|\.)thetvdb\.com$', 'TheTVDB'),

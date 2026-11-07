@@ -21,15 +21,15 @@ AppBar bulkAppBar(
 }) {
   return AppBar(
     leading: IconButton(
-      tooltip: context.tr('Cancel'),
+      tooltip: context.tr('common.action.cancel.label'),
       icon: const Icon(Icons.close),
       onPressed: onClose,
     ),
-    title: Text(context.tr('{n} selected', {'n': count})),
+    title: Text(context.tr('common.selection.count.one', {'n': count})),
     actions: [
       if (count < total)
         IconButton(
-          tooltip: context.tr('Select all'),
+          tooltip: context.tr('search.table.select-all.aria'),
           icon: const Icon(Icons.select_all),
           onPressed: onAll,
         ),
@@ -47,7 +47,7 @@ void _say(BuildContext context, String text) {
 
 String _done(BuildContext context, BulkResult r, String what) {
   var out = r.changed == 0
-      ? context.tr('Nothing to change.')
+      ? context.tr('app.bulk_bar.nothing_to_change')
       : context.tr(what, {'n': r.changed});
   if (r.note.isNotEmpty) out = '$out ${context.tr(r.note)}';
   return out;
@@ -78,8 +78,8 @@ class QuoteBulkActions {
     return [
       IconButton(
         tooltip: allFav
-            ? context.tr('Take them off favourites')
-            : context.tr('Favourite them'),
+            ? context.tr('app.bulk_bar.take_them_off_favourites')
+            : context.tr('app.bulk_bar.favourite_them'),
         icon: Icon(allFav ? Icons.star : Icons.star_border),
         onPressed: () async {
           final r = await _ops.favourite(quotes, !allFav);
@@ -96,17 +96,17 @@ class QuoteBulkActions {
         },
       ),
       IconButton(
-        tooltip: context.tr('Colour'),
+        tooltip: context.tr('common.field.colour.label'),
         icon: const Icon(Icons.palette_outlined),
         onPressed: () => _recolour(context),
       ),
       IconButton(
-        tooltip: context.tr('Tag'),
+        tooltip: context.tr('common.field.tag.label'),
         icon: const Icon(Icons.sell_outlined),
         onPressed: () => _tag(context, add: true),
       ),
       PopupMenuButton<String>(
-        tooltip: context.tr('More'),
+        tooltip: context.tr('settings.appearance.contrast.more.label'),
         onSelected: (v) {
           switch (v) {
             case 'untag':
@@ -124,22 +124,25 @@ class QuoteBulkActions {
         itemBuilder: (context) => [
           PopupMenuItem(
             value: 'untag',
-            child: Text(context.tr('Take a tag off')),
+            child: Text(context.tr('app.bulk_bar.take_a_tag_off')),
           ),
           PopupMenuItem(
             value: 'field',
-            child: Text(context.tr('Set one field…')),
+            child: Text(context.tr('app.bulk_bar.set_one_field')),
           ),
           PopupMenuItem(
             value: 'board',
-            child: Text(context.tr('Move to a board…')),
+            child: Text(context.tr('app.bulk_bar.move_to_a_board')),
           ),
           if (anthologies?.available == true)
             PopupMenuItem(
               value: 'anthology',
-              child: Text(context.tr('Add to anthology')),
+              child: Text(context.tr('common.action.anthology.label')),
             ),
-          PopupMenuItem(value: 'delete', child: Text(context.tr('Delete'))),
+          PopupMenuItem(
+            value: 'delete',
+            child: Text(context.tr('common.action.delete.label')),
+          ),
         ],
       ),
     ];
@@ -180,10 +183,12 @@ class QuoteBulkActions {
         : ({for (final q in quotes) ...q.tags}.toList()..sort());
     final name = await askBulkText(
       context,
-      title: add ? 'Add a tag' : 'Take a tag off',
-      label: 'Tag',
+      title: add
+          ? context.tr('app.bulk_bar.add_a_tag')
+          : context.tr('app.bulk_bar.take_a_tag_off'),
+      label: context.tr('common.field.tag.label'),
       offer: offer,
-      action: add ? 'Add' : 'Take off',
+      action: add ? 'Add' : context.tr('app.bulk_bar.take_off'),
     );
     if (name == null || name.trim().isEmpty || !context.mounted) return;
     final r = add
@@ -215,7 +220,7 @@ class QuoteBulkActions {
     if (field == null || !context.mounted) return;
     final value = await askBulkText(
       context,
-      title: 'Set one field',
+      title: context.tr('app.bulk_bar.set_one_field_2'),
       label: field.label,
       offer: const [],
       action: 'Set',
@@ -246,7 +251,7 @@ class QuoteBulkActions {
               ),
             ListTile(
               leading: const Icon(Icons.layers_clear_outlined),
-              title: Text(context.tr('No board')),
+              title: Text(context.tr('app.bulk_bar.no_board')),
               onTap: () => Navigator.of(context).pop(none),
             ),
           ],
@@ -275,7 +280,7 @@ class QuoteBulkActions {
     final chosen = await showDialog<Object>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text(context.tr('Add to anthology')),
+        title: Text(context.tr('common.action.anthology.label')),
         children: [
           for (final a in all)
             SimpleDialogOption(
@@ -284,7 +289,7 @@ class QuoteBulkActions {
             ),
           SimpleDialogOption(
             onPressed: () => Navigator.of(context).pop('new'),
-            child: Text(context.tr('A new anthology…')),
+            child: Text(context.tr('app.anthologies.a_new_anthology')),
           ),
         ],
       ),
@@ -294,7 +299,10 @@ class QuoteBulkActions {
       Anthology target;
       if (chosen == 'new') {
         if (!context.mounted) return;
-        final text = await askAnthologyText(context, heading: 'New anthology');
+        final text = await askAnthologyText(
+          context,
+          heading: context.tr('anthologies.list.new.label'),
+        );
         if (text == null) return;
         target = await service.create(text.title, text.intro);
       } else {
@@ -341,28 +349,26 @@ class QuoteBulkActions {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Delete {n} quotes?', {'n': n})),
+        title: Text(context.tr('app.bulk_bar.delete_n_quotes', {'n': n})),
         content: Text(
-          context.tr(
-            'They are removed from this phone, and from the server at the next sync (its bin keeps them for a while).',
-          ),
+          context.tr('app.bulk_bar.they_are_removed_from_this_phone'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('Keep them')),
+            child: Text(context.tr('app.bulk_bar.keep_them')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('Delete')),
+            child: Text(context.tr('common.action.delete.label')),
           ),
         ],
       ),
     );
     if (sure != true || !context.mounted) return;
     final messenger = ScaffoldMessenger.of(context);
-    final text = context.tr('{n} quotes deleted.', {'n': n});
-    final undo = context.tr('Undo');
+    final text = context.tr('app.bulk_bar.n_quotes_deleted', {'n': n});
+    final undo = context.tr('common.action.undo.label');
     final drafts = await _ops.delete(quotes);
     messenger
       ..clearSnackBars()
@@ -402,18 +408,18 @@ class WorkBulkActions {
 
   List<Widget> bar(BuildContext context) => [
     IconButton(
-      tooltip: context.tr('Set one field…'),
+      tooltip: context.tr('app.bulk_bar.set_one_field'),
       icon: const Icon(Icons.edit_note),
       onPressed: () => _field(context),
     ),
     if (works.length > 1)
       IconButton(
-        tooltip: context.tr('Merge into one'),
+        tooltip: context.tr('app.bulk_bar.merge_into_one'),
         icon: const Icon(Icons.merge_type),
         onPressed: () => _merge(context),
       ),
     IconButton(
-      tooltip: context.tr('Delete'),
+      tooltip: context.tr('common.action.delete.label'),
       icon: const Icon(Icons.delete_outline),
       onPressed: () => _delete(context),
     ),
@@ -437,7 +443,7 @@ class WorkBulkActions {
     if (field == null || !context.mounted) return;
     final value = await askBulkText(
       context,
-      title: 'Set one field',
+      title: context.tr('app.bulk_bar.set_one_field_2'),
       label: field.label,
       offer: const [],
       action: 'Set',
@@ -454,13 +460,18 @@ class WorkBulkActions {
     final target = await showDialog<Work>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text(context.tr('Keep which one?')),
+        title: Text(context.tr('app.bulk_bar.keep_which_one')),
         children: [
           for (final w in works)
             SimpleDialogOption(
               onPressed: () => Navigator.of(context).pop(w),
               child: Text(
-                w.creator.isEmpty ? w.title : '${w.title} — ${w.creator}',
+                w.creator.isEmpty
+                    ? w.title
+                    : context.tr('app.bulk_bar.title_creator', {
+                        'title': w.title,
+                        'creator': w.creator,
+                      }),
               ),
             ),
         ],
@@ -475,21 +486,17 @@ class WorkBulkActions {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          context.tr('Merge into “{title}”?', {'title': target.title}),
+          context.tr('app.bulk_bar.merge_into_title', {'title': target.title}),
         ),
-        content: Text(
-          context.tr(
-            'The quotes of the others move onto it, and the others are deleted.',
-          ),
-        ),
+        content: Text(context.tr('app.bulk_bar.the_quotes_of_the_others_move')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('Merge')),
+            child: Text(context.tr('staging.move.merge.button.label')),
           ),
         ],
       ),
@@ -511,21 +518,20 @@ class WorkBulkActions {
     final sure = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Delete {n} works?', {'n': n})),
+        title: Text(context.tr('app.bulk_bar.delete_n_works', {'n': n})),
         content: Text(
-          context.tr(
-            'Their {q} quotes are deleted with them. This cannot be undone.',
-            {'q': quotes},
-          ),
+          context.tr('app.bulk_bar.their_q_quotes_are_deleted_with', {
+            'q': quotes,
+          }),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('Keep them')),
+            child: Text(context.tr('app.bulk_bar.keep_them')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('Delete')),
+            child: Text(context.tr('common.action.delete.label')),
           ),
         ],
       ),
@@ -589,7 +595,7 @@ Future<String?> askBulkText(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(context.tr('Cancel')),
+            child: Text(context.tr('common.action.cancel.label')),
           ),
           FilledButton(
             onPressed: allowEmpty || c.text.trim().isNotEmpty

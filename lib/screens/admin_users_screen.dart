@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
+import '../l10n/l10n.dart';
 
 /// The accounts on the server: add one, make one an admin or step them down, remove one. The server refuses to
 /// remove yourself or another admin, and says why; its words are shown as they come.
@@ -16,7 +17,7 @@ class AdminUsersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Users')),
+      appBar: AppBar(title: Text(context.tr('app.admin_users.users'))),
       body: Loader<List<AdminUser>>(
         load: service.users,
         builder: (context, users, reload) => _Users(
@@ -46,15 +47,17 @@ class _Users extends StatelessWidget {
   Future<void> _add(BuildContext context) async {
     final name = await askText(
       context,
-      title: 'New user',
-      label: 'Username',
+      title: context.tr('app.admin_users.new_user'),
+      label: context.tr('common.field.username.label'),
       yes: 'Next',
     );
     if (name == null || name.trim().isEmpty || !context.mounted) return;
     final pass = await askText(
       context,
-      title: 'A password for ${name.trim()}',
-      label: 'Password',
+      title: context.tr('app.admin_users.a_password_for_trim', {
+        'trim': name.trim(),
+      }),
+      label: context.tr('common.field.password.label'),
       secret: true,
       yes: 'Add',
     );
@@ -75,9 +78,11 @@ class _Users extends StatelessWidget {
       context,
       title: make ? 'Make ${u.username} an admin?' : 'Step ${u.username} down?',
       body: make
-          ? 'An admin can see every job, change the server and its backups, and add or remove users.'
+          ? context.tr('app.admin_users.an_admin_can_see_every_job')
           : '${u.username} will no longer be able to change the server.',
-      yes: make ? 'Make admin' : 'Step down',
+      yes: make
+          ? context.tr('account.users.make-admin')
+          : context.tr('account.users.step-down'),
     );
     if (!ok || !context.mounted) return;
     if (await attempt(context, () => service.setAdmin(u.id, make))) {
@@ -88,7 +93,9 @@ class _Users extends StatelessWidget {
   Future<void> _delete(BuildContext context, AdminUser u) async {
     final ok = await confirmDialog(
       context,
-      title: 'Remove ${u.username}?',
+      title: context.tr('app.admin_users.remove_username', {
+        'username': u.username,
+      }),
       body: 'Their whole library goes with them: every work, quote and tag. This cannot be undone.',
       yes: 'Remove',
       danger: true,
@@ -133,7 +140,9 @@ class _Users extends StatelessWidget {
                       trailing: u.isAdmin && u.username != myName
                           ? null
                           : PopupMenuButton<String>(
-                              tooltip: 'More',
+                              tooltip: context.tr(
+                                'settings.appearance.contrast.more.label',
+                              ),
                               onSelected: (v) => v == 'admin'
                                   ? _toggleAdmin(context, u)
                                   : _delete(context, u),
@@ -142,14 +151,22 @@ class _Users extends StatelessWidget {
                                   value: 'admin',
                                   child: Text(
                                     u.isAdmin
-                                        ? 'Step down from admin'
-                                        : 'Make admin',
+                                        ? context.tr(
+                                            'app.admin_users.step_down_from_admin',
+                                          )
+                                        : context.tr(
+                                            'account.users.make-admin',
+                                          ),
                                   ),
                                 ),
                                 if (!u.isAdmin)
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: 'delete',
-                                    child: Text('Remove this user'),
+                                    child: Text(
+                                      context.tr(
+                                        'app.admin_users.remove_this_user',
+                                      ),
+                                    ),
                                   ),
                               ],
                             ),
@@ -166,7 +183,7 @@ class _Users extends StatelessWidget {
             heroTag: 'add-user',
             onPressed: () => _add(context),
             icon: const Icon(Icons.person_add_alt_1_rounded),
-            label: const Text('Add a user'),
+            label: Text(context.tr('app.admin_users.add_a_user')),
           ),
         ),
       ],
