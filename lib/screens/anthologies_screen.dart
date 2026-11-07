@@ -166,16 +166,31 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
           : all.isEmpty
           ? const Center(child: Text('No anthologies yet.'))
           : ListView(
-              padding: const EdgeInsets.only(bottom: 88),
+              padding: const EdgeInsets.only(top: 8, bottom: 88),
               children: [
                 for (final a in all)
-                  ListTile(
-                    leading: const Icon(Icons.collections_bookmark_outlined),
-                    title: Text(a.title),
-                    subtitle: Text(
-                      '${a.entries} ${a.entries == 1 ? 'passage' : 'passages'}',
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 5,
                     ),
-                    onTap: () => _open(a),
+                    child: Card(
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        leading: const Icon(
+                          Icons.collections_bookmark_outlined,
+                        ),
+                        title: Text(a.title),
+                        subtitle: Text(
+                          '${a.entries} ${a.entries == 1 ? 'passage' : 'passages'}',
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => _open(a),
+                      ),
+                    ),
                   ),
               ],
             ),

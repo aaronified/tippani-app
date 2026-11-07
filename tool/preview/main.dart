@@ -12,19 +12,42 @@ import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/settings/settings_store.dart';
 
+import '../../test/support/fake_anthologies.dart';
+import '../../test/support/fake_server.dart';
+import '../../test/support/fake_tools.dart';
 import '../../test/support/memory_library.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // ignore: invalid_use_of_visible_for_testing_member
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({
+    'server_url': 'https://tippani.example.org',
+  });
   final prefs = await SharedPreferences.getInstance();
   final settings = SettingsStore(prefs, MemoryTokenVault());
-  final controller = AppController(settings);
+  // A made-up server that answers like the real one, so the screens that need a server have something to show.
+  final server = FakeServer();
+  final controller = AppController(settings, clientFactory: server.factory);
   await controller.load();
+  await controller.pair('ABCD2345', 'Preview phone');
   final lib = MemoryLibrary();
   await _seed(lib);
-  final harness = Harness.fake(settings, controller: controller, library: lib);
+  final anthologies = FakeAnthologies();
+  anthologies.seed(
+    'Stoic mornings',
+    intro: 'What to read before the day starts.',
+  );
+  anthologies.seed('Speeches that held a room');
+  final tools = FakeTools();
+  tools.put(1, 'The mass of men lead lives of quiet desperation.');
+  tools.put(2, 'Heat', kind: 'movie');
+  final harness = Harness.fake(
+    settings,
+    controller: controller,
+    library: lib,
+    anthologies: anthologies,
+    tools: tools,
+  );
   runApp(TippaniApp(controller: controller, harness: harness));
 }
 
