@@ -244,12 +244,14 @@ class MemoryLibrary implements LibraryStore {
     String? tag,
     int? boardId,
     bool unfiled = false,
+    bool standalone = false,
     int limit = 200,
     int offset = 0,
   }) async {
     final needle = query.trim().toLowerCase();
     bool matches(Quote q) {
       if (workId != null && q.workId != workId) return false;
+      if (standalone && q.workId != null) return false;
       if (favouritesOnly && !q.favorite) return false;
       if (boardId != null && q.boardId != boardId) return false;
       if (unfiled && q.boardId != null) return false;

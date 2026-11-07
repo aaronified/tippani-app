@@ -8,6 +8,7 @@ import 'tools/quote_context.dart';
 import 'tools/work_details_source.dart';
 import 'harness/update_ui.dart';
 import 'screens/anthologies_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/nav_icons.dart';
 import 'screens/home_screen.dart';
 import 'screens/library_screen.dart';
@@ -110,7 +111,27 @@ class _ShellState extends State<Shell> {
     // live on the server, so that one is there only where the app has the means to reach them. A harness with no
     // library (a test of the server screens alone) has none of these.
     final library = widget.harness.library;
+    final quiz = widget.harness.quiz;
     final tabs = <({Widget screen, NavigationDestination destination})>[
+      // Home comes first where the app has the quiz to put on it: the day's cards, the favourites, a line at random.
+      if (library != null && quiz != null)
+        (
+          screen: DashboardScreen(
+            store: library,
+            quiz: quiz,
+            controller: widget.controller,
+            picker: widget.harness.picker,
+            anthologies: widget.harness.anthologies,
+            auto: widget.harness.auto,
+            onOpenLibrary: () => setState(() => _index = 1),
+            onOpenCatalogue: () => setState(() => _index = 2),
+          ),
+          destination: const NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+        ),
       if (library != null)
         for (final (nav, part) in [
           (NavSection.library, LibrarySection.books),
@@ -176,6 +197,15 @@ class _ShellState extends State<Shell> {
           ),
         ),
         bottomNavigationBar: NavigationBar(
+          // A word like "Anthologies" is cut off when the bar is crowded (many tabs, a narrow phone, large text):
+          // then only the open tab keeps its label, and the others are the icon alone.
+          labelBehavior:
+              MediaQuery.sizeOf(context).width /
+                      tabs.length /
+                      MediaQuery.textScalerOf(context).scale(1) <
+                  66
+              ? NavigationDestinationLabelBehavior.onlyShowSelected
+              : NavigationDestinationLabelBehavior.alwaysShow,
           selectedIndex: _index,
           onDestinationSelected: (i) => setState(() => _index = i),
           destinations: [for (final t in tabs) t.destination],

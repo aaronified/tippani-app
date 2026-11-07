@@ -27,6 +27,7 @@ class SlowLibrary extends MemoryLibrary {
     String? tag,
     int? boardId,
     bool unfiled = false,
+    bool standalone = false,
     int limit = 200,
     int offset = 0,
   }) async {
@@ -38,6 +39,7 @@ class SlowLibrary extends MemoryLibrary {
       tag: tag,
       boardId: boardId,
       unfiled: unfiled,
+      standalone: standalone,
       limit: limit,
       offset: offset,
     );
@@ -146,6 +148,34 @@ void main() {
       await open(tester);
       expect(find.textContaining('No quotes yet'), findsOneWidget);
       expect(find.text('Quotes 0'), findsOneWidget);
+    });
+  });
+
+  group('the Quotes section', () {
+    testWidgets('is the quote board: only quotes with no work behind them', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final store = MemoryLibrary();
+      final book = await store.addWork(
+        const WorkDraft(title: 'Walden', creator: 'Thoreau'),
+      );
+      await store.addQuote(QuoteDraft(text: 'From a book', workId: book.id));
+      await store.addQuote(const QuoteDraft(text: 'A proverb on the board'));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LibraryScreen(
+            store: store,
+            picker: FakePicker(),
+            section: LibrarySection.quotes,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('A proverb on the board'), findsOneWidget);
+      expect(find.text('From a book'), findsNothing);
     });
   });
 
