@@ -403,7 +403,10 @@ abstract class QuizService implements Listenable {
   int get waiting;
 
   Future<QuizDeck> daily();
-  Future<List<QuizCard>> practice();
+
+  /// The Practice round, over the whole library or (with [anthology], an anthology's server id) only the
+  /// passages of that anthology.
+  Future<List<QuizCard>> practice({int? anthology});
   Future<QuizScores> scores();
 
   /// Keeps [a] (so it survives the phone being offline or closed) and sends it. Returns what the server said, or
@@ -622,8 +625,13 @@ class ServerQuiz extends ChangeNotifier implements QuizService {
   );
 
   @override
-  Future<List<QuizCard>> practice() => _call((c) async {
-    final j = _map(await c.getJson('/review/practice?offset=$_offset'));
+  Future<List<QuizCard>> practice({int? anthology}) => _call((c) async {
+    final j = _map(
+      await c.getJson(
+        '/review/practice?offset=$_offset'
+        '${anthology == null ? '' : '&anthology=$anthology'}',
+      ),
+    );
     return [
       if (j['items'] is List)
         for (final x in j['items'] as List)

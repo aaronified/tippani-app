@@ -35,6 +35,7 @@ version. Write each entry for the person using the app, in plain words. **Start 
   speeches, letters, essays) and, for proverbs, which languages. Hide a board you do not file on, and put the boards in the order you want: the
   filing lists follow that order and leave out hidden boards. Add the server's starter proverbs to a proverb board in the language you choose.
   Everything the web sets on a board now shows here after a sync.
+- Practise an anthology: open an anthology's menu and choose Practise to be quizzed on only its passages.
 - Copy picture: the share picture can be copied to the clipboard and pasted into a chat or a note, as well as shared or saved.
 - Add to anthology from any list: a quote in the library has a button for it (and a long press does the same), not only on the quote's own page.
 - Portraits on the people pills: the round pill on a quote (the author of a book, the speaker, the character with the actor under their name) now

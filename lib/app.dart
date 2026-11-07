@@ -162,6 +162,7 @@ class _ShellState extends State<Shell> {
           screen: AnthologiesScreen(
             service: widget.harness.anthologies!,
             picker: widget.harness.picker,
+            quiz: widget.harness.quiz,
           ),
           destination: NavigationDestination(
             icon: NavSectionIcon(NavSection.anthologies),
