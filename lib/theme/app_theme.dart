@@ -112,6 +112,8 @@ ThemeData buildTheme(ColorScheme scheme) {
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.resolveWith(
         (s) => text.labelMedium?.copyWith(
+          fontSize: 11,
+          letterSpacing: 0,
           fontWeight: s.contains(WidgetState.selected)
               ? FontWeight.w700
               : FontWeight.w500,
