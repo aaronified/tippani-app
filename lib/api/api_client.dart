@@ -145,10 +145,12 @@ class ApiClient {
     String path,
     String field,
     Uint8List bytes,
-    String fileName,
-  ) => _send(() async {
+    String fileName, {
+    Map<String, String> fields = const {},
+  }) => _send(() async {
     final req = http.MultipartRequest('POST', _uri(path))
       ..headers.addAll(_headers)
+      ..fields.addAll(fields)
       ..files.add(
         http.MultipartFile.fromBytes(field, bytes, filename: fileName),
       );
