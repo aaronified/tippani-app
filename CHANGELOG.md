@@ -14,6 +14,12 @@ version. Write each entry for the person using the app, in plain words. **Start 
   edge, where in the work, the date). Give an anthology a cover, an epigraph and a dedication. Fill it from a search: everything, a book, a film, a
   tag, an author, a colour, a shelf, your favourites or a stretch of dates, with a preview first and an option to keep adding as new quotes arrive.
   Passages you take out can be put back from Taken out, and the whole anthology can be saved or sent as a Markdown file or an EPUB book.
+- Boards in full: a board has its own page with its picture, what it is for and its quotes, which you can sort (newest, oldest, A to Z, who said it,
+  colour, favourites first) and group (who said it, language, colour). Give a board a picture and a description, say what kind it is (proverbs,
+  speeches, letters, essays) and, for proverbs, which languages. Hide a board you do not file on, and put the boards in the order you want: the
+  filing lists follow that order and leave out hidden boards. Add the server's starter proverbs to a proverb board in the language you choose.
+  Everything the web sets on a board now shows here after a sync.
+- Copy picture: the share picture can be copied to the clipboard and pasted into a chat or a note, as well as shared or saved.
 - Add to anthology from any list: a quote in the library has a button for it (and a long press does the same), not only on the quote's own page.
 
 - Portraits on the people pills: the round pill on a quote (the author of a book, the speaker, the character with the actor under their name) now

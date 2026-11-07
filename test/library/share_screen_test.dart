@@ -185,6 +185,8 @@ void main() {
     final images = <({Uint8List png, String name, String text})>[];
     final copied = <String>[];
     bool failImage = false;
+    final copiedImages = <({Uint8List png, String name})>[];
+    bool copyImageWorks = true;
     bool failCopy = false;
 
     Future<void> open(WidgetTester tester) async {
@@ -197,6 +199,8 @@ void main() {
       copied.clear();
       failImage = false;
       failCopy = false;
+      copiedImages.clear();
+      copyImageWorks = true;
       await tester.pumpWidget(
         MaterialApp(
           home: ShareScreen(
@@ -211,6 +215,10 @@ void main() {
             copy: (t) async {
               if (failCopy) throw Exception('no clipboard');
               copied.add(t);
+            },
+            copyImage: (png, name) async {
+              copiedImages.add((png: png, name: name));
+              return copyImageWorks;
             },
           ),
         ),
@@ -299,6 +307,33 @@ void main() {
       );
       expect(isPng(picker.saved.values.single), isTrue);
       expect(find.text('Saved.'), findsOneWidget);
+    });
+
+    testWidgets('copying the picture puts a PNG on the clipboard', (
+      tester,
+    ) async {
+      await open(tester);
+      await waitFor(
+        tester,
+        () => tester.tap(find.text('Copy picture')),
+        () => copiedImages.isNotEmpty,
+      );
+      expect(isPng(copiedImages.single.png), isTrue);
+      expect(copiedImages.single.name, 'tippani-quote-7.png');
+      await tester.pump();
+      expect(find.text('Picture copied.'), findsOneWidget);
+    });
+
+    testWidgets('a clipboard that refuses the picture is said', (tester) async {
+      await open(tester);
+      copyImageWorks = false;
+      await waitFor(
+        tester,
+        () => tester.tap(find.text('Copy picture')),
+        () =>
+            find.text('The picture could not be copied.').evaluate().isNotEmpty,
+      );
+      expect(find.text('The picture could not be copied.'), findsOneWidget);
     });
 
     testWidgets('a cancelled save says nothing was saved', (tester) async {

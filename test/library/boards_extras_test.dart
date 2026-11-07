@@ -103,11 +103,11 @@ void main() {
     expect(ids(BoardSort.text), [2, 1, 3]);
     expect(ids(BoardSort.speaker), [2, 1, 3], reason: 'Ann, Zed, then nobody');
     expect(ids(BoardSort.favourites), [2, 3, 1]);
-    expect(
-      ids(BoardSort.colour).first,
-      isNot(3),
-      reason: 'blue sorts before green',
-    );
+    expect(ids(BoardSort.colour), [
+      3,
+      2,
+      1,
+    ], reason: 'green comes before blue in the colour order, then A to Z');
   });
 
   group('the Boards screen', () {
