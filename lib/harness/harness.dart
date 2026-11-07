@@ -14,6 +14,7 @@ import '../l10n/l10n.dart';
 import '../metadata/metadata_service.dart';
 import '../people/people_console.dart';
 import '../people/people_directory.dart';
+import '../tools/cover_search.dart';
 import '../sources/source_picker.dart';
 import '../sources/sources_service.dart';
 import '../people/people_service.dart';
@@ -118,6 +119,7 @@ class Harness {
     this.account,
     this.contextRules,
     this.peopleService,
+    this.coverSearch,
     this.metadata,
     this.sources,
     this.sourcePicker = const SystemSourcePicker(),
@@ -199,6 +201,9 @@ class Harness {
 
   /// The pages of people and characters (and edits to a person) from the paired server.
   final PeopleService? peopleService;
+
+  /// Finds pictures that could be a work's cover or poster, online. Null in a test about something else.
+  final CoverSearch? coverSearch;
 
   /// What the server could still find out about the library's works, and the works saved twice. Null in a test
   /// about something else.
@@ -319,6 +324,7 @@ class Harness {
       account: PairedAccount(controller),
       contextRules: PairedContextRules(controller),
       peopleService: PairedPeopleService(controller),
+      coverSearch: PairedCoverSearch(controller),
       metadata: PairedMetadataService(controller),
       sources: PairedSourcesService(controller),
       peopleConsole: PairedPeopleConsole(controller),
@@ -357,6 +363,7 @@ class Harness {
     AccountService? account,
     ContextRules? contextRules,
     PeopleService? peopleService,
+    CoverSearch? coverSearch,
     MetadataService? metadata,
     SourcesService? sources,
     SourcePicker? sourcePicker,
@@ -417,6 +424,7 @@ class Harness {
       account: account,
       contextRules: contextRules,
       peopleService: peopleService,
+      coverSearch: coverSearch,
       metadata: metadata,
       sources: sources,
       sourcePicker: sourcePicker ?? const SystemSourcePicker(),

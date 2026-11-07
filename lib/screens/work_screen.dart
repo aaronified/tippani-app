@@ -24,7 +24,9 @@ import 'library_widgets.dart';
 import 'quote_chips_row.dart';
 import 'quote_form_screen.dart';
 import 'prefs_screens.dart' show showWorkContextRule;
+import 'cover_search_screen.dart';
 import 'quote_screen.dart';
+import '../tools/cover_search.dart';
 import 'shelf_card.dart';
 import 'work_form_screen.dart';
 import 'work_read_screen.dart';
@@ -149,24 +151,61 @@ class _WorkScreenState extends State<WorkScreen> {
     final w = _work;
     if (source == null || w == null || w.serverId == null) return;
     final messenger = ScaffoldMessenger.of(context);
-    final String? path;
-    try {
-      path = await (widget.photos ?? DevicePhotos()).choose();
-    } on Object {
-      messenger.showSnackBar(
-        SnackBar(content: Text(tr('The picture could not be opened.'))),
+    final search = CoverSearchScope.of(context);
+    Uint8List bytes;
+    String fileName;
+    var online = false;
+    if (search != null && search.available) {
+      final from = await showModalBottomSheet<String>(
+        context: context,
+        showDragHandle: true,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('From my photos'),
+                onTap: () => Navigator.pop(context, 'photos'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.travel_explore_rounded),
+                title: const Text('Find one online'),
+                subtitle: const Text('Search by title, author or ISBN'),
+                onTap: () => Navigator.pop(context, 'online'),
+              ),
+            ],
+          ),
+        ),
       );
-      return;
+      if (from == null || !mounted) return;
+      online = from == 'online';
     }
-    if (path == null) return;
-    final bytes = await (widget.readBytes ?? (p) => File(p).readAsBytes())(
-      path,
-    );
-    final name = await source.upload(
-      w,
-      bytes,
-      path.split(RegExp(r'[\\/]')).last,
-    );
+    if (online) {
+      final picked = await Navigator.of(context)
+          .push<({Uint8List bytes, String name})>(
+            MaterialPageRoute(
+              builder: (_) => CoverSearchScreen(search: search!, work: w),
+            ),
+          );
+      if (picked == null) return;
+      bytes = picked.bytes;
+      fileName = picked.name;
+    } else {
+      final String? path;
+      try {
+        path = await (widget.photos ?? DevicePhotos()).choose();
+      } on Object {
+        messenger.showSnackBar(
+          SnackBar(content: Text(tr('The picture could not be opened.'))),
+        );
+        return;
+      }
+      if (path == null) return;
+      bytes = await (widget.readBytes ?? (p) => File(p).readAsBytes())(path);
+      fileName = path.split(RegExp(r'[\\/]')).last;
+    }
+    final name = await source.upload(w, bytes, fileName);
     messenger.clearSnackBars();
     if (name == null) {
       messenger.showSnackBar(
