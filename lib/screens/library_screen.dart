@@ -12,6 +12,8 @@ import '../sync/auto_sync.dart';
 import 'conflicts_screen.dart';
 import 'boards_screen.dart';
 import '../library/quote_chips.dart';
+import '../sync/fingerprint.dart' show realmOfQuote;
+import 'anthologies_screen.dart' show addToAnthologyDialog;
 import 'library_widgets.dart';
 import 'quote_form_screen.dart';
 import 'quote_screen.dart';
@@ -545,6 +547,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
       await widget.store.setFavorite(q.id, !q.favorite);
       await _load();
     },
+    onAddToAnthology:
+        widget.anthologies?.available == true && q.serverId != null
+        ? () => addToAnthologyDialog(
+            context,
+            widget.anthologies!,
+            kind: entryKindOf(realmOfQuote(_byId[q.workId])),
+            itemId: q.serverId!,
+          )
+        : null,
   );
 
   /// The quotes under a heading per board (in name order), then the rest under "Not on a board".

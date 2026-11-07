@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../anthologies/anthologies.dart';
+import '../capture/photo_source.dart';
+import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
+import 'anthology_tools.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 
@@ -79,10 +82,16 @@ class AnthologiesScreen extends StatefulWidget {
     super.key,
     required this.service,
     this.share = shareThroughSheet,
+    this.picker,
+    this.shareFile = shareFileThroughSheet,
+    this.photos,
   });
 
   final AnthologyService service;
   final ShareText share;
+  final BackupPicker? picker;
+  final ShareFile shareFile;
+  final PhotoSource? photos;
 
   @override
   State<AnthologiesScreen> createState() => _AnthologiesScreenState();
@@ -130,6 +139,9 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
           service: widget.service,
           id: a.id,
           share: widget.share,
+          picker: widget.picker,
+          shareFile: widget.shareFile,
+          photos: widget.photos,
         ),
       ),
     );
@@ -183,8 +195,18 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
                           horizontal: 16,
                           vertical: 6,
                         ),
-                        leading: const Icon(
-                          Icons.collections_bookmark_outlined,
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: AnthologyCover(
+                            name: a.coverPath,
+                            width: 40,
+                            height: 56,
+                            fallback: const SizedBox(
+                              width: 40,
+                              height: 56,
+                              child: Icon(Icons.collections_bookmark_outlined),
+                            ),
+                          ),
                         ),
                         title: Text(a.title),
                         subtitle: Text(
@@ -201,22 +223,34 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
   }
 }
 
-/// One anthology: its introduction and passages in order, to read, share, rename, trim or delete.
+/// One anthology, read in its own order: the cover, epigraph and dedication, the introduction, then passages and
+/// headings that can be dragged into place, given commentary, and grouped. From here it is also filled from a
+/// search, given a cover, switched to show more or less of each passage, exported, shared, renamed or deleted.
 class AnthologyScreen extends StatefulWidget {
   const AnthologyScreen({
     super.key,
     required this.service,
     required this.id,
     this.share = shareThroughSheet,
+    this.picker,
+    this.shareFile = shareFileThroughSheet,
+    this.photos,
   });
 
   final AnthologyService service;
   final int id;
   final ShareText share;
 
+  /// Where an exported file is saved. Null: only sending is offered.
+  final BackupPicker? picker;
+  final ShareFile shareFile;
+  final PhotoSource? photos;
+
   @override
   State<AnthologyScreen> createState() => _AnthologyScreenState();
 }
+
+enum _Menu { heading, group, display, front, fill, removed, export }
 
 class _AnthologyScreenState extends State<AnthologyScreen> {
   AnthologyDetail? _detail;
@@ -248,6 +282,16 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     m.showSnackBar(SnackBar(content: Text(message)));
   }
 
+  /// Runs a change on the server, reads the anthology again, and says what went wrong in words.
+  Future<void> _do(Future<void> Function() run) async {
+    try {
+      await run();
+      await _load();
+    } on AnthologyException catch (e) {
+      if (mounted) _say(e.message);
+    }
+  }
+
   Future<void> _edit() async {
     final a = _detail!.anthology;
     final text = await askAnthologyText(
@@ -257,12 +301,9 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
       intro: a.intro,
     );
     if (text == null) return;
-    try {
-      await widget.service.edit(a, title: text.title, intro: text.intro);
-      await _load();
-    } on AnthologyException catch (e) {
-      if (mounted) _say(e.message);
-    }
+    await _do(
+      () => widget.service.edit(a, title: text.title, intro: text.intro),
+    );
   }
 
   Future<void> _delete() async {
@@ -298,19 +339,349 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     }
   }
 
-  Future<void> _remove(AnthologyEntry e) async {
-    try {
-      await widget.service.removeEntry(widget.id, e.kind, e.itemId);
-      await _load();
-    } on AnthologyException catch (x) {
-      if (mounted) _say(x.message);
+  Future<void> _remove(AnthologyEntry e) =>
+      _do(() => widget.service.removeEntry(widget.id, e.kind, e.itemId));
+
+  Future<void> _commentary(AnthologyEntry e) async {
+    final note = await askCommentary(context, e.note);
+    if (note == null || note == e.note) return;
+    await _do(() => widget.service.setNote(widget.id, e.kind, e.itemId, note));
+  }
+
+  Future<void> _addHeading({AnthologySlot? after}) async {
+    final s = await askSection(context, heading: 'New heading');
+    if (s == null) return;
+    await _do(
+      () => widget.service.addSection(
+        widget.id,
+        s.title,
+        s.prose,
+        after: after?.ref,
+      ),
+    );
+  }
+
+  Future<void> _editHeading(AnthologySection s) async {
+    final r = await askSection(
+      context,
+      heading: 'Edit heading',
+      title: s.title,
+      prose: s.prose,
+    );
+    if (r == null) return;
+    await _do(
+      () => widget.service.editSection(widget.id, s.id, r.title, r.prose),
+    );
+  }
+
+  Future<void> _deleteHeading(AnthologySection s) =>
+      _do(() => widget.service.deleteSection(widget.id, s.id));
+
+  /// Moves [slots] item [from] so that it follows the item that is at [to] among the others (null: first).
+  Future<void> _moveTo(List<AnthologySlot> slots, int from, int to) async {
+    final moving = slots[from];
+    final rest = [...slots]..removeAt(from);
+    final after = to <= 0 ? null : rest[to - 1].ref;
+    if (to == from) return;
+    await _do(
+      () => widget.service.move(
+        widget.id,
+        moving.ref.kind,
+        moving.ref.itemId,
+        after: after,
+      ),
+    );
+  }
+
+  Future<void> _menu(_Menu m) async {
+    final d = _detail!;
+    final a = d.anthology;
+    switch (m) {
+      case _Menu.heading:
+        await _addHeading();
+      case _Menu.group:
+        final by = await askGrouping(context, a.groupBy);
+        if (by != null && by != a.groupBy) {
+          await _do(() => widget.service.setGrouping(widget.id, by));
+        }
+      case _Menu.display:
+        final s = await askSwitches(context, a);
+        if (s != null) await _do(() => widget.service.setSwitches(a, s));
+      case _Menu.front:
+        final changed = await editFrontMatter(
+          context,
+          widget.service,
+          a,
+          photos: widget.photos,
+        );
+        if (changed) await _load();
+      case _Menu.fill:
+        final r = await Navigator.of(context).push<FillResult>(
+          MaterialPageRoute(
+            builder: (_) => FillScreen(service: widget.service, anthology: a),
+          ),
+        );
+        if (r != null) {
+          await _load();
+          _say(
+            r.added == 0
+                ? 'Nothing new to add.'
+                : 'Added ${r.added} ${r.added == 1 ? 'passage' : 'passages'}.',
+          );
+        }
+      case _Menu.removed:
+        final back = await Navigator.of(context).push<bool>(
+          MaterialPageRoute(
+            builder: (_) =>
+                RemovedScreen(service: widget.service, id: widget.id),
+          ),
+        );
+        if (back == true) await _load();
+      case _Menu.export:
+        final choice = await askExport(context);
+        if (choice == null) return;
+        try {
+          final f = await widget.service.export(widget.id, epub: choice.epub);
+          if (choice.action == ExportAction.send || widget.picker == null) {
+            await widget.shareFile(f.bytes, f.name);
+          } else {
+            final saved = await widget.picker!.save(f.name, f.bytes);
+            if (saved && mounted) _say('Saved ${f.name}.');
+          }
+        } on AnthologyException catch (e) {
+          if (mounted) _say(e.message);
+        }
     }
+  }
+
+  Widget _passage(
+    BuildContext context,
+    AnthologyDetail d,
+    List<AnthologySlot> slots,
+    int i,
+  ) {
+    final theme = Theme.of(context);
+    final a = d.anthology;
+    final slot = slots[i];
+    final key = ValueKey(
+      slot.entry != null ? 'e-${slot.entry!.ref}' : 's-${slot.section!.id}',
+    );
+
+    final menu = PopupMenuButton<String>(
+      tooltip: 'More for this one',
+      onSelected: (v) async {
+        switch (v) {
+          case 'up':
+            await _moveTo(slots, i, i - 1);
+          case 'down':
+            await _moveTo(slots, i, i + 1);
+          case 'note':
+            await _commentary(slot.entry!);
+          case 'edit':
+            await _editHeading(slot.section!);
+          case 'delete':
+            await _deleteHeading(slot.section!);
+          case 'after':
+            await _addHeading(after: slot);
+        }
+      },
+      itemBuilder: (_) => [
+        if (i > 0) const PopupMenuItem(value: 'up', child: Text('Move up')),
+        if (i < slots.length - 1)
+          const PopupMenuItem(value: 'down', child: Text('Move down')),
+        if (slot.entry != null)
+          const PopupMenuItem(value: 'note', child: Text('Commentary')),
+        if (slot.section != null) ...const [
+          PopupMenuItem(value: 'edit', child: Text('Edit heading')),
+          PopupMenuItem(value: 'delete', child: Text('Delete heading')),
+        ],
+        const PopupMenuItem(value: 'after', child: Text('Add a heading after')),
+      ],
+    );
+
+    if (slot.section != null) {
+      final s = slot.section!;
+      return Padding(
+        key: key,
+        padding: const EdgeInsets.fromLTRB(16, 20, 4, 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(s.title, style: theme.textTheme.titleLarge),
+                  if (s.prose.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(s.prose, style: theme.textTheme.bodyMedium),
+                    ),
+                ],
+              ),
+            ),
+            menu,
+          ],
+        ),
+      );
+    }
+
+    final e = slot.entry!;
+    final by = a.groupBy;
+    final prev = i > 0 ? slots[i - 1].entry : null;
+    final gk = e.groupKey(by);
+    final header =
+        by.isNotEmpty &&
+        gk.isNotEmpty &&
+        (prev == null || prev.groupKey(by) != gk);
+    final from = [
+      if (!a.flag('hide_credit')) e.credit,
+      if (!a.flag('hide_source')) e.source,
+      if (a.flag('show_locator')) e.locator,
+    ].map((s) => s.trim()).where((s) => s.isNotEmpty).join(', ');
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (header)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Text(
+              e.groupLabel(by),
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        if (!a.flag('hide_commentary') && e.note.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Text(
+              e.note.trim(),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        Card(
+          clipBehavior: Clip.antiAlias,
+          margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+          child: Container(
+            decoration: a.flag('hide_colour')
+                ? null
+                : BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: quoteColour(e.color), width: 6),
+                    ),
+                  ),
+            padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '“${e.quote.trim()}”',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      if (from.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            '— $from',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      if (a.flag('show_date') && e.date.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(e.date, style: theme.textTheme.bodySmall),
+                        ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Remove from anthology',
+                  icon: const Icon(Icons.close),
+                  onPressed: () => _remove(e),
+                ),
+                menu,
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _front(BuildContext context, AnthologyDetail d) {
+    final theme = Theme.of(context);
+    final a = d.anthology;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (a.coverPath.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: AnthologyCover(
+                  name: a.coverPath,
+                  width: 180,
+                  height: 250,
+                  fallback: const SizedBox(width: 180, height: 250),
+                ),
+              ),
+            ),
+          ),
+        if (a.dedication.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Center(
+              child: Text(
+                a.dedication.trim(),
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ),
+        if (a.epigraph.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(32, 12, 32, 0),
+            child: Text(
+              a.epigraph.trim(),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        if (a.intro.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Text(a.intro, style: theme.textTheme.bodyLarge),
+          ),
+        if (d.entries.isEmpty && d.sections.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Nothing in this anthology yet. Open a quote and choose Add to anthology, or use Fill from.',
+            ),
+          ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final d = _detail;
-    final theme = Theme.of(context);
+    final slots = d?.slots ?? const <AnthologySlot>[];
     return Scaffold(
       appBar: AppBar(
         title: Text(d?.anthology.title ?? 'Anthology'),
@@ -331,6 +702,28 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
               tooltip: context.tr('Delete'),
               icon: const Icon(Icons.delete_outline),
               onPressed: _delete,
+            ),
+            PopupMenuButton<_Menu>(
+              tooltip: 'More',
+              onSelected: _menu,
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: _Menu.fill, child: Text('Fill from…')),
+                PopupMenuItem(
+                  value: _Menu.heading,
+                  child: Text('Add a heading'),
+                ),
+                PopupMenuItem(value: _Menu.group, child: Text('Group by…')),
+                PopupMenuItem(
+                  value: _Menu.display,
+                  child: Text('What it shows…'),
+                ),
+                PopupMenuItem(
+                  value: _Menu.front,
+                  child: Text('Cover and front…'),
+                ),
+                PopupMenuItem(value: _Menu.removed, child: Text('Taken out…')),
+                PopupMenuItem(value: _Menu.export, child: Text('Export…')),
+              ],
             ),
           ],
         ],
@@ -354,75 +747,12 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
             )
           : d == null
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (d.anthology.intro.trim().isNotEmpty) ...[
-                  Text(d.anthology.intro, style: theme.textTheme.bodyLarge),
-                  const SizedBox(height: 16),
-                ],
-                if (d.entries.isEmpty)
-                  Text(
-                    context.tr(
-                      'Nothing in this anthology yet. Open a quote and choose Add to anthology.',
-                    ),
-                  ),
-                for (final e in d.entries)
-                  Card(
-                    clipBehavior: Clip.antiAlias,
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          left: BorderSide(
-                            color: quoteColour(e.color),
-                            width: 6,
-                          ),
-                        ),
-                      ),
-                      padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '“${e.quote.trim()}”',
-                                  style: theme.textTheme.titleMedium,
-                                ),
-                                if (e.from.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: Text(
-                                      '— ${e.from}',
-                                      style: theme.textTheme.bodySmall,
-                                    ),
-                                  ),
-                                if (e.note.trim().isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Text(
-                                      e.note.trim(),
-                                      style: TextStyle(
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: context.tr('Remove from anthology'),
-                            icon: const Icon(Icons.close),
-                            onPressed: () => _remove(e),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
+          : ReorderableListView.builder(
+              header: _front(context, d),
+              padding: const EdgeInsets.only(bottom: 32),
+              itemCount: slots.length,
+              onReorderItem: (from, to) => _moveTo(slots, from, to),
+              itemBuilder: (context, i) => _passage(context, d, slots, i),
             ),
     );
   }

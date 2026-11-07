@@ -175,7 +175,10 @@ class _ShellState extends State<Shell> {
           widget.harness.anthologies != null &&
           (prefs.showAnthologies || !prefs.known))
         (
-          screen: AnthologiesScreen(service: widget.harness.anthologies!),
+          screen: AnthologiesScreen(
+            service: widget.harness.anthologies!,
+            picker: widget.harness.picker,
+          ),
           destination: NavigationDestination(
             icon: NavSectionIcon(NavSection.anthologies),
             label: context.tr(NavSection.anthologies.label),
