@@ -1,16 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'changelog.dart';
 import 'harness.dart';
 import 'update_ui.dart';
 import 'version.dart';
 
-/// Every version's changes, newest first, from the changelog bundled into the app. It works with no
-/// network, and it is the same text the "new in this version" dialog shows after an update.
+/// Opens a web address in the phone's browser; false if nothing could. A function so a test can stand in for it.
+typedef OpenLink = Future<bool> Function(Uri url);
+
+Future<bool> openInBrowser(Uri url) =>
+    launchUrl(url, mode: LaunchMode.externalApplication);
+
+/// Every version's changes, newest first, each by a short header, from the changelog bundled into the app. It works
+/// with no network, and it is the same list the "new in this version" dialog shows after an update. The full words
+/// of every change are in the changelog on GitHub, one tap away at the foot.
 class ChangelogScreen extends StatelessWidget {
-  const ChangelogScreen({super.key, required this.harness});
+  const ChangelogScreen({
+    super.key,
+    required this.harness,
+    this.openLink = openInBrowser,
+  });
 
   final Harness harness;
+  final OpenLink openLink;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +52,23 @@ class ChangelogScreen extends StatelessWidget {
                   expandedCrossAxisAlignment: CrossAxisAlignment.start,
                   children: [ChangelogBody(entry: e)],
                 ),
+              ListTile(
+                leading: const Icon(Icons.open_in_new),
+                title: const Text('Full changelog on GitHub'),
+                subtitle: const Text('Every change in full'),
+                onTap: () async {
+                  final ok = await openLink(Uri.parse(changelogUrl));
+                  if (!ok && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'The link could not be opened. It is at github.com/aaronified/tippani-app.',
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
             ],
           );
         },

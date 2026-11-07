@@ -212,6 +212,13 @@ decisions are ADR-0015 to ADR-0018. Tests drive the first three against `test/su
 with the test clock and a settable clock for the back-off. A widget test that starts an `AutoSync` must dispose it before it ends (see `testAuto`),
 and the harness leaves it unstarted in tests (`Harness.runAutoSync`).
 
+## The changelog in the app
+
+`CHANGELOG.md` is bundled into the app and parsed by `parseChangelog`. The app shows each change by `changeHeader` only (the text before a colon if it is
+at most 70 characters, else the whole line if it is short, else the first sentence cut at 100), and `ChangelogScreen` (Settings > What's new) ends with
+a link to `changelogUrl` on GitHub, opened through an injectable `OpenLink`. So **start every changelog entry with a short title and a colon**; the
+details go after it and are read on GitHub.
+
 ## Choosing words on the picture
 
 `CaptureScreen` asks the recogniser for hOCR first. `parseHocr` is lenient (it never throws; a word with no box or no text is skipped) and gives a

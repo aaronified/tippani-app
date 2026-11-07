@@ -90,6 +90,24 @@ List<ChangelogEntry> parseChangelog(String markdown) {
   return entries;
 }
 
+/// Where the full changelog, with every change in full, is read.
+const changelogUrl =
+    'https://github.com/aaronified/tippani-app/blob/main/CHANGELOG.md';
+
+/// A change's header: the app shows each change by a short line, and the full words are on GitHub. A change that
+/// opens with a title and a colon ("Sync conflicts has its own place: ...") is shown by the title; a change that is
+/// already short is shown as it is; a longer one by its first sentence, cut at a hundred characters.
+String changeHeader(String bullet) {
+  final text = bullet.trim();
+  final colon = text.indexOf(': ');
+  if (colon > 0 && colon <= 70) return text.substring(0, colon).trim();
+  if (text.length <= 100) return text;
+  final dot = text.indexOf('. ');
+  var s = dot > 0 ? text.substring(0, dot) : text;
+  if (s.length > 100) s = '${s.substring(0, 99).trimRight()}…';
+  return s.trim();
+}
+
 /// The entry for [version], or null when the file has none.
 ChangelogEntry? entryFor(List<ChangelogEntry> entries, String version) {
   for (final e in entries) {
