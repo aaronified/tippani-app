@@ -36,7 +36,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
     final url = normaliseServerUrl(_text.text);
     if (url == null) {
       setState(() {
-        _problem = 'That is not an address. Try something like 192.168.1.20:8124 or https://quotes.example.org.';
+        _problem = context.tr('app.connect.that_is_not_an_address_try');
         _warning = null;
       });
       return;
@@ -134,7 +134,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
 String serverStatusLine(AppController c) {
   if (c.checking) return tx('app.connect.asking_the_server');
   final check = c.check;
-  if (check == null) return 'Not checked yet.';
+  if (check == null) return tx('app.connect.not_checked_yet');
   final caps = check.capabilities;
   if (caps == null) return describeCheck(check);
   final detail = caps.version.isEmpty ? '' : ' (version ${caps.version})';

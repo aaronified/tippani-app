@@ -70,6 +70,11 @@ app.admin_backup.every_reader_s_library_on_the_2 = সার্ভারের �
 app.admin_backup.give_the_password_of_the_account = যে অ্যাকাউন্টে এটি বানানো হয়েছিল তার পাসওয়ার্ড দিন, বা এর পাসফ্রেজ দিন।
 app.admin_backup.go_on = এগিয়ে যান
 app.admin_backup.keep_the_safety_copy = সুরক্ষা কপিটি রাখুন
+app.admin_backup.kind_none = সিল করা নয়
+app.admin_backup.kind_passphrase = পাসফ্রেজ দিয়ে সিল করা
+app.admin_backup.kind_password = {account}-এর পাসওয়ার্ড দিয়ে সিল করা
+app.admin_backup.kind_password_unknown = এর অ্যাকাউন্টের পাসওয়ার্ড দিয়ে সিল করা
+app.admin_backup.kind_unknown = সিলের ধরন অজানা
 app.admin_backup.make_the_copy = কপি বানান
 app.admin_backup.making_the_safety_copy = সুরক্ষা কপি বানানো হচ্ছে…
 app.admin_backup.making_the_safety_copy_2 = সুরক্ষা কপি বানানো হচ্ছে
@@ -86,6 +91,7 @@ app.admin_backup.sealed_with_unknown = এই ব্যাকআপটি যে
 app.admin_backup.server_backup = সার্ভারের ব্যাকআপ
 app.admin_backup.starting_the_backup = ব্যাকআপ শুরু হচ্ছে…
 app.admin_backup.the_backup_did_not_finish = ব্যাকআপ শেষ হয়নি।
+app.admin_backup.the_backup_holds_every_reader_s = ব্যাকআপে প্রত্যেক পাঠকের লাইব্রেরি থাকে। এটি আপনার পাসওয়ার্ড বা একটি পাসফ্রেজ দিয়ে সিল করা হয়; খুলতে একই জিনিস লাগবে।
 app.admin_backup.the_kept_backup = রাখা ব্যাকআপ
 app.admin_backup.the_library_is_restored_sync_this = লাইব্রেরি ফিরিয়ে আনা হয়েছে। মেলাতে সেটিংস থেকে এই ফোন সিঙ্ক করুন।
 app.admin_backup.the_safety_copy_was_not_kept = সুরক্ষা কপিটি রাখা হয়নি, তাই কিছুই ফেরানো হয়নি।
@@ -99,6 +105,8 @@ app.admin_backup.this_replaces_every_reader_s_library = এটি সার্�
 # --- admin_folders ---
 app.admin_folders.a_folder_on_the_server = সার্ভারের একটি ফোল্ডার
 app.admin_folders.every_attached_file_is_where_it = যুক্ত করা প্রতিটি ফাইল যেখানে থাকার কথা সেখানেই আছে।
+app.admin_folders.missing_files.one = যুক্ত ১টি ফাইল ডিস্ক থেকে হারিয়ে গেছে।
+app.admin_folders.missing_files.other = যুক্ত {n}টি ফাইল ডিস্ক থেকে হারিয়ে গেছে।
 app.admin_folders.no_folder_is_shared_with_tippani = টিপ্পনীর সঙ্গে এখনও কোনো ফোল্ডার ভাগ করা নেই। আপনার বই বা সিনেমার ফোল্ডার যোগ করুন, তাহলে উক্তির আশপাশের লেখা দেখানো যাবে।
 app.admin_folders.no_saved_file_is_unused = কোনো সংরক্ষিত ফাইল অব্যবহৃত নয়
 app.admin_folders.nothing_to_tidy = গোছানোর কিছু নেই।
@@ -111,6 +119,8 @@ app.admin_folders.the_files_attached_to_works_are = রচনায় যুক
 app.admin_folders.the_folder_itself_is_not_touched = ফোল্ডারটিতে হাত দেওয়া হয় না। তা থেকে আগেই যুক্ত হওয়া ফাইলগুলো সংরক্ষিত থাকে।
 app.admin_folders.tidy = গোছান
 app.admin_folders.tidy_up = গুছিয়ে ফেলুন
+app.admin_folders.unused_files.one = ১টি সংরক্ষিত ফাইল অব্যবহৃত ({size})
+app.admin_folders.unused_files.other = {n}টি সংরক্ষিত ফাইল অব্যবহৃত ({size})
 app.admin_folders.what_to_call_it = কী নামে ডাকবেন
 
 # --- admin_jobs ---
@@ -136,6 +146,7 @@ app.admin_jobs.look_up_links = লিংক খোঁজা
 app.admin_jobs.look_up_pictures = ছবি খোঁজা
 app.admin_jobs.no_job_has_ended_in_the = গত ত্রিশ দিনে কোনো কাজ শেষ হয়নি।
 app.admin_jobs.not_run_in_the_last_thirty = গত ত্রিশ দিনে চালানো হয়নি
+app.admin_jobs.now_n = এখন ({n})
 app.admin_jobs.re_check_details = তথ্য আবার পরীক্ষা করা
 app.admin_jobs.re_check_one_work = একটি রচনা আবার পরীক্ষা করা
 app.admin_jobs.reset_the_library = লাইব্রেরি পুনরায় সাজানো
@@ -167,6 +178,7 @@ app.admin_sources.google_books_key = গুগল বুকসের চাব�
 app.admin_sources.if_a_quote_does_not_turn = কোনো উক্তি খোঁজে না এলে এটি সার্ভারকে প্রতিটি উক্তি আবার পড়ায়।
 app.admin_sources.keys_and_credentials = চাবি ও পরিচয়পত্র
 app.admin_sources.needs_a_key = চাবি লাগে
+app.admin_sources.new_value_kept_secret = নতুন মান (গোপন রাখা হবে)
 app.admin_sources.not_set = ঠিক করা নেই
 app.admin_sources.read_google_books_pages = গুগল বুকসের পাতা পড়া
 app.admin_sources.rebuild_the_search_index = খোঁজার সূচি নতুন করে বানান
@@ -200,6 +212,7 @@ app.admin_update.unknown = অজানা
 app.admin_update.up_to_date = হালনাগাদ আছে
 app.admin_update.update_the_server = সার্ভার হালনাগাদ করবেন?
 app.admin_update.update_to_latest = {latest}-এ হালনাগাদ করুন
+app.admin_update.updating_phase = হালনাগাদ হচ্ছে… ({phase})
 
 # --- admin_users ---
 app.admin_users.a_password_for_trim = {trim}-এর জন্য একটি পাসওয়ার্ড
@@ -211,6 +224,7 @@ app.admin_users.remove_this_user = এই ব্যবহারকারীক�
 app.admin_users.remove_username = {username}-কে সরাবেন?
 app.admin_users.step_down_from_admin = অ্যাডমিনের পদ ছাড়ুন
 app.admin_users.step_username_down = {username}-কে অ্যাডমিনের পদ থেকে নামাবেন?
+app.admin_users.their_whole_library_goes_with_them = তাঁর পুরো লাইব্রেরি তাঁর সঙ্গে যায়: প্রতিটি রচনা, উক্তি ও ট্যাগ। এটি আর ফেরানো যায় না।
 app.admin_users.users = ব্যবহারকারী
 
 # --- anthologies ---
@@ -254,6 +268,7 @@ app.anthology_tools.add_a_cover = প্রচ্ছদ যোগ করুন
 app.anthology_tools.book_or_film = বই বা সিনেমা
 app.anthology_tools.change_cover = প্রচ্ছদ বদলান
 app.anthology_tools.choose_where_the_passages_come_from = অংশগুলো কোথা থেকে আসবে বেছে নিন। যেগুলো আগে থেকেই আছে তার পরে এখনই যোগ হবে।
+app.anthology_tools.epub_book = ইপাব বই
 app.anthology_tools.fill_from = যেখান থেকে ভরবেন
 app.anthology_tools.fill_now = এখনই ভরুন
 app.anthology_tools.from_from = {from} থেকে
@@ -316,9 +331,11 @@ app.board_service.the_server_no_longer_accepts_this = সার্ভার আ�
 # --- boards ---
 app.boards.add_a_picture = ছবি যোগ করুন
 app.boards.add_starter_proverbs = শুরুর প্রবাদ যোগ করুন
+app.boards.edit_board = বোর্ড সম্পাদনা
 app.boards.language_count = {language} ({count})
 app.boards.language_count_here = {language} ({count}) · এই বোর্ড
 app.boards.more_for_name = {name}-এর জন্য আরও
+app.boards.new_board = নতুন বোর্ড
 app.boards.no_boards_yet_a_board_is = এখনও কোনো বোর্ড নেই। বোর্ড হলো আলাদা উক্তির তাক: একটি বানান, তারপর উক্তির ফর্ম থেকে তাতে উক্তি রাখুন।
 app.boards.remove_picture = ছবি সরান
 app.boards.removed_keeps.one = বোর্ডটি সরানো হবে। তার ১টি উক্তি আপনার লাইব্রেরিতে থাকবে, কোনো বোর্ডে নয়।
@@ -402,10 +419,14 @@ app.checks.the_server_reads_kindle_goodreads_hardcover = সার্ভার �
 app.checks.times_and_places = সময় ও জায়গা
 
 # --- checks_entry ---
+app.checks_entry.bring_in_files_stray_marks_corrections = ফাইল আনুন; বাড়তি চিহ্ন, সংশোধন, সময় ও জায়গা
 app.checks_entry.import_and_checks = আমদানি ও যাচাই
 app.checks_entry.pending = {pending}
+app.checks_entry.waiting.one = আমদানি করা ১টি উক্তি আপনার অনুমোদনের অপেক্ষায়
+app.checks_entry.waiting.other = আমদানি করা {n}টি উক্তি আপনার অনুমোদনের অপেক্ষায়
 
 # --- checks_service ---
+app.checks_service.a_leftover_reference_mark_a_superscript = ফেলে যাওয়া একটি রেফারেন্স চিহ্ন: উপরে লেখা অক্ষর, বন্ধনীর ভেতরে সংখ্যা, বা শেষ শব্দে লেগে থাকা অঙ্ক।
 app.checks_service.an_invisible_space_or_hyphen_from = অদৃশ্য ফাঁকা জায়গা বা হাইফেন, এইচটিএমএল, সারি-মেলানো পিডিএফ, বা লাইনে ভাঙা শব্দ থেকে।
 app.checks_service.duplicated.one = ১টি আপনার আগের একটি উক্তির প্রতিলিপি হয়ে যেত
 app.checks_service.duplicated.other = {n}টি আপনার আগের উক্তির প্রতিলিপি হয়ে যেত
@@ -418,6 +439,7 @@ app.checks_service.two_or_more_spaces_in_a = পরপর দুই বা ত�
 app.checks_service.updated = {quotes} হালনাগাদ হয়েছে
 
 # --- checks_tabs ---
+app.checks_tabs.a_near_match_the_file_s = প্রায় মিল: ফাইলের কথা আপনার কথা থেকে একটু আলাদা।
 app.checks_tabs.a_subtitle_file_knows_when_each = সাবটাইটেল ফাইল জানে কোন লাইন কখন বলা হয়। বইয়ের ইপাব জানে প্রতিটি হাইলাইটের অধ্যায় আর তা কতটা ভেতরে। আপনি মেনে না নেওয়া পর্যন্ত কিছু বদলায় না।
 app.checks_tabs.a_subtitle_file_knows_when_each_2 = সাবটাইটেল ফাইল জানে কোন লাইন কখন বলা হয়, আর বইয়ের ইপাব জানে প্রতিটি হাইলাইটের অধ্যায়। একটি রচনায় একটি যুক্ত করুন, তার প্রস্তাব এখানে দেখা যাবে।
 app.checks_tabs.a_work_s_attached_file_knows = রচনায় যুক্ত ফাইল তার নিজের কথা জানে। আপনার উক্তি আলাদা হলে তার সংস্করণ প্রস্তাব করা হয়। আপনি মেনে না নেওয়া পর্যন্ত কিছু বদলায় না।
@@ -429,6 +451,7 @@ app.checks_tabs.book_quote = বইয়ের উক্তি
 app.checks_tabs.each_is_rewritten_as_shown_the = প্রতিটি দেখানো মতো আবার লেখা হয়। উক্তি প্রথমে আপনার সার্ভারে, তারপর এই ফোনে বদলায়।
 app.checks_tabs.each_quote_takes_the_file_s = প্রতিটি উক্তি ফাইলের সময় বা জায়গা নেয়।
 app.checks_tabs.evidence = “{evidence}”
+app.checks_tabs.exact_matches_n = হুবহু মিল ({n})
 app.checks_tabs.file_says_x = ফাইলে আছে: {x}
 app.checks_tabs.film_or_show_quote = সিনেমা বা ধারাবাহিকের উক্তি
 app.checks_tabs.fix = ঠিক করুন
@@ -460,6 +483,7 @@ app.checks_tabs.use_the_file_s = ফাইলেরটি ব্যবহার 
 app.checks_tabs.use_this_place = এই জায়গাটি ব্যবহার করুন
 app.checks_tabs.where_a_quote_differs_from_the = রচনায় যুক্ত ফাইলের সঙ্গে কোনো উক্তি আলাদা হলে ফাইলের সংস্করণ এখানে প্রস্তাব করা হয়।
 app.checks_tabs.work_title_differing_of_total_quotes = {work_title}: {total}টি উক্তির মধ্যে {differing}টি আলাদা
+app.checks_tabs.worth_a_look_n = দেখার মতো ({n})
 app.checks_tabs.you_edited_this_quote_yourself = এই উক্তি আপনি নিজে সম্পাদনা করেছেন।
 app.checks_tabs.your_library_is_large_so_only = আপনার লাইব্রেরি বড়, তাই এগুলোর প্রথম অংশই তালিকায় আছে। এগুলোর উত্তর দিয়ে বাকিগুলোর জন্য আবার দেখুন।
 
@@ -488,8 +512,10 @@ app.connect.asking_the_server = সার্ভারকে জিজ্ঞা�
 app.connect.check_and_connect = দেখুন ও যুক্ত হোন
 app.connect.connected_but_this_address_uses_plain = সংযুক্ত হয়েছে, কিন্তু এই ঠিকানা আপনার নিজের নেটওয়ার্কের বাইরে সাধারণ http ব্যবহার করে। পথে যে কেউ অ্যাপ যা পাঠায় তা পড়তে পারে। সম্ভব হলে https ব্যবহার করুন।
 app.connect.could_not_ask_the_server = সার্ভারকে জিজ্ঞাসা করা যায়নি।
+app.connect.not_checked_yet = এখনও দেখা হয়নি।
 app.connect.server_address = সার্ভারের ঠিকানা
 app.connect.something_answered_but_it_is_not = কেউ সাড়া দিয়েছে, কিন্তু সেটি টিপ্পনীর সার্ভার নয়। ঠিকানা ও পোর্ট দেখে নিন।
+app.connect.that_is_not_an_address_try = এটি ঠিকানা নয়। 192.168.1.20:8124 বা https://quotes.example.org-এর মতো কিছু চেষ্টা করুন।
 app.connect.the_server_did_not_answer_in = সার্ভার সময়মতো সাড়া দেয়নি। ঘুমিয়ে থাকলে একটু অপেক্ষা করে আবার চেষ্টা করুন।
 app.connect.the_server_is_asking_you_to = সার্ভার আপনাকে ধীরে চলতে বলছে। একটু অপেক্ষা করে আবার চেষ্টা করুন।
 app.connect.the_server_refused_the_question = সার্ভার প্রশ্নটি নাকচ করেছে।
@@ -538,6 +564,7 @@ app.cover_search.web_images = ওয়েবের ছবি
 # --- dashboard ---
 app.dashboard.a_few_minutes = কয়েক মিনিট, এর বেশি নয়।
 app.dashboard.add_or_review_more_quotes_to = আপনার সূচি গড়তে আরও উক্তি যোগ করুন বা দেখুন।
+app.dashboard.all_caught_up = সব দেখা শেষ ✓
 app.dashboard.answered_so_far = এ পর্যন্ত {n}টির উত্তর দেওয়া হয়েছে
 app.dashboard.cards_due.one = আজ ১টি কার্ড বাকি
 app.dashboard.cards_due.other = আজ {n}টি কার্ড বাকি
@@ -554,11 +581,13 @@ app.dashboard.nothing_due_today = আজ কিছু বাকি নেই
 app.dashboard.nothing_saved_yet_add_a_quote = এখনও কিছু সংরক্ষিত নেই। উক্তি ট্যাব থেকে একটি উক্তি যোগ করুন, বা একটি পাতা স্ক্যান করুন, তা এখানে দেখা যাবে।
 app.dashboard.on_this_day = এই দিনে
 app.dashboard.practice = অনুশীলন
+app.dashboard.recalled_resurface = {got}টি মনে পড়েছে · {again}টি আবার আসবে · কাল ফিরে আসবে
 app.dashboard.reset_score = স্কোর শূন্য করুন
 app.dashboard.send_now = এখনই পাঠান
 app.dashboard.show_fewer = কম দেখান
 app.dashboard.streak_day_streak = {streak} দিনের ধারা
 app.dashboard.up_late = অনেক রাত জাগা
+app.dashboard.view_more_favourites_shown = আরও দেখুন ({favourites_shown})
 app.dashboard.where_you_stand = আপনি কোথায় আছেন
 app.dashboard.winding_down = দিন শেষের পথে
 app.dashboard.your_library_is_bigger_than_the = আপনার লাইব্রেরি সূচির সামলানোর চেয়ে বড়: প্রায় {capacity}টি উক্তি হালনাগাদ থাকে, আর আপনার আছে {total}টি।
@@ -600,6 +629,9 @@ app.import_picker.choose_a_file_to_import = আমদানির জন্য �
 app.import_picker.that_file_is_over_5_mb = ওই ফাইল ৫ এমবির বেশি, যা আমদানিকারক নেয় তার চেয়ে বেশি।
 
 # --- import_service ---
+app.import_service.a_book_s_public_quotes_page = বইয়ের জনসাধারণের উক্তির পাতা। উক্তির ট্যাগও আসে।
+app.import_service.a_film_or_show_s_quotes = সিনেমা বা ধারাবাহিকের উক্তির পাতা, সংলাপ হিসেবে আমদানি হয়।
+app.import_service.a_single_md_may_hold_many = একটি .md ফাইলে অনেক বই বা রচনা থাকতে পারে। প্রতিটি আমদানি হয়।
 app.import_service.import_it_every_book_in_the = আমদানি করুন। ফাইলের প্রতিটি বই একসঙ্গে আসে।
 app.import_service.kindle_highlights_through_the_bookcision_bookmarklet = বুকসিশন বুকমার্কলেটের মাধ্যমে পাওয়া কিন্ডল হাইলাইট।
 app.import_service.readest_s_annotation_export_colours_and = রিডেস্টের টীকা রপ্তানি। রং আর প্রতিটি হাইলাইটের তারিখ আসে।
@@ -608,6 +640,7 @@ app.import_service.the_kindle_device_s_own_file = কিন্ডল ডিভ�
 app.import_service.the_server_could_not_read_that = সার্ভার ওই ফাইল পড়তে পারেনি।
 app.import_service.tippani_exports_of_books_or_the = বই বা ক্যাটালগের টিপ্পনী রপ্তানি, বা রিডেস্ট রপ্তানি।
 app.import_service.without_the_bookmarklet_import_the_saved = বুকমার্কলেট ছাড়া বদলে সংরক্ষিত কিন্ডল নোটবুকের পাতা আমদানি করুন। এতে রং থাকে।
+app.import_service.your_kindle_notes_highlights_page_colours = আপনার কিন্ডলের নোট ও হাইলাইটের পাতা। রং ও অবস্থান আসে।
 
 # --- library ---
 app.library.add_a_book = একটি বই যোগ করুন
@@ -651,15 +684,24 @@ app.metadata_tools.every_work_has_all_its_details = প্রতিটি রচ
 app.metadata_tools.fetch_missing_covers = অনুপস্থিত প্রচ্ছদ আনুন
 app.metadata_tools.fill_every_work_s_gaps = প্রতিটি রচনার ফাঁক পূরণ করুন
 app.metadata_tools.from_source = {source} থেকে
+app.metadata_tools.gaps_n = ফাঁক ({n})
 app.metadata_tools.has_a_cover = প্রচ্ছদ আছে
 app.metadata_tools.merge_n = {n}টি এক করুন
+app.metadata_tools.missing_x_x2 = অনুপস্থিত: {x}{x2}
+app.metadata_tools.n_unreachable = {n}টিতে পৌঁছানো যায়নি
+app.metadata_tools.n_up_to_date = {n}টি হালনাগাদ
 app.metadata_tools.no_g_n = নেই {g} ({n})
+app.metadata_tools.no_id.one = ১টির খোঁজার মতো কোনো আইডি নেই
+app.metadata_tools.no_id.other = {n}টির খোঁজার মতো কোনো আইডি নেই
 app.metadata_tools.no_work_looks_saved_twice = কোনো রচনা দুবার সংরক্ষিত বলে মনে হয় না।
 app.metadata_tools.no_work_matches = কোনো রচনা মেলে না।
+app.metadata_tools.nothing_to_change_summary = বদলানোর কিছু নেই: {summary}।
 app.metadata_tools.place_in_the_series = ধারাবাহিকে স্থান
 app.metadata_tools.quotes_tags_and_credits_move_to = উক্তি, ট্যাগ ও কৃতিত্ব আপনার রাখা রচনাটিতে যায়। বাকিগুলো বিনে যায়।
 app.metadata_tools.re_check = আবার পরীক্ষা করুন
+app.metadata_tools.saved_twice_n = দুবার সংরক্ষিত ({n})
 app.metadata_tools.search_titles_and_creators = শিরোনাম ও রচয়িতা খুঁজুন
+app.metadata_tools.small_cover = ছোট প্রচ্ছদ
 app.metadata_tools.source_link = উৎসের লিংক
 app.metadata_tools.the_server_is_fetching_the_missing = সার্ভার অনুপস্থিত প্রচ্ছদ আনছে।
 app.metadata_tools.the_web_had_nothing_new = ওয়েবে নতুন কিছু ছিল না।
@@ -670,6 +712,7 @@ app.metadata_tools.what_the_web_says = ওয়েব কী বলে
 app.page_selector.tap_a_word_to_take_it = একটি শব্দে ট্যাপ করে নিন বা বাদ দিন। কয়েকটি শব্দের ওপর দিয়ে বাক্স টেনে সেগুলো নিন।
 
 # --- pair ---
+app.pair.a_pairing_code_is_pairing_code = যুক্ত করার কোড {pairing_code_length}টি অক্ষর ও সংখ্যার, যেমন 7K2M9QXD।
 app.pair.could_not_reach_the_server_check = সার্ভারে পৌঁছানো যায়নি। আপনার ফোন সেটি দেখতে পায় কি না দেখে নিয়ে আবার চেষ্টা করুন।
 app.pair.my_android_phone = আমার অ্যান্ড্রয়েড ফোন
 app.pair.name_for_this_phone = এই ফোনের নাম
@@ -682,6 +725,7 @@ app.pair.too_many_tries_wait_a_minute = অনেকবার চেষ্টা
 
 # --- people_console ---
 app.people_console.a_new_character = একটি নতুন চরিত্র
+app.people_console.characters_n = চরিত্র ({n})
 app.people_console.fetch_missing_photos_and_details = অনুপস্থিত ছবি ও তথ্য আনুন
 app.people_console.no_character_is_saved_yet_add = এখনও কোনো চরিত্র সংরক্ষিত নেই। একটি যোগ করুন, বা সিনেমার উক্তিতে কোনো বক্তার নাম দিন।
 app.people_console.no_links_n = লিংক নেই ({n})
@@ -691,11 +735,14 @@ app.people_console.no_photo_n = ছবি নেই ({n})
 app.people_console.no_picture_n = ছবি নেই ({n})
 app.people_console.nothing_unused_to_remove = সরানোর মতো অব্যবহৃত কিছু নেই
 app.people_console.orphans = {people} ও {characters} কোনো রচনায় বা উক্তিতে নেই। মোট {n}টি সরানো হবে।
+app.people_console.people_n = মানুষ ({n})
 app.people_console.remove_what_nothing_uses = যা কেউ ব্যবহার করে না তা সরাবেন?
+app.people_console.remove_what_nothing_uses_total = যা কেউ ব্যবহার করে না তা সরান ({total})
 app.people_console.search_names_and_spellings = নাম ও বানান খুঁজুন
 app.people_console.the_server_is_fetching_photos_and = যাদের নেই তাদের সবার ছবি ও তথ্য সার্ভার আনছে। কিছুক্ষণ লাগতে পারে।
 
 # --- people_console_actions ---
+app.people_console_actions.a_record_needs_at_least_one = একটি তথ্য-পাতায় অন্তত একটি নাম লাগে।
 app.people_console_actions.born_in_the_story = জন্ম (গল্পে)
 app.people_console_actions.edit_the_character = চরিত্র সম্পাদনা
 app.people_console_actions.everything_that_points_at_one_points = যা কিছু একটির দিকে নির্দেশ করে তা অন্যটির দিকে নির্দেশ করবে। কোন নামটি থাকবে?
@@ -865,6 +912,11 @@ app.quiz.the_ones_you_missed_come_back = যেগুলোতে ভুল ক�
 app.quiz.what_you_wrote_typed = আপনি লিখেছিলেন: {typed}
 app.quiz.which_noun_is_this_quote_from = এই উক্তিটি কোন {noun} থেকে?
 app.quiz.which_quote_is_from_this_noun = কোন উক্তিটি এই {noun} থেকে?
+app.quiz.word_correct = ঠিক
+app.quiz.word_kept = রাখা, চিহ্নিত করার জন্য
+app.quiz.word_not_quite = ঠিক নয়
+app.quiz.word_noted = নোট করা
+app.quiz.word_recalled = মনে পড়েছে
 app.quiz.x_of_total = {total}-এর মধ্যে {x}
 
 # --- quote ---
@@ -937,6 +989,7 @@ app.search_models.films_and_shows = ছবি ও ধারাবাহিক
 # --- server_files ---
 app.server_files.choose_a_backup_from_the_server = সার্ভার থেকে একটি ব্যাকআপ বেছে নিন
 app.server_files.save_the_backup = আপনার ব্যাকআপ সংরক্ষণ করুন
+app.server_files.that_file_is_too_big_for = ওই ফাইল ফোনের বহন করার পক্ষে বেশি বড় (৩০০ এমবির বেশি)। সার্ভার নিজেই ব্যবহার করুন।
 
 # --- server_log ---
 app.server_log.could_not_reach_the_server = সার্ভারে পৌঁছানো যায়নি।
@@ -953,6 +1006,7 @@ app.settings.adds_what_is_only_on_this = শুধু এই ফোনে যা
 app.settings.app_log = অ্যাপের লগ
 app.settings.authors_actors_speakers_and_characters_spellings = লেখক, অভিনেতা, বক্তা ও চরিত্র: বানান, ছবি, এক করা
 app.settings.automatic_sync_is_off = স্বয়ংক্রিয় সিঙ্ক বন্ধ
+app.settings.automatic_up_to_date = স্বয়ংক্রিয় · হালনাগাদ
 app.settings.details_and_duplicates = তথ্য ও প্রতিলিপি
 app.settings.forget = ভুলে যান
 app.settings.forget_this_server = এই সার্ভার ভুলে যাবেন?
@@ -1006,6 +1060,7 @@ app.share.you_can_edit_it_before_sending = পাঠানোর আগে এ�
 
 # --- share_format ---
 app.share_format.my_note = আমার নোট
+app.share_format.note_x = নোট: {x}
 app.share_format.plain_text = সাধারণ লেখা
 
 # --- share_picture ---
@@ -1025,20 +1080,24 @@ app.source_files.a_work_has_one_file_a = একটি রচনার একট�
 app.source_files.a_work_not_on_this_phone = এই ফোনে নেই এমন একটি রচনা
 app.source_files.attach_all = সব যুক্ত করুন
 app.source_files.attached_n = {n}টি যুক্ত হয়েছে
+app.source_files.attached_n_2 = যুক্ত ({n})
 app.source_files.attached_to_title = {title}-এ যুক্ত হয়েছে।
 app.source_files.browse_the_server_s_folders_and = সার্ভারের ফোল্ডার ঘুরে ফাইলটি বেছে নিন। এটি যেখানে আছে সেখানেই পড়া হয়, কপি করা হয় না।
 app.source_files.folder = ফোল্ডার
 app.source_files.found_by_ids = {rel} · {format} · আইডি দিয়ে মেলানো
 app.source_files.found_by_name = {rel} · {format} · নাম দিয়ে মেলানো
+app.source_files.found_n = পাওয়া ({n})
 app.source_files.free_the_space = জায়গা খালি করুন
 app.source_files.free_the_space_of_this_file = এই ফাইলের জায়গা খালি করবেন?
 app.source_files.from_a_folder_on_the_server = সার্ভারের একটি ফোল্ডার থেকে
+app.source_files.from_a_server_folder = সার্ভারের ফোল্ডার থেকে
 app.source_files.from_this_phone = এই ফোন থেকে
 app.source_files.full_stop = ।
 app.source_files.keeps.one = ১টি উক্তি তার আশপাশ রাখে।
 app.source_files.keeps.other = {n}টি উক্তি তাদের আশপাশ রাখে।
 app.source_files.like_s01e04_a_show_s_subtitles = যেমন s01e04। ধারাবাহিকের সাবটাইটেল একটি পর্বের জন্য।
 app.source_files.looking = খোঁজা হচ্ছে… {read}টি ফাইল পড়া হয়েছে, {found}টি পাওয়া গেছে।
+app.source_files.missing_on_the_server = সার্ভারে নেই
 app.source_files.no_file_is_attached_yet_scan = এখনও কোনো ফাইল যুক্ত নেই। “পাওয়া” ট্যাবে একটি ফোল্ডার স্ক্যান করুন, বা “যোগ” ট্যাবে হাতে একটি যুক্ত করুন, তাহলে উক্তিতে আশপাশের লাইন দেখানো যাবে।
 app.source_files.none_of_your_works_is_on = আপনার কোনো রচনা এখনও সার্ভারে নেই। আগে সিঙ্ক করুন, তারপর ফাইল যুক্ত করুন।
 app.source_files.none_to_keep.one = ১টি উক্তির রাখার মতো কিছু নেই।
@@ -1055,6 +1114,7 @@ app.source_files.scan_done_some_unclaimed = {read}টি ফাইল পড়�
 app.source_files.search_your_works = আপনার রচনা খুঁজুন
 app.source_files.send_an_ebook_or_a_subtitle = একটি ই-বই বা সাবটাইটেল ফাইল পাঠান (২৫ এমবি পর্যন্ত)। সার্ভার একটি কপি রাখে।
 app.source_files.skipped_n = {n}টি বাদ
+app.source_files.space_freed = জায়গা খালি হয়েছে
 app.source_files.stopped_part_way = মাঝপথে থেমেছে: {read}টি ফাইল পড়া হয়েছে। চালিয়ে যেতে আবার স্ক্যান করুন।
 app.source_files.the_file_is_taken_off_x = ফাইলটি {x} থেকে সরানো হয়। উক্তিগুলো ইতিমধ্যে কেটে নেওয়া আশপাশ রাখে; নতুন উক্তির কোনোটি থাকবে না।
 app.source_files.the_file_x_is_deleted_from = ফাইলটি ({x}) সার্ভার থেকে মুছে যায়; {x2} আশপাশ থেকে যায়। {keeps}{none}
@@ -1063,10 +1123,13 @@ app.source_files.the_scan_did_not_finish_why = স্ক্যান শেষ �
 app.source_files.the_server_has_no_folder_to = সার্ভারে খোঁজার মতো কোনো ফোল্ডার নেই। একজন অ্যাডমিন “সার্ভার পরিচালনা”-র “লাইব্রেরির ফোল্ডার”-এ সেগুলো যোগ করেন।
 app.source_files.the_server_has_no_folder_to_2 = সার্ভারে ঘোরার মতো কোনো ফোল্ডার নেই। একজন অ্যাডমিন “লাইব্রেরির ফোল্ডার”-এ সেগুলো যোগ করেন।
 app.source_files.title_episode = {title} · {episode}
+app.source_files.to_look_over_n = দেখার জন্য ({n})
 app.source_files.turn_all_down = সব বাতিল করুন
 app.source_files.unreadable_n = {n}টি পড়া যায়নি
+app.source_files.uploaded = আপলোড করা
 app.source_files.waiting_for_the_server_to_start = সার্ভারের শুরু করার অপেক্ষায়…
 app.source_files.which_work_is_it_for = এটি কোন রচনার জন্য?
+app.source_files.with_surroundings = আশপাশসহ {quotes}
 
 # --- source_picker ---
 app.source_picker.choose_an_ebook_or_a_subtitle = একটি ই-বই বা সাবটাইটেল ফাইল বেছে নিন
@@ -1085,6 +1148,8 @@ app.staging.approving = অনুমোদন হচ্ছে
 app.staging.colour_changed = রং বদলেছে
 app.staging.could_not_read_your_library = আপনার লাইব্রেরি পড়া যায়নি।
 app.staging.count_selected = {count}টি বাছাই করা
+app.staging.discard_quotes.one = এই উক্তি বাতিল করবেন?
+app.staging.discard_quotes.other = {n}টি উক্তি বাতিল করবেন?
 app.staging.discard_this_file = এই ফাইল বাতিল করুন
 app.staging.discard_this_group = এই দল বাতিল করুন
 app.staging.discarded_gone = {gone}টি বাতিল করা হয়েছে
@@ -1107,6 +1172,7 @@ app.staging.page_location = পাতা / অবস্থান
 app.staging.quotes_of_their_own = একক উক্তি
 app.staging.quotes_quotes = {quotes}টি উক্তি
 app.staging.separate_with_commas = কমা দিয়ে আলাদা করুন
+app.staging.set_to = এতে ঠিক করুন
 app.staging.shift_locations_on_count_selected = বাছাই করা {count}টির অবস্থান সরান
 app.staging.show_more_shown_of_total = আরও দেখান ({total}-এর মধ্যে {shown}টি)
 app.staging.the_server_could_not_add_those = সার্ভার ওই উক্তিগুলো যোগ করতে পারেনি।
@@ -1177,6 +1243,7 @@ app.tools.things_you_delete_are_kept_here = আপনার মোছা জি�
 app.tools.with_quotes = {quotes} সহ
 
 # --- update_ui ---
+app.update_ui.a_newer_version_of_tippani_is = টিপ্পনীর একটি নতুন সংস্করণ তৈরি।
 app.update_ui.android_is_asking_you_to_install = অ্যান্ড্রয়েড আপনাকে আপডেটটি ইনস্টল করতে বলছে। এর মধ্যে টিপ্পনী বন্ধ হয়ে যাবে।
 app.update_ui.android_s_installer_would_not_open = অ্যান্ড্রয়েডের ইনস্টলার খোলেনি। আবার চেষ্টা করুন, বা প্রকল্পের রিলিজ পাতা থেকে হালনাগাদ নামিয়ে নিন।
 app.update_ui.checking = দেখা হচ্ছে…
@@ -1219,6 +1286,8 @@ app.work.it_is_removed_from_this_phone = এটি এই ফোন থেকে
 app.work.no_favourites_in_this_work_yet = এই রচনায় এখনও কোনো প্রিয় নেই।
 app.work.no_tag = ট্যাগ নেই
 app.work.order = ক্রম
+app.work.quotes_deleted_with_it.one = এর ১টি উক্তিও এর সঙ্গে মুছে যাবে। এটি আর ফেরানো যাবে না।
+app.work.quotes_deleted_with_it.other = এর {n}টি উক্তিও এর সঙ্গে মুছে যাবে। এটি আর ফেরানো যাবে না।
 app.work.search_by_title_author_or_isbn = শিরোনাম, লেখক বা আইএসবিএন দিয়ে খুঁজুন
 app.work.the_picture_could_not_be_opened = ছবিটি খোলা যায়নি।
 app.work.the_server_did_not_take_that = সার্ভার ওই ছবিটি মলাট হিসেবে নেয়নি।
@@ -1228,6 +1297,8 @@ app.work.this_work_is_no_longer_in = এই রচনাটি আর গ্র�
 app.work_details.show_all_n = সব {n}টি দেখান
 
 # --- work_form ---
+app.work_form.add_a_work = একটি রচনা যোগ করুন
+app.work_form.edit_work = রচনা সম্পাদনা
 app.work_form.look_up_details = বিবরণ খুঁজুন
 app.work_form.nothing_matched_that_title = ওই শিরোনামে কিছু মেলেনি।
 app.work_form.the_year_must_be_a_number = বছর একটি সংখ্যা হতে হবে।

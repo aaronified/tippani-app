@@ -17,8 +17,7 @@ const maxServerFileBytes = 300 * 1024 * 1024;
 class ServerFileTooBig implements Exception {
   const ServerFileTooBig();
   @override
-  String toString() =>
-      'That file is too big for the phone to carry (over 300 MB). Use the server itself.';
+  String toString() => tx('app.server_files.that_file_is_too_big_for');
 }
 
 /// The system's own pickers for the big files of server administration (backups). Tests hand the harness a fake.

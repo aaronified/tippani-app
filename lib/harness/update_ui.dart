@@ -274,7 +274,9 @@ class _UpdateDialog extends StatelessWidget {
               content: SingleChildScrollView(
                 child: Text(
                   r == null || r.notes.trim().isEmpty
-                      ? 'A newer version of Tippani is ready.'
+                      ? context.tr(
+                          'app.update_ui.a_newer_version_of_tippani_is',
+                        )
                       : r.notes.trim(),
                 ),
               ),

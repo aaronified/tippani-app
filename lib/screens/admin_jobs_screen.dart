@@ -397,7 +397,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
               Tab(
                 text: cur == null || cur.jobs.isEmpty
                     ? tx('locators.now')
-                    : 'Now (${cur.jobs.length})',
+                    : tx('app.admin_jobs.now_n', {'n': cur.jobs.length}),
               ),
               const Tab(text: 'Past'),
               const Tab(text: 'Common'),

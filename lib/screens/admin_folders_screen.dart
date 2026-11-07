@@ -197,14 +197,21 @@ class _Folders extends StatelessWidget {
                         ? context.tr(
                             'app.admin_folders.no_saved_file_is_unused',
                           )
-                        : '${folders.orphanFiles} saved ${folders.orphanFiles == 1 ? 'file is' : 'files are'} unused (${_size(folders.orphanBytes)})',
+                        : trn(
+                            'app.admin_folders.unused_files',
+                            folders.orphanFiles,
+                            {'size': _size(folders.orphanBytes)},
+                          ),
                   ),
                   subtitle: Text(
                     folders.missingFiles == 0
                         ? context.tr(
                             'app.admin_folders.every_attached_file_is_where_it',
                           )
-                        : '${folders.missingFiles} attached ${folders.missingFiles == 1 ? 'file is' : 'files are'} missing from the disk.',
+                        : trn(
+                            'app.admin_folders.missing_files',
+                            folders.missingFiles,
+                          ),
                     style: text.bodySmall,
                   ),
                   trailing: FilledButton.tonal(

@@ -233,7 +233,9 @@ class SettingsScreen extends StatelessWidget {
                                       )
                                     : auto.lastSynced != null
                                     ? (auto.enabled
-                                          ? 'Automatic · up to date'
+                                          ? context.tr(
+                                              'app.settings.automatic_up_to_date',
+                                            )
                                           : context.tr(
                                               'app.settings.automatic_sync_is_off',
                                             ))

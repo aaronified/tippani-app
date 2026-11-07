@@ -34,7 +34,7 @@ final importSources = <ImportSource>[
     tx('app.import_service.tippani_exports_of_books_or_the'),
     [
       'Import a Tippani export (books or catalogue), a Readest export, or your own frontmatter and quotes.',
-      'A single .md may hold many books or titles. Each one is imported.',
+      tx('app.import_service.a_single_md_may_hold_many'),
     ],
   ),
   ImportSource(
@@ -75,7 +75,7 @@ final importSources = <ImportSource>[
     'goodreads-html',
     tx('import.source.goodreads-html.title'),
     ['html', 'htm'],
-    "A book's public Quotes page. Quote tags come across too.",
+    tx('app.import_service.a_book_s_public_quotes_page'),
     [
       "Open the book's Quotes page, for example goodreads.com/work/quotes/<id>-<book>.",
       tx('app.import_service.save_it_as_a_web_page'),
@@ -84,9 +84,9 @@ final importSources = <ImportSource>[
   ),
   ImportSource(
     'imdb-quotes',
-    'IMDb quotes',
+    tx('import.source.imdb-quotes.title'),
     ['html', 'htm'],
-    "A film or show's Quotes page, imported as dialogues.",
+    tx('app.import_service.a_film_or_show_s_quotes'),
     [
       "Open the title's Quotes page, for example imdb.com/title/tt0434409/quotes.",
       tx('app.import_service.save_it_as_a_web_page'),
@@ -97,7 +97,7 @@ final importSources = <ImportSource>[
     'kindle-notebook',
     tx('import.source.kindle-notebook.title'),
     ['html', 'htm'],
-    'Your Kindle Notes & Highlights page. Colours and locations come across.',
+    tx('app.import_service.your_kindle_notes_highlights_page_colours'),
     [
       'Open read.amazon.com/notebook and pick the book.',
       tx('app.import_service.save_it_as_a_web_page'),

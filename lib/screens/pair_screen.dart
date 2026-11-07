@@ -42,8 +42,9 @@ class _PairScreenState extends State<PairScreen> {
     final code = normalisePairingCode(_code.text);
     if (code == null) {
       setState(
-        () => _problem =
-            'A pairing code is $pairingCodeLength letters and numbers, like 7K2M9QXD.',
+        () => _problem = context.tr('app.pair.a_pairing_code_is_pairing_code', {
+          'pairing_code_length': pairingCodeLength,
+        }),
       );
       return;
     }

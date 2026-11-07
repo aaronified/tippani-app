@@ -151,7 +151,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
     final secret = await askBackupSecret(
       context,
       title: context.tr('app.admin_backup.back_up_the_server'),
-      body: 'The backup holds every reader\'s library. It is sealed with your password or a passphrase; you will need the same to open it.',
+      body: context.tr('app.admin_backup.the_backup_holds_every_reader_s'),
       yes: context.tr('settings.jobs.kind.backup'),
     );
     if (secret == null || !mounted) return;
@@ -408,10 +408,10 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                                   'app.admin_backup.the_server_has_no_backup_yet',
                                 )
                               : '${info.created.isEmpty ? info.name : info.created} · ${_size(info.size)} · ${switch (info.key) {
-                                  'password' => 'sealed with the password of ${info.account.isEmpty ? 'its account' : info.account}',
-                                  'passphrase' => 'sealed with a passphrase',
-                                  'none' => 'not sealed',
-                                  _ => 'sealing unknown',
+                                  'password' => info.account.isEmpty ? context.tr('app.admin_backup.kind_password_unknown') : context.tr('app.admin_backup.kind_password', {'account': info.account}),
+                                  'passphrase' => context.tr('app.admin_backup.kind_passphrase'),
+                                  'none' => context.tr('app.admin_backup.kind_none'),
+                                  _ => context.tr('app.admin_backup.kind_unknown'),
                                 }}',
                         ),
                         const SizedBox(height: 12),

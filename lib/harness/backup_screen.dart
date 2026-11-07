@@ -116,8 +116,8 @@ class _BackupScreenState extends State<BackupScreen> {
         content: Text(
           context.tr(
             doc.appVersion.isEmpty
-                ? 'app.backup.made_it_replaces_the_settings'
-                : 'app.backup.made_by_version_it_replaces_the_settings',
+                ? tx('app.backup.made_it_replaces_the_settings')
+                : tx('app.backup.made_by_version_it_replaces_the_settings'),
             {
               'first': doc.createdAt.toLocal().toString().split('.').first,
               'version': doc.appVersion,

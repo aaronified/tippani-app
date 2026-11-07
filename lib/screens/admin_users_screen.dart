@@ -102,7 +102,7 @@ class _Users extends StatelessWidget {
       title: context.tr('app.admin_users.remove_username', {
         'username': u.username,
       }),
-      body: 'Their whole library goes with them: every work, quote and tag. This cannot be undone.',
+      body: context.tr('app.admin_users.their_whole_library_goes_with_them'),
       yes: context.tr('common.action.remove.label'),
       danger: true,
     );

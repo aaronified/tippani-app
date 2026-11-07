@@ -353,7 +353,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Text(
                     _allFavourites
                         ? context.tr('app.dashboard.show_fewer')
-                        : 'View more (${favourites.length - _favouritesShown})',
+                        : context.tr(
+                            'app.dashboard.view_more_favourites_shown',
+                            {
+                              'favourites_shown':
+                                  favourites.length - _favouritesShown,
+                            },
+                          ),
                   ),
                 ),
               ),
@@ -568,9 +574,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final String headline;
       final String sub;
       if (due == 0 && done > 0) {
-        headline = 'All caught up ✓';
-        sub =
-            '${s.dailyGot} recalled · ${s.dailyAnswered - s.dailyGot} to resurface · back tomorrow';
+        headline = context.tr('app.dashboard.all_caught_up');
+        sub = context.tr('app.dashboard.recalled_resurface', {
+          'got': s.dailyGot,
+          'again': s.dailyAnswered - s.dailyGot,
+        });
       } else if (due == 0) {
         headline = context.tr('app.dashboard.nothing_due_today');
         sub = context.tr('app.dashboard.add_or_review_more_quotes_to');
