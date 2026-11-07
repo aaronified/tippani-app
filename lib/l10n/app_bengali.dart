@@ -16,6 +16,10 @@ const Map<String, String> appBengali = {
   "Not started": "শুরু হয়নি",
   "The shelf is kept on your server. Pair this phone and sync this work to change it.": "তাক আপনার সার্ভারে রাখা হয়। বদলাতে এই ফোনটি যুক্ত করুন এবং এই রচনাটি সিঙ্ক করুন।",
   "in progress": "চলছে",
+  "Quote deleted.": "উক্তিটি মুছে ফেলা হয়েছে।",
+  "In this work": "এই রচনায়",
+  "Your tags": "আপনার ট্যাগ",
+  "Chapters you used": "যে অধ্যায়গুলো আপনি ব্যবহার করেছেন",
   "Adds what is only on this phone": "শুধু এই ফোনে যা আছে তা যোগ করে",
   "After": "পরে",
   "An admin chose this password. Choose your own.":
