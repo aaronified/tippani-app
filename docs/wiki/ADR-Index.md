@@ -49,5 +49,6 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0018](ADR-0018-Sync-Runs-By-Itself-And-Never-Stops-For-A-Conflict.md): Sync runs by itself and never stops for a conflict
 - [ADR-0019](ADR-0019-Sync-On-Every-Change-And-Once-A-Day-Nothing-In-Between.md): Sync on every change and once a day, with nothing in between
 - [ADR-0020](ADR-0020-The-Colours-Are-Chosen-In-Settings.md): The colours are chosen in Settings
+- [ADR-0021](ADR-0021-Four-Tabs-And-The-Boards-Tab.md): Four tabs, and the Boards tab
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)
