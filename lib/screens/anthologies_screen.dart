@@ -93,7 +93,11 @@ class AnthologiesScreen extends StatefulWidget {
     this.photos,
     this.quiz,
     this.controller,
+    this.embedded = false,
   });
+
+  /// Drawn inside the Boards tab, whose header names the board: no bar of its own.
+  final bool embedded;
 
   /// When given, the list waits for the phone to read its pairing (the tabs are built at start, before that is
   /// known) and reads again if the pairing changes.
@@ -189,7 +193,9 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
   Widget build(BuildContext context) {
     final all = _all;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('nav.tab.anthologies.label'))),
+      appBar: widget.embedded
+          ? null
+          : AppBar(title: Text(context.tr('nav.tab.anthologies.label'))),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'add-anthology',
         onPressed: _create,

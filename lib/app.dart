@@ -10,9 +10,9 @@ import 'library/cover_cache.dart';
 import 'tools/quote_context.dart';
 import 'tools/work_details_source.dart';
 import 'harness/update_ui.dart';
-import 'screens/anthologies_screen.dart';
+import 'screens/add_quote_sheet.dart';
+import 'screens/boards_tab.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/nav_icons.dart';
 import 'screens/home_screen.dart';
 import 'screens/checks_screen.dart';
 import 'screens/library_screen.dart';
@@ -145,13 +145,33 @@ class _ShellState extends State<Shell> {
   List<({Widget screen, NavigationDestination destination})> _tabsNow =
       const [];
 
+  /// Brings a board of the Boards tab into view, from outside it (a button on Home).
+  final _boardsGoTo = ValueNotifier<BoardKind?>(null);
+
   void _goTo(LibrarySection part) {
-    final i = _tabsNow.indexWhere(
-      (t) =>
-          t.screen is LibraryScreen &&
-          (t.screen as LibraryScreen).section == part,
+    final i = _tabsNow.indexWhere((t) => t.screen is BoardsTab);
+    if (i < 0) return;
+    setState(() => _index = i);
+    _boardsGoTo.value = switch (part) {
+      LibrarySection.catalogue => BoardKind.catalogue,
+      LibrarySection.quotes => BoardKind.quotes,
+      _ => BoardKind.library,
+    };
+  }
+
+  Future<void> _openImports(BuildContext context) async {
+    final h = widget.harness;
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => ChecksScreen(
+          imports: h.imports,
+          checks: h.checks,
+          library: h.library,
+          picker: h.importPicker,
+          auto: h.auto,
+        ),
+      ),
     );
-    if (i >= 0) setState(() => _index = i);
   }
 
   @override
@@ -189,34 +209,44 @@ class _ShellState extends State<Shell> {
           LibrarySection.all => false,
         };
     final quiz = widget.harness.quiz;
+    final boardKinds = [
+      if (library != null && shown(LibrarySection.books)) BoardKind.library,
+      if (library != null && shown(LibrarySection.catalogue))
+        BoardKind.catalogue,
+      if (library != null && shown(LibrarySection.quotes)) BoardKind.quotes,
+      if (library != null &&
+          widget.harness.anthologies != null &&
+          (prefs.showAnthologies || !prefs.known))
+        BoardKind.anthologies,
+    ];
     final tabs = <({Widget screen, NavigationDestination destination})>[
       // Home comes first where the app has the quiz to put on it: the day's cards, the favourites, a line at random.
       if (library != null && quiz != null)
         (
-          screen: DashboardScreen(
-            store: library,
-            quiz: quiz,
-            controller: widget.controller,
-            picker: widget.harness.picker,
-            anthologies: widget.harness.anthologies,
-            auto: widget.harness.auto,
-            onOpenLibrary: () => _goTo(LibrarySection.books),
-            onOpenCatalogue: () => _goTo(LibrarySection.catalogue),
-            imports: widget.harness.imports,
-            onOpenImports: () async {
-              final h = widget.harness;
-              await Navigator.of(context).push<void>(
-                MaterialPageRoute<void>(
-                  builder: (_) => ChecksScreen(
-                    imports: h.imports,
-                    checks: h.checks,
-                    library: h.library,
-                    picker: h.importPicker,
-                    auto: h.auto,
-                  ),
-                ),
-              );
-            },
+          screen: Scaffold(
+            backgroundColor: Colors.transparent,
+            floatingActionButton: FloatingActionButton.extended(
+              heroTag: 'add-anything',
+              onPressed: () => showAddQuoteSheet(
+                context,
+                store: library,
+                onImport: () => _openImports(context),
+              ),
+              icon: const Icon(Ti.plus),
+              label: Text(context.tr('app.add.title')),
+            ),
+            body: DashboardScreen(
+              store: library,
+              quiz: quiz,
+              controller: widget.controller,
+              picker: widget.harness.picker,
+              anthologies: widget.harness.anthologies,
+              auto: widget.harness.auto,
+              onOpenLibrary: () => _goTo(LibrarySection.books),
+              onOpenCatalogue: () => _goTo(LibrarySection.catalogue),
+              imports: widget.harness.imports,
+              onOpenImports: () => _openImports(context),
+            ),
           ),
           destination: NavigationDestination(
             icon: const Icon(Ti.home),
@@ -224,41 +254,22 @@ class _ShellState extends State<Shell> {
             label: context.tr('nav.tab.home.label'),
           ),
         ),
-      if (library != null)
-        for (final (nav, part) in [
-          (NavSection.library, LibrarySection.books),
-          (NavSection.catalogue, LibrarySection.catalogue),
-          (NavSection.quotes, LibrarySection.quotes),
-        ])
-          if (shown(part))
-            (
-              screen: LibraryScreen(
-                key: ValueKey(part),
-                store: library,
-                picker: widget.harness.picker,
-                anthologies: widget.harness.anthologies,
-                lookup: widget.harness.lookup,
-                auto: widget.harness.auto,
-                section: part,
-              ),
-              destination: NavigationDestination(
-                icon: NavSectionIcon(nav),
-                label: context.tr(nav.label),
-              ),
-            ),
-      if (library != null &&
-          widget.harness.anthologies != null &&
-          (prefs.showAnthologies || !prefs.known))
+      if (library != null && boardKinds.isNotEmpty)
         (
-          screen: AnthologiesScreen(
-            service: widget.harness.anthologies!,
+          screen: BoardsTab(
+            store: library,
             picker: widget.harness.picker,
+            boards: boardKinds,
+            goTo: _boardsGoTo,
+            anthologies: widget.harness.anthologies,
+            lookup: widget.harness.lookup,
+            auto: widget.harness.auto,
             quiz: widget.harness.quiz,
             controller: widget.controller,
           ),
           destination: NavigationDestination(
-            icon: NavSectionIcon(NavSection.anthologies),
-            label: context.tr(NavSection.anthologies.label),
+            icon: const Icon(Ti.layoutBoard),
+            label: context.tr('tour.step.boards.name'),
           ),
         ),
       // Without a library (a test of the server screens alone) there is nothing else to open on, so the server
@@ -272,6 +283,19 @@ class _ShellState extends State<Shell> {
             label: context.tr('nav.tab.home.label'),
           ),
         ),
+      // the server: the connection, sync, the library on the server, administration
+      (
+        screen: SettingsScreen(
+          controller: widget.controller,
+          harness: widget.harness,
+          part: SettingsPart.server,
+        ),
+        destination: NavigationDestination(
+          icon: const Icon(Ti.server),
+          label: context.tr('settings.section.server.label'),
+        ),
+      ),
+      // the app's own settings
       (
         screen: SettingsScreen(
           controller: widget.controller,

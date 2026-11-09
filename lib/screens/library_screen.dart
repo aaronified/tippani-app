@@ -18,6 +18,8 @@ import 'bulk_bar.dart';
 import 'library_widgets.dart';
 import '../tags/tag_service.dart';
 import 'quote_form_screen.dart';
+import '../people/people_directory.dart';
+import '../widgets/token_search.dart';
 import 'tags_screen.dart';
 import 'quote_screen.dart';
 import 'search_screen.dart';
@@ -58,7 +60,12 @@ class LibraryScreen extends StatefulWidget {
     this.lookup,
     this.auto,
     this.section = LibrarySection.all,
+    this.embedded = false,
   });
+
+  /// Drawn inside the Boards tab, whose header names the board: no bar of its own (a bar still appears while quotes are
+  /// selected), and Manage boards is a chip.
+  final bool embedded;
 
   /// Which part is shown; the default is all of it.
   final LibrarySection section;
@@ -104,6 +111,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   static const _noBoard = -1;
   bool _groupByBoard = false;
   List<Board> _boards = const [];
+  List<String> _knownTags = const [];
   List<Quote> _quotes = const [];
   List<Work> _works = const [];
 
@@ -161,6 +169,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final me = ++_request;
     final all = await widget.store.works();
     final counts = await widget.store.counts();
+    final knownTags = await widget.store.tags();
     // in the order the reader put them in (the server's), the rest by name
     final boards = await widget.store.boards()
       ..sort((x, y) {
@@ -169,11 +178,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ? p
             : x.name.toLowerCase().compareTo(y.name.toLowerCase());
       });
+    final sq = parseSearch(_search.text);
+    final byWord = [sq.text, ?sq.by].where((s) => s.isNotEmpty).join(' ');
+    final inWork = sq.inWork == null
+        ? null
+        : all
+              .where(
+                (w) => w.title.toLowerCase().contains(sq.inWork!.toLowerCase()),
+              )
+              .map((w) => w.id)
+              .firstOrNull;
     final quotes = _mode == _Mode.quotes
         ? await widget.store.quotes(
-            query: _search.text,
+            query: byWord,
+            workId: sq.inWork != null ? (inWork ?? -1) : null,
             favouritesOnly: _favourites,
-            tag: _tag,
+            tag: sq.tag ?? _tag,
             boardId: _boardFilter != null && _boardFilter != _noBoard
                 ? _boardFilter
                 : null,
@@ -183,19 +203,43 @@ class _LibraryScreenState extends State<LibraryScreen> {
         : const <Quote>[];
     final works = _mode == _Mode.works
         ? [
-            for (final w in await widget.store.works(query: _search.text))
+            for (final w in await widget.store.works(query: byWord))
               if (_inSection(w)) w,
           ]
         : const <Work>[];
     if (!mounted || me != _request) return;
     setState(() {
       _byId = {for (final w in all) w.id: w};
+      _knownTags = knownTags;
       _boards = boards;
       _counts = counts;
       _quotes = quotes;
       _works = works;
       _loaded = true;
     });
+  }
+
+  /// What the search box can suggest after `tag:`, `by:` and `in:`.
+  SearchSources _searchSources() {
+    final dir = PeopleDirectoryScope.of(context);
+    final seen = <String>{};
+    final people = <String>[];
+    void add(String n) {
+      final t = n.trim();
+      if (t.isNotEmpty && seen.add(t.toLowerCase())) people.add(t);
+    }
+
+    for (final w in _byId.values) {
+      creditNames(w.creator).forEach(add);
+    }
+    for (final k in const ['author', 'director', 'speaker', 'actor']) {
+      (dir?.names(k) ?? const <String>[]).forEach(add);
+    }
+    return SearchSources(
+      tags: _knownTags,
+      people: people,
+      works: [for (final w in _byId.values) w.title],
+    );
   }
 
   Future<void> _addQuote() async {
@@ -392,7 +436,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final counts = _counts;
-    final PreferredSizeWidget bar;
+    final PreferredSizeWidget? bar;
     if (_selecting) {
       final quoteMode = _mode == _Mode.quotes;
       final chosenQuotes = [
@@ -428,7 +472,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ).bar(context),
       );
     } else {
-      bar = _normalBar(context);
+      bar = widget.embedded ? null : _normalBar(context);
     }
     return PopScope(
       canPop: !_selecting,
@@ -520,7 +564,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  Widget _scaffold(BuildContext context, PreferredSizeWidget bar, counts) {
+  Widget _scaffold(BuildContext context, PreferredSizeWidget? bar, counts) {
     return Scaffold(
       appBar: bar,
       floatingActionButton: _selecting
@@ -547,38 +591,27 @@ class _LibraryScreenState extends State<LibraryScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            child: TextField(
+            child: TokenSearchField(
               controller: _search,
-              onChanged: (_) => _load(),
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: _mode == _Mode.quotes
-                    ? context.tr(
-                        'app.library.search_words_people_works_and_tags',
-                      )
-                    : context.tr(
-                        'app.metadata_tools.search_titles_and_creators',
-                      ),
-                prefixIcon: const Icon(Ti.search),
-                suffixIcon: _search.text.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: context.tr(
-                          'common.selection.shelf.clear.label',
-                        ),
-                        icon: const Icon(Ti.x),
-                        onPressed: () {
-                          _search.clear();
-                          _load();
-                        },
-                      ),
-                border: _pill(),
-                enabledBorder: _pill(),
-                focusedBorder: _pill(
-                  BorderSide(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
-                  ),
+              onChanged: _load,
+              hintText: _mode == _Mode.quotes
+                  ? context.tr('app.library.search_words_people_works_and_tags')
+                  : context.tr('app.metadata_tools.search_titles_and_creators'),
+              sources: _searchSources,
+              onSubmitted: (_) => _load(),
+              // the same words, widened to the server's results too
+              trailing: IconButton(
+                tooltip: context.tr('search.results.everything.label'),
+                icon: const Icon(Ti.worldSearch),
+                onPressed: () => openSearch(
+                  context,
+                  store: widget.store,
+                  picker: widget.picker,
+                  share: widget.share,
+                  shareImage: widget.shareImage,
+                  anthologies: widget.anthologies,
+                  lookup: widget.lookup,
+                  initial: _search.text,
                 ),
               ),
             ),
@@ -669,6 +702,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       selected: _groupByBoard,
                       onSelected: (v) => setState(() => _groupByBoard = v),
                     ),
+                    if (widget.embedded)
+                      ActionChip(
+                        avatar: const Icon(Ti.layoutBoard, size: 18),
+                        label: Text(context.tr('tour.step.boards.name')),
+                        onPressed: _manageBoards,
+                      ),
                   ],
                 ),
               ),
@@ -679,12 +718,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
     );
   }
-
-  static OutlineInputBorder _pill([BorderSide side = BorderSide.none]) =>
-      OutlineInputBorder(
-        borderRadius: BorderRadius.circular(28),
-        borderSide: side,
-      );
 
   Widget _quoteTile(Quote q) => QuoteTile(
     quote: q,

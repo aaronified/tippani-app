@@ -11,6 +11,8 @@ import '../library/library_store.dart';
 import '../library/models.dart';
 import '../quiz/quiz.dart';
 import '../sync/auto_sync.dart';
+import '../library/quote_chips.dart' show creditNames;
+import '../widgets/token_search.dart';
 import 'library_widgets.dart' show QuoteTile;
 import 'quiz_screen.dart';
 import 'quote_screen.dart';
@@ -163,7 +165,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadLibrary();
     _loadScores();
     _loadImports();
+    _loadSearchSources();
     widget.quiz.drain();
+  }
+
+  final _searchBox = TextEditingController();
+  SearchSources _sources = const SearchSources();
+
+  /// What the search box can suggest after `tag:`, `by:` and `in:`.
+  Future<void> _loadSearchSources() async {
+    try {
+      final tags = await widget.store.tags();
+      final works = await widget.store.works();
+      final seen = <String>{};
+      final people = <String>[];
+      for (final w in works) {
+        for (final n in creditNames(w.creator)) {
+          if (seen.add(n.toLowerCase())) people.add(n);
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _sources = SearchSources(
+            tags: tags,
+            people: people,
+            works: [for (final w in works) w.title],
+          );
+        });
+      }
+    } on Object {
+      // the box still searches, it just suggests less
+    }
   }
 
   /// How many imported quotes wait for approval (the same count the Settings row is badged with).
@@ -186,6 +218,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _changes?.cancel();
     widget.quiz.removeListener(_rebuild);
     widget.controller.removeListener(_pairingChanged);
+    _searchBox.dispose();
     super.dispose();
   }
 
@@ -343,12 +376,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          SearchPill(
-            onTap: () => openSearch(
-              context,
-              store: widget.store,
-              picker: widget.picker,
-              anthologies: widget.anthologies,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: TokenSearchField(
+              controller: _searchBox,
+              hintText: context.tr(
+                'app.search.search_words_names_tags_and_titles',
+              ),
+              sources: () => _sources,
+              onSubmitted: (text) => openSearch(
+                context,
+                store: widget.store,
+                picker: widget.picker,
+                anthologies: widget.anthologies,
+                initial: text,
+              ),
             ),
           ),
           _tiles(context),
