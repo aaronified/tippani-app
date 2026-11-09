@@ -936,8 +936,6 @@ app.quote_chips.what_name_actor = {what} {name}, অভিনয়ে {actor}
 
 # --- quote_context ---
 app.quote_context.context = প্রসঙ্গ
-app.quote_context.show_more_after = পরে আরও দেখান
-app.quote_context.show_more_before = আগে আরও দেখান
 app.quote_context.show_where_it_comes_from = কোথা থেকে এসেছে দেখান
 app.quote_context.the_end_of_the_chapter_scene = অধ্যায়, দৃশ্য বা রচনার শেষ।
 app.quote_context.the_server_has_no_context_for = এই উক্তির কোনো প্রসঙ্গ সার্ভারে নেই: এটি কোনো ফাইলে পাওয়া যায়নি।
@@ -1347,3 +1345,16 @@ app.quote_form.occasion = উপলক্ষ
 app.quote_form.chapter = অধ্যায়
 app.quote_form.place = জায়গা
 app.quote_form.page_or_position = পৃষ্ঠা বা অবস্থান
+app.context.in_this_passage = এই অংশে
+app.context.your_quote = আপনার উক্তি
+app.context.where_this_is = এটি কোথায়
+app.context.character = চরিত্র
+app.context.character_in = চরিত্র · {work}
+app.context.played_by = অভিনয়ে {actor}
+app.context.no_description = এখনও কোনো বিবরণ নেই।
+app.context.also_called = অন্য নামে
+app.context.named_here.one = এখানে একবার এসেছে
+app.context.named_here.other = এখানে {n} বার এসেছে
+app.context.your_quotes = আপনার উক্তি
+app.context.open_page = পাতা খুলুন
+app.context.show_their_quotes = তাঁর উক্তিগুলো দেখুন
