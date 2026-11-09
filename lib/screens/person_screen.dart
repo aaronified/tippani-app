@@ -481,6 +481,7 @@ class _PersonScreenState extends State<PersonScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                textCapitalization: TextCapitalization.words,
                 controller: name,
                 decoration: InputDecoration(
                   labelText: context.tr('common.field.name.label'),
@@ -490,6 +491,7 @@ class _PersonScreenState extends State<PersonScreen> {
                 children: [
                   Expanded(
                     child: TextField(
+                      textCapitalization: TextCapitalization.none,
                       controller: born,
                       decoration: InputDecoration(
                         labelText: context.tr('common.field.born.label'),
@@ -499,6 +501,7 @@ class _PersonScreenState extends State<PersonScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
+                      textCapitalization: TextCapitalization.none,
                       controller: died,
                       decoration: InputDecoration(
                         labelText: context.tr('common.field.died.label'),
@@ -508,6 +511,7 @@ class _PersonScreenState extends State<PersonScreen> {
                 ],
               ),
               TextField(
+                textCapitalization: TextCapitalization.sentences,
                 controller: bio,
                 minLines: 3,
                 maxLines: 8,
@@ -516,6 +520,7 @@ class _PersonScreenState extends State<PersonScreen> {
                 ),
               ),
               TextField(
+                textCapitalization: TextCapitalization.none,
                 controller: links,
                 minLines: 2,
                 maxLines: 5,
@@ -528,6 +533,7 @@ class _PersonScreenState extends State<PersonScreen> {
                 ),
               ),
               TextField(
+                textCapitalization: TextCapitalization.sentences,
                 controller: note,
                 minLines: 1,
                 maxLines: 4,

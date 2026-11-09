@@ -87,6 +87,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
           ),
           const SizedBox(height: 16),
           TextField(
+            textCapitalization: TextCapitalization.none,
             controller: _text,
             enabled: !_busy,
             keyboardType: TextInputType.url,

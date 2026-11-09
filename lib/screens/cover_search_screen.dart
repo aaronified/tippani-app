@@ -146,6 +146,7 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
             child: Column(
               children: [
                 TextField(
+                  textCapitalization: TextCapitalization.words,
                   controller: _title,
                   decoration: InputDecoration(
                     labelText: context.tr('common.field.title.label'),
@@ -157,6 +158,7 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
                     children: [
                       Expanded(
                         child: TextField(
+                          textCapitalization: TextCapitalization.words,
                           controller: _creator,
                           decoration: InputDecoration(
                             labelText: context.tr('common.field.author.label'),
@@ -167,6 +169,7 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: TextField(
+                          textCapitalization: TextCapitalization.none,
                           controller: _isbn,
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(

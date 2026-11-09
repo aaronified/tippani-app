@@ -212,6 +212,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
           if (_image != null && !_busy) ...[
             const SizedBox(height: 16),
             TextField(
+              textCapitalization: TextCapitalization.sentences,
               controller: _text,
               minLines: 5,
               maxLines: 14,

@@ -41,6 +41,9 @@ abstract class PeopleDirectory implements Listenable {
   /// The person called [name] under any kind (author, actor, director ...), preferring one with a portrait.
   PersonInfo? anyPerson(String name);
 
+  /// The names of everyone of [kind] ('author', 'actor', 'director' ...) the server holds, for suggestions.
+  List<String> names(String kind);
+
   /// The character called [name], or null if the server has none.
   CharacterInfo? character(String name);
 
@@ -252,6 +255,14 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
       found ??= p;
     }
     return found;
+  }
+
+  @override
+  List<String> names(String kind) {
+    _ensure();
+    return [
+      for (final p in _people[kind]?.values ?? const <PersonInfo>[]) p.name,
+    ];
   }
 
   @override

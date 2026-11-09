@@ -51,6 +51,7 @@ Future<BackupSecret?> askBackupSecret(
                   onSelectionChanged: (s) => set(() => passphrase = s.single),
                 ),
               TextField(
+                textCapitalization: TextCapitalization.none,
                 controller: c,
                 autofocus: true,
                 obscureText: true,

@@ -252,6 +252,7 @@ class _AccountScreenState extends State<AccountScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                 child: TextField(
+                  textCapitalization: TextCapitalization.none,
                   controller: _pushUser,
                   decoration: InputDecoration(
                     labelText: context.tr('account.notify.user.label'),
@@ -262,6 +263,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                   child: TextField(
+                    textCapitalization: TextCapitalization.none,
                     controller: _appToken,
                     obscureText: true,
                     decoration: InputDecoration(
@@ -453,6 +455,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
+            textCapitalization: TextCapitalization.none,
             key: const ValueKey('password-current'),
             controller: _current,
             obscureText: true,
@@ -462,6 +465,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
             ),
           ),
           TextField(
+            textCapitalization: TextCapitalization.none,
             key: const ValueKey('password-new'),
             controller: _next,
             obscureText: true,
@@ -470,6 +474,7 @@ class _PasswordDialogState extends State<_PasswordDialog> {
             ),
           ),
           TextField(
+            textCapitalization: TextCapitalization.none,
             key: const ValueKey('password-again'),
             controller: _again,
             obscureText: true,

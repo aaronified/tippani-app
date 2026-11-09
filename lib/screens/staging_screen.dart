@@ -941,6 +941,7 @@ class _QuoteSheetState extends State<_QuoteSheet> {
     Widget field(String label, TextEditingController c, String hint) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
+        textCapitalization: TextCapitalization.words,
         controller: c,
         decoration: InputDecoration(
           labelText: label,
@@ -1068,6 +1069,7 @@ class _FieldsSheetState extends State<_FieldsSheet> {
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: TextField(
+              textCapitalization: TextCapitalization.none,
               controller: e.value,
               onChanged: (_) => _touched.add(e.key),
               decoration: InputDecoration(
@@ -1082,6 +1084,7 @@ class _FieldsSheetState extends State<_FieldsSheet> {
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: TextField(
+            textCapitalization: TextCapitalization.none,
             controller: _add,
             decoration: InputDecoration(
               labelText: context.tr('common.action.add-tags.label'),
@@ -1093,6 +1096,7 @@ class _FieldsSheetState extends State<_FieldsSheet> {
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: TextField(
+            textCapitalization: TextCapitalization.none,
             controller: _remove,
             decoration: InputDecoration(
               labelText: context.tr('staging.fields.remove-tags.label'),
@@ -1202,6 +1206,7 @@ class _ShiftSheetState extends State<_ShiftSheet> {
         const SizedBox(height: 12),
         if (_op != 'reset')
           TextField(
+            textCapitalization: TextCapitalization.none,
             controller: _by,
             onChanged: (_) => setState(() {}),
             keyboardType: needsNumber
@@ -1289,6 +1294,7 @@ class _MoveSheetState extends State<_MoveSheet> {
           ].take(60).toList();
     return _sheet(context, context.tr('staging.bulk.move.label'), [
       TextField(
+        textCapitalization: TextCapitalization.none,
         onChanged: (v) => setState(() => _q = v),
         decoration: InputDecoration(
           prefixIcon: Icon(Ti.search),

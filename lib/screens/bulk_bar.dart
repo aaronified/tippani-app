@@ -572,6 +572,7 @@ Future<String?> askBulkText(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextField(
+                textCapitalization: TextCapitalization.words,
                 controller: c,
                 autofocus: true,
                 decoration: InputDecoration(labelText: context.tr(label)),

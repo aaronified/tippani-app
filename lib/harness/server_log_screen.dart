@@ -157,6 +157,7 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
             child: TextField(
+              textCapitalization: TextCapitalization.none,
               controller: _query,
               textInputAction: TextInputAction.search,
               onSubmitted: (v) => _apply(_filter.copyWith(query: v)),

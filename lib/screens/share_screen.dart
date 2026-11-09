@@ -523,6 +523,7 @@ class _ShareScreenState extends State<ShareScreen> {
             ),
           ] else ...[
             TextField(
+              textCapitalization: TextCapitalization.sentences,
               controller: _text,
               minLines: 6,
               maxLines: 14,

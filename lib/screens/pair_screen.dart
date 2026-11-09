@@ -90,6 +90,7 @@ class _PairScreenState extends State<PairScreen> {
           ),
           const SizedBox(height: 12),
           TextField(
+            textCapitalization: TextCapitalization.words,
             controller: _name,
             enabled: !_busy,
             maxLength: 64,

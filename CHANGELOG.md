@@ -13,6 +13,9 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Changed
 
+- Edit fields suggest as you type: Who said it offers the characters of the work and of the rest of its series (the third book offers the second's characters) and who has spoken there before; Chapter offers the chapters already used in the work, in chapter order, and picking one by its name or its number fills in both; the credit on a work (author, director, studio) offers the people your server holds for that kind of work and the credits already in your library; Language and Tags offer what you already use. You can still type something new.
+- Every text box capitalises as it should: names and titles by word, notes and descriptions by sentence, and nothing for passwords, addresses, tags, searches and numbers.
+
 - The context viewer is a scroller: Show where it comes from on a quote opens one screen with everything the server stored around it, above and below, the top and bottom fading out, your quote highlighted in its colour, and more loading as you reach either end. The characters of the work are picked out in the text, each in a colour of its own (by name and by the other names the server knows), with a row of them above; pressing one opens a sheet with their portrait, description, other names and how often they are named, and buttons for their page and for your quotes of theirs. The chapter and page are a chip in the top bar.
 
 - Quote cards: every quote in a list is now a card. The work is in a header with its cover, title, who made it and where in it (chapter, page or time), the quote sits beside a bar in its colour, the people on it are chips, and a footer holds its tags and four buttons: Copy, Read aloud, Share and More (Open, Select, Add to anthology). A long run of chips or tags scrolls sideways and fades at the edge where more is hidden.

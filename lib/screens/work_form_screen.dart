@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../library/library_store.dart';
 import '../api/server_call.dart';
 import '../library/models.dart';
+import '../library/suggestions.dart';
+import '../people/people_directory.dart';
+import '../widgets/combo_field.dart';
 import '../tools/work_lookup.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
@@ -58,6 +61,15 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
   String? _error;
   bool _saving = false;
   bool _looking = false;
+  List<Work> _all = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    widget.store.works().then((ws) {
+      if (mounted) setState(() => _all = ws);
+    });
+  }
 
   @override
   void dispose() {
@@ -219,13 +231,20 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
             ),
           ],
           const SizedBox(height: 12),
-          TextField(
+          // the people the server holds for this kind of work, and the credits already in the library
+          ComboField(
             controller: _creator,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(labelText: creatorLabel(_kind)),
+            multi: true,
+            labelText: creatorLabel(_kind),
+            options: () => creditOptions(
+              _kind,
+              _all,
+              PeopleDirectoryScope.of(context)?.names ?? (_) => const [],
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
+            textCapitalization: TextCapitalization.none,
             controller: _year,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
@@ -233,14 +252,14 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
+          ComboField(
             controller: _language,
-            decoration: InputDecoration(
-              labelText: context.tr('common.field.language.label'),
-              helperText: context.tr(
-                'app.work_form.what_it_is_written_or_spoken',
-              ),
+            textCapitalization: TextCapitalization.none,
+            labelText: context.tr('common.field.language.label'),
+            helperText: context.tr(
+              'app.work_form.what_it_is_written_or_spoken',
             ),
+            options: () => languageOptions(_all),
           ),
         ],
       ),
