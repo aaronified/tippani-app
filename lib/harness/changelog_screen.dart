@@ -6,6 +6,7 @@ import 'harness.dart';
 import 'update_ui.dart';
 import 'version.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Opens a web address in the phone's browser; false if nothing could. A function so a test can stand in for it.
 typedef OpenLink = Future<bool> Function(Uri url);
@@ -56,7 +57,7 @@ class ChangelogScreen extends StatelessWidget {
                   children: [ChangelogBody(entry: e)],
                 ),
               ListTile(
-                leading: const Icon(Icons.open_in_new),
+                leading: const Icon(Ti.externalLink),
                 title: Text(
                   context.tr('app.changelog.full_changelog_on_github'),
                 ),

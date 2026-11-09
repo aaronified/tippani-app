@@ -8,6 +8,7 @@ import '../anthologies/anthologies.dart';
 import '../capture/photo_source.dart';
 import '../library/cover_cache.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Sends a file through Android's share sheet. A function so a test can stand in for it.
 typedef ShareFile = Future<void> Function(Uint8List bytes, String fileName);
@@ -261,7 +262,7 @@ Future<bool> editFrontMatter(
                         color: Theme.of(context)
                             .colorScheme
                             .surfaceContainerHigh,
-                        child: const Icon(Icons.image_outlined),
+                        child: const Icon(Ti.photo),
                       ),
                     ),
                   ),
@@ -406,7 +407,7 @@ Future<({bool epub, ExportAction action})?> askExport(
           (true, context.tr('app.anthology_tools.epub_book')),
         ]) ...[
           ListTile(
-            leading: const Icon(Icons.save_alt),
+            leading: const Icon(Ti.deviceFloppy),
             title: Text(
               context.tr('app.anthology_tools.save_as_label', {'label': label}),
             ),
@@ -415,7 +416,7 @@ Future<({bool epub, ExportAction action})?> askExport(
                     .pop((epub: epub, action: ExportAction.save)),
           ),
           ListTile(
-            leading: const Icon(Icons.ios_share),
+            leading: const Icon(Ti.share2),
             title: Text(
               context.tr('app.anthology_tools.send_as_label', {'label': label}),
             ),

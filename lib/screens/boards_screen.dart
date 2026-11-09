@@ -13,6 +13,7 @@ import '../sync/auto_sync.dart';
 import 'board_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// The picture of a board, or [fallback] while there is none (and while it loads).
 class BoardPicture extends StatelessWidget {
@@ -515,7 +516,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
       appBar: AppBar(title: Text(context.tr('tour.step.boards.name'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _edit(),
-        icon: const Icon(Icons.add),
+        icon: const Icon(Ti.plus),
         label: Text(context.tr('quotes.board.new.label')),
       ),
       body: boards == null

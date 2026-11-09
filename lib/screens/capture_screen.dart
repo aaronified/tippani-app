@@ -9,6 +9,7 @@ import '../capture/text_recogniser.dart';
 import 'adjust_screen.dart';
 import 'page_selector.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Text read from a page, handed back to the quote form: [text] as the reader corrected it, and how it was
 /// captured ([source]: "ocr").
@@ -165,12 +166,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
             children: [
               FilledButton.icon(
                 onPressed: _busy ? null : () => _get(_photos.take),
-                icon: const Icon(Icons.photo_camera_outlined),
+                icon: const Icon(Ti.camera),
                 label: Text(context.tr('app.capture.take_a_photo')),
               ),
               FilledButton.tonalIcon(
                 onPressed: _busy ? null : () => _get(_photos.choose),
-                icon: const Icon(Icons.photo_library_outlined),
+                icon: const Icon(Ti.photo),
                 label: Text(context.tr('anthologies.front.cover.choose')),
               ),
             ],

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// What a kind of job is called, in words. A kind the app has no words for is shown as "Job".
 String jobKindName(String kind) =>
@@ -318,7 +319,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                         if (j.live)
                           TextButton.icon(
                             onPressed: () => _stop(j),
-                            icon: const Icon(Icons.stop_rounded),
+                            icon: const Icon(Ti.playerStopFilled),
                             label: Text(
                               context.tr('settings.jobs.current.stop.label'),
                             ),
@@ -326,7 +327,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                         if (j.rerunnable)
                           TextButton.icon(
                             onPressed: () => _rerun(j),
-                            icon: const Icon(Icons.replay_rounded),
+                            icon: const Icon(Ti.rotate),
                             label: Text(
                               context.tr('settings.jobs.past.rerun.label'),
                             ),
@@ -388,7 +389,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
             if (cur != null && cur.jobs.isNotEmpty)
               IconButton(
                 tooltip: context.tr('app.admin_jobs.stop_every_job_2'),
-                icon: const Icon(Icons.stop_circle_outlined),
+                icon: const Icon(Ti.playerStop),
                 onPressed: _stopAll,
               ),
           ],

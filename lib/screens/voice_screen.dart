@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../capture/voice_listener.dart';
 import 'capture_screen.dart' show CapturedText;
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Turns speech into words: press the microphone, say them, press again, and correct the text. Pops a
 /// [CapturedText] for the quote form to put in the words. The app keeps no audio.
@@ -112,7 +113,9 @@ class _VoiceScreenState extends State<VoiceScreen> {
                 backgroundColor: _listening ? theme.colorScheme.error : null,
               ),
               onPressed: _toggle,
-              icon: Icon(_listening ? Icons.stop : Icons.mic),
+              icon: Icon(
+                _listening ? Ti.playerStopFilled : Ti.microphoneFilled,
+              ),
               label: Text(
                 _listening
                     ? context.tr('settings.jobs.current.stop.label')

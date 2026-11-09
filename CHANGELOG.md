@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Changed
+
+- New icons: every icon in the app, the four section icons in the bottom bar included, is now from Tabler Icons (MIT licence). The back, close and menu buttons of every screen use them too. Settings names them at the bottom, and pressing that line lists the licences.
+
 ### Fixed
 
 - Anthologies no longer opens saying "This phone is not paired" and needing Try again: it waits until the phone has read its pairing, then shows your anthologies. The bottom bar no longer wraps a tab's name onto two lines: when a name will not fit on one line, only the open tab keeps its name.

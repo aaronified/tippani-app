@@ -1222,6 +1222,7 @@ const Map<String, String> englishTokens = {
   'app.settings.forget_this_server': 'Forget this server?',
   'app.settings.forget_this_server_2': 'Forget this server',
   'app.settings.free_software_gpl_3_0_source': 'Free software, GPL-3.0. Source: github.com/aaronified/tippani-app',
+  'app.settings.icons_by_tabler': 'Icons by Tabler Icons (MIT). Press for all licences.',
   'app.settings.needed_to_use_your_library': 'Needed to use your library',
   'app.settings.nothing_to_settle': 'Nothing to settle',
   'app.settings.pair_it_again_to_use_your': 'Pair it again to use your library.',

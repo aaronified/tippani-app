@@ -10,6 +10,7 @@ import 'anthology_tools.dart';
 import 'quiz_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// An anthology as plain text to send: its title and introduction, then each passage with where it is from and the
 /// reader's commentary on it.
@@ -192,7 +193,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'add-anthology',
         onPressed: _create,
-        icon: const Icon(Icons.add),
+        icon: const Icon(Ti.plus),
         label: Text(context.tr('anthologies.list.new.label')),
       ),
       body: _problem != null
@@ -242,13 +243,13 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
                             fallback: const SizedBox(
                               width: 40,
                               height: 56,
-                              child: Icon(Icons.collections_bookmark_outlined),
+                              child: Icon(Ti.books),
                             ),
                           ),
                         ),
                         title: Text(a.title),
                         subtitle: Text(countWords('passage', a.entries)),
-                        trailing: const Icon(Icons.chevron_right_rounded),
+                        trailing: const Icon(Ti.chevronRight),
                         onTap: () => _open(a),
                       ),
                     ),
@@ -685,7 +686,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                 ),
                 IconButton(
                   tooltip: context.tr('app.anthologies.remove_from_anthology'),
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Ti.x),
                   onPressed: () => _remove(e),
                 ),
                 menu,
@@ -771,18 +772,18 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           if (d != null) ...[
             IconButton(
               tooltip: context.tr('common.action.share.label'),
-              icon: const Icon(Icons.ios_share),
+              icon: const Icon(Ti.share2),
               onPressed: () =>
                   widget.share(anthologyShareText(d), d.anthology.title),
             ),
             IconButton(
               tooltip: context.tr('common.action.edit.label'),
-              icon: const Icon(Icons.edit_outlined),
+              icon: const Icon(Ti.pencil),
               onPressed: _edit,
             ),
             IconButton(
               tooltip: context.tr('common.action.delete.label'),
-              icon: const Icon(Icons.delete_outline),
+              icon: const Icon(Ti.trash),
               onPressed: _delete,
             ),
             PopupMenuButton<_Menu>(

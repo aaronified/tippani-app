@@ -6,6 +6,7 @@ import '../api/server_call.dart';
 import '../library/models.dart';
 import '../tools/cover_search.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Finds a cover or poster online: search by title, creator or ISBN (the work's own are filled in), see what the
 /// catalogues and picture suppliers have with the name of each, and press one to use it. Pops the chosen picture's
@@ -84,8 +85,7 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
               child: Image.network(
                 o.url,
                 fit: BoxFit.contain,
-                errorBuilder: (_, _, _) =>
-                    const Icon(Icons.broken_image_outlined, size: 48),
+                errorBuilder: (_, _, _) => const Icon(Ti.photoOff, size: 48),
               ),
             ),
             const SizedBox(height: 8),
@@ -182,7 +182,7 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     onPressed: _busy ? null : _go,
-                    icon: const Icon(Icons.search),
+                    icon: const Icon(Ti.search),
                     label: Text(context.tr('common.help.topbar.search.term')),
                   ),
                 ),
@@ -245,9 +245,8 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
                                     o.shown,
                                     fit: BoxFit.cover,
                                     width: double.infinity,
-                                    errorBuilder: (_, _, _) => const Center(
-                                      child: Icon(Icons.broken_image_outlined),
-                                    ),
+                                    errorBuilder: (_, _, _) =>
+                                        const Center(child: Icon(Ti.photoOff)),
                                   ),
                                 ),
                               ),

@@ -8,6 +8,7 @@ import 'harness/app_log.dart';
 import 'harness/harness.dart';
 import 'library/library_store.dart';
 import 'settings/settings_store.dart';
+import 'theme/tabler_licence.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,5 +22,6 @@ Future<void> main() async {
   );
   final harness = Harness.open(settings, controller, library: library);
   await harness.start();
+  registerTablerLicence();
   runApp(TippaniApp(controller: controller, harness: harness));
 }

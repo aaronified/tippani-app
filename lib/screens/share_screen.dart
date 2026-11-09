@@ -12,6 +12,7 @@ import '../share/share_picture.dart';
 import 'quote_card.dart' show captureCard;
 import 'quote_screen.dart' show ShareImage;
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Puts text on the clipboard. A function so a test can stand in for the clipboard.
 typedef CopyText = Future<void> Function(String text);
@@ -505,17 +506,17 @@ class _ShareScreenState extends State<ShareScreen> {
               children: [
                 FilledButton.icon(
                   onPressed: _busy ? null : _sharePicture,
-                  icon: const Icon(Icons.ios_share),
+                  icon: const Icon(Ti.share2),
                   label: Text(context.tr('common.action.share.label')),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _busy ? null : _copyPicture,
-                  icon: const Icon(Icons.copy_rounded),
+                  icon: const Icon(Ti.copy),
                   label: Text(context.tr('app.share.copy_picture')),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _busy ? null : _savePicture,
-                  icon: const Icon(Icons.save_alt),
+                  icon: const Icon(Ti.deviceFloppy),
                   label: Text(context.tr('app.share.save_picture')),
                 ),
               ],
@@ -540,12 +541,12 @@ class _ShareScreenState extends State<ShareScreen> {
               children: [
                 FilledButton.icon(
                   onPressed: _shareText,
-                  icon: const Icon(Icons.ios_share),
+                  icon: const Icon(Ti.share2),
                   label: Text(context.tr('common.action.share.label')),
                 ),
                 FilledButton.tonalIcon(
                   onPressed: _copy,
-                  icon: const Icon(Icons.copy_outlined),
+                  icon: const Icon(Ti.copy),
                   label: Text(context.tr('common.action.copy.label')),
                 ),
               ],

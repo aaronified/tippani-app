@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/server_call.dart';
 import '../people/people_console.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 void _say(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
@@ -249,7 +250,7 @@ Future<PickRow?> pickRecord(
                   child: TextField(
                     autofocus: true,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.search),
+                      prefixIcon: Icon(Ti.search),
                       hintText: context.tr('common.help.topbar.search.term'),
                     ),
                     onChanged: (v) => set(() => query = v.trim().toLowerCase()),

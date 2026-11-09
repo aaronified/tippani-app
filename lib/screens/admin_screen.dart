@@ -9,6 +9,7 @@ import 'admin_sources_screen.dart';
 import 'admin_update_screen.dart';
 import 'admin_users_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Running the server: its users, jobs, backups, updates, library folders and metadata sources. Only an admin
 /// account is offered this (Settings hides it for anyone else), and the server checks again on every call.
@@ -38,7 +39,7 @@ class AdminScreen extends StatelessWidget {
           leading: Icon(icon),
           title: Text(title),
           subtitle: Text(hint),
-          trailing: const Icon(Icons.chevron_right_rounded),
+          trailing: const Icon(Ti.chevronRight),
           onTap: () =>
               Navigator.of(context)
                   .push(MaterialPageRoute<void>(builder: (_) => to())),
@@ -53,37 +54,37 @@ class AdminScreen extends StatelessWidget {
         padding: const EdgeInsets.only(top: 8, bottom: 24),
         children: [
           row(
-            Icons.group_outlined,
+            Ti.users,
             'Users',
             context.tr('app.admin.add_a_reader_make_an_admin'),
             () => AdminUsersScreen(service: service, myName: myName),
           ),
           row(
-            Icons.work_history_outlined,
+            Ti.history,
             context.tr('settings.section.jobs.label'),
             context.tr('app.admin.what_is_running_and_waiting_what'),
             () => AdminJobsScreen(service: service),
           ),
           row(
-            Icons.backup_outlined,
+            Ti.databaseExport,
             context.tr('app.admin_backup.server_backup'),
             context.tr('app.admin.make_a_backup_keep_it_on'),
             () => AdminBackupScreen(service: service, files: files),
           ),
           row(
-            Icons.system_update_alt_rounded,
+            Ti.circleArrowDown,
             context.tr('app.admin_update.server_updates'),
             context.tr('app.admin.the_version_it_runs_and_updating'),
             () => AdminUpdateScreen(service: service),
           ),
           row(
-            Icons.folder_open_outlined,
+            Ti.folderOpen,
             context.tr('settings.library.folders.label'),
             context.tr('app.admin.folders_on_the_server_that_quotes'),
             () => AdminFoldersScreen(service: service),
           ),
           row(
-            Icons.travel_explore_rounded,
+            Ti.worldSearch,
             context.tr('metadata.help.metadata-sources.term'),
             context.tr('app.admin.who_the_server_asks_for_details'),
             () => AdminSourcesScreen(service: service),

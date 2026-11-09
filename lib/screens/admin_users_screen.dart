@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// The accounts on the server: add one, make one an admin or step them down, remove one. The server refuses to
 /// remove yourself or another admin, and says why; its words are shown as they come.
@@ -188,7 +189,7 @@ class _Users extends StatelessWidget {
           child: FloatingActionButton.extended(
             heroTag: 'add-user',
             onPressed: () => _add(context),
-            icon: const Icon(Icons.person_add_alt_1_rounded),
+            icon: const Icon(Ti.userPlus),
             label: Text(context.tr('app.admin_users.add_a_user')),
           ),
         ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/server_call.dart';
 import '../tools/server_tools.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 export 'stats_screen.dart';
 
@@ -95,7 +96,7 @@ class _BinScreenState extends State<BinScreen> {
           if (bin != null && bin.entries.isNotEmpty)
             IconButton(
               tooltip: context.tr('app.tools.empty_the_bin'),
-              icon: const Icon(Icons.delete_sweep_outlined),
+              icon: const Icon(Ti.trashX),
               onPressed: () async {
                 if (await _confirm(
                   context.tr('bin.confirm.title'),
@@ -173,13 +174,13 @@ class _BinScreenState extends State<BinScreen> {
                               tooltip: context.tr(
                                 'common.action.restore.label',
                               ),
-                              icon: const Icon(Icons.restore),
+                              icon: const Icon(Ti.history),
                               onPressed: () =>
                                   _act(() => widget.tools.restore(e.id)),
                             ),
                             IconButton(
                               tooltip: context.tr('app.tools.delete_for_good'),
-                              icon: const Icon(Icons.delete_forever_outlined),
+                              icon: const Icon(Ti.trashX),
                               onPressed: () async {
                                 if (await _confirm(
                                   context.tr('app.tools.delete_for_good_2'),

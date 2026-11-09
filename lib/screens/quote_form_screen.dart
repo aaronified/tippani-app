@@ -11,6 +11,7 @@ import 'capture_screen.dart';
 import 'voice_screen.dart';
 import 'work_form_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// The colour a quote's name stands for, drawn in the theme's own tone so it works in light and dark.
 Color quoteColour(String name) {
@@ -353,7 +354,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           if (editing)
             IconButton(
               tooltip: context.tr('common.action.delete.label'),
-              icon: const Icon(Icons.delete_outline),
+              icon: const Icon(Ti.trash),
               onPressed: _delete,
             ),
           TextButton(
@@ -389,12 +390,12 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             children: [
               OutlinedButton.icon(
                 onPressed: _scan,
-                icon: const Icon(Icons.document_scanner_outlined),
+                icon: const Icon(Ti.scan),
                 label: Text(context.tr('app.capture.scan_a_page')),
               ),
               OutlinedButton.icon(
                 onPressed: _speak,
-                icon: const Icon(Icons.mic_none),
+                icon: const Icon(Ti.microphone),
                 label: Text(context.tr('app.quote_form.speak')),
               ),
             ],
@@ -436,7 +437,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: _newWork,
-              icon: const Icon(Icons.add),
+              icon: const Icon(Ti.plus),
               label: Text(context.tr('app.quote_form.new_work')),
             ),
           ),

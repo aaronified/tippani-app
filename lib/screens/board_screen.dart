@@ -12,6 +12,7 @@ import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import 'quote_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// How the quotes of a board are put in order.
 enum BoardSort {
@@ -232,7 +233,7 @@ class _BoardScreenState extends State<BoardScreen> {
         actions: [
           PopupMenuButton<BoardSort>(
             tooltip: context.tr('common.filters.sort.aria'),
-            icon: const Icon(Icons.sort_rounded),
+            icon: const Icon(Ti.arrowsSort),
             initialValue: _sort,
             onSelected: (s) => setState(() => _sort = s),
             itemBuilder: (_) => [
@@ -246,7 +247,7 @@ class _BoardScreenState extends State<BoardScreen> {
           ),
           PopupMenuButton<BoardGroup>(
             tooltip: context.tr('app.board.group'),
-            icon: const Icon(Icons.segment_rounded),
+            icon: const Icon(Ti.alignLeft),
             initialValue: _group,
             onSelected: (g) => setState(() => _group = g),
             itemBuilder: (_) => [

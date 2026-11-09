@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import 'app_log.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Shares text through Android's share sheet. A function so a test can stand in for it.
 typedef ShareText = Future<void> Function(String text, String subject);
@@ -79,17 +80,17 @@ class _LogScreenState extends State<LogScreen> {
         actions: [
           IconButton(
             tooltip: context.tr('common.action.copy.label'),
-            icon: const Icon(Icons.copy),
+            icon: const Icon(Ti.copy),
             onPressed: text.isEmpty ? null : _copy,
           ),
           IconButton(
             tooltip: context.tr('common.action.share.label'),
-            icon: const Icon(Icons.share),
+            icon: const Icon(Ti.share),
             onPressed: text.isEmpty ? null : _share,
           ),
           IconButton(
             tooltip: context.tr('common.selection.shelf.clear.label'),
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Ti.trash),
             onPressed: _clear,
           ),
         ],

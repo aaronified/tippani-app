@@ -4,6 +4,7 @@ import '../api/server_call.dart';
 import '../metadata/metadata_service.dart';
 import '../people/picture.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 void _say(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
@@ -350,9 +351,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                                     color: scheme.surfaceContainerHighest,
                                     alignment: Alignment.center,
                                     child: Icon(
-                                      w.isBook
-                                          ? Icons.menu_book_outlined
-                                          : Icons.movie_outlined,
+                                      w.isBook ? Ti.book2 : Ti.movie,
                                       size: 20,
                                     ),
                                   ),
@@ -387,7 +386,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                                   setState(() => _picked.add(_key(w))),
                               trailing: _picked.isNotEmpty
                                   ? null
-                                  : const Icon(Icons.travel_explore_rounded),
+                                  : const Icon(Ti.worldSearch),
                             ),
                           ),
                         ),
@@ -470,7 +469,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
         leading: selecting
             ? IconButton(
                 tooltip: context.tr('app.metadata_tools.clear_the_choice'),
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(Ti.x),
                 onPressed: () => setState(_picked.clear),
               )
             : null,
@@ -492,7 +491,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                       setState(_picked.clear);
                       _check(chosen);
                     },
-              icon: const Icon(Icons.travel_explore_rounded),
+              icon: const Icon(Ti.worldSearch),
               label: Text(context.tr('app.metadata_tools.re_check')),
             )
           else
@@ -540,7 +539,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                   hintText: context.tr(
                     'app.metadata_tools.search_titles_and_creators',
                   ),
-                  leading: const Icon(Icons.search),
+                  leading: const Icon(Ti.search),
                   elevation: const WidgetStatePropertyAll(0),
                   onChanged: (v) => setState(() => _query = v.trim()),
                 ),
@@ -785,7 +784,7 @@ class _ReverifyReviewScreenState extends State<ReverifyReviewScreen> {
                 height: 18,
                 child: CircularProgressIndicator(strokeWidth: 2.5),
               )
-            : const Icon(Icons.check_rounded),
+            : const Icon(Ti.check),
         label: Text(_count == 0 ? 'Nothing ticked' : 'Apply $_count'),
       ),
     );

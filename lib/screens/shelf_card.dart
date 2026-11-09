@@ -5,6 +5,7 @@ import '../l10n/l10n.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
 import '../tools/work_details_source.dart';
+import '../theme/tabler.dart';
 
 /// The word the server uses for "in progress" on a work: reading a book, watching a film or show, playing a game.
 String activeStatusOf(WorkKind kind) => switch (kind) {
@@ -118,7 +119,7 @@ class _ShelfCardState extends State<ShelfCard> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.bookmark_outline_rounded, color: scheme.primary),
+                  Icon(Ti.bookmark, color: scheme.primary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

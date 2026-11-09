@@ -76,6 +76,14 @@ phone.
   [ADR-Index.md](docs/wiki/ADR-Index.md).
 - **Server work the app needs** is filed as issues on [Tippani](https://github.com/aaronified/tippani/issues); this repository's issues are the app's.
 
+## Acknowledgements
+
+- **[Tabler Icons](https://tabler.io/icons)** by Paweł Kuna (MIT): every icon in the app. The licence is in
+  [assets/fonts/tabler/LICENSE](assets/fonts/tabler/LICENSE), and the app lists it under Settings, in the version line at the bottom.
+  `assets/fonts/tabler/*.ttf` hold only the icons the app draws.
+- Inter, Source Serif 4, Newsreader and the other faces are under the SIL Open Font Licence, with their licences beside them.
+- [Tesseract](https://github.com/tesseract-ocr/tesseract) (Apache-2.0) for text recognition.
+
 ## Licence
 
 [GPL-3.0](LICENSE). Tippani itself is MIT.

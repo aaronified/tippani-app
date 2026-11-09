@@ -18,6 +18,7 @@ import 'quote_form_screen.dart';
 import 'shelf_card.dart' show shelfStatusLabel;
 import 'work_form_screen.dart' show workKindLabel;
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// One quote in a list: its words in the serif, who and what it is from, a thin edge in the quote's colour,
 /// and a star to favourite it.
@@ -156,9 +157,7 @@ class QuoteTile extends StatelessWidget {
                           : context.tr('common.field.favourite.label'),
                       visualDensity: VisualDensity.compact,
                       icon: Icon(
-                        quote.favorite
-                            ? Icons.star_rounded
-                            : Icons.star_border_rounded,
+                        quote.favorite ? Ti.starFilled : Ti.star,
                         color: quote.favorite
                             ? scheme.primary
                             : scheme.onSurfaceVariant,
@@ -169,10 +168,7 @@ class QuoteTile extends StatelessWidget {
                       IconButton(
                         tooltip: context.tr('common.action.anthology.label'),
                         visualDensity: VisualDensity.compact,
-                        icon: Icon(
-                          Icons.collections_bookmark_outlined,
-                          color: scheme.onSurfaceVariant,
-                        ),
+                        icon: Icon(Ti.books, color: scheme.onSurfaceVariant),
                         onPressed: onAddToAnthology,
                       ),
                   ],
@@ -308,10 +304,7 @@ class WorkTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: scheme.onSurfaceVariant,
-                ),
+                Icon(Ti.chevronRight, color: scheme.onSurfaceVariant),
               ],
             ),
           ),

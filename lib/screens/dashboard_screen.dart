@@ -16,6 +16,7 @@ import 'quiz_screen.dart';
 import 'quote_screen.dart';
 import 'search_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// The words at the top of Home for [now]: a greeting for the time of day (with [name] when the phone knows who it is
 /// paired as), and one line about keeping quotes for the day.
@@ -460,7 +461,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: _tile(
               context,
-              icon: Icons.auto_stories_outlined,
+              icon: Ti.notebook,
               big: '$books',
               label: books == 1
                   ? context.tr('app.count.book_word.one')
@@ -473,7 +474,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: _tile(
               context,
-              icon: Icons.movie_outlined,
+              icon: Ti.movie,
               big: '$titles',
               label: titles == 1 ? 'title' : 'titles',
               small: '$screenQuotes ${screenQuotes == 1 ? 'line' : 'lines'}',
@@ -541,10 +542,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Card(
         color: scheme.secondaryContainer,
         child: ListTile(
-          leading: Icon(
-            Icons.move_to_inbox_outlined,
-            color: scheme.onSecondaryContainer,
-          ),
+          leading: Icon(Ti.archive, color: scheme.onSecondaryContainer),
           title: Text(
             trn('app.dashboard.imports_waiting', _pendingImports),
             style: TextStyle(color: scheme.onSecondaryContainer),
@@ -569,10 +567,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Card(
         color: scheme.tertiaryContainer,
         child: ListTile(
-          leading: Icon(
-            Icons.cloud_upload_outlined,
-            color: scheme.onTertiaryContainer,
-          ),
+          leading: Icon(Ti.cloudUpload, color: scheme.onTertiaryContainer),
           title: Text(
             trn('app.dashboard.answers_waiting', n),
             style: TextStyle(color: scheme.onTertiaryContainer),
@@ -666,7 +661,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 14),
             FilledButton.icon(
               onPressed: () => _play(QuizMode.daily),
-              icon: const Icon(Icons.play_arrow_rounded),
+              icon: const Icon(Ti.playerPlayFilled),
               label: Text(
                 done > 0
                     ? context.tr('home.daily.resume.label')
@@ -687,7 +682,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.bolt_rounded, color: scheme.primary, size: 20),
+                  Icon(Ti.bolt, color: scheme.primary, size: 20),
                   const SizedBox(width: 6),
                   Text(
                     context.tr('app.dashboard.daily_quiz'),
@@ -701,10 +696,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   if (s != null && s.streak > 0)
                     Chip(
                       visualDensity: VisualDensity.compact,
-                      avatar: const Icon(
-                        Icons.local_fire_department_rounded,
-                        size: 18,
-                      ),
+                      avatar: const Icon(Ti.flame, size: 18),
                       label: Text(
                         context.tr('app.dashboard.streak_day_streak', {
                           'streak': s.streak,
@@ -737,11 +729,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Row(
                 children: [
-                  Icon(
-                    Icons.fitness_center_rounded,
-                    color: scheme.primary,
-                    size: 20,
-                  ),
+                  Icon(Ti.barbell, color: scheme.primary, size: 20),
                   const SizedBox(width: 6),
                   Text(
                     context.tr('app.dashboard.practice'),
@@ -778,7 +766,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onPressed: available
                         ? () => _play(QuizMode.practice)
                         : null,
-                    icon: const Icon(Icons.play_arrow_rounded),
+                    icon: const Icon(Ti.playerPlayFilled),
                     label: Text(context.tr('home.practice.start.label')),
                   ),
                   if (s != null && s.practiceAnswered > 0) ...[
@@ -899,7 +887,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
               onPressed: _quotes.isEmpty ? null : _shuffle,
-              icon: const Icon(Icons.shuffle_rounded),
+              icon: const Icon(Ti.arrowsShuffle),
               label: Text(shuffled == null ? 'Shuffle' : 'Another one'),
             ),
           ),

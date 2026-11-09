@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Saves [patch] to the account's preferences and tells the reader when the server refused it, in its words.
 Future<void> savePrefs(BuildContext context, Map<String, Object?> patch) async {
@@ -99,7 +100,7 @@ class ChoiceTile<T> extends StatelessWidget {
       leading: icon == null ? null : Icon(icon),
       title: Text(title),
       subtitle: Text([?current?.label, ?subtitle].join(' · ')),
-      trailing: const Icon(Icons.expand_more_rounded),
+      trailing: const Icon(Ti.chevronDown),
       onTap: () async {
         final picked = await showModalBottomSheet<T>(
           context: context,
