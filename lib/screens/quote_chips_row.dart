@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../library/models.dart';
+import '../widgets/edge_fade_row.dart';
 import '../library/quote_chips.dart';
 import '../people/people_directory.dart';
 import '../people/people_service.dart';
@@ -35,25 +36,19 @@ class QuoteChipsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final chips = chipsFor(quote, work, omitAuthor: omitAuthor);
     if (chips.isEmpty) return const SizedBox.shrink();
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final c in chips)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: PersonChip(
-                chip: c,
-                dense: dense,
-                // where the server's people are known, a press opens the person's page (which can still filter the
-                // library); without them it filters at once
-                onTap: () => PeopleServiceScope.of(context) == null
-                    ? onTap(ChipFilter(c.name))
-                    : openPersonPage(context, chip: c, onFilter: onTap),
-              ),
-            ),
-        ],
-      ),
+    return EdgeFadeRow(
+      children: [
+        for (final c in chips)
+          PersonChip(
+            chip: c,
+            dense: dense,
+            // where the server's people are known, a press opens the person's page (which can still filter the
+            // library); without them it filters at once
+            onTap: () => PeopleServiceScope.of(context) == null
+                ? onTap(ChipFilter(c.name))
+                : openPersonPage(context, chip: c, onFilter: onTap),
+          ),
+      ],
     );
   }
 }
@@ -69,26 +64,20 @@ class CreatorPills extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (names.isEmpty) return const SizedBox.shrink();
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final n in names)
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: PersonChip(
-                chip: QuoteChip(ChipKind.author, n),
-                onTap: () => PeopleServiceScope.of(context) == null
-                    ? onTap(ChipFilter(n))
-                    : openPersonPage(
-                        context,
-                        chip: QuoteChip(ChipKind.author, n),
-                        onFilter: onTap,
-                      ),
-              ),
-            ),
-        ],
-      ),
+    return EdgeFadeRow(
+      children: [
+        for (final n in names)
+          PersonChip(
+            chip: QuoteChip(ChipKind.author, n),
+            onTap: () => PeopleServiceScope.of(context) == null
+                ? onTap(ChipFilter(n))
+                : openPersonPage(
+                    context,
+                    chip: QuoteChip(ChipKind.author, n),
+                    onFilter: onTap,
+                  ),
+          ),
+      ],
     );
   }
 }
