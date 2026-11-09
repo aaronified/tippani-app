@@ -548,6 +548,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
             child: TextField(
+              textCapitalization: TextCapitalization.none,
               controller: _search,
               onChanged: (_) => _load(),
               textInputAction: TextInputAction.search,

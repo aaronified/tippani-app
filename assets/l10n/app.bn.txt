@@ -944,8 +944,6 @@ app.quote_context.the_server_has_no_context_for = এই উক্তির ক�
 app.quote_context.the_start_of_the_chapter_or = অধ্যায় বা দৃশ্যের শুরু।
 
 # --- quote_form ---
-app.quote_form.chapters_you_used = যে অধ্যায়গুলো আপনি ব্যবহার করেছেন
-app.quote_form.in_this_work = এই রচনায়
 app.quote_form.it_is_removed_from_this_phone = এটি এই ফোন থেকে সরে যায়। এটি আর ফেরানো যাবে না।
 app.quote_form.language_of_the_words = লেখার ভাষা
 app.quote_form.new_work = নতুন রচনা
@@ -954,7 +952,6 @@ app.quote_form.separated_by_commas = কমা দিয়ে আলাদা �
 app.quote_form.speak = বলুন
 app.quote_form.the_words = শব্দগুলো
 app.quote_form.title_creator = {title} · {creator}
-app.quote_form.your_tags = আপনার ট্যাগ
 
 # --- read_aloud_settings ---
 app.read_aloud_settings.automatic = স্বয়ংক্রিয়
@@ -1346,3 +1343,7 @@ app.quote_card.no_tags = ট্যাগ নেই
 app.quote_card.open = খুলুন
 app.quote_card.no_voice = এই ফোনে "{language}" ভাষার কোনো কণ্ঠ নেই।
 app.quote_card.more = এই উক্তির আরও
+app.quote_form.occasion = উপলক্ষ
+app.quote_form.chapter = অধ্যায়
+app.quote_form.place = জায়গা
+app.quote_form.page_or_position = পৃষ্ঠা বা অবস্থান

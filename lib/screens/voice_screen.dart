@@ -133,6 +133,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
           ],
           const SizedBox(height: 16),
           TextField(
+            textCapitalization: TextCapitalization.sentences,
             controller: _text,
             minLines: 4,
             maxLines: 12,

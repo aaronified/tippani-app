@@ -70,6 +70,7 @@ Future<bool> editSpellings(
           ),
           const SizedBox(height: 12),
           TextField(
+            textCapitalization: TextCapitalization.words,
             controller: c,
             autofocus: true,
             minLines: 3,
@@ -248,6 +249,7 @@ Future<PickRow?> pickRecord(
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: TextField(
+                    textCapitalization: TextCapitalization.none,
                     autofocus: true,
                     decoration: InputDecoration(
                       prefixIcon: Icon(Ti.search),
@@ -346,6 +348,7 @@ Future<CharacterEdit?> characterForm(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              textCapitalization: TextCapitalization.words,
               controller: n,
               autofocus: name.isEmpty,
               decoration: InputDecoration(
@@ -353,6 +356,7 @@ Future<CharacterEdit?> characterForm(
               ),
             ),
             TextField(
+              textCapitalization: TextCapitalization.sentences,
               controller: d,
               minLines: 2,
               maxLines: 6,
@@ -363,6 +367,7 @@ Future<CharacterEdit?> characterForm(
               ),
             ),
             TextField(
+              textCapitalization: TextCapitalization.none,
               controller: b,
               decoration: InputDecoration(
                 labelText: context.tr(
@@ -371,6 +376,7 @@ Future<CharacterEdit?> characterForm(
               ),
             ),
             TextField(
+              textCapitalization: TextCapitalization.none,
               controller: l,
               minLines: 1,
               maxLines: 4,
@@ -383,6 +389,7 @@ Future<CharacterEdit?> characterForm(
               ),
             ),
             TextField(
+              textCapitalization: TextCapitalization.sentences,
               controller: o,
               minLines: 1,
               maxLines: 4,

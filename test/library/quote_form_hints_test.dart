@@ -5,13 +5,23 @@ import 'package:tippani/screens/quote_form_screen.dart';
 
 import '../support/memory_library.dart';
 
+Future<void> _type(WidgetTester tester, String label, String text) async {
+  final field = find.widgetWithText(TextField, label);
+  await tester.enterText(field, text);
+  await tester.pumpAndSettle();
+}
+
 void main() {
+  void bigScreen(WidgetTester tester) {
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+  }
+
   testWidgets(
-    'the form offers the work\'s characters, its chapters and the tags you have',
+    'who said it suggests the work\'s characters and the speakers already used, and a second name follows a comma',
     (tester) async {
-      tester.view.physicalSize = const Size(800, 3000);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
+      bigScreen(tester);
       final lib = MemoryLibrary();
       final film = await lib.addWork(
         const WorkDraft(title: 'Casablanca', kind: WorkKind.film),
@@ -34,7 +44,6 @@ void main() {
           tags: const ['love'],
         ),
       );
-
       await tester.pumpWidget(
         MaterialApp(
           home: QuoteFormScreen(store: lib, workId: film.id),
@@ -42,32 +51,114 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // the cast and the speakers already used in this work
-      expect(find.widgetWithText(ActionChip, 'Rick Blaine'), findsOneWidget);
-      expect(find.widgetWithText(ActionChip, 'Ilsa Lund'), findsOneWidget);
-      expect(
-        find.widgetWithText(ActionChip, 'Captain Renault'),
-        findsOneWidget,
-      );
-      // the chapters already used
-      expect(find.widgetWithText(ActionChip, 'Act 3'), findsOneWidget);
-      // the tags the library has
-      expect(find.widgetWithText(ActionChip, 'love'), findsOneWidget);
-
-      // pressing a name adds it to the box, and a second one after a comma
-      await tester.tap(find.widgetWithText(ActionChip, 'Rick Blaine'));
-      await tester.pump();
-      await tester.tap(find.widgetWithText(ActionChip, 'Ilsa Lund'));
-      await tester.pump();
+      await _type(tester, 'Who said it', 'ri');
+      expect(find.widgetWithText(ListTile, 'Rick Blaine'), findsOneWidget);
+      await tester.tap(find.widgetWithText(ListTile, 'Rick Blaine'));
+      await tester.pumpAndSettle();
+      await _type(tester, 'Who said it', 'Rick Blaine, cap');
+      expect(find.widgetWithText(ListTile, 'Captain Renault'), findsOneWidget);
+      await tester.tap(find.widgetWithText(ListTile, 'Captain Renault'));
+      await tester.pumpAndSettle();
       final who = tester.widget<TextField>(
         find.widgetWithText(TextField, 'Who said it'),
       );
-      expect(who.controller!.text, 'Rick Blaine, Ilsa Lund');
+      expect(who.controller!.text, 'Rick Blaine, Captain Renault');
+    },
+  );
 
-      // a tag already in the box is no longer offered
-      await tester.tap(find.widgetWithText(ActionChip, 'love'));
-      await tester.pump();
-      expect(find.widgetWithText(ActionChip, 'love'), findsNothing);
+  testWidgets('a work in a series offers the characters of the whole series', (
+    tester,
+  ) async {
+    bigScreen(tester);
+    final lib = MemoryLibrary();
+    final chamber = await lib.addWork(
+      const WorkDraft(title: 'Chamber of Secrets'),
+    );
+    final azkaban = await lib.addWork(
+      const WorkDraft(title: 'Prisoner of Azkaban'),
+    );
+    final other = await lib.addWork(const WorkDraft(title: 'Dune'));
+    await lib.setWorkDetails(
+      chamber.id,
+      const WorkDetails(
+        series: 'Harry Potter',
+        cast: [CastMember(character: 'Dobby')],
+      ),
+    );
+    await lib.setWorkDetails(
+      azkaban.id,
+      const WorkDetails(
+        series: 'harry potter',
+        cast: [CastMember(character: 'Sirius Black')],
+      ),
+    );
+    await lib.setWorkDetails(
+      other.id,
+      const WorkDetails(cast: [CastMember(character: 'Paul Atreides')]),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: QuoteFormScreen(store: lib, workId: azkaban.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _type(tester, 'Who said it', 'do');
+    expect(find.widgetWithText(ListTile, 'Dobby'), findsOneWidget);
+    await _type(tester, 'Who said it', 'si');
+    expect(find.widgetWithText(ListTile, 'Sirius Black'), findsOneWidget);
+    // a character of another work stays out
+    await _type(tester, 'Who said it', 'pa');
+    expect(find.widgetWithText(ListTile, 'Paul Atreides'), findsNothing);
+  });
+
+  testWidgets(
+    'the chapter is chosen by name or by number and keeps both, and tags suggest the library\'s tags',
+    (tester) async {
+      bigScreen(tester);
+      final lib = MemoryLibrary();
+      final w = await lib.addWork(const WorkDraft(title: 'Moby-Dick'));
+      for (final c in [
+        '10. The Carpet-Bag',
+        '2. The Carpet-Bag Returns',
+        '1. Loomings',
+      ]) {
+        await lib.addQuote(
+          QuoteDraft(
+            text: 'x $c',
+            workId: w.id,
+            chapter: c,
+            tags: const ['sea'],
+          ),
+        );
+      }
+      await tester.pumpWidget(
+        MaterialApp(
+          home: QuoteFormScreen(store: lib, workId: w.id),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // by the name
+      await _type(tester, 'Chapter', 'loom');
+      expect(find.widgetWithText(ListTile, '1. Loomings'), findsOneWidget);
+      await tester.tap(find.widgetWithText(ListTile, '1. Loomings'));
+      await tester.pumpAndSettle();
+      var chapter = tester.widget<TextField>(
+        find.widgetWithText(TextField, 'Chapter'),
+      );
+      expect(chapter.controller!.text, '1. Loomings');
+      // by the number, in chapter order
+      await _type(tester, 'Chapter', '10');
+      await tester.tap(find.widgetWithText(ListTile, '10. The Carpet-Bag'));
+      await tester.pumpAndSettle();
+      chapter = tester.widget<TextField>(
+        find.widgetWithText(TextField, 'Chapter'),
+      );
+      expect(chapter.controller!.text, '10. The Carpet-Bag');
+
+      await _type(tester, 'Tags', 'se');
+      expect(find.widgetWithText(ListTile, 'sea'), findsOneWidget);
     },
   );
 }

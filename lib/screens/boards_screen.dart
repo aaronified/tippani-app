@@ -208,6 +208,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
                   if (kind == 'proverb') ...[
                     const SizedBox(height: 12),
                     TextField(
+                      textCapitalization: TextCapitalization.none,
                       controller: languages,
                       decoration: InputDecoration(
                         labelText: context.tr(

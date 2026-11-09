@@ -148,6 +148,7 @@ class _TagsScreenState extends State<TagsScreen> {
       builder: (context) => AlertDialog(
         title: Text(title),
         content: TextField(
+          textCapitalization: TextCapitalization.none,
           controller: c,
           autofocus: true,
           maxLength: 64,
@@ -503,6 +504,7 @@ class _TagsScreenState extends State<TagsScreen> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: TextField(
+                    textCapitalization: TextCapitalization.none,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Ti.search),
                       hintText: context.tr('app.tags.find_a_tag'),

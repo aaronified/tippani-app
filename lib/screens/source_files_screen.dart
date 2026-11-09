@@ -306,6 +306,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: TextField(
+                      textCapitalization: TextCapitalization.none,
                       decoration: InputDecoration(
                         prefixIcon: Icon(Ti.search),
                         hintText: context.tr(
@@ -345,6 +346,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
         builder: (context) => AlertDialog(
           title: Text(context.tr('common.source.episode.title')),
           content: TextField(
+            textCapitalization: TextCapitalization.none,
             controller: c,
             autofocus: true,
             decoration: InputDecoration(

@@ -505,6 +505,7 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         titleSpacing: 0,
         title: TextField(
+          textCapitalization: TextCapitalization.none,
           controller: _text,
           focusNode: _focus,
           autofocus: widget.initial.isEmpty,
@@ -1031,6 +1032,7 @@ class _ValuePickerState extends State<_ValuePicker> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: TextField(
+                  textCapitalization: TextCapitalization.none,
                   autofocus: true,
                   onChanged: (v) => setState(() => _q = v),
                   decoration: InputDecoration(
