@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Colours: Settings, Colours chooses where the app's colours come from: Material You (your wallpaper, as before), the colours of a photo you pick, or a palette (Tippani red, indigo, teal, forest, rose, amber, slate). The change shows at once.
+
 ### Changed
 
 - Edit fields suggest as you type: Who said it offers the characters of the work and of the rest of its series (the third book offers the second's characters) and who has spoken there before; Chapter offers the chapters already used in the work, in chapter order, and picking one by its name or its number fills in both; the credit on a work (author, director, studio) offers the people your server holds for that kind of work and the credits already in your library; Language and Tags offer what you already use. You can still type something new.

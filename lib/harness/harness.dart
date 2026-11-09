@@ -37,6 +37,7 @@ import '../sync/pull_sync.dart';
 import '../sync/push_sync.dart';
 import '../settings/settings_backup.dart';
 import '../settings/settings_store.dart';
+import '../theme/theme_choice.dart';
 import 'apk_install.dart';
 import 'app_log.dart';
 import 'backup.dart';
@@ -145,6 +146,9 @@ class Harness {
   final BackupService backup;
   final BackupPicker picker;
   final SettingsStore settings;
+
+  /// Where the app's colours come from (the phone's, a photo, or a palette); kept on this phone.
+  late final ThemeChoice themeChoice = ThemeChoice(settings);
 
   /// The phone's own library of works and quotes, which is what lets the app work with no server. Null
   /// only in a test that is about something else.
