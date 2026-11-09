@@ -78,9 +78,16 @@ class AppController extends ChangeNotifier {
   /// the next time the app opens, not whenever a stored flag is cleared.
   bool get isAdmin => paired && _isAdmin;
 
+  bool _loaded = false;
+
+  /// Whether the stored token has been read yet. Until it has, [paired] is false whatever the phone holds, so a
+  /// screen that opens at start must not read that as "not paired".
+  bool get loaded => _loaded;
+
   /// Reads the stored token once at start.
   Future<void> load() async {
     _token = await _settings.token();
+    _loaded = true;
     notifyListeners();
     await loadAccount();
   }
