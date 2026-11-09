@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Colours: Settings, Colours chooses where the app's colours come from: Material You (your wallpaper, as before), the colours of a photo you pick, or a palette (Tippani red, indigo, teal, forest, rose, amber, slate). The change shows at once.
+
 ### Changed
 
 - The context viewer is a scroller: Show where it comes from on a quote opens one screen with everything the server stored around it, above and below, the top and bottom fading out, your quote highlighted in its colour, and more loading as you reach either end. The characters of the work are picked out in the text, each in a colour of its own (by name and by the other names the server knows), with a row of them above; pressing one opens a sheet with their portrait, description, other names and how often they are named, and buttons for their page and for your quotes of theirs. The chapter and page are a chip in the top bar.

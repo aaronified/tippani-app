@@ -6,6 +6,7 @@ import 'filtered_quotes_screen.dart';
 import 'people_console_screen.dart';
 import 'conflicts_screen.dart';
 import 'read_aloud_settings_screen.dart';
+import 'theme_colours_screen.dart';
 import 'tools_screens.dart';
 
 import 'package:flutter/material.dart';
@@ -435,6 +436,17 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                ListTile(
+                  leading: const Icon(Ti.palette),
+                  title: Text(context.tr('app.theme.title')),
+                  subtitle: Text(context.tr('app.theme.settings_note')),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                          ThemeColoursScreen(choice: harness.themeChoice),
+                    ),
+                  ),
+                ),
                 ListTile(
                   leading: const Icon(Ti.speakerphone),
                   title: Text(context.tr('speech.play.aria')),
