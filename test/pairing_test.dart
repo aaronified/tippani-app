@@ -347,7 +347,7 @@ void main() {
         final r = await rig(s);
         await r.controller.pair('ABCD2345', 'My Android phone');
         await open(tester, r);
-        await tester.tap(find.text('Settings'));
+        await tester.tap(find.text('Server'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Paired devices'));
         await tester.pumpAndSettle();
@@ -385,7 +385,7 @@ void main() {
         final r = await rig(s);
         await r.controller.pair('ABCD2345', 'My Android phone');
         await open(tester, r);
-        await tester.tap(find.text('Settings'));
+        await tester.tap(find.text('Server'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Paired devices'));
         await tester.pumpAndSettle();
@@ -413,7 +413,7 @@ void main() {
       final r = await rig(FakeServer());
       await r.controller.pair('ABCD2345', 'My Android phone');
       await open(tester, r);
-      await tester.tap(find.text('Settings'));
+      await tester.tap(find.text('Server'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Unpair this phone'));
       await tester.pumpAndSettle();

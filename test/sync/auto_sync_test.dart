@@ -607,7 +607,7 @@ void main() {
       'Settings has a Sync conflicts entry that says there is nothing to settle',
       (tester) async {
         await open(tester);
-        await tester.tap(find.text('Settings'));
+        await tester.tap(find.text('Server'));
         await tester.pumpAndSettle();
         expect(find.text('Sync conflicts'), findsOneWidget);
         expect(find.text('Nothing to settle'), findsOneWidget);
@@ -622,7 +622,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byTooltip('2 sync conflicts'), findsOneWidget);
-        await tester.tap(find.text('Settings'));
+        await tester.tap(find.text('Server'));
         await tester.pumpAndSettle();
         expect(find.text('2 waiting for you'), findsOneWidget);
       },
@@ -662,7 +662,7 @@ void main() {
       'the Sync screen shows the switch and Sync now, and points to the conflicts',
       (tester) async {
         await open(tester, seed: withClash);
-        await tester.tap(find.text('Settings'));
+        await tester.tap(find.text('Server'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Sync with server'));
         await tester.pumpAndSettle();
@@ -676,7 +676,7 @@ void main() {
 
     testWidgets('the switch turns automatic sync off', (tester) async {
       await open(tester);
-      await tester.tap(find.text('Settings'));
+      await tester.tap(find.text('Server'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sync with server'));
       await tester.pumpAndSettle();

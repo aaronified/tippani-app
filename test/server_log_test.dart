@@ -400,16 +400,34 @@ void main() {
           await tester.pumpAndSettle();
         }
 
+        Future<void> serverTab() async {
+          await tester.tap(
+            find.descendant(
+              of: find.byType(NavigationBar),
+              matching: find.text('Server'),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+
         await settingsFor(FakeServer(admin: false));
 
+        // the app's log is the app's: in Settings, for everyone
         await scrollToBottom(tester);
         expect(find.text('App log'), findsOneWidget);
+        expect(find.text('Server log'), findsNothing);
+        await serverTab();
+        await scrollToBottom(tester);
         expect(find.text('Server log'), findsNothing);
 
         await settingsFor(FakeServer(admin: true));
 
         await scrollToBottom(tester);
         expect(find.text('App log'), findsOneWidget);
+        expect(find.text('Server log'), findsNothing);
+        // the server's own log is on the Server tab, for an admin
+        await serverTab();
+        await scrollToBottom(tester);
         expect(find.text('Server log'), findsOneWidget);
       },
     );
@@ -444,6 +462,13 @@ void main() {
         await tester.pageBack();
         await tester.pumpAndSettle();
 
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text('Server'),
+          ),
+        );
+        await tester.pumpAndSettle();
         await scrollToBottom(tester);
 
         await tester.tap(find.text('Server log'));

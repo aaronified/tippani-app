@@ -112,6 +112,9 @@ abstract final class Ti {
   /// ti-clock
   static const IconData clock = IconData(0xea70, fontFamily: _o);
 
+  /// ti-cloud
+  static const IconData cloud = IconData(0xea76, fontFamily: _o);
+
   /// ti-cloud-check
   static const IconData cloudCheck = IconData(0xf84d, fontFamily: _o);
 
@@ -411,6 +414,9 @@ abstract final class Ti {
 
   /// ti-unlink
   static const IconData unlink = IconData(0xeb46, fontFamily: _o);
+
+  /// ti-user
+  static const IconData user = IconData(0xeb4d, fontFamily: _o);
 
   /// ti-user-circle
   static const IconData userCircle = IconData(0xef68, fontFamily: _o);

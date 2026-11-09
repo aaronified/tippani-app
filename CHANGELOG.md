@@ -7,11 +7,15 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Changed
+
+- Four tabs: the bottom bar is now Home, Boards, Server and Settings. Boards holds your Library, Catalogue, Quotes and Anthologies as four boards: the header shows the board you are on, and you swipe or drag sideways (or press an arrow or a dot) to move to the next. The swipe works only there. Server has everything about your server in one place (connection, sync, devices, imports and checks, people, details, source files, administration and the server's log), and Settings has only the app's own (colours, language, text size, tags, reading aloud, updates, backup, the app log and licences).
+- One search bar, on Home and on every board: it suggests tokens as you type (tag:, by:, in:) and then their values, and on a board it filters that board while a button widens the same words to the server's results. The old separate server search button is gone.
+- Home has its own Add button, for every kind of quote: a line from a book, from a film, show or game, a standalone quote, a scanned page, spoken words, and a file import.
+
 ### Added
 
 - Colours: Settings, Colours chooses where the app's colours come from: Material You (your wallpaper, as before), the colours of a photo you pick, or a palette (Tippani red, indigo, teal, forest, rose, amber, slate). The change shows at once.
-
-### Changed
 
 - Edit fields suggest as you type: Who said it offers the characters of the work and of the rest of its series (the third book offers the second's characters) and who has spoken there before; Chapter offers the chapters already used in the work, in chapter order, and picking one by its name or its number fills in both; the credit on a work (author, director, studio) offers the people your server holds for that kind of work and the credits already in your library; Language and Tags offer what you already use. You can still type something new.
 - Every text box capitalises as it should: names and titles by word, notes and descriptions by sentence, and nothing for passwords, addresses, tags, searches and numbers.

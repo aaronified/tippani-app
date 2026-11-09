@@ -153,7 +153,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Settings'));
+      await tester.tap(find.text('Server'));
       await tester.pumpAndSettle();
     }
 

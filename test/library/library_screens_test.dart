@@ -134,12 +134,8 @@ void main() {
         await tester.pumpAndSettle();
         // the app opens on the Library: the books
         expect(find.text('No books yet.'), findsOneWidget);
-        expect(
-          find.text('Server'),
-          findsNothing,
-          reason: 'it is in Settings now',
-        );
-        await tapText(tester, 'Settings');
+        expect(find.text('Server'), findsOneWidget, reason: 'a tab of its own');
+        await tapText(tester, 'Server');
         expect(find.text('Connect to your server'), findsOneWidget);
       },
     );

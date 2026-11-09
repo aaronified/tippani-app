@@ -10,6 +10,7 @@ import '../library/models.dart';
 import '../library/suggestions.dart';
 import '../people/people_directory.dart';
 import '../widgets/combo_field.dart';
+import 'add_kind.dart';
 import 'capture_screen.dart';
 import 'voice_screen.dart';
 import 'work_form_screen.dart';
@@ -53,7 +54,16 @@ class QuoteFormScreen extends StatefulWidget {
     this.listener,
     this.adjuster,
     this.adjustPage = true,
+    this.kind,
+    this.startWith,
   });
+
+  /// Which kind of quote is being added, from the Add sheet: a book's lines choose among books, a film's among films,
+  /// shows and games, and a standalone quote has no work. Null: any.
+  final AddKind? kind;
+
+  /// Something to start straight away: scanning a page, or listening for spoken words.
+  final AddKind? startWith;
 
   /// Straightens and crops a scanned page; null uses the phone's own. A test passes a stand-in, or turns it off.
   final PageAdjuster? adjuster;
@@ -117,8 +127,34 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.kind == AddKind.loose) _workId = null;
     _loadWorks();
+    final go = widget.startWith;
+    if (go != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (go == AddKind.scan) _scan();
+        if (go == AddKind.voice) _speak();
+      });
+    }
   }
+
+  /// The works the box offers: those of the kind being added.
+  List<Work> get _offered => switch (widget.kind) {
+    AddKind.book => [
+      for (final w in _works)
+        if (w.kind == WorkKind.book || w.kind == WorkKind.other) w,
+    ],
+    AddKind.screen => [
+      for (final w in _works)
+        if (w.kind == WorkKind.film ||
+            w.kind == WorkKind.show ||
+            w.kind == WorkKind.game)
+          w,
+    ],
+    AddKind.loose => const [],
+    _ => _works,
+  };
 
   @override
   void dispose() {
@@ -394,7 +430,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int?>(
-            initialValue: _works.any((w) => w.id == _workId) ? _workId : null,
+            initialValue: _offered.any((w) => w.id == _workId) ? _workId : null,
             isExpanded: true,
             decoration: InputDecoration(
               labelText: context.tr('anthologies.fill.from.label'),
@@ -406,7 +442,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   context.tr('app.quote_form.no_work_a_standalone_quote'),
                 ),
               ),
-              for (final w in _works)
+              for (final w in _offered)
                 DropdownMenuItem<int?>(
                   value: w.id,
                   child: Text(
