@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
+import 'tabler.dart';
+
 import '../account/preferences.dart';
 
 /// The face for the words of a quote, and for the large display lines: Source Serif 4 (SIL OFL, bundled).
@@ -101,6 +103,12 @@ ThemeData buildTheme(ColorScheme scheme) {
       elevation: const WidgetStatePropertyAll(0),
       backgroundColor: WidgetStatePropertyAll(scheme.surfaceContainerHigh),
       shape: const WidgetStatePropertyAll(StadiumBorder()),
+    ),
+    actionIconTheme: ActionIconThemeData(
+      backButtonIconBuilder: (_) => const Icon(Ti.arrowLeft),
+      closeButtonIconBuilder: (_) => const Icon(Ti.x),
+      drawerButtonIconBuilder: (_) => const Icon(Ti.menu2),
+      endDrawerButtonIconBuilder: (_) => const Icon(Ti.menu2),
     ),
     navigationBarTheme: NavigationBarThemeData(
       height: 72,

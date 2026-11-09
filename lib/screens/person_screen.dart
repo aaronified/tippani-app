@@ -14,6 +14,7 @@ import '../people/picture.dart';
 import '../theme/app_theme.dart';
 import 'people_console_actions.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Opens the page of whoever a pill names: a person's, or (for a character in a film, show or game) the character's.
 /// A name the server holds no record of still gets a page (their picture, the quotes), with a note saying so.
@@ -143,7 +144,7 @@ class _Parts {
         children: [
           for (final l in links)
             ActionChip(
-              avatar: const Icon(Icons.open_in_new_rounded, size: 16),
+              avatar: const Icon(Ti.externalLink, size: 16),
               label: Text(l.label),
               tooltip: l.url,
               onPressed: () => launchUrl(
@@ -226,7 +227,7 @@ class _Parts {
                             Padding(
                               padding: const EdgeInsets.only(right: 6),
                               child: Icon(
-                                Icons.star_rounded,
+                                Ti.starFilled,
                                 size: 16,
                                 color: scheme.primary,
                               ),
@@ -731,7 +732,7 @@ class _PersonScreenState extends State<PersonScreen> {
                         widget.onFilter(ChipFilter(widget.name));
                         Navigator.of(context).pop();
                       },
-                      icon: const Icon(Icons.format_quote_rounded),
+                      icon: const Icon(Ti.quote),
                       label: Text(context.tr('app.person.show_their_quotes')),
                     ),
                   ),
@@ -1306,7 +1307,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
                         widget.onFilter(ChipFilter(widget.name));
                         Navigator.of(context).pop();
                       },
-                      icon: const Icon(Icons.format_quote_rounded),
+                      icon: const Icon(Ti.quote),
                       label: Text(context.tr('app.person.show_their_quotes')),
                     ),
                   ),
@@ -1383,7 +1384,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
                             if (x.actor == a) x.workTitle,
                         ].join(' · '),
                       ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
+                      trailing: const Icon(Ti.chevronRight),
                       onTap: () => _openActor(a),
                     ),
                 ],

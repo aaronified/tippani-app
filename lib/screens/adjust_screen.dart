@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../capture/page_adjuster.dart';
 import '../capture/page_geometry.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Straightens and crops a photographed page before it is read. The app first works out how the page is tilted and
 /// where the text is (both can be changed): turn the picture with the slider or the nudge buttons, and drag the
@@ -244,7 +245,7 @@ class _AdjustScreenState extends State<AdjustScreen> {
               children: [
                 IconButton(
                   tooltip: context.tr('app.adjust.turn_anticlockwise'),
-                  icon: const Icon(Icons.rotate_left),
+                  icon: const Icon(Ti.rotate),
                   onPressed: _busy ? null : () => _turn(-0.5),
                 ),
                 Expanded(
@@ -259,7 +260,7 @@ class _AdjustScreenState extends State<AdjustScreen> {
                 ),
                 IconButton(
                   tooltip: context.tr('app.adjust.turn_clockwise'),
-                  icon: const Icon(Icons.rotate_right),
+                  icon: const Icon(Ti.rotateClockwise),
                   onPressed: _busy ? null : () => _turn(0.5),
                 ),
               ],
@@ -279,12 +280,12 @@ class _AdjustScreenState extends State<AdjustScreen> {
               children: [
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _auto,
-                  icon: const Icon(Icons.auto_fix_high),
+                  icon: const Icon(Ti.wand),
                   label: Text(context.tr('board.columns.auto.label')),
                 ),
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _reset,
-                  icon: const Icon(Icons.restart_alt),
+                  icon: const Icon(Ti.reload),
                   label: Text(context.tr('staging.formula.example.reset')),
                 ),
               ],

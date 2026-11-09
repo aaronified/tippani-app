@@ -8,6 +8,7 @@ import '../library/models.dart';
 import '../sources/source_picker.dart';
 import '../sources/sources_service.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// The source a work's file belongs to: 'book' for a book, 'screen' for a film or a show (a game has none).
 String? sourceSubjectOf(Work w) => switch (w.kind) {
@@ -306,7 +307,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: TextField(
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.search),
+                        prefixIcon: Icon(Ti.search),
                         hintText: context.tr(
                           'app.source_files.search_your_works',
                         ),
@@ -460,9 +461,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
               child: Card(
                 child: ListTile(
                   leading: Icon(
-                    s.state == 'missing'
-                        ? Icons.link_off_rounded
-                        : Icons.description_outlined,
+                    s.state == 'missing' ? Ti.unlink : Ti.fileText,
                     color: s.state == 'missing' ? scheme.error : null,
                   ),
                   title: Text(_title(s.subject, s.workId, s.episode)),
@@ -584,7 +583,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
                 const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: _scan.live ? null : _startScan,
-                  icon: const Icon(Icons.search_rounded),
+                  icon: const Icon(Ti.search),
                   label: Text(_scan.state == 'none' ? 'Scan' : 'Scan again'),
                 ),
               ],
@@ -714,7 +713,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
       children: [
         Card(
           child: ListTile(
-            leading: const Icon(Icons.folder_open_outlined),
+            leading: const Icon(Ti.folderOpen),
             title: Text(
               context.tr('app.source_files.from_a_folder_on_the_server'),
             ),
@@ -734,7 +733,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
         const SizedBox(height: 8),
         Card(
           child: ListTile(
-            leading: const Icon(Icons.upload_file_outlined),
+            leading: const Icon(Ti.fileUpload),
             title: Text(context.tr('app.source_files.from_this_phone')),
             subtitle: Text(
               context.tr('app.source_files.send_an_ebook_or_a_subtitle'),
@@ -887,7 +886,7 @@ class _BrowseScreenState extends State<_BrowseScreen> {
           if (widget.mounts.length > 1)
             PopupMenuButton<String>(
               tooltip: context.tr('app.source_files.folder'),
-              icon: const Icon(Icons.folder_special_outlined),
+              icon: const Icon(Ti.folderStar),
               onSelected: (v) {
                 setState(() => _mount = v);
                 _open('');
@@ -917,11 +916,7 @@ class _BrowseScreenState extends State<_BrowseScreen> {
                   ),
                 for (final e in l.entries)
                   ListTile(
-                    leading: Icon(
-                      e.dir
-                          ? Icons.folder_outlined
-                          : Icons.description_outlined,
-                    ),
+                    leading: Icon(e.dir ? Ti.folder : Ti.fileText),
                     title: Text(e.name),
                     subtitle: e.dir || e.size == 0 ? null : Text(_size(e.size)),
                     onTap: () => e.dir

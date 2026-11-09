@@ -80,6 +80,7 @@ flutter:
     - assets/tessdata/
     - assets/share/
     - assets/l10n/
+    - assets/fonts/tabler/LICENSE
 
   # Inter for the interface and Source Serif 4 for the words of a quote, both SIL OFL (licences beside them).
   # They are variable fonts: the weight is set from the axis.
@@ -94,6 +95,13 @@ flutter:
           weight: 600
         - asset: assets/fonts/Inter.ttf
           weight: 700
+    # Tabler Icons (MIT, assets/fonts/tabler/LICENSE), cut down to the icons the app draws.
+    - family: Tabler
+      fonts:
+        - asset: assets/fonts/tabler/Tabler.ttf
+    - family: TablerFilled
+      fonts:
+        - asset: assets/fonts/tabler/TablerFilled.ttf
     - family: Newsreader
       fonts:
         - asset: assets/fonts/share/Newsreader.ttf

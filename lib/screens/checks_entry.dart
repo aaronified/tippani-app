@@ -4,6 +4,7 @@ import '../app_controller.dart';
 import '../harness/harness.dart';
 import 'checks_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// The Settings row that opens Import and checks, badged with how many imported quotes wait for approval.
 class ChecksEntry extends StatefulWidget {
@@ -54,7 +55,7 @@ class _ChecksEntryState extends State<ChecksEntry> {
   Widget build(BuildContext context) {
     final h = widget.harness;
     return ListTile(
-      leading: const Icon(Icons.fact_check_outlined),
+      leading: const Icon(Ti.listCheck),
       title: Text(context.tr('app.checks_entry.import_and_checks')),
       subtitle: Text(
         _pending > 0

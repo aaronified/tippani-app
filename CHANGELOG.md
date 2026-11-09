@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Changed
+
+- New icons: every icon in the app, the four section icons in the bottom bar included, is now from Tabler Icons (MIT licence). The back, close and menu buttons of every screen use them too. Settings names them at the bottom, and pressing that line lists the licences.
+
 ## [0.7.0] - 2026-11-07
 
 ### Changed

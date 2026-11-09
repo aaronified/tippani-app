@@ -7,6 +7,7 @@ import '../library/quote_text.dart';
 import '../library/work_order.dart';
 import '../speech/speaker.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// A work's quotes as one document to read straight through, by chapter, in reading order. The reader sets
 /// the text size and whether translations and their own notes show, and can send the whole thing as text.
@@ -89,14 +90,12 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
             tooltip: _reading
                 ? context.tr('speech.stop.aria')
                 : context.tr('speech.play.aria'),
-            icon: Icon(
-              _reading ? Icons.stop_circle_outlined : Icons.volume_up_outlined,
-            ),
+            icon: Icon(_reading ? Ti.playerStop : Ti.volume),
             onPressed: widget.quotes.isEmpty ? null : _toggleReading,
           ),
           IconButton(
             tooltip: context.tr('app.work_read.share_all'),
-            icon: const Icon(Icons.ios_share),
+            icon: const Icon(Ti.share2),
             onPressed: () => widget.share(
               workShareText(
                 widget.work,
@@ -119,7 +118,7 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.text_decrease, size: 20),
+                      const Icon(Ti.textDecrease, size: 20),
                       Expanded(
                         child: Slider(
                           value: _size,
@@ -136,7 +135,7 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
                           onChanged: (v) => setState(() => _size = v),
                         ),
                       ),
-                      const Icon(Icons.text_increase, size: 20),
+                      const Icon(Ti.textIncrease, size: 20),
                     ],
                   ),
                   Wrap(

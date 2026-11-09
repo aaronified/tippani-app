@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import 'library_widgets.dart' show EmptyState;
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Which deck a round is.
 enum QuizMode { daily, practice }
@@ -199,14 +200,14 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return EmptyState(
-        icon: Icons.cloud_off_rounded,
+        icon: Ti.cloudOff,
         title: context.tr('app.quiz.could_not_load_the_cards'),
         hint: _error,
       );
     }
     if (_cards.isEmpty) {
       return EmptyState(
-        icon: _daily ? Icons.task_alt_rounded : Icons.menu_book_outlined,
+        icon: _daily ? Ti.circleCheck : Ti.book2,
         title: _daily
             ? context.tr('app.quiz.nothing_due_today')
             : context.tr('app.quiz.no_quotes_here_to_practise'),
@@ -227,7 +228,7 @@ class _QuizScreenState extends State<QuizScreen> {
       padding: const EdgeInsets.all(24),
       children: [
         const SizedBox(height: 24),
-        Icon(Icons.check_circle_rounded, size: 64, color: scheme.primary),
+        Icon(Ti.circleCheckFilled, size: 64, color: scheme.primary),
         const SizedBox(height: 16),
         Text(
           _daily
@@ -265,7 +266,7 @@ class _QuizScreenState extends State<QuizScreen> {
         if (!_daily)
           FilledButton.icon(
             onPressed: _load,
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(Ti.refresh),
             label: Text(context.tr('quiz.round.again.label')),
           ),
         const SizedBox(height: 8),
@@ -622,9 +623,9 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
                 if (isAnswer)
-                  Icon(Icons.check_circle_rounded, color: scheme.primary)
+                  Icon(Ti.circleCheckFilled, color: scheme.primary)
                 else if (isWrongPick)
-                  Icon(Icons.cancel_rounded, color: scheme.error),
+                  Icon(Ti.circleX, color: scheme.error),
               ],
             ),
           ),

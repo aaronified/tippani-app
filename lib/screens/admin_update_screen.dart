@@ -7,6 +7,7 @@ import '../admin/admin_service.dart';
 import '../api/server_call.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// The server's own version: what it runs, what is newest on the release line it follows (stable or pre-release),
 /// and, where the server can update itself, a button that does it. Where it cannot, the command to run on the
@@ -147,7 +148,7 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
         actions: [
           IconButton(
             tooltip: context.tr('app.admin_update.check_again'),
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(Ti.refresh),
             onPressed: _busy || _applying != null ? null : _check,
           ),
         ],
@@ -212,7 +213,7 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
                     if (i.available && i.canSelfUpdate)
                       FilledButton.icon(
                         onPressed: _applying == null ? _apply : null,
-                        icon: const Icon(Icons.system_update_alt_rounded),
+                        icon: const Icon(Ti.circleArrowDown),
                         label: Text(
                           context.tr('app.admin_update.update_to_latest', {
                             'latest': i.latest,
@@ -251,7 +252,7 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
                             say(context, context.tr('account.widget.copied'));
                           }
                         },
-                        icon: const Icon(Icons.copy_rounded),
+                        icon: const Icon(Ti.copy),
                         label: Text(
                           context.tr('app.admin_update.copy_the_command'),
                         ),

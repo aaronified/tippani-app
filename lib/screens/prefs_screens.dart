@@ -9,6 +9,7 @@ import '../library/models.dart';
 import '../theme/app_theme.dart';
 import 'prefs_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour, quoteColourName;
+import '../theme/tabler.dart';
 
 const _sizes = [75, 100, 125, 150, 175, 200];
 
@@ -48,14 +49,14 @@ class ReadingScreen extends StatelessWidget {
           children: [
             StepTile(
               title: context.tr('settings.appearance.text-size.label'),
-              icon: Icons.text_fields_rounded,
+              icon: Ti.typography,
               steps: _sizes,
               value: p.sizeUi,
               onChanged: (v) => savePrefs(context, {'sizeUi': v}),
             ),
             StepTile(
               title: context.tr('app.prefs.quote_size'),
-              icon: Icons.format_size_rounded,
+              icon: Ti.textSize,
               steps: _sizes,
               value: p.sizeDisplay,
               onChanged: (v) => savePrefs(context, {'sizeDisplay': v}),
@@ -67,7 +68,7 @@ class ReadingScreen extends StatelessWidget {
           children: [
             ChoiceTile<int>(
               title: context.tr('app.prefs.line_height'),
-              icon: Icons.format_line_spacing_rounded,
+              icon: Ti.lineHeight,
               value: p.quoteLeading,
               choices: [
                 Choice(0, context.tr('app.prefs.the_app_s_own')),
@@ -81,7 +82,7 @@ class ReadingScreen extends StatelessWidget {
             ),
             ChoiceTile<int>(
               title: context.tr('app.prefs.line_length'),
-              icon: Icons.width_normal_rounded,
+              icon: Ti.viewportWide,
               value: p.quoteMeasure,
               choices: [
                 Choice(0, context.tr('app.prefs.the_full_width')),
@@ -163,7 +164,7 @@ class ReadingScreen extends StatelessWidget {
                 subtitle: Text(_faceName(context, e.value)),
                 trailing: IconButton(
                   tooltip: context.tr('common.action.remove.label'),
-                  icon: const Icon(Icons.close_rounded),
+                  icon: const Icon(Ti.x),
                   onPressed: () {
                     final next = {...faces}..remove(e.key);
                     savePrefs(context, {'fontsByLanguage': _blob(next)});
@@ -172,7 +173,7 @@ class ReadingScreen extends StatelessWidget {
                 onTap: () => _addFace(context, faces, e.key),
               ),
             ListTile(
-              leading: const Icon(Icons.add_rounded),
+              leading: const Icon(Ti.plus),
               title: Text(context.tr('settings.languages.add.label')),
               onTap: () => _addFace(context, faces, null),
             ),
@@ -330,7 +331,7 @@ class ColoursScreen extends StatelessWidget {
                             0xFF000000 | int.parse(hex.substring(1), radix: 16),
                           ),
                           child: p.colourHex(token).toUpperCase() == hex
-                              ? const Icon(Icons.check_rounded, size: 20)
+                              ? const Icon(Ti.check, size: 20)
                               : null,
                         ),
                       ),
@@ -435,7 +436,7 @@ class SectionsScreen extends StatelessWidget {
           children: [
             ChoiceTile<int>(
               title: context.tr('app.prefs.keep_deleted_things_for'),
-              icon: Icons.delete_outline,
+              icon: Ti.trash,
               value: p.trashDays,
               choices: [
                 Choice(
@@ -689,7 +690,7 @@ class ReviewPrefsScreen extends StatelessWidget {
         PrefGroup(
           children: [
             ListTile(
-              leading: const Icon(Icons.restart_alt_rounded),
+              leading: const Icon(Ti.reload),
               title: Text(context.tr('app.prefs.back_to_the_defaults')),
               subtitle: Text(
                 context.tr('app.prefs.puts_the_settings_on_these_pages'),

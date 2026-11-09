@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// The name of a metadata source in words.
 String sourceName(String s) =>
@@ -141,7 +142,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2.5),
                   )
-                : const Icon(Icons.network_check_rounded),
+                : const Icon(Ti.wifi),
             onPressed: _asking == null ? () => _test() : null,
           ),
         ],
@@ -206,15 +207,13 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                                     'app.admin_sources.test_x',
                                     {'x': sourceName(s.source)},
                                   ),
-                                  icon: const Icon(Icons.play_arrow_rounded),
+                                  icon: const Icon(Ti.playerPlayFilled),
                                   onPressed: _asking == null
                                       ? () => _test(s.source)
                                       : null,
                                 ),
                           leading: Icon(
-                            s.state == 'needed'
-                                ? Icons.key_off_outlined
-                                : Icons.cloud_done_outlined,
+                            s.state == 'needed' ? Ti.keyOff : Ti.cloudCheck,
                             color: s.state == 'needed'
                                 ? scheme.error
                                 : scheme.primary,
@@ -244,7 +243,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                                       : keys.text(f.field)),
                             style: text.bodySmall,
                           ),
-                          trailing: const Icon(Icons.edit_outlined),
+                          trailing: const Icon(Ti.pencil),
                           onTap: () => _set(f),
                         ),
                       ),

@@ -27,6 +27,7 @@ import '../harness/update_ui.dart';
 import '../harness/version.dart';
 import 'connect_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Which server the app is pointed at, and the way to point it somewhere else or forget it.
 class SettingsScreen extends StatelessWidget {
@@ -99,7 +100,7 @@ class SettingsScreen extends StatelessWidget {
             _Group(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.dns_outlined),
+                  leading: const Icon(Ti.server),
                   title: Text(
                     url == null ? 'Connect to your server' : 'Server',
                   ),
@@ -118,7 +119,7 @@ class SettingsScreen extends StatelessWidget {
                 if (controller.revoked)
                   ListTile(
                     leading: Icon(
-                      Icons.warning_amber_outlined,
+                      Ti.alertTriangle,
                       color: Theme.of(context).colorScheme.error,
                     ),
                     title: Text(
@@ -137,14 +138,14 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 if (url != null)
                   ListTile(
-                    leading: const Icon(Icons.refresh),
+                    leading: const Icon(Ti.refresh),
                     title: Text(context.tr('app.admin_update.check_again')),
                     enabled: !controller.checking,
                     onTap: controller.refresh,
                   ),
                 if (url != null && !controller.paired)
                   ListTile(
-                    leading: const Icon(Icons.phonelink_lock_outlined),
+                    leading: const Icon(Ti.deviceMobileCode),
                     title: Text(context.tr('app.home.pair_this_phone')),
                     subtitle: Text(
                       context.tr('app.settings.needed_to_use_your_library'),
@@ -157,7 +158,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 if (controller.paired) ...[
                   ListTile(
-                    leading: const Icon(Icons.devices_outlined),
+                    leading: const Icon(Ti.devices),
                     title: Text(context.tr('app.devices.paired_devices')),
                     subtitle: Text(
                       context.tr('app.settings.paired_as_name', {
@@ -172,7 +173,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   if (harness.tools != null) ...[
                     ListTile(
-                      leading: const Icon(Icons.bar_chart_outlined),
+                      leading: const Icon(Ti.chartBar),
                       title: Text(context.tr('app.settings.statistics')),
                       subtitle: Text(
                         context.tr(
@@ -191,7 +192,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                     ListTile(
-                      leading: const Icon(Icons.delete_outline),
+                      leading: const Icon(Ti.trash),
                       title: Text(context.tr('bin.title')),
                       subtitle: Text(
                         context.tr(
@@ -222,7 +223,7 @@ class SettingsScreen extends StatelessWidget {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Icon(Icons.sync),
+                                  : const Icon(Ti.refresh),
                               title: Text(
                                 context.tr('app.pull.sync_with_server'),
                               ),
@@ -252,7 +253,7 @@ class SettingsScreen extends StatelessWidget {
                               ),
                             ),
                             ListTile(
-                              leading: const Icon(Icons.sync_problem_outlined),
+                              leading: const Icon(Ti.refreshAlert),
                               title: Text(
                                 context.tr('app.conflicts.sync_conflicts'),
                               ),
@@ -280,7 +281,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   if (harness.sync != null)
                     ListTile(
-                      leading: const Icon(Icons.cloud_upload_outlined),
+                      leading: const Icon(Ti.cloudUpload),
                       title: Text(
                         context.tr('app.settings.send_library_to_server'),
                       ),
@@ -294,14 +295,14 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ListTile(
-                    leading: const Icon(Icons.phonelink_erase_outlined),
+                    leading: const Icon(Ti.deviceMobileOff),
                     title: Text(context.tr('app.settings.unpair_this_phone_2')),
                     onTap: () => _unpair(context),
                   ),
                 ],
                 if (url != null)
                   ListTile(
-                    leading: const Icon(Icons.link_off),
+                    leading: const Icon(Ti.unlink),
                     title: Text(
                       context.tr('app.settings.forget_this_server_2'),
                     ),
@@ -316,7 +317,7 @@ class SettingsScreen extends StatelessWidget {
                   ChecksEntry(controller: controller, harness: harness),
                   if (harness.sources != null && harness.library != null)
                     ListTile(
-                      leading: const Icon(Icons.description_outlined),
+                      leading: const Icon(Ti.fileText),
                       title: Text(context.tr('metadata.section.files.label')),
                       subtitle: Text(
                         context.tr(
@@ -335,7 +336,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   if (harness.peopleConsole != null && harness.library != null)
                     ListTile(
-                      leading: const Icon(Icons.groups_2_outlined),
+                      leading: const Icon(Ti.usersGroup),
                       title: Text(
                         context.tr('app.settings.people_and_characters'),
                       ),
@@ -365,7 +366,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   if (harness.metadata != null && harness.library != null)
                     ListTile(
-                      leading: const Icon(Icons.travel_explore_rounded),
+                      leading: const Icon(Ti.worldSearch),
                       title: Text(
                         context.tr('app.settings.details_and_duplicates'),
                       ),
@@ -390,7 +391,7 @@ class SettingsScreen extends StatelessWidget {
               _Group(
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.admin_panel_settings_outlined),
+                    leading: const Icon(Ti.shieldLock),
                     title: Text(context.tr('app.settings.run_the_server')),
                     subtitle: Text(
                       context.tr(
@@ -416,7 +417,7 @@ class SettingsScreen extends StatelessWidget {
               children: [
                 if (harness.library != null)
                   ListTile(
-                    leading: const Icon(Icons.sell_outlined),
+                    leading: const Icon(Ti.tag),
                     title: Text(context.tr('common.field.tags.label')),
                     subtitle: Text(
                       context.tr(
@@ -435,7 +436,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                 ListTile(
-                  leading: const Icon(Icons.record_voice_over_outlined),
+                  leading: const Icon(Ti.speakerphone),
                   title: Text(context.tr('speech.play.aria')),
                   subtitle: Text(
                     context.tr('app.settings.voice_speed_and_pitch'),
@@ -451,7 +452,7 @@ class SettingsScreen extends StatelessWidget {
                   builder: (context, _) {
                     final u = harness.updates;
                     return ListTile(
-                      leading: const Icon(Icons.system_update_outlined),
+                      leading: const Icon(Ti.circleArrowDown),
                       title: Text(
                         u.stage == UpdateStage.available
                             ? context.tr('app.settings.update_available')
@@ -473,7 +474,7 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.new_releases_outlined),
+                  leading: const Icon(Ti.sparkles),
                   title: Text(context.tr('app.changelog.what_s_new')),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
@@ -482,7 +483,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.backup_outlined),
+                  leading: const Icon(Ti.databaseExport),
                   title: Text(context.tr('app.backup.backup_and_restore')),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
@@ -494,7 +495,7 @@ class SettingsScreen extends StatelessWidget {
                 // server's log is the server's, kept there, and only an admin can read it. They never share a
                 // screen, a copy or a file.
                 ListTile(
-                  leading: const Icon(Icons.receipt_long_outlined),
+                  leading: const Icon(Ti.receipt),
                   title: Text(context.tr('app.settings.app_log')),
                   subtitle: Text(
                     context.tr('app.settings.what_this_app_did_on_this'),
@@ -507,7 +508,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 if (controller.isAdmin)
                   ListTile(
-                    leading: const Icon(Icons.dns_outlined),
+                    leading: const Icon(Ti.server),
                     title: Text(context.tr('app.server_log.server_log')),
                     subtitle: Text(
                       context.tr('app.settings.the_tippani_server_s_own_log'),
@@ -524,14 +525,20 @@ class SettingsScreen extends StatelessWidget {
             _Group(
               children: [
                 ListTile(
-                  leading: Icon(Icons.info_outline),
+                  leading: Icon(Ti.infoCircle),
                   title: Text(
                     context.tr('app.settings.tippani_for_android_app_version', {
                       'app_version': appVersion,
                     }),
                   ),
                   subtitle: Text(
-                    context.tr('app.settings.free_software_gpl_3_0_source'),
+                    '${context.tr('app.settings.free_software_gpl_3_0_source')}\n${context.tr('app.settings.icons_by_tabler')}',
+                  ),
+                  isThreeLine: true,
+                  onTap: () => showLicensePage(
+                    context: context,
+                    applicationName: 'Tippani',
+                    applicationVersion: appVersion,
                   ),
                 ),
               ],

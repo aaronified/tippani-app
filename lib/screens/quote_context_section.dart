@@ -4,6 +4,7 @@ import '../api/server_call.dart';
 import '../library/models.dart';
 import '../tools/quote_context.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// What the server stored around a quote in its source file: a button to show it, then the text before, the quote as the
 /// file has it, and the text after, with Show more on each side up to what is stored. It asks the server when pressed (the
@@ -81,7 +82,7 @@ class _QuoteContextSectionState extends State<QuoteContextSection> {
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
                 onPressed: _load,
-                icon: const Icon(Icons.article_outlined),
+                icon: const Icon(Ti.article),
                 label: Text(
                   context.tr('app.quote_context.show_where_it_comes_from'),
                 ),

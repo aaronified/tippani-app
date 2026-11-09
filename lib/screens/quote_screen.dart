@@ -18,6 +18,7 @@ import 'quote_form_screen.dart';
 import 'share_screen.dart';
 import 'work_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Shares a picture through Android's share sheet. A function so a test can stand in for it.
 typedef ShareImage = Future<void> Function(
@@ -285,22 +286,22 @@ class _QuoteScreenState extends State<QuoteScreen> {
             tooltip: q.favorite
                 ? context.tr('common.action.favourite.off.label')
                 : context.tr('common.field.favourite.label'),
-            icon: Icon(q.favorite ? Icons.star : Icons.star_border),
+            icon: Icon(q.favorite ? Ti.starFilled : Ti.star),
             onPressed: _favourite,
           ),
           IconButton(
             tooltip: context.tr('common.action.copy.label'),
-            icon: const Icon(Icons.copy_rounded),
+            icon: const Icon(Ti.copy),
             onPressed: _copy,
           ),
           IconButton(
             tooltip: context.tr('common.action.edit.label'),
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(Ti.pencil),
             onPressed: _edit,
           ),
           IconButton(
             tooltip: context.tr('common.action.delete.label'),
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Ti.trash),
             onPressed: _delete,
           ),
         ],
@@ -344,12 +345,12 @@ class _QuoteScreenState extends State<QuoteScreen> {
                     kind: entryKindOf(realmOfQuote(_work)),
                     itemId: q.serverId!,
                   ),
-                  icon: const Icon(Icons.collections_bookmark_outlined),
+                  icon: const Icon(Ti.books),
                   label: Text(context.tr('common.action.anthology.label')),
                 ),
               FilledButton.tonalIcon(
                 onPressed: _speak,
-                icon: Icon(_speaking ? Icons.stop : Icons.volume_up_outlined),
+                icon: Icon(_speaking ? Ti.playerStopFilled : Ti.volume),
                 label: Text(
                   _speaking
                       ? context.tr('settings.jobs.current.stop.label')
@@ -358,7 +359,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
               ),
               FilledButton.tonalIcon(
                 onPressed: _share,
-                icon: const Icon(Icons.ios_share),
+                icon: const Icon(Ti.share2),
                 label: Text(context.tr('common.action.share.label')),
               ),
             ],
@@ -377,7 +378,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
           if (_work != null)
             Card(
               child: ListTile(
-                leading: const Icon(Icons.menu_book_outlined),
+                leading: const Icon(Ti.book2),
                 title: Text(_work!.title),
                 subtitle: Text(
                   [
@@ -385,7 +386,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
                     if (place.isNotEmpty) place,
                   ].join(' · '),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded),
+                trailing: const Icon(Ti.chevronRight),
                 onTap: _openWork,
               ),
             )
@@ -393,7 +394,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.place_outlined,
+                  Ti.mapPin,
                   size: 18,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

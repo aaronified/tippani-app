@@ -7,6 +7,7 @@ import '../l10n/l10n.dart';
 import 'account_screen.dart';
 import 'prefs_screens.dart';
 import 'prefs_widgets.dart';
+import '../theme/tabler.dart';
 
 /// The Settings entries for the account's own preferences: who you are, the language, how text and quotes are
 /// set, colours, sections, the daily review and the context around a quote.
@@ -39,7 +40,7 @@ class PrefsEntries extends StatelessWidget {
           children: [
             if (account != null && paired)
               ListTile(
-                leading: const Icon(Icons.account_circle_outlined),
+                leading: const Icon(Ti.userCircle),
                 title: Text(context.tr('bin.kind.account.label')),
                 subtitle: Text(
                   context.tr(
@@ -53,7 +54,7 @@ class PrefsEntries extends StatelessWidget {
               ),
             ChoiceTile<String>(
               title: context.tr('common.field.language.label'),
-              icon: Icons.translate_rounded,
+              icon: Ti.language,
               value: p.locale,
               choices: [
                 Choice('', context.tr('app.prefs.the_phone_s_own_language')),
@@ -68,7 +69,7 @@ class PrefsEntries extends StatelessWidget {
           title: context.tr('common.shelf.reading.book.label'),
           children: [
             ListTile(
-              leading: const Icon(Icons.text_fields_rounded),
+              leading: const Icon(Ti.typography),
               title: Text(context.tr('app.prefs.text_and_quotes')),
               subtitle: Text(
                 context.tr('app.prefs.sizes_line_height_typeface_names_in'),
@@ -76,7 +77,7 @@ class PrefsEntries extends StatelessWidget {
               onTap: () => _open(context, const ReadingScreen()),
             ),
             ListTile(
-              leading: const Icon(Icons.palette_outlined),
+              leading: const Icon(Ti.palette),
               title: Text(context.tr('metadata.categories.colours.title')),
               subtitle: Text(
                 context.tr('app.prefs.names_shades_and_which_are_offered'),
@@ -84,7 +85,7 @@ class PrefsEntries extends StatelessWidget {
               onTap: () => _open(context, const ColoursScreen()),
             ),
             ListTile(
-              leading: const Icon(Icons.view_carousel_outlined),
+              leading: const Icon(Ti.carouselHorizontal),
               title: Text(context.tr('shell.dock.sections.label')),
               subtitle: Text(
                 context.tr('app.prefs.what_shows_at_the_bottom_and'),
@@ -92,7 +93,7 @@ class PrefsEntries extends StatelessWidget {
               onTap: () => _open(context, const SectionsScreen()),
             ),
             ListTile(
-              leading: const Icon(Icons.school_outlined),
+              leading: const Icon(Ti.school),
               title: Text(context.tr('app.prefs.daily_review')),
               subtitle: Text(
                 context.tr('app.prefs.cards_a_day_difficulty_and_schedule'),
@@ -101,7 +102,7 @@ class PrefsEntries extends StatelessWidget {
             ),
             if (rules != null && paired)
               ListTile(
-                leading: const Icon(Icons.unfold_more_rounded),
+                leading: const Icon(Ti.selector),
                 title: Text(context.tr('app.prefs.context_around_a_quote')),
                 subtitle: Text(
                   context.tr('app.prefs.how_much_of_the_source_shows'),

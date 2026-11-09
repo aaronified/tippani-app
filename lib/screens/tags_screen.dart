@@ -11,6 +11,7 @@ import 'filtered_quotes_screen.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 class _Row {
   _Row(this.name, this.local, this.server);
@@ -443,7 +444,7 @@ class _TagsScreenState extends State<TagsScreen> {
         leading: selecting
             ? IconButton(
                 tooltip: context.tr('app.tags.clear_selection'),
-                icon: const Icon(Icons.close),
+                icon: const Icon(Ti.x),
                 onPressed: () => setState(_picked.clear),
               )
             : null,
@@ -451,20 +452,20 @@ class _TagsScreenState extends State<TagsScreen> {
           if (selecting) ...[
             IconButton(
               tooltip: context.tr('staging.move.merge.button.label'),
-              icon: const Icon(Icons.call_merge_rounded),
+              icon: const Icon(Ti.arrowsJoin),
               onPressed: picked.length < 2 || _busy
                   ? null
                   : () => _merge(picked),
             ),
             IconButton(
               tooltip: context.tr('common.action.delete.label'),
-              icon: const Icon(Icons.delete_outline),
+              icon: const Icon(Ti.trash),
               onPressed: _busy ? null : () => _delete(picked),
             ),
           ] else
             PopupMenuButton<_Sort>(
               tooltip: context.tr('common.filters.sort.aria'),
-              icon: const Icon(Icons.sort_rounded),
+              icon: const Icon(Ti.arrowsSort),
               initialValue: _sort,
               onSelected: (s) => setState(() => _sort = s),
               itemBuilder: (_) => [
@@ -485,14 +486,14 @@ class _TagsScreenState extends State<TagsScreen> {
           : FloatingActionButton.extended(
               heroTag: 'add-tag',
               onPressed: _create,
-              icon: const Icon(Icons.add),
+              icon: const Icon(Ti.plus),
               label: Text(context.tr('tags.new.title')),
             ),
       body: rows == null
           ? const Center(child: CircularProgressIndicator())
           : rows.isEmpty
           ? EmptyState(
-              icon: Icons.sell_outlined,
+              icon: Ti.tag,
               title: context.tr('app.library.no_tags_yet'),
               hint: context.tr('app.tags.tag_a_quote_and_it_appears'),
             )
@@ -503,7 +504,7 @@ class _TagsScreenState extends State<TagsScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: TextField(
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search_rounded),
+                      prefixIcon: const Icon(Ti.search),
                       hintText: context.tr('app.tags.find_a_tag'),
                       filled: true,
                       fillColor: scheme.surfaceContainerHigh,

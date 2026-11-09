@@ -5,6 +5,7 @@ import '../admin/server_files.dart';
 import '../api/server_call.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// What the reader typed to open or seal a backup: the account's password, or a passphrase.
 typedef BackupSecret = ({String password, String passphrase});
@@ -421,7 +422,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                           children: [
                             FilledButton.icon(
                               onPressed: _working == null ? _make : null,
-                              icon: const Icon(Icons.backup_outlined),
+                              icon: const Icon(Ti.databaseExport),
                               label: Text(
                                 info == null ? 'Back up now' : 'Back up again',
                               ),
@@ -429,7 +430,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                             if (info != null)
                               OutlinedButton.icon(
                                 onPressed: _working == null ? _download : null,
-                                icon: const Icon(Icons.download_rounded),
+                                icon: const Icon(Ti.download),
                                 label: Text(
                                   context.tr(
                                     'app.admin_backup.save_on_this_phone',

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../speech/speaker.dart';
 import '../speech/speech_settings.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Chooses how the app reads aloud: which voice, how fast, how high. The voices are the ones Android's speech
 /// service offers, so the natural-sounding ones appear after installing them in Android's own settings.
@@ -161,7 +162,7 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             alignment: Alignment.centerLeft,
             child: FilledButton.tonalIcon(
               onPressed: _test,
-              icon: Icon(_testing ? Icons.stop : Icons.volume_up_outlined),
+              icon: Icon(_testing ? Ti.playerStopFilled : Ti.volume),
               label: Text(
                 _testing
                     ? context.tr('settings.jobs.current.stop.label')
@@ -182,11 +183,7 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           ListTile(
-            leading: Icon(
-              _prefs.voiceName == null
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-            ),
+            leading: Icon(_prefs.voiceName == null ? Ti.circleDot : Ti.circle),
             title: Text(context.tr('app.read_aloud_settings.automatic')),
             subtitle: Text(
               context.tr(
@@ -223,8 +220,8 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
               ListTile(
                 leading: Icon(
                   _prefs.voiceName == v.name && _prefs.voiceLocale == v.locale
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
+                      ? Ti.circleDot
+                      : Ti.circle,
                 ),
                 title: Text(
                   context.tr('app.read_aloud_settings.locale_name', {

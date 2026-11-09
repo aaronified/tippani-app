@@ -12,6 +12,7 @@ import '../sync/auto_sync.dart';
 import 'checks_tabs.dart';
 import 'staging_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Where the things that wait on the reader are: files imported into the server's queue, stray marks in the
 /// words, corrections from a work's own file, and times and places from it. Each tab carries a count of what is
@@ -256,10 +257,7 @@ class _ImportsTabState extends State<ImportsTab> {
           Card(
             color: scheme.primaryContainer,
             child: ListTile(
-              leading: Icon(
-                Icons.inbox_outlined,
-                color: scheme.onPrimaryContainer,
-              ),
+              leading: Icon(Ti.inbox, color: scheme.onPrimaryContainer),
               title: Text(
                 pending == 1
                     ? '1 imported quote is waiting for you to okay it'
@@ -282,21 +280,21 @@ class _ImportsTabState extends State<ImportsTab> {
           ),
         if (_server)
           _Panel(
-            icon: Icons.cloud_download_outlined,
+            icon: Ti.cloudDownload,
             title: context.tr('app.checks.import_a_file'),
             body: context.tr(
               'app.checks.the_server_reads_kindle_goodreads_hardcover',
             ),
             action: FilledButton.icon(
               onPressed: _busy == null ? _chooseServerFile : null,
-              icon: const Icon(Icons.upload_file),
+              icon: const Icon(Ti.fileUpload),
               label: Text(context.tr('app.checks.choose_a_file')),
             ),
           )
         else
           Card(
             child: ListTile(
-              leading: const Icon(Icons.cloud_off_outlined),
+              leading: const Icon(Ti.cloudOff),
               title: Text(
                 context.tr('app.checks.importing_to_a_server_needs_a'),
               ),
@@ -307,12 +305,12 @@ class _ImportsTabState extends State<ImportsTab> {
           ),
         if (widget.library != null)
           _Panel(
-            icon: Icons.description_outlined,
+            icon: Ti.fileText,
             title: context.tr('app.checks.import_markdown_into_this_phone'),
             body: 'A file in the form the app exports (a "---" block naming each book or film, then its quotes). It goes straight into the library on this phone, and a book or quote you already have is left as it is.',
             action: OutlinedButton.icon(
               onPressed: _busy == null ? _chooseLocalFile : null,
-              icon: const Icon(Icons.file_open_outlined),
+              icon: const Icon(Ti.fileImport),
               label: Text(context.tr('app.checks.choose_a_markdown_file')),
             ),
           ),
@@ -354,7 +352,7 @@ class _ImportsTabState extends State<ImportsTab> {
           child: ExpansionTile(
             shape: const Border(),
             collapsedShape: const Border(),
-            leading: const Icon(Icons.help_outline),
+            leading: const Icon(Ti.helpCircle),
             title: Text(context.tr('app.checks.how_to_get_a_file_from')),
             children: [
               for (final s in importSources)
@@ -504,7 +502,7 @@ class _ResultCardState extends State<_ResultCard> {
             Row(
               children: [
                 Icon(
-                  bad ? Icons.error_outline : Icons.check_circle_outline,
+                  bad ? Ti.alertCircle : Ti.circleCheck,
                   color: bad ? scheme.onErrorContainer : scheme.primary,
                 ),
                 const SizedBox(width: 8),

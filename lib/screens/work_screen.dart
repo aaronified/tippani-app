@@ -30,6 +30,7 @@ import '../tools/cover_search.dart';
 import 'shelf_card.dart';
 import 'work_form_screen.dart';
 import 'work_read_screen.dart';
+import '../theme/tabler.dart';
 
 /// One work: its details, the quotes taken from it, and what can be done with it (edit, export, delete).
 class WorkScreen extends StatefulWidget {
@@ -165,12 +166,12 @@ class _WorkScreenState extends State<WorkScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined),
+                leading: const Icon(Ti.photo),
                 title: Text(context.tr('app.work.from_my_photos')),
                 onTap: () => Navigator.pop(context, 'photos'),
               ),
               ListTile(
-                leading: const Icon(Icons.travel_explore_rounded),
+                leading: const Icon(Ti.worldSearch),
                 title: Text(context.tr('app.work.find_one_online')),
                 subtitle: Text(
                   context.tr('app.work.search_by_title_author_or_isbn'),
@@ -410,7 +411,7 @@ class _WorkScreenState extends State<WorkScreen> {
                 if (w != null) ...[
                   IconButton(
                     tooltip: context.tr('common.action.edit.label'),
-                    icon: const Icon(Icons.edit_outlined),
+                    icon: const Icon(Ti.pencil),
                     onPressed: _edit,
                   ),
                   PopupMenuButton<String>(
@@ -478,7 +479,7 @@ class _WorkScreenState extends State<WorkScreen> {
           ? null
           : FloatingActionButton.extended(
               onPressed: _addQuote,
-              icon: const Icon(Icons.add),
+              icon: const Icon(Ti.plus),
               label: Text(context.tr('app.work.add_a_quote')),
             ),
       body: !_loaded
@@ -538,7 +539,7 @@ class _WorkScreenState extends State<WorkScreen> {
                           children: [
                             FilledButton.tonalIcon(
                               onPressed: _read,
-                              icon: const Icon(Icons.menu_book_outlined),
+                              icon: const Icon(Ti.book2),
                               label: Text(
                                 context.tr('anthologies.reader.label'),
                               ),

@@ -4,6 +4,7 @@ import '../api/server_call.dart';
 import '../checks/checks_service.dart';
 import 'library_widgets.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Reads something from the server and draws it, with the same loading, failure and retry for every tab.
 class _Loader<T> extends StatefulWidget {
@@ -432,7 +433,7 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                               await answer(fixable, fix: true);
                             }
                           },
-                    icon: const Icon(Icons.auto_fix_high),
+                    icon: const Icon(Ti.wand),
                     label: Text(
                       context.tr('app.checks_tabs.fix_all_n', {
                         'n': fixable.length,
@@ -445,7 +446,7 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
               SizedBox(
                 height: 360,
                 child: EmptyState(
-                  icon: Icons.task_alt_rounded,
+                  icon: Ti.circleCheck,
                   title: _ignored
                       ? context.tr('app.checks_tabs.nothing_ignored')
                       : context.tr('app.checks_tabs.no_stray_marks'),
@@ -526,7 +527,7 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                     children: [
                       IconButton(
                         tooltip: context.tr('common.selection.clear.aria'),
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Ti.x),
                         onPressed: () => setState(_picked.clear),
                       ),
                       Expanded(
@@ -644,7 +645,7 @@ class _FindingRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
-                        Icons.subdirectory_arrow_right,
+                        Ti.cornerDownRight,
                         size: 16,
                         color: scheme.onSurfaceVariant,
                       ),
@@ -761,7 +762,7 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
       builder: (context, scan, reload) {
         if (scan.proposals.isEmpty && scan.wrongFile.isEmpty) {
           return EmptyState(
-            icon: Icons.task_alt_rounded,
+            icon: Ti.circleCheck,
             title: context.tr('app.checks_tabs.nothing_differs'),
             hint: context.tr('app.checks_tabs.where_a_quote_differs_from_the'),
           );
@@ -795,7 +796,7 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                     margin: const EdgeInsets.only(top: 12),
                     child: ListTile(
                       leading: Icon(
-                        Icons.warning_amber_rounded,
+                        Ti.alertTriangle,
                         color: scheme.onErrorContainer,
                       ),
                       title: Text(
@@ -1069,7 +1070,7 @@ class _LocatorsTabState extends State<LocatorsTab> {
       builder: (context, all, reload) {
         if (all.isEmpty) {
           return EmptyState(
-            icon: Icons.task_alt_rounded,
+            icon: Ti.circleCheck,
             title: context.tr('app.checks_tabs.nothing_proposed'),
             hint: context.tr(
               'app.checks_tabs.a_subtitle_file_knows_when_each_2',
@@ -1173,7 +1174,7 @@ class _LocatorsTabState extends State<LocatorsTab> {
                                 style: theme.textTheme.bodySmall,
                               ),
                             ),
-                            const Icon(Icons.arrow_forward, size: 16),
+                            const Icon(Ti.arrowRight, size: 16),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -1285,7 +1286,7 @@ class _NeedsServer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EmptyState(
-    icon: Icons.cloud_off_outlined,
+    icon: Ti.cloudOff,
     title: context.tr('app.checks_tabs.this_needs_your_server'),
     hint: context.tr('app.checks_tabs.pair_this_phone_in_settings_and'),
   );

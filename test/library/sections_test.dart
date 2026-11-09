@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/app.dart';
@@ -65,11 +64,7 @@ void main() {
       'Quotes',
       'Anthologies',
     ]);
-    expect({for (final s in NavSection.values) s.svg}, hasLength(4));
-    for (final s in NavSection.values) {
-      expect(s.svg, contains('<path'));
-      expect(s.svg, contains('viewBox'));
-    }
+    expect({for (final s in NavSection.values) s.icon}, hasLength(4));
   });
 
   testWidgets(
@@ -95,7 +90,7 @@ void main() {
         findsNothing,
       );
       expect(
-        find.descendant(of: bar, matching: find.byType(SvgPicture)),
+        find.descendant(of: bar, matching: find.byType(NavSectionIcon)),
         findsNWidgets(4),
       );
     },

@@ -6,6 +6,7 @@ import '../library/models.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 String _kindWord(String kind) => switch (kind) {
   'book' => 'book',
@@ -380,7 +381,7 @@ class _StagingScreenState extends State<StagingScreen> {
           ? const Center(child: CircularProgressIndicator())
           : pending == 0 && groups.isEmpty
           ? EmptyState(
-              icon: Icons.inbox_outlined,
+              icon: Ti.inbox,
               title: context.tr('app.staging.nothing_waiting'),
               hint: context.tr('app.staging.an_import_lands_here_first_and'),
             )
@@ -773,7 +774,7 @@ class _QuoteRow extends StatelessWidget {
             if (quote.favorite)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
-                child: Icon(Icons.favorite, size: 16, color: scheme.error),
+                child: Icon(Ti.heartFilled, size: 16, color: scheme.error),
               ),
           ],
         ),
@@ -817,7 +818,7 @@ class _SelectionBar extends StatelessWidget {
                 children: [
                   IconButton(
                     tooltip: context.tr('common.selection.clear.aria'),
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Ti.x),
                     onPressed: onClear,
                   ),
                   Expanded(
@@ -855,27 +856,27 @@ class _SelectionBar extends StatelessWidget {
                       ),
                     IconButton(
                       tooltip: context.tr('common.field.favourite.label'),
-                      icon: const Icon(Icons.favorite_border),
+                      icon: const Icon(Ti.heart),
                       onPressed: () => onFavourite(true),
                     ),
                     IconButton(
                       tooltip: context.tr('staging.bulk.unfavourite.tip'),
-                      icon: const Icon(Icons.heart_broken_outlined),
+                      icon: const Icon(Ti.heartBroken),
                       onPressed: () => onFavourite(false),
                     ),
                     TextButton.icon(
                       onPressed: onFields,
-                      icon: const Icon(Icons.edit_outlined),
+                      icon: const Icon(Ti.pencil),
                       label: Text(context.tr('app.staging.edit_fields')),
                     ),
                     TextButton.icon(
                       onPressed: onShift,
-                      icon: const Icon(Icons.swap_vert),
+                      icon: const Icon(Ti.arrowsUpDown),
                       label: Text(context.tr('app.staging.locations')),
                     ),
                     TextButton.icon(
                       onPressed: onMove,
-                      icon: const Icon(Icons.drive_file_move_outlined),
+                      icon: const Icon(Ti.folderShare),
                       label: Text(context.tr('staging.bulk.move.label')),
                     ),
                   ],
@@ -1290,7 +1291,7 @@ class _MoveSheetState extends State<_MoveSheet> {
       TextField(
         onChanged: (v) => setState(() => _q = v),
         decoration: InputDecoration(
-          prefixIcon: Icon(Icons.search),
+          prefixIcon: Icon(Ti.search),
           hintText: context.tr('app.staging.find_a_book_or_film_in'),
           border: OutlineInputBorder(),
         ),
@@ -1305,9 +1306,7 @@ class _MoveSheetState extends State<_MoveSheet> {
       for (final w in shown)
         ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: Icon(
-            w.kind == 'book' ? Icons.menu_book_outlined : Icons.movie_outlined,
-          ),
+          leading: Icon(w.kind == 'book' ? Ti.book2 : Ti.movie),
           title: Text(w.title),
           subtitle: Text(
             [
@@ -1326,7 +1325,7 @@ class _MoveSheetState extends State<_MoveSheet> {
         for (final g in widget.groups)
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.merge_type),
+            leading: const Icon(Ti.arrowsJoin),
             title: Text(
               g.title.isEmpty
                   ? context.tr('app.staging.quotes_of_their_own')

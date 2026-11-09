@@ -25,6 +25,7 @@ import 'work_form_screen.dart';
 import 'work_screen.dart';
 import 'works_view.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 enum _Mode { quotes, works }
 
@@ -347,7 +348,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
             const Divider(height: 1),
             ListTile(
-              leading: const Icon(Icons.sell_outlined),
+              leading: const Icon(Ti.tag),
               title: Text(context.tr('app.library.manage_tags')),
               subtitle: Text(
                 context.tr('app.library.rename_colour_merge_delete'),
@@ -448,7 +449,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       actions: [
         IconButton(
           tooltip: context.tr('search.results.everything.label'),
-          icon: const Icon(Icons.manage_search),
+          icon: const Icon(Ti.listSearch),
           onPressed: () => openSearch(
             context,
             store: widget.store,
@@ -464,7 +465,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             widget.section == LibrarySection.quotes)
           IconButton(
             tooltip: context.tr('tour.step.boards.name'),
-            icon: const Icon(Icons.dashboard_customize_outlined),
+            icon: const Icon(Ti.layoutBoard),
             onPressed: _manageBoards,
           ),
         if (widget.auto != null)
@@ -478,7 +479,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   tooltip: n == 1 ? '1 sync conflict' : '$n sync conflicts',
                   icon: Badge(
                     label: Text('$n'),
-                    child: const Icon(Icons.sync_problem_outlined),
+                    child: const Icon(Ti.refreshAlert),
                   ),
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
@@ -502,7 +503,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ),
         PopupMenuButton<ExportKind>(
           tooltip: context.tr('common.action.export.label'),
-          icon: const Icon(Icons.ios_share),
+          icon: const Icon(Ti.share2),
           onSelected: _export,
           itemBuilder: (_) => [
             PopupMenuItem(
@@ -527,7 +528,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           : FloatingActionButton.extended(
               heroTag: 'add-${widget.section.name}',
               onPressed: _mode == _Mode.quotes ? _addQuote : _addWork,
-              icon: const Icon(Icons.add),
+              icon: const Icon(Ti.plus),
               label: Text(
                 _mode == _Mode.quotes
                     ? context.tr('app.work.add_a_quote')
@@ -558,14 +559,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     : context.tr(
                         'app.metadata_tools.search_titles_and_creators',
                       ),
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(Ti.search),
                 suffixIcon: _search.text.isEmpty
                     ? null
                     : IconButton(
                         tooltip: context.tr(
                           'common.selection.shelf.clear.label',
                         ),
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Ti.x),
                         onPressed: () {
                           _search.clear();
                           _load();
@@ -765,12 +766,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
     if (empty) {
       return EmptyState(
         icon: searching
-            ? Icons.search_off_rounded
+            ? Ti.searchOff
             : _mode == _Mode.quotes
-            ? Icons.format_quote_rounded
+            ? Ti.quote
             : widget.section == LibrarySection.catalogue
-            ? Icons.movie_outlined
-            : Icons.menu_book_rounded,
+            ? Ti.movie
+            : Ti.book2,
         title: searching
             ? context.tr('app.search.nothing_matches')
             : _mode == _Mode.quotes

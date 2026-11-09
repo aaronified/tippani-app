@@ -1339,3 +1339,4 @@ app.works_view.where_i_am_with_it = আমি কোথায় আছি
 app.works_view.year_newest_first = বছর, নতুন আগে
 app.works_view.year_oldest_first = বছর, পুরনো আগে
 app.works_view.year_unknown = বছর অজানা
+app.settings.icons_by_tabler = আইকন: Tabler Icons (MIT)। সব লাইসেন্স দেখতে চাপুন।

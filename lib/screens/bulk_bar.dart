@@ -8,6 +8,7 @@ import '../library/models.dart';
 import '../sync/fingerprint.dart' show realmOfQuote;
 import 'anthologies_screen.dart' show askAnthologyText;
 import 'quote_form_screen.dart' show quoteColour, quoteColourName;
+import '../theme/tabler.dart';
 
 /// The bar that replaces a list's title while things are selected: how many, a way out, select everything, and the
 /// actions that suit what is selected.
@@ -22,7 +23,7 @@ AppBar bulkAppBar(
   return AppBar(
     leading: IconButton(
       tooltip: context.tr('common.action.cancel.label'),
-      icon: const Icon(Icons.close),
+      icon: const Icon(Ti.x),
       onPressed: onClose,
     ),
     title: Text(context.tr('common.selection.count.one', {'n': count})),
@@ -30,7 +31,7 @@ AppBar bulkAppBar(
       if (count < total)
         IconButton(
           tooltip: context.tr('search.table.select-all.aria'),
-          icon: const Icon(Icons.select_all),
+          icon: const Icon(Ti.selectAll),
           onPressed: onAll,
         ),
       ...actions,
@@ -80,7 +81,7 @@ class QuoteBulkActions {
         tooltip: allFav
             ? context.tr('app.bulk_bar.take_them_off_favourites')
             : context.tr('app.bulk_bar.favourite_them'),
-        icon: Icon(allFav ? Icons.star : Icons.star_border),
+        icon: Icon(allFav ? Ti.starFilled : Ti.star),
         onPressed: () async {
           final r = await _ops.favourite(quotes, !allFav);
           if (!context.mounted) return;
@@ -97,12 +98,12 @@ class QuoteBulkActions {
       ),
       IconButton(
         tooltip: context.tr('common.field.colour.label'),
-        icon: const Icon(Icons.palette_outlined),
+        icon: const Icon(Ti.palette),
         onPressed: () => _recolour(context),
       ),
       IconButton(
         tooltip: context.tr('common.field.tag.label'),
-        icon: const Icon(Icons.sell_outlined),
+        icon: const Icon(Ti.tag),
         onPressed: () => _tag(context, add: true),
       ),
       PopupMenuButton<String>(
@@ -247,12 +248,12 @@ class QuoteBulkActions {
           children: [
             for (final b in boards)
               ListTile(
-                leading: const Icon(Icons.dashboard_outlined),
+                leading: const Icon(Ti.layoutDashboard),
                 title: Text(b.name),
                 onTap: () => Navigator.of(context).pop(b.id),
               ),
             ListTile(
-              leading: const Icon(Icons.layers_clear_outlined),
+              leading: const Icon(Ti.layersOff),
               title: Text(context.tr('app.bulk_bar.no_board')),
               onTap: () => Navigator.of(context).pop(none),
             ),
@@ -415,18 +416,18 @@ class WorkBulkActions {
   List<Widget> bar(BuildContext context) => [
     IconButton(
       tooltip: context.tr('app.bulk_bar.set_one_field'),
-      icon: const Icon(Icons.edit_note),
+      icon: const Icon(Ti.notes),
       onPressed: () => _field(context),
     ),
     if (works.length > 1)
       IconButton(
         tooltip: context.tr('app.bulk_bar.merge_into_one'),
-        icon: const Icon(Icons.merge_type),
+        icon: const Icon(Ti.arrowsJoin),
         onPressed: () => _merge(context),
       ),
     IconButton(
       tooltip: context.tr('common.action.delete.label'),
-      icon: const Icon(Icons.delete_outline),
+      icon: const Icon(Ti.trash),
       onPressed: () => _delete(context),
     ),
   ];

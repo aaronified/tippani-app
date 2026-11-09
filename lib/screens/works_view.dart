@@ -6,6 +6,7 @@ import '../library/cover_cache.dart';
 import '../library/models.dart';
 import 'library_widgets.dart';
 import 'shelf_card.dart';
+import '../theme/tabler.dart';
 
 /// How the works are ordered.
 enum WorkSort {
@@ -328,7 +329,7 @@ class _WorksViewState extends State<WorksView> {
                 _menu<WorkSort>(
                   key: const ValueKey('works-sort'),
                   title: context.tr('common.filters.sort.aria'),
-                  icon: Icons.sort_rounded,
+                  icon: Ti.arrowsSort,
                   values: WorkSort.values,
                   value: _sort,
                   label: (v) => context.tr(v.label),
@@ -340,7 +341,7 @@ class _WorksViewState extends State<WorksView> {
                 _menu<WorkGroup>(
                   key: const ValueKey('works-group'),
                   title: context.tr('app.board.group'),
-                  icon: Icons.view_agenda_outlined,
+                  icon: Ti.layoutRows,
                   values: WorkGroup.values,
                   value: _group,
                   label: (v) => context.tr(v.label),
@@ -354,9 +355,7 @@ class _WorksViewState extends State<WorksView> {
                   tooltip: _grid
                       ? context.tr('app.works_view.show_as_a_list')
                       : context.tr('app.works_view.show_as_covers'),
-                  icon: Icon(
-                    _grid ? Icons.view_list_rounded : Icons.grid_view_rounded,
-                  ),
+                  icon: Icon(_grid ? Ti.list : Ti.layoutGrid),
                   onPressed: () {
                     setState(() => _grid = !_grid);
                     _keep('grid', _grid);
@@ -388,7 +387,7 @@ class _WorksViewState extends State<WorksView> {
             Row(
               children: [
                 Icon(
-                  Icons.photo_size_select_large_outlined,
+                  Ti.photoScan,
                   size: 18,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -556,7 +555,7 @@ class _CoverGrid extends StatelessWidget {
                                     child: Padding(
                                       padding: const EdgeInsets.all(6),
                                       child: Icon(
-                                        Icons.check_circle_rounded,
+                                        Ti.circleCheckFilled,
                                         color: scheme.primary,
                                       ),
                                     ),

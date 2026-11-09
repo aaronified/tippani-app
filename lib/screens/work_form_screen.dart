@@ -5,6 +5,7 @@ import '../api/server_call.dart';
 import '../library/models.dart';
 import '../tools/work_lookup.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 String workKindLabel(WorkKind k) => switch (k) {
   WorkKind.book => 'Book',
@@ -212,7 +213,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.travel_explore),
+                    : const Icon(Ti.worldSearch),
                 label: Text(context.tr('app.work_form.look_up_details')),
               ),
             ),

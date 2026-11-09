@@ -7,6 +7,7 @@ import '../people/picture.dart';
 import 'people_console_actions.dart';
 import 'person_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// Every person and character the server keeps: search them, see which have no photo, open one, rename its
 /// spellings, merge two that are the same, remove one, make a character, and ask the server to fetch the photos
@@ -298,7 +299,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
               ? CircleAvatar(
                   radius: 24,
                   backgroundColor: scheme.primary,
-                  child: Icon(Icons.check_rounded, color: scheme.onPrimary),
+                  child: Icon(Ti.check, color: scheme.onPrimary),
                 )
               : _face(image, name),
           title: Text(name),
@@ -530,7 +531,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
         leading: selecting
             ? IconButton(
                 tooltip: context.tr('app.metadata_tools.clear_the_choice'),
-                icon: const Icon(Icons.close_rounded),
+                icon: const Icon(Ti.x),
                 onPressed: () => setState(_picked.clear),
               )
             : null,
@@ -543,7 +544,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
           if (selecting && _picked.length == 2)
             TextButton.icon(
               onPressed: _merge,
-              icon: const Icon(Icons.merge_rounded),
+              icon: const Icon(Ti.arrowsJoin),
               label: Text(context.tr('staging.move.merge.button.label')),
             ),
           if (!selecting)
@@ -586,7 +587,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                   hintText: context.tr(
                     'app.people_console.search_names_and_spellings',
                   ),
-                  leading: const Icon(Icons.search),
+                  leading: const Icon(Ti.search),
                   elevation: const WidgetStatePropertyAll(0),
                   onChanged: (v) => setState(() => _query = v.trim()),
                 ),
@@ -618,7 +619,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
           ? FloatingActionButton.extended(
               heroTag: 'add-character',
               onPressed: _addCharacter,
-              icon: const Icon(Icons.add),
+              icon: const Icon(Ti.plus),
               label: Text(context.tr('cast.add.aria')),
             )
           : null,

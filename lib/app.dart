@@ -26,6 +26,7 @@ import 'search/search_service.dart';
 import 'tags/tag_service.dart';
 import 'share/share_people.dart';
 import 'theme/app_theme.dart';
+import 'theme/tabler.dart';
 
 /// Tippani's own red, used as the seed where the phone gives no wallpaper colours (before Android 12,
 /// and on devices that opt out). The web app's accent is the same colour.
@@ -219,8 +220,8 @@ class _ShellState extends State<Shell> {
             },
           ),
           destination: NavigationDestination(
-            icon: const Icon(Icons.home_outlined),
-            selectedIcon: const Icon(Icons.home_rounded),
+            icon: const Icon(Ti.home),
+            selectedIcon: const Icon(Ti.homeFilled),
             label: context.tr('nav.tab.home.label'),
           ),
         ),
@@ -266,8 +267,8 @@ class _ShellState extends State<Shell> {
         (
           screen: HomeScreen(controller: widget.controller),
           destination: NavigationDestination(
-            icon: const Icon(Icons.home_outlined),
-            selectedIcon: const Icon(Icons.home),
+            icon: const Icon(Ti.home),
+            selectedIcon: const Icon(Ti.homeFilled),
             label: context.tr('nav.tab.home.label'),
           ),
         ),
@@ -277,8 +278,8 @@ class _ShellState extends State<Shell> {
           harness: widget.harness,
         ),
         destination: NavigationDestination(
-          icon: const Icon(Icons.settings_outlined),
-          selectedIcon: const Icon(Icons.settings),
+          icon: const Icon(Ti.settings),
+          selectedIcon: const Icon(Ti.settingsFilled),
           label: context.tr('nav.tab.settings.label'),
         ),
       ),

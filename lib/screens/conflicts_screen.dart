@@ -4,6 +4,7 @@ import '../sync/auto_sync.dart';
 import 'library_widgets.dart' show EmptyState;
 import '../sync/pull_sync.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// What changed on both the phone and the server, waiting for the reader. Nothing here is urgent and nothing has
 /// been overwritten: they settle one, several or none, whenever they like, and the next sync keeps the rest here.
@@ -87,7 +88,7 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
           final conflicts = widget.auto.conflicts;
           if (conflicts.isEmpty) {
             return EmptyState(
-              icon: Icons.task_alt_rounded,
+              icon: Ti.circleCheck,
               title: context.tr('app.conflicts.nothing_to_settle'),
               hint: context.tr('app.conflicts.if_the_same_quote_or_work'),
             );

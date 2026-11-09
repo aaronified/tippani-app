@@ -8,6 +8,7 @@ import '../capture/photo_source.dart';
 import '../l10n/l10n.dart';
 import '../library/cover_cache.dart';
 import 'prefs_widgets.dart';
+import '../theme/tabler.dart';
 
 /// The reader's account on the server: picture and name, password, notifications and the widget key.
 class AccountScreen extends StatefulWidget {
@@ -202,7 +203,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   children: [
                     OutlinedButton.icon(
                       onPressed: _busy ? null : _newPicture,
-                      icon: const Icon(Icons.photo_camera_outlined),
+                      icon: const Icon(Ti.camera),
                       label: Text(context.tr('app.account.change_picture')),
                     ),
                     if (me.avatar.isNotEmpty)
@@ -223,13 +224,13 @@ class _AccountScreenState extends State<AccountScreen> {
           PrefGroup(
             children: [
               ListTile(
-                leading: const Icon(Icons.badge_outlined),
+                leading: const Icon(Ti.idBadge),
                 title: Text(context.tr('app.account.your_name')),
                 subtitle: Text(me.username),
                 onTap: _rename,
               ),
               ListTile(
-                leading: const Icon(Icons.password_rounded),
+                leading: const Icon(Ti.password),
                 title: Text(context.tr('account.password.label')),
                 subtitle: me.mustChangePassword
                     ? Text(
@@ -322,7 +323,7 @@ class _AccountScreenState extends State<AccountScreen> {
             footer: context.tr('app.account.a_key_lets_a_home_screen'),
             children: [
               ListTile(
-                leading: const Icon(Icons.key_rounded),
+                leading: const Icon(Ti.key),
                 title: Text(
                   _hasWidgetKey
                       ? context.tr('app.account.made_when', {
@@ -344,7 +345,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     if (_hasWidgetKey)
                       IconButton(
                         tooltip: context.tr('common.action.remove.label'),
-                        icon: const Icon(Icons.delete_outline),
+                        icon: const Icon(Ti.trash),
                         onPressed: _busy
                             ? null
                             : () => _run(

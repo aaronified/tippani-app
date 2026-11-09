@@ -7,6 +7,7 @@ import '../library/models.dart';
 import 'library_widgets.dart';
 import 'quote_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 /// The quotes that carry one tag, or match one search (a person's name, a work's title), as a plain list: the place
 /// a name or a tag on a statistics or tags page leads to.
@@ -72,7 +73,7 @@ class _FilteredQuotesScreenState extends State<FilteredQuotesScreen> {
           ? const Center(child: CircularProgressIndicator())
           : quotes.isEmpty
           ? EmptyState(
-              icon: Icons.format_quote_rounded,
+              icon: Ti.quote,
               title: context.tr('app.filtered_quotes.no_quotes_here'),
               hint: context.tr(
                 'app.filtered_quotes.nothing_on_this_phone_matches',

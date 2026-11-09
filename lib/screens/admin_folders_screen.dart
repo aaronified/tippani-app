@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 String _slug(String s) {
   final out = s
@@ -146,9 +147,7 @@ class _Folders extends StatelessWidget {
                   child: Card(
                     child: ListTile(
                       leading: Icon(
-                        m.ok
-                            ? Icons.folder_outlined
-                            : Icons.folder_off_outlined,
+                        m.ok ? Ti.folder : Ti.folderOff,
                         color: m.ok ? scheme.primary : scheme.error,
                       ),
                       title: Text(m.label),
@@ -160,7 +159,7 @@ class _Folders extends StatelessWidget {
                       isThreeLine: !m.ok && m.error.isNotEmpty,
                       trailing: IconButton(
                         tooltip: context.tr('common.action.remove.label'),
-                        icon: const Icon(Icons.close_rounded),
+                        icon: const Icon(Ti.x),
                         onPressed: () => _remove(context, m),
                       ),
                     ),
@@ -231,7 +230,7 @@ class _Folders extends StatelessWidget {
           child: FloatingActionButton.extended(
             heroTag: 'add-folder',
             onPressed: () => _add(context),
-            icon: const Icon(Icons.create_new_folder_outlined),
+            icon: const Icon(Ti.folderPlus),
             label: Text(context.tr('settings.library.add.label')),
           ),
         ),

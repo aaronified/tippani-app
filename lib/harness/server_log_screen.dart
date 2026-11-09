@@ -6,6 +6,7 @@ import '../app_controller.dart';
 import 'log_screen.dart' show ShareText, shareThroughSheet;
 import 'server_log.dart';
 import '../l10n/l10n.dart';
+import '../theme/tabler.dart';
 
 final _windows = <(String, Duration)>[
   (tx('settings.logs.range.hour.label'), Duration(hours: 1)),
@@ -126,17 +127,17 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
         actions: [
           IconButton(
             tooltip: context.tr('app.server_log.refresh'),
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Ti.refresh),
             onPressed: _loading ? null : () => _load(reset: true),
           ),
           IconButton(
             tooltip: context.tr('common.action.copy.label'),
-            icon: const Icon(Icons.copy),
+            icon: const Icon(Ti.copy),
             onPressed: _lines.isEmpty ? null : _copy,
           ),
           IconButton(
             tooltip: context.tr('common.action.share.label'),
-            icon: const Icon(Icons.share),
+            icon: const Icon(Ti.share),
             onPressed: _lines.isEmpty
                 ? null
                 : () =>
@@ -165,7 +166,7 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
                   tooltip: context.tr('common.help.topbar.search.term'),
-                  icon: const Icon(Icons.search),
+                  icon: const Icon(Ti.search),
                   onPressed: () => _apply(_filter.copyWith(query: _query.text)),
                 ),
               ),

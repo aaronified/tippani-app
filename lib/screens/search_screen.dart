@@ -21,6 +21,7 @@ import 'quote_form_screen.dart' show quoteColour;
 import 'quote_screen.dart';
 import 'work_screen.dart';
 import '../theme/app_theme.dart';
+import '../theme/tabler.dart';
 
 /// Opens the search page over the current screen. [initial] is what the box starts with.
 Future<void> openSearch(
@@ -67,7 +68,7 @@ class SearchPill extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(Icons.search, color: scheme.onSurfaceVariant),
+                Icon(Ti.search, color: scheme.onSurfaceVariant),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -467,13 +468,13 @@ class _SearchScreenState extends State<SearchScreen> {
     final IconData icon;
     final String text;
     if (r != null && r.fellBack) {
-      icon = Icons.cloud_off_outlined;
+      icon = Ti.cloudOff;
       text = context.tr('app.search.the_server_could_not_be_reached');
     } else if (server) {
-      icon = Icons.cloud_done_outlined;
+      icon = Ti.cloudCheck;
       text = context.tr('app.search.searching_your_server_forgives_typos');
     } else {
-      icon = Icons.smartphone_outlined;
+      icon = Ti.deviceMobile;
       text = context.tr('app.search.searching_this_phone_exact_words_pair');
     }
     return Padding(
@@ -524,7 +525,7 @@ class _SearchScreenState extends State<SearchScreen> {
           if (_text.text.isNotEmpty)
             IconButton(
               tooltip: context.tr('common.selection.shelf.clear.label'),
-              icon: const Icon(Icons.close),
+              icon: const Icon(Ti.x),
               onPressed: () {
                 _text.clear();
                 _changed();
@@ -554,7 +555,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(
-                    avatar: const Icon(Icons.filter_list, size: 18),
+                    avatar: const Icon(Ti.filter, size: 18),
                     label: Text(context.tr('app.search.filter')),
                     onPressed: _vocab.byField.isEmpty ? null : _pickFilter,
                   ),
@@ -595,7 +596,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       padding: const EdgeInsets.only(right: 8),
                       child: ActionChip(
                         avatar: Icon(
-                          Icons.add,
+                          Ti.plus,
                           size: 16,
                           color: theme.colorScheme.primary,
                         ),
@@ -615,14 +616,14 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _body(BuildContext context, SearchResults? r) {
     if (r == null) {
       return EmptyState(
-        icon: Icons.search_rounded,
+        icon: Ti.search,
         title: context.tr('app.search.search_your_library'),
         hint: context.tr('app.search.words_from_a_quote_a_title'),
       );
     }
     if (r.isEmpty) {
       return EmptyState(
-        icon: Icons.search_off_rounded,
+        icon: Ti.searchOff,
         title: context.tr('app.search.nothing_matches'),
         hint: context.tr('app.search.try_fewer_words_or_take_a'),
       );
@@ -699,12 +700,12 @@ class _SearchScreenState extends State<SearchScreen> {
       for (final t in r.tags) {
         out.add(
           ListTile(
-            leading: const Icon(Icons.sell_outlined),
+            leading: const Icon(Ti.tag),
             title: Text(context.tr('app.search.name', {'name': t.name})),
             subtitle: Text(
               context.tr('common.work-card.count.quote.other', {'n': t.count}),
             ),
-            trailing: const Icon(Icons.filter_alt_outlined),
+            trailing: const Icon(Ti.filter),
             onTap: () => _addFacet(SearchFacet('tag', t.name), replaceText: ''),
           ),
         );
@@ -715,12 +716,12 @@ class _SearchScreenState extends State<SearchScreen> {
       for (final g in r.genres) {
         out.add(
           ListTile(
-            leading: const Icon(Icons.category_outlined),
+            leading: const Icon(Ti.category),
             title: Text(g.name),
             subtitle: Text(
               context.tr('app.search.n_titles', {'n': g.works.length}),
             ),
-            trailing: const Icon(Icons.filter_alt_outlined),
+            trailing: const Icon(Ti.filter),
             onTap: () =>
                 _addFacet(SearchFacet('genre', g.name), replaceText: ''),
           ),
@@ -847,7 +848,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ? '$what · ${context.tr('app.search.n_titles', {'n': p.works.length})}'
             : '$what · ${context.tr('common.work-card.count.quote.other', {'n': n})}',
       ),
-      trailing: const Icon(Icons.chevron_right_rounded),
+      trailing: const Icon(Ti.chevronRight),
       onTap: () => _openPerson(p),
     );
   }
@@ -1034,7 +1035,7 @@ class _ValuePickerState extends State<_ValuePicker> {
                   onChanged: (v) => setState(() => _q = v),
                   decoration: InputDecoration(
                     labelText: widget.title,
-                    prefixIcon: const Icon(Icons.search),
+                    prefixIcon: const Icon(Ti.search),
                   ),
                 ),
               ),

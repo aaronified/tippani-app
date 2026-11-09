@@ -1342,3 +1342,4 @@ app.works_view.where_i_am_with_it = Where I am with it
 app.works_view.year_newest_first = Year, newest first
 app.works_view.year_oldest_first = Year, oldest first
 app.works_view.year_unknown = Year unknown
+app.settings.icons_by_tabler = Icons by Tabler Icons (MIT). Press for all licences.
