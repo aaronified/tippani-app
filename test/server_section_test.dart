@@ -33,57 +33,47 @@ Future<(AppController, FakeServer)> open(
     ),
   );
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Settings'));
+  await tester.tap(find.text('Server'));
   await tester.pumpAndSettle();
   return (c, server);
 }
 
 void main() {
-  testWidgets('there is no Server tab: the bar has the library and Settings', (
-    tester,
-  ) async {
+  testWidgets('the bar has Boards, Server and Settings', (tester) async {
     await open(tester);
-    expect(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Server'),
-      ),
-      findsNothing,
-    );
-    expect(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Library'),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Settings'),
-      ),
-      findsOneWidget,
-    );
+    for (final label in ['Boards', 'Server', 'Settings']) {
+      expect(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text(label),
+        ),
+        findsOneWidget,
+        reason: label,
+      );
+    }
   });
 
   testWidgets(
-    'Settings opens with a Server section, and the app\'s own settings come after it',
+    'the Server tab is the server\'s, and the app\'s own settings are on their own tab',
     (tester) async {
       await open(tester);
-      expect(find.text('Server'), findsOneWidget);
       expect(find.text('Connect to your server'), findsOneWidget);
       expect(find.text('Not connected to a server yet.'), findsOneWidget);
-      final server = tester.getTopLeft(find.text('Connect to your server')).dy;
+      expect(find.text('Read aloud'), findsNothing);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('Settings'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Connect to your server'), findsNothing);
       await tester.scrollUntilVisible(
-        find.text('App'),
+        find.text('Read aloud'),
         300,
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Read aloud'), findsOneWidget);
-      expect(
-        tester.getTopLeft(find.text('Read aloud')).dy,
-        greaterThan(server),
-      );
     },
   );
 

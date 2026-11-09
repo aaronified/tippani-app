@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import 'combo_field.dart';
 
@@ -200,6 +201,7 @@ class _TokenSearchFieldState extends State<TokenSearchField> {
             children: [
               if (controller.text.isNotEmpty)
                 IconButton(
+                  tooltip: context.tr('common.selection.shelf.clear.label'),
                   icon: const Icon(Ti.x),
                   onPressed: () {
                     controller.clear();

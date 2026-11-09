@@ -11,6 +11,7 @@ import '../theme/tabler.dart';
 import '../tools/work_lookup.dart';
 import '../widgets/swipe_pager.dart';
 import 'anthologies_screen.dart';
+import 'conflicts_screen.dart';
 import 'library_screen.dart';
 
 /// The four boards of the Boards tab: the pages of the reader's collection.
@@ -117,78 +118,20 @@ class _BoardsTabState extends State<BoardsTab> {
   Widget build(BuildContext context) {
     final boards = widget.boards;
     if (boards.isEmpty) return const SizedBox.shrink();
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     return SafeArea(
       bottom: false,
       child: Column(
         children: [
-          ValueListenableBuilder<int>(
-            valueListenable: _page,
-            builder: (context, i, _) {
-              final at = i.clamp(0, boards.length - 1);
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-                child: Row(
-                  children: [
-                    IconButton(
-                      key: const ValueKey('board-previous'),
-                      tooltip: context.tr('app.boards_tab.previous'),
-                      onPressed: at == 0 ? null : () => _page.value = at - 1,
-                      icon: const Icon(Ti.chevronLeft),
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            context.tr(boards[at].label),
-                            style: theme.textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              for (var d = 0; d < boards.length; d++)
-                                GestureDetector(
-                                  onTap: () => _page.value = d,
-                                  behavior: HitTestBehavior.opaque,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 3,
-                                      vertical: 4,
-                                    ),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
-                                      width: d == at ? 18 : 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        color: d == at
-                                            ? scheme.primary
-                                            : scheme.outlineVariant,
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      key: const ValueKey('board-next'),
-                      tooltip: context.tr('app.boards_tab.next'),
-                      onPressed: at == boards.length - 1
-                          ? null
-                          : () => _page.value = at + 1,
-                      icon: const Icon(Ti.chevronRight),
-                    ),
-                  ],
+          Stack(
+            children: [
+              _header(context),
+              if (widget.auto != null)
+                Positioned(
+                  right: 52,
+                  top: 4,
+                  child: _syncState(context, widget.auto!),
                 ),
-              );
-            },
+            ],
           ),
           Expanded(
             child: SwipePager(
@@ -198,6 +141,109 @@ class _BoardsTabState extends State<BoardsTab> {
           ),
         ],
       ),
+    );
+  }
+
+  /// A sync running, or the conflicts waiting for the reader (a press settles them).
+  Widget _syncState(BuildContext context, AutoSync auto) => ListenableBuilder(
+    listenable: auto,
+    builder: (context, _) {
+      final n = auto.conflicts.length;
+      if (n > 0) {
+        return IconButton(
+          visualDensity: VisualDensity.compact,
+          tooltip: n == 1 ? '1 sync conflict' : '$n sync conflicts',
+          icon: Badge(label: Text('$n'), child: const Icon(Ti.refreshAlert)),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => ConflictsScreen(auto: auto),
+            ),
+          ),
+        );
+      }
+      if (auto.syncing) {
+        return const Padding(
+          padding: EdgeInsets.all(10),
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    },
+  );
+
+  /// The name of the board you are on, an arrow each way and a dot for each board.
+  Widget _header(BuildContext context) {
+    final boards = widget.boards;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return ValueListenableBuilder<int>(
+      valueListenable: _page,
+      builder: (context, i, _) {
+        final at = i.clamp(0, boards.length - 1);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+          child: Row(
+            children: [
+              IconButton(
+                key: const ValueKey('board-previous'),
+                tooltip: context.tr('app.boards_tab.previous'),
+                onPressed: at == 0 ? null : () => _page.value = at - 1,
+                icon: const Icon(Ti.chevronLeft),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Text(
+                      context.tr(boards[at].label),
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (var d = 0; d < boards.length; d++)
+                          GestureDetector(
+                            onTap: () => _page.value = d,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 3,
+                                vertical: 4,
+                              ),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: d == at ? 18 : 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: d == at
+                                      ? scheme.primary
+                                      : scheme.outlineVariant,
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                key: const ValueKey('board-next'),
+                tooltip: context.tr('app.boards_tab.next'),
+                onPressed: at == boards.length - 1
+                    ? null
+                    : () => _page.value = at + 1,
+                icon: const Icon(Ti.chevronRight),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

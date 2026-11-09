@@ -169,7 +169,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final me = ++_request;
     final all = await widget.store.works();
     final counts = await widget.store.counts();
-    final knownTags = await widget.store.tags();
+    // suggestions only: a store that cannot list its tags just suggests none
+    var knownTags = <String>[];
+    try {
+      knownTags = await widget.store.tags();
+    } on Object {
+      // none to suggest
+    }
     // in the order the reader put them in (the server's), the rest by name
     final boards = await widget.store.boards()
       ..sort((x, y) {
@@ -545,24 +551,27 @@ class _LibraryScreenState extends State<LibraryScreen> {
               return const SizedBox.shrink();
             },
           ),
-        PopupMenuButton<ExportKind>(
-          tooltip: context.tr('common.action.export.label'),
-          icon: const Icon(Ti.share2),
-          onSelected: _export,
-          itemBuilder: (_) => [
-            PopupMenuItem(
-              value: ExportKind.share,
-              child: Text(context.tr('app.library.share_as_markdown')),
-            ),
-            PopupMenuItem(
-              value: ExportKind.save,
-              child: Text(context.tr('app.library.save_as_markdown_file')),
-            ),
-          ],
-        ),
+        _exportMenu(context),
       ],
     );
   }
+
+  /// Share or save the library (or what the search shows) as Markdown.
+  Widget _exportMenu(BuildContext context) => PopupMenuButton<ExportKind>(
+    tooltip: context.tr('common.action.export.label'),
+    icon: const Icon(Ti.share2),
+    onSelected: _export,
+    itemBuilder: (_) => [
+      PopupMenuItem(
+        value: ExportKind.share,
+        child: Text(context.tr('app.library.share_as_markdown')),
+      ),
+      PopupMenuItem(
+        value: ExportKind.save,
+        child: Text(context.tr('app.library.save_as_markdown_file')),
+      ),
+    ],
+  );
 
   Widget _scaffold(BuildContext context, PreferredSizeWidget? bar, counts) {
     return Scaffold(
@@ -600,19 +609,25 @@ class _LibraryScreenState extends State<LibraryScreen> {
               sources: _searchSources,
               onSubmitted: (_) => _load(),
               // the same words, widened to the server's results too
-              trailing: IconButton(
-                tooltip: context.tr('search.results.everything.label'),
-                icon: const Icon(Ti.worldSearch),
-                onPressed: () => openSearch(
-                  context,
-                  store: widget.store,
-                  picker: widget.picker,
-                  share: widget.share,
-                  shareImage: widget.shareImage,
-                  anthologies: widget.anthologies,
-                  lookup: widget.lookup,
-                  initial: _search.text,
-                ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: context.tr('search.results.everything.label'),
+                    icon: const Icon(Ti.worldSearch),
+                    onPressed: () => openSearch(
+                      context,
+                      store: widget.store,
+                      picker: widget.picker,
+                      share: widget.share,
+                      shareImage: widget.shareImage,
+                      anthologies: widget.anthologies,
+                      lookup: widget.lookup,
+                      initial: _search.text,
+                    ),
+                  ),
+                  if (widget.embedded) _exportMenu(context),
+                ],
               ),
             ),
           ),

@@ -150,7 +150,7 @@ void main() {
       saved: {'server_url': 'https://q.example.org'},
     );
     await start(tester, c);
-    await tester.tap(find.text('Settings'));
+    await tester.tap(find.text('Server'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Forget this server'));
     await tester.pumpAndSettle();
