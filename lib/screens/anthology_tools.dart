@@ -84,6 +84,7 @@ Future<({String title, String prose})?> askSection(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                textCapitalization: TextCapitalization.words,
                 controller: t,
                 autofocus: true,
                 maxLength: 200,
@@ -93,6 +94,7 @@ Future<({String title, String prose})?> askSection(
                 ),
               ),
               TextField(
+                textCapitalization: TextCapitalization.sentences,
                 controller: p,
                 minLines: 2,
                 maxLines: 6,
@@ -336,6 +338,7 @@ Future<bool> editFrontMatter(
                 ),
               const SizedBox(height: 12),
               TextField(
+                textCapitalization: TextCapitalization.sentences,
                 controller: epigraph,
                 minLines: 2,
                 maxLines: 4,
@@ -345,6 +348,7 @@ Future<bool> editFrontMatter(
                 ),
               ),
               TextField(
+                textCapitalization: TextCapitalization.sentences,
                 controller: dedication,
                 minLines: 1,
                 maxLines: 3,

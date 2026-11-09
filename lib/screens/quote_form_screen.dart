@@ -7,6 +7,10 @@ import '../capture/text_recogniser.dart';
 import '../capture/voice_listener.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
+import '../library/suggestions.dart';
+import '../people/people_directory.dart';
+import '../widgets/combo_field.dart';
+import 'add_kind.dart';
 import 'capture_screen.dart';
 import 'voice_screen.dart';
 import 'work_form_screen.dart';
@@ -50,7 +54,16 @@ class QuoteFormScreen extends StatefulWidget {
     this.listener,
     this.adjuster,
     this.adjustPage = true,
+    this.kind,
+    this.startWith,
   });
+
+  /// Which kind of quote is being added, from the Add sheet: a book's lines choose among books, a film's among films,
+  /// shows and games, and a standalone quote has no work. Null: any.
+  final AddKind? kind;
+
+  /// Something to start straight away: scanning a page, or listening for spoken words.
+  final AddKind? startWith;
 
   /// Straightens and crops a scanned page; null uses the phone's own. A test passes a stand-in, or turns it off.
   final PageAdjuster? adjuster;
@@ -103,6 +116,9 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   /// What the form offers to fill the boxes with: the cast of the chosen work, the chapters already used in it, and
   /// the tags the library already has.
   List<Quote> _inWork = const [];
+
+  /// The quotes of every work in the chosen work's series (or of the work alone, with no series): who has spoken there.
+  List<Quote> _inSeries = const [];
   List<String> _knownTags = const [];
   late int? _boardId = widget.quote?.boardId;
   String? _error;
@@ -111,8 +127,34 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.kind == AddKind.loose) _workId = null;
     _loadWorks();
+    final go = widget.startWith;
+    if (go != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (go == AddKind.scan) _scan();
+        if (go == AddKind.voice) _speak();
+      });
+    }
   }
+
+  /// The works the box offers: those of the kind being added.
+  List<Work> get _offered => switch (widget.kind) {
+    AddKind.book => [
+      for (final w in _works)
+        if (w.kind == WorkKind.book || w.kind == WorkKind.other) w,
+    ],
+    AddKind.screen => [
+      for (final w in _works)
+        if (w.kind == WorkKind.film ||
+            w.kind == WorkKind.show ||
+            w.kind == WorkKind.game)
+          w,
+    ],
+    AddKind.loose => const [],
+    _ => _works,
+  };
 
   @override
   void dispose() {
@@ -157,7 +199,21 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
     final qs = id == null
         ? const <Quote>[]
         : await widget.store.quotes(workId: id, limit: 1 << 30);
-    if (mounted) setState(() => _inWork = qs);
+    final scope = seriesOf(_works.where((w) => w.id == id).firstOrNull, _works);
+    final inSeries = <Quote>[...qs];
+    for (final w in scope) {
+      if (w.id != id) {
+        inSeries.addAll(
+          await widget.store.quotes(workId: w.id, limit: 1 << 30),
+        );
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _inWork = qs;
+        _inSeries = inSeries;
+      });
+    }
   }
 
   /// The characters (or, for a book, the speakers already used) the chosen work offers for "who said it".
@@ -170,67 +226,39 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
       if (n.isNotEmpty && seen.add(n.toLowerCase())) out.add(n);
     }
 
-    if (w != null) {
-      for (final c in w.details.cast) {
+    // the work's own cast first, then the cast of the rest of its series (Azkaban offers the Chamber's characters)
+    for (final s in seriesOf(w, _works)) {
+      for (final c in s.details.cast) {
         add(c.character);
       }
     }
-    for (final q in _inWork) {
+    final dir = PeopleDirectoryScope.of(context);
+    if (w == null) {
+      for (final n in dir?.names('speaker') ?? const <String>[]) {
+        add(n);
+      }
+    }
+    for (final q in _inSeries) {
       for (final n in q.speaker.split(RegExp(r'\s*[,;&]\s*'))) {
         add(n);
       }
     }
-    return out.take(14).toList();
+    return out;
   }
 
+  /// The chapters already used in the chosen work, in chapter order where they start with a number. A chapter is kept as
+  /// one piece of text ("12. The Whale"), so choosing it by its name or by its number fills in both.
   List<String> get _chapterHints {
     final seen = <String>{};
-    return [
+    final out = [
       for (final q in _inWork)
         if (q.chapter.trim().isNotEmpty && seen.add(q.chapter.trim()))
           q.chapter.trim(),
-    ].take(14).toList();
-  }
-
-  /// Adds [name] to a comma-separated box, unless it is already there.
-  void _append(TextEditingController c, String name) {
-    final parts = [
-      for (final p in c.text.split(','))
-        if (p.trim().isNotEmpty) p.trim(),
     ];
-    if (parts.any((p) => p.toLowerCase() == name.toLowerCase())) return;
-    setState(() => c.text = [...parts, name].join(', '));
+    return sortChapters(out);
   }
 
-  Widget _hints(
-    String label,
-    List<String> options,
-    void Function(String) pick,
-  ) {
-    if (options.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 6,
-            runSpacing: 0,
-            children: [
-              for (final o in options)
-                ActionChip(
-                  label: Text(o),
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => pick(o),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  List<String> get _languageHints => languageOptions(_works);
 
   Future<void> _newWork() async {
     final w = await Navigator.of(context).push<Work>(
@@ -402,7 +430,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int?>(
-            initialValue: _works.any((w) => w.id == _workId) ? _workId : null,
+            initialValue: _offered.any((w) => w.id == _workId) ? _workId : null,
             isExpanded: true,
             decoration: InputDecoration(
               labelText: context.tr('anthologies.fill.from.label'),
@@ -414,7 +442,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
                   context.tr('app.quote_form.no_work_a_standalone_quote'),
                 ),
               ),
-              for (final w in _works)
+              for (final w in _offered)
                 DropdownMenuItem<int?>(
                   value: w.id,
                   child: Text(
@@ -464,60 +492,60 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             ),
             const SizedBox(height: 12),
           ],
-          TextField(
+          // who said it: the characters of this work and of the rest of its series, and who has spoken there before
+          ComboField(
             controller: _speaker,
-            textCapitalization: TextCapitalization.words,
-            decoration: InputDecoration(
-              labelText: context.tr('anthologies.form.fields.credit.label'),
-            ),
-          ),
-          _hints(
-            context.tr('app.quote_form.in_this_work'),
-            _speakerHints,
-            (n) => _append(_speaker, n),
+            multi: true,
+            labelText: context.tr('anthologies.form.fields.credit.label'),
+            options: () => _speakerHints,
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: TextField(
+                child: ComboField(
                   controller: _chapter,
-                  decoration: InputDecoration(
-                    labelText: _workId == null ? 'Occasion' : 'Chapter',
+                  labelText: context.tr(
+                    _workId == null
+                        ? 'app.quote_form.occasion'
+                        : 'app.quote_form.chapter',
                   ),
+                  textCapitalization: TextCapitalization.sentences,
+                  options: () => _chapterHints,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
                   controller: _location,
+                  textCapitalization: TextCapitalization.none,
                   decoration: InputDecoration(
-                    labelText: _workId == null ? 'Place' : 'Page or position',
+                    labelText: context.tr(
+                      _workId == null
+                          ? 'app.quote_form.place'
+                          : 'app.quote_form.page_or_position',
+                    ),
                   ),
                 ),
               ),
             ],
-          ),
-          _hints(
-            context.tr('app.quote_form.chapters_you_used'),
-            _chapterHints,
-            (n) => setState(() => _chapter.text = n),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _translation,
             minLines: 1,
             maxLines: 6,
+            textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
               labelText: context.tr('common.field.translation.label'),
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
+          ComboField(
             controller: _language,
-            decoration: InputDecoration(
-              labelText: context.tr('app.quote_form.language_of_the_words'),
-            ),
+            labelText: context.tr('app.quote_form.language_of_the_words'),
+            textCapitalization: TextCapitalization.none,
+            options: () => _languageHints,
           ),
           const SizedBox(height: 12),
           TextField(
@@ -530,23 +558,13 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
+          ComboField(
             controller: _tags,
-            decoration: InputDecoration(
-              labelText: context.tr('common.field.tags.label'),
-              helperText: context.tr('app.quote_form.separated_by_commas'),
-            ),
-          ),
-          _hints(
-            context.tr('app.quote_form.your_tags'),
-            [
-              for (final t in _knownTags)
-                if (!_tags.text
-                    .split(',')
-                    .any((p) => p.trim().toLowerCase() == t.toLowerCase()))
-                  t,
-            ].take(14).toList(),
-            (n) => _append(_tags, n),
+            multi: true,
+            labelText: context.tr('common.field.tags.label'),
+            helperText: context.tr('app.quote_form.separated_by_commas'),
+            textCapitalization: TextCapitalization.none,
+            options: () => _knownTags,
           ),
           const SizedBox(height: 16),
           Wrap(

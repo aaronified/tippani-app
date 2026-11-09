@@ -980,6 +980,7 @@ class _FaceDialogState extends State<_FaceDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         TextField(
+          textCapitalization: TextCapitalization.none,
           controller: _name,
           enabled: widget.language == null,
           autofocus: widget.language == null,

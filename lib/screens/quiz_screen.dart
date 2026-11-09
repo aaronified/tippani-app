@@ -678,6 +678,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Widget _clozeInput(BuildContext context, QuizCard c) {
     return TextField(
+      textCapitalization: TextCapitalization.none,
       controller: _field,
       enabled: !_graded && !_sending,
       textInputAction: TextInputAction.done,

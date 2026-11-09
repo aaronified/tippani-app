@@ -168,6 +168,7 @@ Future<String?> askText(
     builder: (context) => AlertDialog(
       title: Text(title),
       content: TextField(
+        textCapitalization: TextCapitalization.none,
         controller: c,
         autofocus: true,
         obscureText: secret,

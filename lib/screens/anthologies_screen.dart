@@ -45,6 +45,7 @@ Future<({String title, String intro})?> askAnthologyText(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              textCapitalization: TextCapitalization.words,
               controller: t,
               autofocus: true,
               onChanged: (_) => setState(() {}),
@@ -54,6 +55,7 @@ Future<({String title, String intro})?> askAnthologyText(
             ),
             const SizedBox(height: 12),
             TextField(
+              textCapitalization: TextCapitalization.sentences,
               controller: i,
               minLines: 2,
               maxLines: 5,

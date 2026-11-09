@@ -297,6 +297,7 @@ class _TextDialogState extends State<_TextDialog> {
   Widget build(BuildContext context) => AlertDialog(
     title: Text(widget.title),
     content: TextField(
+      textCapitalization: TextCapitalization.words,
       controller: _c,
       autofocus: true,
       maxLength: widget.maxLength,
