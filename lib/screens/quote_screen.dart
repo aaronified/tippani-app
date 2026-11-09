@@ -374,7 +374,12 @@ class _QuoteScreenState extends State<QuoteScreen> {
             Text(q.note),
             const SizedBox(height: 16),
           ],
-          QuoteContextSection(quote: q, work: _work),
+          QuoteContextSection(
+            quote: q,
+            work: _work,
+            // the library opens on the character chosen in the viewer
+            onFilter: (f) => Navigator.of(context).pop(f),
+          ),
           if (_work != null)
             Card(
               child: ListTile(

@@ -25,9 +25,10 @@ Map<String, Object?> answer({
   bool boundBefore = false,
   bool boundAfter = false,
   String unit = 'paragraph',
+  String body = 'Simplify, simplify.',
 }) => {
   'before': before,
-  'body': 'Simplify, simplify.',
+  'body': body,
   'after': after,
   'unit': unit,
   'span': {'before': shownBefore, 'after': shownAfter},
@@ -195,6 +196,9 @@ void main() {
       WidgetTester tester, {
       bool synced = true,
       bool withSource = true,
+      List<CastMember> cast = const [],
+      String chapter = '',
+      String location = '',
     }) async {
       tester.view.physicalSize = const Size(800, 3000);
       tester.view.devicePixelRatio = 1;
@@ -202,8 +206,16 @@ void main() {
       source = _Source();
       final lib = MemoryLibrary();
       final w = await lib.addWork(const WorkDraft(title: 'Walden'));
+      if (cast.isNotEmpty) {
+        await lib.setWorkDetails(w.id, WorkDetails(cast: cast));
+      }
       final q = await lib.addQuote(
-        QuoteDraft(text: 'Simplify, simplify.', workId: w.id),
+        QuoteDraft(
+          text: 'Simplify, simplify.',
+          workId: w.id,
+          chapter: chapter,
+          location: location,
+        ),
       );
       if (synced) await lib.setQuoteServerId(q.id, 7);
       await tester.pumpWidget(
@@ -217,17 +229,22 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    Future<void> openViewer(WidgetTester tester) async {
+      await tester.tap(find.text('Show where it comes from'));
+      await tester.pumpAndSettle();
+    }
+
     testWidgets(
       'a quote on the server offers its context, and asks nothing until pressed',
       (tester) async {
         await open(tester);
         expect(find.text('Context'), findsOneWidget);
         expect(source.asked, isEmpty);
-        await tester.tap(find.text('Show where it comes from'));
-        await tester.pumpAndSettle();
-        expect(source.asked, [(null, null)]);
+        await openViewer(tester);
+        expect(source.asked.first, (null, null));
         expect(find.text('Earlier paragraph.'), findsOneWidget);
         expect(find.text('Later paragraph.'), findsOneWidget);
+        expect(find.textContaining('Your quote'), findsOneWidget);
       },
     );
 
@@ -242,21 +259,16 @@ void main() {
       },
     );
 
-    testWidgets('Show more widens one side by three, keeping the other', (
+    testWidgets('reaching an edge asks for six more on that side', (
       tester,
     ) async {
       await open(tester);
-      await tester.tap(find.text('Show where it comes from'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Show more before'));
-      await tester.pumpAndSettle();
-      expect(source.asked.last, (4, 1));
-      await tester.tap(find.text('Show more after'));
-      await tester.pumpAndSettle();
-      expect(source.asked.last, (4, 4));
+      await openViewer(tester);
+      // the text does not fill the screen, so both edges are in reach and each is asked for
+      expect(source.asked, contains((7, 1)));
     });
 
-    testWidgets('where the file ends, it says so and offers no more', (
+    testWidgets('where the file ends, it says so and asks for no more', (
       tester,
     ) async {
       await open(tester);
@@ -268,10 +280,8 @@ void main() {
           boundAfter: true,
         ),
       );
-      await tester.tap(find.text('Show where it comes from'));
-      await tester.pumpAndSettle();
-      expect(find.text('Show more before'), findsNothing);
-      expect(find.text('Show more after'), findsNothing);
+      await openViewer(tester);
+      expect(source.asked, hasLength(1));
       expect(find.text('The start of the chapter or scene.'), findsOneWidget);
       expect(
         find.text('The end of the chapter, scene or work.'),
@@ -284,8 +294,7 @@ void main() {
     ) async {
       await open(tester);
       source.next = null;
-      await tester.tap(find.text('Show where it comes from'));
-      await tester.pumpAndSettle();
+      await openViewer(tester);
       expect(
         find.textContaining('has no context for this quote'),
         findsOneWidget,
@@ -297,13 +306,64 @@ void main() {
     ) async {
       await open(tester);
       source.fail = const ServerException('The server could not be reached.');
-      await tester.tap(find.text('Show where it comes from'));
-      await tester.pumpAndSettle();
+      await openViewer(tester);
       expect(find.text('The server could not be reached.'), findsOneWidget);
       source.fail = null;
       await tester.tap(find.text('Try again'));
       await tester.pumpAndSettle();
       expect(find.text('Earlier paragraph.'), findsOneWidget);
+    });
+
+    testWidgets(
+      'a character of the work is picked out, listed above, and opens its sheet',
+      (tester) async {
+        await open(
+          tester,
+          cast: const [
+            CastMember(character: 'Henry'),
+            CastMember(character: 'Thoreau'),
+          ],
+        );
+        source.next = QuoteContext.fromJson(
+          answer(
+            before: 'Henry spoke first.\nThen nobody did.',
+            after: 'Later, Thoreau answered Henry.',
+            storedBefore: 2,
+            storedAfter: 1,
+            shownBefore: 2,
+          ),
+        );
+        await openViewer(tester);
+        expect(find.text('In this passage'), findsOneWidget);
+        await tester.tap(find.text('Thoreau').first);
+        await tester.pumpAndSettle();
+        expect(find.text('Open page'), findsOneWidget);
+        expect(find.text('Show their quotes'), findsOneWidget);
+        expect(find.text('No description yet.'), findsOneWidget);
+        expect(find.textContaining('named once here'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'the chapter and page are a chip in the bar, with the detail a press away',
+      (tester) async {
+        await open(tester, chapter: 'Economy', location: 'p. 14');
+        await openViewer(tester);
+        expect(find.text('Economy · p. 14'), findsOneWidget);
+        await tester.tap(find.byType(ActionChip));
+        await tester.pumpAndSettle();
+        expect(find.text('Where this is'), findsOneWidget);
+        expect(find.text('Economy'), findsOneWidget);
+        expect(find.text('p. 14'), findsOneWidget);
+      },
+    );
+
+    testWidgets('a quote with no chapter or page has no place chip', (
+      tester,
+    ) async {
+      await open(tester);
+      await openViewer(tester);
+      expect(find.byType(ActionChip), findsNothing);
     });
   });
 }
