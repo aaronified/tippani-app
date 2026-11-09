@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tippani/theme/tabler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/library_widgets.dart';
@@ -316,7 +317,7 @@ void main() {
         );
         await tester.tap(find.byKey(const ValueKey('works-view')));
         await tester.pumpAndSettle();
-        expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+        expect(find.byIcon(Ti.circleCheckFilled), findsOneWidget);
         await tester.longPress(find.byKey(ValueKey('cover-${dune.id}')));
         expect(longPressed.last.title, 'Dune');
       },
