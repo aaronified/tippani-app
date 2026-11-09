@@ -85,6 +85,24 @@ void main() {
     },
   );
 
+  test('a chip shows the face its work cast gives, or the sync saw', () async {
+    final (_, d, _) = await _rig();
+    await d.ready();
+    // the work's cast names the picture
+    expect(
+      d.faceOf(const QuoteChip(ChipKind.character, 'Ahab', '', _ishmael)),
+      _ishmael,
+    );
+    // a name the sync saw on a quote, spoken in a book
+    expect(d.faceOf(const QuoteChip(ChipKind.speaker, 'Queequeg')), '');
+    d.rememberFaces({'Queequeg': _actorFile});
+    expect(d.faceOf(const QuoteChip(ChipKind.speaker, 'queequeg')), _actorFile);
+    expect(
+      d.faceOf(const QuoteChip(ChipKind.character, 'Queequeg')),
+      _actorFile,
+    );
+  });
+
   test('the lists are kept on the phone and read again offline', () async {
     final (server, d, dir) = await _rig();
     server.people['speaker'] = [
