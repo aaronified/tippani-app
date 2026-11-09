@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Fixed
+
+- Anthologies no longer opens saying "This phone is not paired" and needing Try again: it waits until the phone has read its pairing, then shows your anthologies. The bottom bar no longer wraps a tab's name onto two lines: when a name will not fit on one line, only the open tab keeps its name.
+
 ## [0.7.0] - 2026-11-07
 
 ### Changed
