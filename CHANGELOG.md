@@ -13,6 +13,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Changed
 
+- The context viewer is a scroller: Show where it comes from on a quote opens one screen with everything the server stored around it, above and below, the top and bottom fading out, your quote highlighted in its colour, and more loading as you reach either end. The characters of the work are picked out in the text, each in a colour of its own (by name and by the other names the server knows), with a row of them above; pressing one opens a sheet with their portrait, description, other names and how often they are named, and buttons for their page and for your quotes of theirs. The chapter and page are a chip in the top bar.
+
 - Quote cards: every quote in a list is now a card. The work is in a header with its cover, title, who made it and where in it (chapter, page or time), the quote sits beside a bar in its colour, the people on it are chips, and a footer holds its tags and four buttons: Copy, Read aloud, Share and More (Open, Select, Add to anthology). A long run of chips or tags scrolls sideways and fades at the edge where more is hidden.
 
 - New icons: every icon in the app, the four section icons in the bottom bar included, is now from Tabler Icons (MIT licence). The back, close and menu buttons of every screen use them too. Settings names them at the bottom, and pressing that line lists the licences.

@@ -939,8 +939,6 @@ app.quote_chips.what_name_actor = {what} {name}, played by {actor}
 
 # --- quote_context ---
 app.quote_context.context = Context
-app.quote_context.show_more_after = Show more after
-app.quote_context.show_more_before = Show more before
 app.quote_context.show_where_it_comes_from = Show where it comes from
 app.quote_context.the_end_of_the_chapter_scene = The end of the chapter, scene or work.
 app.quote_context.the_server_has_no_context_for = The server has no context for this quote: it was not found in a file.
@@ -1365,3 +1363,16 @@ app.theme.palette_forest = Forest
 app.theme.palette_rose = Rose
 app.theme.palette_amber = Amber
 app.theme.palette_slate = Slate
+app.context.in_this_passage = In this passage
+app.context.your_quote = Your quote
+app.context.where_this_is = Where this is
+app.context.character = Character
+app.context.character_in = Character · {work}
+app.context.played_by = Played by {actor}
+app.context.no_description = No description yet.
+app.context.also_called = Also called
+app.context.named_here.one = named once here
+app.context.named_here.other = named {n} times here
+app.context.your_quotes = Your quotes
+app.context.open_page = Open page
+app.context.show_their_quotes = Show their quotes
