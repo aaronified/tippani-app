@@ -369,7 +369,7 @@ class _CardActions extends StatelessWidget {
         ),
         button(context.tr('common.action.share.label'), Ti.share2, onShare),
         PopupMenuButton<VoidCallback>(
-          tooltip: context.tr('settings.appearance.contrast.more.label'),
+          tooltip: context.tr('app.quote_card.more'),
           padding: EdgeInsets.zero,
           icon: Icon(Ti.dotsVertical, size: 20, color: muted),
           onSelected: (run) => run(),

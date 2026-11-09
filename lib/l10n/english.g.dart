@@ -1152,6 +1152,7 @@ const Map<String, String> englishTokens = {
   'app.quote.quote_deleted': 'Quote deleted.',
   'app.quote.the_quote_could_not_be_read': 'The quote could not be read aloud.',
   'app.quote.this_quote_is_not_here_any': 'This quote is not here any more.',
+  'app.quote_card.more': 'More for this quote',
   'app.quote_card.no_tags': 'No tags',
   'app.quote_card.no_voice': 'This phone has no voice for "{language}".',
   'app.quote_card.note': 'Note',

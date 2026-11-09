@@ -192,7 +192,8 @@ void main() {
       );
       expect(find.text('I went to the woods'), findsOneWidget);
       expect(find.text('Thoreau'), findsOneWidget);
-      expect(find.text('#life  #nature'), findsOneWidget);
+      expect(find.text('#life'), findsOneWidget);
+      expect(find.text('#nature'), findsOneWidget);
       expect(find.text('Quotes 1'), findsOneWidget);
       expect((await lib.quotes()).single.tags, ['life', 'nature']);
     });

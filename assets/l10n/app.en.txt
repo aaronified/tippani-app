@@ -1348,3 +1348,4 @@ app.quote_card.noted_on = Noted {date}
 app.quote_card.no_tags = No tags
 app.quote_card.open = Open
 app.quote_card.no_voice = This phone has no voice for "{language}".
+app.quote_card.more = More for this quote

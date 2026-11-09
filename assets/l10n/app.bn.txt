@@ -1345,3 +1345,4 @@ app.quote_card.noted_on = লেখা হয়েছে {date}
 app.quote_card.no_tags = ট্যাগ নেই
 app.quote_card.open = খুলুন
 app.quote_card.no_voice = এই ফোনে "{language}" ভাষার কোনো কণ্ঠ নেই।
+app.quote_card.more = এই উক্তির আরও

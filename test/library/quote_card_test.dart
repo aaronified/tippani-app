@@ -74,7 +74,12 @@ void main() {
       expect(find.text('Jaws'), findsOneWidget);
       expect(find.text('Steven Spielberg · 01:12:40'), findsOneWidget);
       expect(find.text('#quotable'), findsOneWidget);
-      for (final tip in ['Copy', 'Read aloud', 'Share', 'More']) {
+      for (final tip in [
+        'Copy',
+        'Read aloud',
+        'Share',
+        'More for this quote',
+      ]) {
         expect(find.byTooltip(tip), findsOneWidget, reason: tip);
       }
     },

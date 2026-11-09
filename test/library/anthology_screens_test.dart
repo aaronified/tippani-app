@@ -319,9 +319,12 @@ void main() {
     await tester.pumpWidget(tile());
     expect(find.byTooltip('Add to anthology'), findsNothing);
     await tester.pumpWidget(tile(add: () => added++));
-    await tester.tap(find.byTooltip('Add to anthology'));
+    await tester.tap(find.byTooltip('More for this quote'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add to anthology'));
+    await tester.pumpAndSettle();
     await tester.longPress(find.text('Simplify.'));
-    expect(added, 2, reason: 'the button and a long press both do it');
+    expect(added, 2, reason: 'the menu and a long press both do it');
   });
 
   testWidgets('Practise runs the quiz on this anthology only', (tester) async {
