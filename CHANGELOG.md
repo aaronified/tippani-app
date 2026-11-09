@@ -10,6 +10,7 @@ version. Write each entry for the person using the app, in plain words. **Start 
 ### Fixed
 
 - Anthologies no longer opens saying "This phone is not paired" and needing Try again: it waits until the phone has read its pairing, then shows your anthologies. The bottom bar no longer wraps a tab's name onto two lines: when a name will not fit on one line, only the open tab keeps its name.
+- Character pictures show on quote chips: a character's face now appears on its chip in every list, including for a work you have not opened, and for a name spoken in a book. The picture of the character in that work is used first, then the character's own, then the actor's.
 
 ## [0.7.0] - 2026-11-07
 

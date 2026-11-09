@@ -280,6 +280,7 @@ class Harness {
         : PullSync(library, controller, log: appLog);
     final covers = CoverCache(controller);
     final directory = PairedPeopleDirectory(controller, covers);
+    pull?.onFaces = directory.rememberFaces;
     final prefs = PairedPreferences(controller, settings);
     final l10n = L10n()..use(prefs.prefs.locale);
     Tr.current = l10n; // code with no screen (a service wording an error) speaks in the same language

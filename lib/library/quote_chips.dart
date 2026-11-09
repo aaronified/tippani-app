@@ -16,7 +16,7 @@ enum ChipKind {
 
 /// One chip on a quote: a name, and under it (for a character) the actor.
 class QuoteChip {
-  const QuoteChip(this.kind, this.name, [this.actor = '']);
+  const QuoteChip(this.kind, this.name, [this.actor = '', this.image = '']);
 
   final ChipKind kind;
   final String name;
@@ -24,15 +24,19 @@ class QuoteChip {
   /// The actor who plays this character, or '' when the work's cast does not say.
   final String actor;
 
+  /// The picture the work's cast gives this chip (a character's, or failing that the actor's); '' when it gives none.
+  final String image;
+
   @override
   bool operator ==(Object other) =>
       other is QuoteChip &&
       other.kind == kind &&
       other.name == name &&
-      other.actor == actor;
+      other.actor == actor &&
+      other.image == image;
 
   @override
-  int get hashCode => Object.hash(kind, name, actor);
+  int get hashCode => Object.hash(kind, name, actor, image);
 }
 
 /// A chip was pressed: show the library for this name.
@@ -80,11 +84,21 @@ List<QuoteChip> chipsFor(Quote q, Work? w, {bool omitAuthor = false}) {
         if (c.character.isNotEmpty && c.actor.isNotEmpty)
           _fold(c.character): c.actor,
   };
+  final faces = {
+    if (w != null)
+      for (final c in w.details.cast)
+        if (c.character.isNotEmpty &&
+            (c.characterImage.isNotEmpty || c.actorImage.isNotEmpty))
+          _fold(c.character): c.characterImage.isNotEmpty
+              ? c.characterImage
+              : c.actorImage,
+  };
   for (final n in speakerNames(q.speaker)) {
+    final face = faces[_fold(n)] ?? '';
     out.add(
       screen
-          ? QuoteChip(ChipKind.character, n, cast[_fold(n)] ?? '')
-          : QuoteChip(ChipKind.speaker, n),
+          ? QuoteChip(ChipKind.character, n, cast[_fold(n)] ?? '', face)
+          : QuoteChip(ChipKind.speaker, n, '', face),
     );
   }
   return out;
