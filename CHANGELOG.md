@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-09
+
 ### Changed
 
 - Four tabs: the bottom bar is now Home, Boards, Server and Settings. Boards holds your Library, Catalogue, Quotes and Anthologies as four boards: the header shows the board you are on, and you swipe or drag sideways (or press an arrow or a dot) to move to the next. The swipe works only there. Server has everything about your server in one place (connection, sync, devices, imports and checks, people, details, source files, administration and the server's log), and Settings has only the app's own (colours, language, text size, tags, reading aloud, updates, backup, the app log and licences).
