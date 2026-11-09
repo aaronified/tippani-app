@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../anthologies/anthologies.dart';
+import '../app_controller.dart';
 import '../capture/photo_source.dart';
 import '../harness/harness.dart' show BackupPicker;
 import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
@@ -91,7 +92,12 @@ class AnthologiesScreen extends StatefulWidget {
     this.shareFile = shareFileThroughSheet,
     this.photos,
     this.quiz,
+    this.controller,
   });
+
+  /// When given, the list waits for the phone to read its pairing (the tabs are built at start, before that is
+  /// known) and reads again if the pairing changes.
+  final AppController? controller;
 
   final AnthologyService service;
   final ShareText share;
@@ -109,14 +115,32 @@ class AnthologiesScreen extends StatefulWidget {
 class _AnthologiesScreenState extends State<AnthologiesScreen> {
   List<Anthology>? _all;
   String? _problem;
+  bool _wasPaired = false;
 
   @override
   void initState() {
     super.initState();
+    widget.controller?.addListener(_pairingChanged);
     _load();
   }
 
+  @override
+  void dispose() {
+    widget.controller?.removeListener(_pairingChanged);
+    super.dispose();
+  }
+
+  void _pairingChanged() {
+    final c = widget.controller;
+    if (c == null || !mounted) return;
+    if (c.loaded && (c.paired != _wasPaired || _all == null)) _load();
+  }
+
   Future<void> _load() async {
+    final c = widget.controller;
+    // the spinner stays until the pairing is known
+    if (c != null && !c.loaded) return;
+    _wasPaired = c?.paired ?? false;
     try {
       final all = await widget.service.list();
       if (mounted) {

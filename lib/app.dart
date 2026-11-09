@@ -255,6 +255,7 @@ class _ShellState extends State<Shell> {
             service: widget.harness.anthologies!,
             picker: widget.harness.picker,
             quiz: widget.harness.quiz,
+            controller: widget.controller,
           ),
           destination: NavigationDestination(
             icon: NavSectionIcon(NavSection.anthologies),
@@ -298,12 +299,9 @@ class _ShellState extends State<Shell> {
           // A word like "Anthologies" is cut off when the bar is crowded (many tabs, a narrow phone, large text):
           // then only the open tab keeps its label, and the others are the icon alone.
           labelBehavior:
-              MediaQuery.sizeOf(context).width /
-                      tabs.length /
-                      MediaQuery.textScalerOf(context).scale(1) <
-                  66
-              ? NavigationDestinationLabelBehavior.onlyShowSelected
-              : NavigationDestinationLabelBehavior.alwaysShow,
+              _labelsFit(context, [for (final t in tabs) t.destination.label])
+              ? NavigationDestinationLabelBehavior.alwaysShow
+              : NavigationDestinationLabelBehavior.onlyShowSelected,
           selectedIndex: _index.clamp(0, tabs.length - 1),
           onDestinationSelected: (i) => setState(() => _index = i),
           destinations: [for (final t in tabs) t.destination],
@@ -311,4 +309,33 @@ class _ShellState extends State<Shell> {
       ),
     );
   }
+}
+
+/// Whether every tab's label fits on one line in the bar: the widest word, in the bar's own label style and the
+/// phone's text size, has to fit the width of one tab. When one does not, the bar keeps only the open tab's label
+/// (a label that wraps into two lines, or breaks in the middle of a word, looks broken).
+bool _labelsFit(BuildContext context, List<String> labels) {
+  final theme = Theme.of(context);
+  final style =
+      theme.navigationBarTheme.labelTextStyle?.resolve({
+        WidgetState.selected,
+      }) ??
+      theme.textTheme.labelMedium ??
+      const TextStyle(fontSize: 11);
+  final scaler = MediaQuery.textScalerOf(context);
+  final direction = Directionality.of(context);
+  final tab = MediaQuery.sizeOf(context).width / labels.length;
+  var widest = 0.0;
+  for (final l in labels) {
+    final p = TextPainter(
+      text: TextSpan(text: l, style: style),
+      textDirection: direction,
+      textScaler: scaler,
+      maxLines: 1,
+    )..layout();
+    if (p.width > widest) widest = p.width;
+    p.dispose();
+  }
+  // a little room each side, as the bar keeps
+  return widest + 12 <= tab;
 }
