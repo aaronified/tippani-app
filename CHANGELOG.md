@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Colours: Settings, Colours chooses where the app's colours come from: Material You (your wallpaper, as before), the colours of a photo you pick, or a palette (Tippani red, indigo, teal, forest, rose, amber, slate). The change shows at once.
+
 ### Changed
 
 - Quote cards: every quote in a list is now a card. The work is in a header with its cover, title, who made it and where in it (chapter, page or time), the quote sits beside a bar in its colour, the people on it are chips, and a footer holds its tags and four buttons: Copy, Read aloud, Share and More (Open, Select, Add to anthology). A long run of chips or tags scrolls sideways and fades at the edge where more is hidden.

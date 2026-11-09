@@ -30,7 +30,7 @@ import 'theme/tabler.dart';
 
 /// Tippani's own red, used as the seed where the phone gives no wallpaper colours (before Android 12,
 /// and on devices that opt out). The web app's accent is the same colour.
-const Color tippaniSeed = Color(0xFFB4482D);
+export 'theme/theme_choice.dart' show tippaniSeed;
 
 ThemeData _theme(ColorScheme scheme) => buildTheme(scheme);
 
@@ -49,59 +49,58 @@ class TippaniApp extends StatelessWidget {
     // THE PHONE'S OWN COLOURS WHERE IT HAS THEM (Material You), and Tippani's red where it does not.
     // The light and dark schemes come as a pair so the app follows the system setting.
     return DynamicColorBuilder(
-      builder: (lightDynamic, darkDynamic) {
-        final light =
-            lightDynamic ?? ColorScheme.fromSeed(seedColor: tippaniSeed);
-        final dark =
-            darkDynamic ??
-            ColorScheme.fromSeed(
-              seedColor: tippaniSeed,
-              brightness: Brightness.dark,
-            );
-        return MaterialApp(
-          title: 'Tippani',
-          theme: _theme(light.harmonized()),
-          darkTheme: _theme(dark.harmonized()),
-          builder: (context, child) => PrefsScope(
-            source: harness.prefs,
-            child: L10nScope(
-              l10n: harness.l10n,
-              child: Builder(
-                builder: (context) {
-                  // the reader's text size scales every word the app draws
-                  final media = MediaQuery.of(context);
-                  final factor = PrefsScope.of(context).sizeUi / 100;
-                  return MediaQuery(
-                    data: media.copyWith(
-                      textScaler: TextScaler.linear(
-                        media.textScaler.scale(1) * factor,
+      builder: (lightDynamic, darkDynamic) => ListenableBuilder(
+        listenable: harness.themeChoice,
+        builder: (context, _) {
+          final (light, dark) = harness.themeChoice.schemes(
+            lightDynamic,
+            darkDynamic,
+          );
+          return MaterialApp(
+            title: 'Tippani',
+            theme: _theme(light),
+            darkTheme: _theme(dark),
+            builder: (context, child) => PrefsScope(
+              source: harness.prefs,
+              child: L10nScope(
+                l10n: harness.l10n,
+                child: Builder(
+                  builder: (context) {
+                    // the reader's text size scales every word the app draws
+                    final media = MediaQuery.of(context);
+                    final factor = PrefsScope.of(context).sizeUi / 100;
+                    return MediaQuery(
+                      data: media.copyWith(
+                        textScaler: TextScaler.linear(
+                          media.textScaler.scale(1) * factor,
+                        ),
                       ),
-                    ),
-                    child: ContextRulesScope(
-                      rules: harness.contextRules,
-                      child: CoverScope(
-                        source: harness.covers,
-                        child: DetailsScope(
-                          source: harness.details,
-                          child: ContextScope(
-                            source: harness.contexts,
-                            child: PeopleScope(
-                              source: harness.people,
-                              child: PeopleDirectoryScope(
-                                directory: harness.directory,
-                                child: BoardScope(
-                                  service: harness.boards,
-                                  child: PeopleServiceScope(
-                                    service: harness.peopleService,
-                                    child: TagServiceScope(
-                                      service: harness.tags,
-                                      child: PeopleConsoleScope(
-                                        console: harness.peopleConsole,
-                                        child: ServerSearchScope(
-                                          service: harness.search,
-                                          child: CoverSearchScope(
-                                            search: harness.coverSearch,
-                                            child: child!,
+                      child: ContextRulesScope(
+                        rules: harness.contextRules,
+                        child: CoverScope(
+                          source: harness.covers,
+                          child: DetailsScope(
+                            source: harness.details,
+                            child: ContextScope(
+                              source: harness.contexts,
+                              child: PeopleScope(
+                                source: harness.people,
+                                child: PeopleDirectoryScope(
+                                  directory: harness.directory,
+                                  child: BoardScope(
+                                    service: harness.boards,
+                                    child: PeopleServiceScope(
+                                      service: harness.peopleService,
+                                      child: TagServiceScope(
+                                        service: harness.tags,
+                                        child: PeopleConsoleScope(
+                                          console: harness.peopleConsole,
+                                          child: ServerSearchScope(
+                                            service: harness.search,
+                                            child: CoverSearchScope(
+                                              search: harness.coverSearch,
+                                              child: child!,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -113,15 +112,15 @@ class TippaniApp extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-          home: Shell(controller: controller, harness: harness),
-        );
-      },
+            home: Shell(controller: controller, harness: harness),
+          );
+        },
+      ),
     );
   }
 }
