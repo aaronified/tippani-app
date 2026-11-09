@@ -134,11 +134,26 @@ class Work {
 
 /// A character in a work, and the actor who plays them (empty for a book).
 class CastMember {
-  const CastMember({required this.character, this.actor = ''});
+  const CastMember({
+    required this.character,
+    this.actor = '',
+    this.characterImage = '',
+    this.actorImage = '',
+  });
   final String character;
   final String actor;
 
-  Map<String, Object?> toJson() => {'character': character, 'actor': actor};
+  /// The files of the character's picture in this work (or the record's own) and of the actor's portrait, as the
+  /// server names them; '' for none.
+  final String characterImage;
+  final String actorImage;
+
+  Map<String, Object?> toJson() => {
+    'character': character,
+    'actor': actor,
+    if (characterImage.isNotEmpty) 'character_image': characterImage,
+    if (actorImage.isNotEmpty) 'actor_image': actorImage,
+  };
 
   static CastMember? fromJson(Object? j) {
     if (j is! Map) return null;
@@ -146,7 +161,22 @@ class CastMember {
     final character = c is String ? c.trim() : '';
     final actor = a is String ? a.trim() : '';
     if (character.isEmpty && actor.isEmpty) return null;
-    return CastMember(character: character, actor: actor);
+    String img(String k) {
+      final v = j[k];
+      return v is String ? v.trim() : '';
+    }
+
+    final own = img('character_image_path').isNotEmpty
+        ? img('character_image_path')
+        : img('character_image').isNotEmpty
+        ? img('character_image')
+        : img('character_record_image');
+    return CastMember(
+      character: character,
+      actor: actor,
+      characterImage: own,
+      actorImage: img('actor_image'),
+    );
   }
 }
 
