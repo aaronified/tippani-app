@@ -63,6 +63,10 @@ abstract class PeopleDirectory implements Listenable {
 
   /// Reads the lists again from the server (the sync's way of saying "people may have changed").
   Future<void> refresh();
+
+  /// Keeps the pictures the server gave the characters named on quotes (name to file), for chips whose work's cast
+  /// has not been read.
+  void rememberFaces(Map<String, String> faces);
 }
 
 /// The directory read from the paired server (`GET /people?kind=` for each kind, and `GET /characters`) and
@@ -82,6 +86,7 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
 
   final _people = <String, Map<String, PersonInfo>>{};
   final _characters = <String, CharacterInfo>{};
+  final _seen = <String, String>{};
   DateTime? _loadedAt;
   Future<void>? _loading;
   bool _diskRead = false;
@@ -123,6 +128,7 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
     if (!_diskRead) {
       _diskRead = true;
       await _readDisk();
+      await _readSeen();
     }
     if (!_controller.paired) return;
     try {
@@ -257,18 +263,67 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
   @override
   String characterImage(String name) {
     _ensure();
-    return _characters[foldName(name)]?.image ?? '';
+    final own = _characters[foldName(name)]?.image ?? '';
+    return own.isNotEmpty ? own : _seen[foldName(name)] ?? '';
+  }
+
+  @override
+  void rememberFaces(Map<String, String> faces) {
+    var changed = false;
+    for (final e in faces.entries) {
+      final k = foldName(e.key);
+      if (_seen[k] != e.value) {
+        _seen[k] = e.value;
+        changed = true;
+      }
+    }
+    if (!changed) return;
+    notifyListeners();
+    _saveSeen();
+  }
+
+  Future<void> _saveSeen() async {
+    try {
+      final f = await _store();
+      final s = File('${f.path}.seen');
+      await s.writeAsString(jsonEncode(_seen), flush: true);
+    } on Object {
+      // not kept; the next sync gives them again
+    }
+  }
+
+  Future<void> _readSeen() async {
+    try {
+      final f = await _store();
+      final s = File('${f.path}.seen');
+      if (!await s.exists()) return;
+      final j = jsonDecode(await s.readAsString());
+      if (j is Map) {
+        for (final e in j.entries) {
+          _seen.putIfAbsent('${e.key}', () => '${e.value}');
+        }
+      }
+    } on Object {
+      // read again from the next sync
+    }
   }
 
   @override
   String faceOf(QuoteChip chip) {
+    // the work's own cast names the picture best: that character in this work
+    if (chip.image.isNotEmpty && chip.kind != ChipKind.author) {
+      return chip.image;
+    }
     switch (chip.kind) {
       case ChipKind.author:
         final a = person('author', chip.name)?.image ?? '';
         return a.isNotEmpty ? a : anyPerson(chip.name)?.image ?? '';
       case ChipKind.speaker:
         final s = person('speaker', chip.name)?.image ?? '';
-        return s.isNotEmpty ? s : anyPerson(chip.name)?.image ?? '';
+        if (s.isNotEmpty) return s;
+        final p = anyPerson(chip.name)?.image ?? '';
+        // a name spoken in a book can be a character
+        return p.isNotEmpty ? p : characterImage(chip.name);
       case ChipKind.character:
         final own = characterImage(chip.name);
         if (own.isNotEmpty) return own;
@@ -286,7 +341,7 @@ class PairedPeopleDirectory extends ChangeNotifier implements PeopleDirectory {
       final img = _people[k]?[key]?.image ?? '';
       if (img.isNotEmpty) return img;
     }
-    return _characters[key]?.image ?? '';
+    return characterImage(name);
   }
 
   @override

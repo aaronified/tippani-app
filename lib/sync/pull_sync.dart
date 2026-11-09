@@ -162,6 +162,10 @@ class PullSync {
   final AppController _controller;
   final AppLog? _log;
 
+  /// Told the pictures the server gives the characters named on quotes (name to file), so a quote's chip can show a
+  /// face before its work has been opened. Set by whoever keeps the people.
+  void Function(Map<String, String> faces)? onFaces;
+
   Future<PullResult>? _current;
   bool get running => _current != null;
 
@@ -219,11 +223,31 @@ class PullSync {
       t.stopped = ApiFailure.unauthorised;
       return _finish(t);
     }
+    _passFaces(got);
     await _syncWorks(got, t);
     if (t.stopped == null) await _syncQuotes(got, t);
     if (t.stopped == null) await _syncBoards(got, t);
     if (t.stopped == null) await _syncGone(got, t);
     return _finish(t);
+  }
+
+  void _passFaces(_Fetched got) {
+    final sink = onFaces;
+    if (sink == null) return;
+    final faces = <String, String>{};
+    for (final rows in got.quotes.values) {
+      for (final r in rows) {
+        final imgs = r['character_images'];
+        if (imgs is! List) continue;
+        for (final i in imgs) {
+          if (i is! Map) continue;
+          final name = '${i['name'] ?? ''}'.trim();
+          final path = '${i['path'] ?? ''}'.trim();
+          if (name.isNotEmpty && path.isNotEmpty) faces[name] = path;
+        }
+      }
+    }
+    if (faces.isNotEmpty) sink(faces);
   }
 
   PullResult _finish(_Tally t) {

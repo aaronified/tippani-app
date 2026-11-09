@@ -13,6 +13,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 - New icons: every icon in the app, the four section icons in the bottom bar included, is now from Tabler Icons (MIT licence). The back, close and menu buttons of every screen use them too. Settings names them at the bottom, and pressing that line lists the licences.
 
+### Fixed
+
+- Character pictures show on quote chips: a character's face now appears on its chip in every list, including for a work you have not opened, and for a name spoken in a book. The picture of the character in that work is used first, then the character's own, then the actor's.
+
 ## [0.7.0] - 2026-11-07
 
 ### Changed
