@@ -6,12 +6,16 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText;
+import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../library/markdown_export.dart';
 import '../library/models.dart';
+import '../library/share_format.dart';
+import '../speech/quote_speech.dart';
+import '../widgets/edge_fade_row.dart';
 import '../library/cover_cache.dart' show WorkCover;
 import '../theme/app_theme.dart';
 import 'quote_form_screen.dart';
@@ -20,8 +24,9 @@ import 'work_form_screen.dart' show workKindLabel;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 
-/// One quote in a list: its words in the serif, who and what it is from, a thin edge in the quote's colour,
-/// and a star to favourite it.
+/// One quote in a list, as a card: the work it is from in a header (cover, title, who made it and where in it), the
+/// words in the serif beside a bar in the quote's colour, the people on it as chips, and a footer with its tags and
+/// the things to do with it (copy, read aloud, share, more). Pressing the card opens the quote.
 class QuoteTile extends StatelessWidget {
   const QuoteTile({
     super.key,
@@ -35,6 +40,7 @@ class QuoteTile extends StatelessWidget {
     this.onAddToAnthology,
     this.onLongPress,
     this.selected = false,
+    this.share = shareThroughSheet,
   });
 
   final Quote quote;
@@ -42,16 +48,16 @@ class QuoteTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onFavourite;
 
-  /// What pressing a person chip does. Null draws no chips, and the speaker stays in the line of text.
+  /// What pressing a person chip does. Null draws no chips, and the speaker stays in the header.
   final ValueChanged<ChipFilter>? onChip;
 
-  /// The work to draw the pills from when [work] is left out of the line of text (on the work's own page); the
-  /// author's pill is dropped there ([omitAuthor]) since the header names them.
+  /// The work to draw the pills from when [work] is left out of the header (on the work's own page, which already
+  /// names it); the author's pill is dropped there ([omitAuthor]) since the page names them.
   final Work? chipWork;
   final bool omitAuthor;
 
   /// Puts the quote in an anthology. Null where there is no anthology to add to (no server, or the quote is
-  /// not on it yet): there is no button then, and a long press does nothing.
+  /// not on it yet): it is not in the menu then, and a long press does nothing.
   final VoidCallback? onAddToAnthology;
 
   /// Starts selecting this quote. When null a long press adds it to an anthology (where that can be done).
@@ -60,6 +66,53 @@ class QuoteTile extends StatelessWidget {
   /// Whether the quote is one of those selected.
   final bool selected;
 
+  /// Hands text to the share sheet. A parameter so a test can stand in for it.
+  final ShareText share;
+
+  Work? get _source => chipWork ?? work;
+
+  Future<void> _copy(BuildContext context) async {
+    final on = shareDefaults(shareFieldsOf(quote, _source));
+    final text = buildShareText(quote, _source, on, ShareFormat.plain);
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(content: Text(context.tr('account.widget.copied'))),
+      );
+  }
+
+  Future<void> _share() {
+    final on = shareDefaults(shareFieldsOf(quote, _source));
+    return share(buildShareText(quote, _source, on, ShareFormat.plain), '');
+  }
+
+  Future<void> _speak(BuildContext context) async {
+    final language = quote.language.isNotEmpty
+        ? quote.language
+        : (_source?.language ?? '');
+    final ok = await QuoteSpeech.instance.toggle(
+      quote.id,
+      quote.text,
+      language,
+    );
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              context.tr('app.quote_card.no_voice', {'language': language}),
+            ),
+          ),
+        );
+    }
+  }
+
+  static String _day(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -67,12 +120,53 @@ class QuoteTile extends StatelessWidget {
     final scheme = theme.colorScheme;
     final chips =
         onChip != null &&
-        chipsFor(quote, chipWork ?? work, omitAuthor: omitAuthor).isNotEmpty;
-    final from = [
+        chipsFor(quote, _source, omitAuthor: omitAuthor).isNotEmpty;
+    // the header names the work; on a work's own page the page does, so there is none
+    final header = work != null || chipWork == null;
+    final where = [
       if (quote.speaker.isNotEmpty && !chips) quote.speaker,
-      if (work != null) work!.title,
+      if (work != null && work!.creator.isNotEmpty) work!.creator,
       if (quote.chapter.isNotEmpty) quote.chapter,
-    ].join(' \u00b7 ');
+      if (quote.location.isNotEmpty) quote.location,
+      if (work == null && chipWork == null)
+        context.tr('app.quote_card.noted_on', {'date': _day(quote.notedAt)}),
+    ].join(' · ');
+
+    final star = IconButton(
+      tooltip: quote.favorite
+          ? context.tr('common.action.favourite.off.label')
+          : context.tr('common.field.favourite.label'),
+      visualDensity: VisualDensity.compact,
+      icon: Icon(
+        quote.favorite ? Ti.starFilled : Ti.star,
+        color: quote.favorite ? scheme.primary : scheme.onSurfaceVariant,
+      ),
+      onPressed: onFavourite,
+    );
+    final words = IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            width: 5,
+            decoration: BoxDecoration(
+              color: quoteColour(quote.color),
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              quote.text,
+              maxLines: 5,
+              overflow: TextOverflow.ellipsis,
+              style: quoteStyle(context, size: 17, language: quote.language),
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
       child: Card(
@@ -84,93 +178,141 @@ class QuoteTile extends StatelessWidget {
               )
             : null,
         child: InkWell(
+          borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           onLongPress: onLongPress ?? onAddToAnthology,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 6, 14),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(14, 12, 6, 2),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                if (header)
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 22,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: quoteColour(quote.color),
-                              borderRadius: BorderRadius.circular(2),
+                      if (work != null)
+                        WorkCover(
+                          work: work!,
+                          width: 36,
+                          height: 52,
+                          fallback: MonogramCover(
+                            work: work!,
+                            width: 36,
+                            height: 52,
+                          ),
+                        )
+                      else
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: scheme.secondaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Ti.notes,
+                            size: 20,
+                            color: scheme.onSecondaryContainer,
+                          ),
+                        ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              work?.title ?? context.tr('app.quote_card.note'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: text.titleSmall,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        quote.text,
-                        maxLines: 5,
-                        overflow: TextOverflow.ellipsis,
-                        style: quoteStyle(
-                          context,
-                          size: 17,
-                          language: quote.language,
+                            if (where.isNotEmpty)
+                              Text(
+                                where,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: text.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      if (from.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          from,
-                          style: text.labelMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                      if (chips) ...[
-                        const SizedBox(height: 8),
-                        QuoteChipsRow(
-                          quote: quote,
-                          work: chipWork ?? work,
-                          dense: true,
-                          omitAuthor: omitAuthor,
-                          onTap: onChip!,
-                        ),
-                      ],
-                      if (quote.tags.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          quote.tags.map((t) => '#$t').join('  '),
-                          style: text.labelSmall?.copyWith(
-                            color: scheme.primary,
-                          ),
-                        ),
-                      ],
+                      star,
                     ],
                   ),
-                ),
-                Column(
-                  children: [
-                    IconButton(
-                      tooltip: quote.favorite
-                          ? context.tr('common.action.favourite.off.label')
-                          : context.tr('common.field.favourite.label'),
-                      visualDensity: VisualDensity.compact,
-                      icon: Icon(
-                        quote.favorite ? Ti.starFilled : Ti.star,
-                        color: quote.favorite
-                            ? scheme.primary
-                            : scheme.onSurfaceVariant,
+                if (header)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 10, 8, 0),
+                    child: words,
+                  )
+                else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: words,
+                        ),
                       ),
-                      onPressed: onFavourite,
+                      star,
+                    ],
+                  ),
+                if (chips)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 10, 8, 0),
+                    child: QuoteChipsRow(
+                      quote: quote,
+                      work: _source,
+                      dense: true,
+                      omitAuthor: omitAuthor,
+                      onTap: onChip!,
                     ),
-                    if (onAddToAnthology != null)
-                      IconButton(
-                        tooltip: context.tr('common.action.anthology.label'),
-                        visualDensity: VisualDensity.compact,
-                        icon: Icon(Ti.books, color: scheme.onSurfaceVariant),
-                        onPressed: onAddToAnthology,
-                      ),
+                  ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: quote.tags.isEmpty
+                          ? Text(
+                              context.tr('app.quote_card.no_tags'),
+                              style: text.labelMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            )
+                          : EdgeFadeRow(
+                              gap: 6,
+                              children: [
+                                for (final t in quote.tags)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: scheme.primaryContainer,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '#$t',
+                                      style: text.labelMedium?.copyWith(
+                                        color: scheme.onPrimaryContainer,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                    ),
+                    const SizedBox(width: 4),
+                    _CardActions(
+                      onCopy: () => _copy(context),
+                      onSpeak: () => _speak(context),
+                      quoteId: quote.id,
+                      onShare: _share,
+                      onOpen: onTap,
+                      onSelect: onLongPress,
+                      onAddToAnthology: onAddToAnthology,
+                    ),
                   ],
                 ),
               ],
@@ -178,6 +320,77 @@ class QuoteTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The card's footer buttons: Copy, Speak (Stop while it reads), Share, and a menu with the rest.
+class _CardActions extends StatelessWidget {
+  const _CardActions({
+    required this.onCopy,
+    required this.onSpeak,
+    required this.quoteId,
+    required this.onShare,
+    required this.onOpen,
+    this.onSelect,
+    this.onAddToAnthology,
+  });
+
+  final VoidCallback onCopy, onSpeak, onShare, onOpen;
+  final int quoteId;
+  final VoidCallback? onSelect, onAddToAnthology;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    Widget button(String tip, IconData icon, VoidCallback onPressed) =>
+        IconButton(
+          tooltip: tip,
+          visualDensity: VisualDensity.compact,
+          icon: Icon(icon, size: 20, color: muted),
+          onPressed: onPressed,
+        );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        button(context.tr('common.action.copy.label'), Ti.copy, onCopy),
+        ListenableBuilder(
+          listenable: QuoteSpeech.instance,
+          builder: (context, _) {
+            final on = QuoteSpeech.instance.speaking == quoteId;
+            return button(
+              on
+                  ? context.tr('settings.jobs.current.stop.label')
+                  : context.tr('speech.play.aria'),
+              on ? Ti.playerStopFilled : Ti.volume,
+              onSpeak,
+            );
+          },
+        ),
+        button(context.tr('common.action.share.label'), Ti.share2, onShare),
+        PopupMenuButton<VoidCallback>(
+          tooltip: context.tr('settings.appearance.contrast.more.label'),
+          padding: EdgeInsets.zero,
+          icon: Icon(Ti.dotsVertical, size: 20, color: muted),
+          onSelected: (run) => run(),
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: onOpen,
+              child: Text(context.tr('app.quote_card.open')),
+            ),
+            if (onSelect != null)
+              PopupMenuItem(
+                value: onSelect!,
+                child: Text(context.tr('common.selection.menu.select.label')),
+              ),
+            if (onAddToAnthology != null)
+              PopupMenuItem(
+                value: onAddToAnthology!,
+                child: Text(context.tr('common.action.anthology.label')),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
