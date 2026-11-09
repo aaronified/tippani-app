@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tippani/theme/tabler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/app.dart';
 import 'package:tippani/app_controller.dart';
@@ -246,7 +247,7 @@ void main() {
       await tester.pumpWidget(MaterialApp(home: LogScreen(log: AppLog())));
       expect(find.text('The log is empty.'), findsOneWidget);
       final share = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.share),
+        find.widgetWithIcon(IconButton, Ti.share),
       );
       expect(share.onPressed, isNull);
     });
