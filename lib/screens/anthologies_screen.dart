@@ -12,6 +12,7 @@ import 'quiz_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import 'offline_note.dart';
 
 /// An anthology as plain text to send: its title and introduction, then each passage with where it is from and the
 /// reader's commentary on it.
@@ -207,6 +208,8 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
       ),
       body: Column(
         children: [
+          if (widget.controller != null)
+            OfflineNote(offline: widget.controller!.offline),
           _WaitingNote(widget.service),
           Expanded(child: _list(context, all)),
         ],

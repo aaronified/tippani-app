@@ -10,6 +10,7 @@ import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/quote_screen.dart';
 import 'package:tippani/settings/settings_store.dart';
 import 'package:tippani/sync/fingerprint.dart';
+import 'package:tippani/tools/context_store.dart';
 import 'package:tippani/tools/quote_context.dart';
 
 import '../support/fake_server.dart';
@@ -117,7 +118,7 @@ void main() {
   group('asking the server', () {
     late FakeServer server;
     late PairedQuoteContext source;
-    late AppController controller;
+    late MemoryContextStore store;
 
     Future<void> rig({bool paired = true}) async {
       SharedPreferences.setMockInitialValues({
@@ -133,8 +134,8 @@ void main() {
       );
       await c.load();
       if (paired) await c.pair('ABCD2345', 'My phone');
-      controller = c;
-      source = PairedQuoteContext(c);
+      store = MemoryContextStore();
+      source = PairedQuoteContext(c, store: store);
     }
 
     test('a book quote is asked of the annotation route', () async {
@@ -213,35 +214,96 @@ void main() {
       },
     );
 
+    Future<(MemoryLibrary, Work)> library() async {
+      final lib = MemoryLibrary();
+      final w = await lib.addWork(
+        const WorkDraft(kind: WorkKind.book, title: 'Walden'),
+      );
+      await lib.setWorkServerId(w.id, 3);
+      final withContext = await lib.addQuote(
+        QuoteDraft(text: 'Simplify.', workId: w.id),
+      );
+      await lib.setQuoteServerId(withContext.id, 7);
+      final without = await lib.addQuote(
+        QuoteDraft(text: 'No file for this one.', workId: w.id),
+      );
+      await lib.setQuoteServerId(without.id, 8);
+      final loose = await lib.addQuote(const QuoteDraft(text: 'A proverb.'));
+      await lib.setQuoteServerId(loose.id, 9);
+      server.contexts['annotation/7'] = answer();
+      server.contexts['utterance/9'] = answer(body: 'A proverb.');
+      server.extra = (r, path) async {
+        if (r.method == 'GET' && path == '/sources/context-ids') {
+          final subject = r.url.queryParameters['subject'];
+          return server.json({
+            'ids': subject == 'book'
+                ? [7]
+                : (subject == 'utterance' ? [9] : []),
+          });
+        }
+        return null;
+      };
+      return (lib, w);
+    }
+
+    test('every synced quote that has a context is kept after a sync, and only those', () async {
+      await rig();
+      final (lib, w) = await library();
+
+      expect(await keepContexts(lib, source), 2);
+      expect(server.contextReads, [
+        '/quotes/annotation/7/context',
+        '/quotes/utterance/9/context',
+      ], reason: 'the quote the server lists none for is never asked about');
+      expect(await keepContexts(lib, source), 0, reason: 'already kept');
+
+      server.unreachable = true;
+      final read = await source.fetch(
+        (await lib.quotes(workId: w.id)).firstWhere((q) => q.serverId == 7),
+        w,
+        before: 3,
+      );
+      expect(read!.body, 'Simplify, simplify.');
+      final loose = await source.fetch(
+        (await lib.quotes(standalone: true)).single,
+        null,
+      );
+      expect(loose!.body, 'A proverb.');
+    });
+
+    test('a run keeps a few at a time and the next run continues', () async {
+      await rig();
+      final (lib, _) = await library();
+      expect(await keepContexts(lib, source, limit: 1), 1);
+      expect(await keepContexts(lib, source, limit: 1), 1);
+      expect(await keepContexts(lib, source, limit: 1), 0);
+    });
+
+    test('a quote the server lists but cannot find is noted as having none and not asked again', () async {
+      await rig();
+      final (lib, _) = await library();
+      server.contexts.remove('annotation/7');
+      await keepContexts(lib, source);
+      final asked = server.contextReads
+          .where((p) => p.contains('annotation/7'))
+          .length;
+      expect(asked, 1);
+      await keepContexts(lib, source);
+      expect(
+        server.contextReads.where((p) => p.contains('annotation/7')).length,
+        asked,
+        reason: 'the note stands for a week',
+      );
+    });
+
     test(
-      'the favourites are kept after a sync, a few at a time, and only once',
+      'a server that cannot be asked leaves the keeping for the next sync',
       () async {
         await rig();
-        final lib = MemoryLibrary();
-        final w = await lib.addWork(
-          const WorkDraft(kind: WorkKind.book, title: 'Walden'),
-        );
-        final fav = await lib.addQuote(
-          QuoteDraft(text: 'Simplify.', workId: w.id, favorite: true),
-        );
-        await lib.setQuoteServerId(fav.id, 7);
-        await lib.addQuote(QuoteDraft(text: 'Not a favourite.', workId: w.id));
-        server.contexts['annotation/7'] = answer();
-
-        expect(await keepFavouriteContexts(lib, source, controller.offline), 1);
-        expect(server.contextReads, ['/quotes/annotation/7/context']);
-        expect(
-          await keepFavouriteContexts(lib, source, controller.offline),
-          0,
-          reason: 'already kept',
-        );
+        final (lib, _) = await library();
         server.unreachable = true;
-        final read = await source.fetch(
-          (await lib.quote(fav.id))!,
-          w,
-          before: 3,
-        );
-        expect(read!.body, 'Simplify, simplify.');
+        expect(await keepContexts(lib, source), 0);
+        expect(store.entries, isEmpty);
       },
     );
 

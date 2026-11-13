@@ -151,6 +151,11 @@ class ApiClient {
   Future<Object?> getJson(String path) =>
       _getThrough(path, OfflineCache.isCacheablePath(path));
 
+  /// GET [path] and decode the JSON answer, never from the phone's kept copy: for reading back what was just
+  /// saved, where an old answer served in place of a timeout would look like the save was undone.
+  Future<Object?> getJsonLive(String path) =>
+      _send(() => _client.get(_uri(path), headers: _headers));
+
   /// [getJson] for a screen that has asked to show the server's last answer whatever the path (the account
   /// page: `/auth/me` is not kept for everyone, because the app learns it was unpaired from it).
   Future<Object?> getJsonKept(String path) => _getThrough(path, true);
@@ -164,12 +169,16 @@ class ApiClient {
     try {
       final response = await _checked(ask);
       final decoded = _decode(response);
-      if (response.body.isNotEmpty) {
-        try {
+      try {
+        if (response.body.isNotEmpty) {
           await cache.write(path, utf8.decode(response.bodyBytes));
-        } on Object {
-          // a full or failing store must not break a read that worked
+        } else {
+          await cache.remove(
+            path,
+          ); // an empty answer is the answer now; an older one is not
         }
+      } on Object {
+        // a full or failing store must not break a read that worked
       }
       cache.servedFrom.value = null;
       return decoded;

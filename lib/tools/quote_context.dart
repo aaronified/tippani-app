@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 
 import '../api/api_client.dart';
-import '../api/offline_cache.dart';
 import '../api/server_call.dart';
 import '../app_controller.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
+import 'context_store.dart';
 import '../sync/fingerprint.dart';
 
 /// The lines around a quote in the file it came from, as the server stored them when the quote was found there: the
@@ -89,8 +89,15 @@ abstract class QuoteContextSource {
 }
 
 class PairedQuoteContext implements QuoteContextSource {
-  PairedQuoteContext(this._controller);
+  PairedQuoteContext(this._controller, {this._store});
   final AppController _controller;
+  final ContextStore? _store;
+
+  /// The key a quote's context is kept under.
+  static String keyOf(String kind, int serverId) => '$kind-$serverId';
+
+  /// How long a note that a quote has no context is believed before the server is asked again.
+  static const _noneFor = Duration(days: 7);
 
   @override
   Future<QuoteContext?> fetch(
@@ -106,27 +113,71 @@ class PairedQuoteContext implements QuoteContextSource {
       if (before != null) 'before=$before',
       if (after != null) 'after=$after',
     ].join('&');
-    final base = '/quotes/$kind/$id/context';
+    final path = '/quotes/$kind/$id/context${q.isEmpty ? '' : '?$q'}';
+    final key = keyOf(kind, id);
     return serverCall<QuoteContext?>(_controller, (c) async {
       try {
-        return QuoteContext.fromJson(
-          await c.getJson('$base${q.isEmpty ? '' : '?$q'}'),
-        );
+        final answer = await c.getJson(path);
+        final context = QuoteContext.fromJson(answer);
+        if (context != null) await _keep(key, jsonEncode(answer));
+        return context;
       } on ApiException catch (e) {
         // "this quote has no context": nothing stored, which is an answer and not a failure
-        if (e.status == 404) return null;
-        // With no server, a window never asked for before is answered with the widest one kept for the quote:
-        // more than was asked is better than nothing, and the answer says how much it shows.
+        if (e.status == 404) {
+          await _store?.write(key, StoredContext.none(DateTime.now()));
+          return null;
+        }
+        // With no server, whatever window was asked for is answered with the widest one kept for the quote: more
+        // than was asked is better than nothing, and the answer says how much it shows.
         if (e.failure == ApiFailure.network ||
             e.failure == ApiFailure.timeout) {
-          final kept = _controller.offline.readWidest(base);
+          final kept = await _store?.read(key);
           if (kept != null) {
-            return QuoteContext.fromJson(jsonDecode(kept.body));
+            return kept.none
+                ? null
+                : QuoteContext.fromJson(jsonDecode(kept.body!));
           }
         }
         rethrow;
       }
     });
+  }
+
+  /// Keeps [body] unless a wider answer is already kept.
+  Future<void> _keep(String key, String body) async {
+    final store = _store;
+    if (store == null) return;
+    final have = await store.read(key);
+    if (have != null && !have.none && have.body!.length >= body.length) return;
+    await store.write(key, StoredContext(at: DateTime.now(), body: body));
+  }
+
+  /// Whether the context of the quote is already on the phone (or the server was lately told to have none).
+  Future<bool> kept(String kind, int serverId) async {
+    final have = await _store?.read(keyOf(kind, serverId));
+    if (have == null) return false;
+    return !have.none || DateTime.now().difference(have.at) < _noneFor;
+  }
+
+  /// The server ids of the quotes of one work that have a stored context (`/sources/context-ids`), or of all the
+  /// standalone quotes when [workId] is null. Null when the server could not be asked.
+  Future<Set<int>?> idsWithContext(String subject, int? workId) async {
+    try {
+      final r = await _controller.withClient(
+        (c) => c.getJson(
+          '/sources/context-ids?subject=$subject'
+          '${workId == null ? '' : '&subject_id=$workId'}',
+        ),
+      );
+      final ids = r is Map ? r['ids'] : null;
+      if (ids is! List) return null;
+      return {
+        for (final x in ids)
+          if (x is num) x.toInt(),
+      };
+    } on ApiException {
+      return null;
+    }
   }
 }
 
@@ -143,28 +194,56 @@ class ContextScope extends InheritedWidget {
   bool updateShouldNotify(ContextScope old) => old.source != source;
 }
 
-/// Keeps the context of the reader's favourite quotes on the phone, so they read with no server (ADR-0022).
-/// Asks only for the ones not kept yet, a few each run, and stops at the first answer that fails.
-Future<int> keepFavouriteContexts(
+/// Keeps the context of every synced quote on the phone, so they read with no server (ADR-0022). The server says
+/// which quotes of each work have one, so a quote with none is not asked about; only what is not kept yet is
+/// fetched, up to [limit] a run, and the rest follows at the next sync. Returns how many contexts were fetched.
+Future<int> keepContexts(
   LibraryStore library,
-  QuoteContextSource source,
-  OfflineCache cache, {
-  int limit = 40,
+  PairedQuoteContext source, {
+  int limit = 150,
 }) async {
   var fetched = 0;
-  for (final q in await library.quotes(favouritesOnly: true, limit: 200)) {
-    if (fetched >= limit) break;
-    final id = q.serverId;
-    if (id == null) continue;
-    final work = q.workId == null ? null : await library.work(q.workId!);
-    final base = '/quotes/${contextKindOf(realmOfQuote(work))}/$id/context';
-    if (cache.readWidest(base) != null) continue;
-    try {
-      await source.fetch(q, work);
-      fetched++;
-    } on ServerException {
-      break;
+  Future<bool> keepOf(Work? work, int? workServerId) async {
+    final subject = work == null
+        ? 'utterance'
+        : (realmOfQuote(work) == Realm.screen ? 'screen' : 'book');
+    if (work != null && workServerId == null) {
+      // not on the server yet: nothing to ask
+      return true;
+    }
+    final ids = await source.idsWithContext(subject, workServerId);
+    if (ids == null) {
+      // the server cannot be asked: try again at the next sync
+      return false;
+    }
+    final kind = contextKindOf(realmOfQuote(work));
+    for (var offset = 0; ; offset += 200) {
+      final page = await library.quotes(
+        workId: work?.id,
+        standalone: work == null,
+        limit: 200,
+        offset: offset,
+      );
+      for (final q in page) {
+        final id = q.serverId;
+        if (id == null || !ids.contains(id)) continue;
+        if (await source.kept(kind, id)) continue;
+        if (fetched >= limit) return true;
+        try {
+          await source.fetch(q, work);
+          fetched++;
+        } on ServerException {
+          return false;
+        }
+      }
+      if (page.length < 200) return true;
     }
   }
+
+  for (final w in await library.works()) {
+    if (fetched >= limit) break;
+    if (!await keepOf(w, w.serverId)) return fetched;
+  }
+  if (fetched < limit) await keepOf(null, null);
   return fetched;
 }

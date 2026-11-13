@@ -80,9 +80,9 @@ void main() {
   );
 
   testWidgets(
-    'the settings kept on the server are on the Server tab; the app\'s own stay on Settings',
+    'everything the account keeps on the server is on the Server tab; Settings keeps only the app\'s own',
     (tester) async {
-      tester.view.physicalSize = const Size(800, 3200);
+      tester.view.physicalSize = const Size(800, 3600);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       SharedPreferences.setMockInitialValues({
@@ -112,15 +112,23 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Server'));
       await tester.pumpAndSettle();
-      for (final kept in [
+      final kept = [
         'Your settings on the server',
         'Account',
+        'Language',
+        'Text and quotes',
+        'Colours',
+        'Sections',
         'Daily review',
         'Context around a quote',
-      ]) {
-        expect(find.text(kept), findsOneWidget, reason: kept);
+      ];
+      for (final entry in kept) {
+        expect(
+          find.text(entry),
+          findsOneWidget,
+          reason: '$entry on the Server tab',
+        );
       }
-      expect(find.text('Language'), findsNothing);
 
       await tester.tap(
         find.descendant(
@@ -129,14 +137,70 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Language'), findsOneWidget);
-      for (final moved in [
-        'Daily review',
-        'Context around a quote',
-        'Your settings on the server',
-      ]) {
-        expect(find.text(moved), findsNothing, reason: moved);
+      for (final entry in kept) {
+        expect(
+          find.text(entry),
+          findsNothing,
+          reason: '$entry is not on Settings',
+        );
       }
+      await tester.scrollUntilVisible(
+        find.text('Read aloud'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Read aloud'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a phone with no pairing still has its settings on the Server tab, and the server tab says when it shows the phone\'s copy',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 3600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({});
+      final server = FakeServer();
+      final store = SettingsStore(
+        await SharedPreferences.getInstance(),
+        MemoryTokenVault(),
+      );
+      final c = AppController(store, clientFactory: server.factory);
+      await c.load();
+      await tester.pumpWidget(
+        TippaniApp(
+          controller: c,
+          harness: Harness.fake(
+            store,
+            controller: c,
+            library: MemoryLibrary(),
+            prefs: PairedPreferences(c, store),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Server'));
+      await tester.pumpAndSettle();
+      expect(find.text('Colours'), findsOneWidget);
+      expect(find.text('Daily review'), findsOneWidget);
+      expect(
+        find.text('Account'),
+        findsNothing,
+        reason: 'there is no account to show',
+      );
+      expect(
+        find.textContaining('Showing what this phone last saw'),
+        findsNothing,
+      );
+
+      c.offline.servedFrom.value = DateTime.utc(2026, 11, 13);
+      await tester.pump();
+      expect(
+        find.text(
+          'Showing what this phone last saw (2026-11-13). The server cannot be reached.',
+        ),
+        findsOneWidget,
+      );
     },
   );
 

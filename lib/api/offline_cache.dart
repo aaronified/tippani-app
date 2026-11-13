@@ -14,7 +14,7 @@ import '../settings/settings_store.dart';
 /// failure is how the app learns it was unpaired.
 ///
 /// WHERE. [SettingsStore]'s own text storage, one entry per path, so a test needs nothing but mocked preferences.
-/// The total is bounded: past [maxBytes] or [maxEntries] the least recently used entries go, except the pinned
+/// The total is bounded: past [maxBytes] or [maxEntries] the oldest-written entries go, except the pinned
 /// ones (anthologies), which are the reader's own work.
 class OfflineCache {
   OfflineCache(this._store, {this.maxBytes = 3000000, this.maxEntries = 400});
@@ -97,6 +97,11 @@ class OfflineCache {
     '/review/daily',
     '/review/practice',
     '/review/scores',
+    '/import/staged',
+    '/auth/devices',
+    '/admin/maintenance/sources',
+    '/quotes/starters',
+    '/locales',
   ];
 
   static bool _pinned(String key) => key.startsWith('/anthologies');
@@ -119,39 +124,39 @@ class OfflineCache {
     return null;
   }
 
-  /// The fullest answer kept for any key that starts with [prefix] (the widest context of one quote, whatever
-  /// window it was asked for), or null.
-  ({String body, DateTime at})? readWidest(String prefix) {
-    ({String body, DateTime at})? best;
-    for (final e in _entries) {
-      final key = e[0] as String;
-      if (!key.startsWith(prefix)) continue;
-      final r = read(key);
-      if (r != null && (best == null || r.body.length > best.body.length)) {
-        best = r;
-      }
-    }
-    return best;
-  }
-
-  /// Keeps [body] as the answer for [key], and drops the oldest entries if the cache is over its bounds.
+  /// Keeps [body] as the answer for [key], and drops the oldest entries if the cache is over its bounds. An answer
+  /// larger than the whole cache is not kept (it would push out everything else and then itself).
   Future<void> write(String key, String body, {DateTime? at}) async {
     final entry = jsonEncode({
       'b': body,
       't': (at ?? DateTime.now()).millisecondsSinceEpoch,
     });
+    if (entry.length > (_pinned(key) ? maxPinnedBytes : maxBytes)) return;
     final entries = _entries;
     final i = entries.indexWhere((e) => e[0] == key);
     if (i >= 0) entries.removeAt(i);
     entries.add([key, entry.length]);
-    await _store.write('$_prefix$key', entry);
     await _trim(entries);
+    // the index first: an entry the index does not name could never be found again to be forgotten
     await _store.write(_indexKey, jsonEncode(entries));
+    await _store.write('$_prefix$key', entry);
   }
 
+  /// The share of the cache the reader's own work (anthologies) may fill, so it cannot starve the rest.
+  int get maxPinnedBytes => maxBytes * 2 ~/ 3;
+
   Future<void> _trim(List<List<Object?>> entries) async {
-    int total() => entries.fold<int>(0, (n, e) => n + (e[1] as int));
-    while (entries.length > maxEntries || total() > maxBytes) {
+    int total(bool pinned) => entries
+        .where((e) => _pinned(e[0] as String) == pinned)
+        .fold<int>(0, (n, e) => n + (e[1] as int));
+    // pinned entries keep to their own share: past it the oldest of them go
+    while (total(true) > maxPinnedBytes) {
+      final victim = entries.indexWhere((e) => _pinned(e[0] as String));
+      final key = entries.removeAt(victim)[0] as String;
+      await _store.remove('$_prefix$key');
+    }
+    while (entries.length > maxEntries ||
+        total(true) + total(false) > maxBytes) {
       final victim = entries.indexWhere((e) => !_pinned(e[0] as String));
       if (victim < 0) return;
       final key = entries.removeAt(victim)[0] as String;
@@ -170,11 +175,12 @@ class OfflineCache {
   /// Forgets everything kept (the phone was unpaired from this server: another account's answers must not
   /// show under the next one).
   Future<void> clear() async {
-    for (final e in List.of(_entries)) {
-      await _store.remove('$_prefix${e[0]}');
+    // every key of the family, not only those the index names: an entry written just before the app stopped
+    // may not be in it
+    for (final k in _store.keys.where((k) => k.startsWith(_prefix)).toList()) {
+      await _store.remove(k);
     }
     _index = [];
-    await _store.remove(_indexKey);
     servedFrom.value = null;
     for (final forget in List.of(whenCleared)) {
       await forget();

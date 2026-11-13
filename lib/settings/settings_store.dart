@@ -60,6 +60,9 @@ class SettingsStore {
 
   Future<void> remove(String key) => _prefs.remove(key);
 
+  /// Every key kept, so a family of them (the offline copy's) can be forgotten whole.
+  Set<String> get keys => _prefs.getKeys();
+
   static const _seenKey = 'last_seen_version';
 
   /// The app version this phone last showed "what is new" for, or null on a first install.

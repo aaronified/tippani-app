@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import '../admin/admin_service.dart';
 import '../admin/server_files.dart';
@@ -24,6 +26,7 @@ import '../anthologies/anthologies.dart';
 import '../anthologies/offline_anthologies.dart';
 import '../boards/board_service.dart';
 import '../library/cover_cache.dart';
+import '../tools/context_store.dart';
 import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
 import '../search/search_service.dart';
@@ -296,7 +299,13 @@ class Harness {
           ? null
           : (kind, id) => _passageOf(library, kind, id),
     );
-    final contexts = PairedQuoteContext(controller);
+    final contextStore = FileContextStore(
+      () async => Directory(
+        '${(await getApplicationSupportDirectory()).path}/contexts',
+      ),
+    );
+    controller.offline.whenCleared.add(contextStore.clear);
+    final contexts = PairedQuoteContext(controller, store: contextStore);
     final l10n = L10n()..use(prefs.prefs.locale);
     Tr.current = l10n; // code with no screen (a service wording an error) speaks in the same language
     prefs.addListener(() => l10n.use(prefs.prefs.locale));
@@ -311,7 +320,11 @@ class Harness {
       backup: BackupService(
         files,
         contributors: [
-          SettingsBackup(settings, onRestored: controller.refresh),
+          SettingsBackup(
+            settings,
+            onRestored: controller.refresh,
+            forget: controller.forget,
+          ),
           if (library != null) LibraryBackup(library),
         ],
       ),
@@ -330,11 +343,7 @@ class Harness {
               after: [
                 prefs.flush,
                 anthologies.flush,
-                () => keepFavouriteContexts(
-                  library!,
-                  contexts,
-                  controller.offline,
-                ),
+                () => keepContexts(library!, contexts),
               ],
             ),
       runAutoSync: true,
@@ -427,7 +436,11 @@ class Harness {
       backup: BackupService(
         f,
         contributors: [
-          SettingsBackup(settings, onRestored: controller?.refresh),
+          SettingsBackup(
+            settings,
+            onRestored: controller?.refresh,
+            forget: controller?.forget,
+          ),
           if (library != null) LibraryBackup(library),
         ],
       ),
