@@ -24,8 +24,8 @@ platform-neutral.
 
 All of this is built (the files are named below):
 
-- **Pairing.** Settings shows a QR code (`POST /auth/devices/pair`, valid 5 minutes, single use). The app scans it and
-  claims it (`POST /auth/devices/claim`, rate limited) for a **device token**. Tokens are listed and revoked in
+- **Pairing.** Settings makes a code (`POST /auth/devices/pair`, valid 5 minutes, single use). This plan assumed a QR code; the server shows
+  8 characters and the app takes them typed ([ADR-0006](ADR-0006-Pairing-Is-A-Typed-Code.md)). The app claims it (`POST /auth/devices/claim`, rate limited) for a **device token**. Tokens are listed and revoked in
   Settings (`GET/DELETE /auth/devices`). `internal/httpapi/pairing_handlers.go`.
 - **Version handshake.** `GET /capabilities` needs no credential and returns an `apiRevision` integer, so the app can
   tell whether it and the server are compatible before it holds a token. `internal/httpapi/capabilities_handler.go`.
@@ -60,8 +60,8 @@ photo kept with a quote, and an app-release feed that does not mix with the serv
   in.
 - **Pairing adds sync, it does not replace the local library.** When the phone is paired, what was made locally is pushed to the
   server (the offline queue of feature 1 is this push, generalised) and what the server has can be pulled down. `409` on a
-  duplicate still makes a retry safe. Who wins on a conflict, and whether a pull is automatic, are decided when sync is built and
-  are the owner's call; until then it is push only.
+  duplicate still makes a retry safe. Who wins on a conflict is chosen per item ([ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md)), and the pull and the
+  automatic sync are built ([ADR-0018](ADR-0018-Sync-Runs-By-Itself-And-Never-Stops-For-A-Conflict.md), [ADR-0019](ADR-0019-Sync-On-Every-Change-And-Once-A-Day-Nothing-In-Between.md)).
 - **Leaving no door shut.** An unpaired phone can export its library as Tippani's own Markdown format, which the server already
   imports, so a reader who starts alone and later installs a server loses nothing.
 - **Backup and restore carry the local library** (the harness's `BackupContributor` is where it registers), so a phone that is
@@ -69,9 +69,10 @@ photo kept with a quote, and an app-release feed that does not mix with the serv
 - **What needs a server stays labelled as needing one:** the server log, the device list, the server's metadata lookups, shared
   anthologies and boards. Home no longer opens on "not connected"; it opens on the library.
 - **What works alone, decided by the owner (6 November 2026): the core.** The library, quotes, search, add/edit/tag, the daily quiz,
-  boards and anthologies, and export/import run on the local database. **Management and admin screens need a paired server and say
-  so:** metadata sources, Checks, jobs, library folders, source files and context, the server log, the device list. They are
-  built (phases 3 and 4) but are only reachable when paired; an unpaired phone shows them as "needs your Tippani server".
+  boards, and export/import run on the local database, and anthologies are kept on the server with a copy and a queue on the phone so they work with
+  no server ([ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md)). **Management and admin screens need a paired server to change
+  anything and say so:** metadata sources, Checks, jobs, library folders, source files, the server log, the device list. With no server they show the
+  phone's last copy of what the server said.
 - **Order of work, decided by the owner the same day: all the functions first, then new features.** (1) the local library; (2) phase 1
   core; (3) phase 2 reading side; (4) phase 3 management; (5) phase 4 settings and admin; and only then the new features: capture
   with Tesseract, donation, bug report, and the signed release. Pairing and the harness (both done) are unaffected.
@@ -118,11 +119,11 @@ Android itself enforces that an upgrade is signed with the same key. See Lexodle
 
 - Take Fluenough's extras: delete the downloaded APK after the update, a 60-second stall check, an "open the download
   page" fallback, and "What's new" read from the release notes.
-- Automatic checking is **off by default** (each check is a request to GitHub), as in both apps. Manual check always
-  works.
+- The app checks on every open, which is the owner's call ([ADR-0007](ADR-0007-The-Harness-Is-The-Base-Every-Screen-Stands-On.md)); the plan had it off
+  by default, as in both other apps. A check can be asked for at any time.
 - **The app is released on its own tags.** Tippani's server releases use `vX.Y.Z` and `releases/latest` points at
-  them. The app uses tags `app-vX.Y.Z`, and the update check lists releases and picks the newest `app-v*` one, not
-  `/latest`.
+  them. The app uses tags `app-vX.Y.Z`; now the app has its own repository, the update check reads that repository's latest release and requires
+  the `app-v` prefix.
 - The app also reads `GET /capabilities` and says plainly when the server is too old or too new for it.
 - Needed on Android: the `ota_update` FileProvider and its paths file, core library desugaring, and removing the
   storage permissions. The owner turns on "Install unknown apps" for the app once.
@@ -247,10 +248,11 @@ synced account's theme preferences are ignored here.
       Checked against a real server in `test/live`. Reordering, per-passage commentary, sections, grouping, front matter and the cover came after (see the changelog).
 - [x] **The server is a section of Settings** (done 8 November 2026, owner's ask): the Server tab is removed; Settings opens with a Server section (address
       and status via `serverStatusLine`, Check again, the unpaired warning, pairing, and everything that needs a paired server) followed by App. Only
-      the test-only harness with no library keeps a Home tab.
+      the test-only harness with no library keeps a Home tab. *Superseded on 9 November 2026 by [ADR-0021](ADR-0021-Four-Tabs-And-The-Boards-Tab.md): the Server tab is back.*
 - [x] **The four sections** (done 8 November 2026, owner's ask): the bar is Library (books), Catalogue (films, shows, games), Quotes (with boards) and
       Anthologies, then Settings, with the web app's own four icons (`lib/screens/nav_icons.dart`, `flutter_svg`). One `LibraryScreen`, told which
       `LibrarySection` it is; the default section is the whole library, so earlier uses are unchanged. Each reloads on `LibraryStore.changes` and when a sync ends.
+      *Superseded on 9 November 2026 by [ADR-0021](ADR-0021-Four-Tabs-And-The-Boards-Tab.md): the bar is Home, Boards, Server and Settings.*
 - [x] **Author, actor and character chips** (done 8 November 2026, owner's ask): `chipsFor` (`lib/library/quote_chips.dart`) gives a book's author chip and a
       chip per named speaker; for a film, show or game each speaker is a character chip with the actor from the work's cast under it (the cast comes
       from the work details, so it is there once a work's page has been opened). `QuoteChipsRow` draws them in the Library list and on the quote screen;
@@ -261,7 +263,7 @@ synced account's theme preferences are ignored here.
 - [x] **Context from the server** (done 8 November 2026, owner's ask): the quote screen's Context section reads `GET /quotes/{annotation|dialogue|utterance}/{id}/context`
       (`lib/tools/quote_context.dart`) on demand, shows the text before, the quote as the file has it and the text after, widens by three with
       `?before=&after=` up to what is stored, and says where the chapter ends. How much context a quote or work shows came after (0.7.0, in Settings).
-      **Not done:** keeping it on the phone for offline.
+      Kept on the phone for every synced quote since 0.8.2 ([ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md)).
 - [x] **Scan: choose words on the picture** (done 7 November 2026): Tesseract's hOCR (`extractHocr`) is parsed (`lib/capture/recognised_page.dart`,
       `parseHocr`) into lines and words with boxes; `PageSelector` draws them over the page and `PageSelection` turns the chosen words into text (reading
       order, hyphens mended, a gap kept as a paragraph break). Falls back to plain `read` text when hOCR gives no words. **Not done:** proposing a page
@@ -330,22 +332,26 @@ synced account's theme preferences are ignored here.
       suppliers (`/books/lookup`, `/movies/lookup`, the cast and people routes), so the provider keys live only on the server and are set
       up there. The app holds no supplier key. These need a paired server and are part of phase 3 (metadata and people).
 - [ ] **All functions, phases 1 to 4 of feature 5, before any new feature** (owner's order, 6 November 2026): core, reading side,
-      management, settings and admin. The core works alone; the management and admin screens need a paired server.
+      management, settings and admin. Phases 1 to 4 are built. What is left is the server features the app has no screen for (find and replace,
+      stickers, fonts, the server's own exports, cast editing, re-reads), and which of those "all" still includes is the owner's to say.
 - [ ] **New features, after the functions:** capture is built (camera, Tesseract OCR, straighten and crop, selection on the photo, correction screen,
       saving to the local library, the sync push when paired) except the page and chapter proposal; donation and bug report are not.
 - [x] **Update:** the check and installer, the `app-v*` release lookup and the manifest pieces (done with the harness), and the release
       workflow that publishes what the check looks for (in use since `app-v0.2.0`, see [Releasing](Releasing.md); the owner is testing the in-app update).
 - [x] **Everything available offline, and synced when connected** (owner, 13 November 2026, [ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md);
-      to land in 0.8.2): every screen that reads the server keeps its last answer and shows it with no server; anthologies are made and edited offline and
-      go up in order; a setting changed offline is kept and sent; a quote's context and the favourites' contexts are kept; the admin section shows with no
-      server. **Not done:** source files on the phone, offline cover/fill/export of anthologies, and the contexts of quotes that are neither opened nor favourite.
+      to land in 0.8.2): every screen that reads the server keeps its last answer and shows it, dated, with no server; anthologies (their entries, headings,
+      commentary, grouping, front matter, cover picture and fill) are made and edited offline and go up in order; a setting changed offline is kept and sent
+      unless the web changed it meanwhile; the context of every synced quote is kept on the phone; the admin section shows with no server. **Not done:** a
+      count of what a fill would find and an EPUB need the server; source files stay on the server (only the list and each quote's context are kept); a crash
+      between sending a queued change and saving the queue may send a new anthology or heading twice.
 - [x] **A Server tab that is all server management** (owner, 13 November 2026; to land in 0.8.2): metadata, Checks and the bin were already there; the account,
-      colours, daily review and context rules moved in as **Your settings on the server**. Settings keeps the app's own.
+      language, text and quotes, colours, sections (with the bin's keep time), daily review and context rules moved in as **Your settings on the server**. Settings
+      keeps the app's own: app colours, tags (library data), reading aloud, updates, backup, the log and the licences.
 - [ ] **Donation:** port the section, regenerate the QR, the disclaimer.
 - [ ] **Bug report:** the form, `app-feedback-mail.yml`, `scripts/mail_to_issues.py` and its tests.
 - [x] **Release workflow:** `release.yml` with signing and verification, and the decision pages (run for every release since `app-v0.2.0`).
 - [x] **First signed APK:** `app-v0.2.0`, 6 November 2026.
-- [ ] Phases 2 to 4 of feature 5.
+- [x] Phases 2 to 4 of feature 5 (built across 0.2.0 to 0.8.1; see the changelog).
 - [ ] Docs: user page for the app, Developing's file map and CI table, the Roadmap, the changelog.
 
 ## Out of scope

@@ -1,7 +1,7 @@
 # ADR-0021: Four tabs, and the Boards tab
 
 - **Status:** Accepted and built; changes the navigation of [ADR-0007](ADR-0007-The-Harness-Is-The-Base-Every-Screen-Stands-On.md). The owner,
-  9 November 2026.
+  9 November 2026. Refined by [ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md): the Server tab also holds every setting the account keeps on the server, and Settings keeps only the app's own.
 
 **Decided.** The bottom bar is Home, Boards, Server and Settings.
 

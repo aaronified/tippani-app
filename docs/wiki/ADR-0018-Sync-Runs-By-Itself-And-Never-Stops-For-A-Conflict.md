@@ -26,4 +26,4 @@ tap on Sync now while an automatic run is going waits for it and shows its resul
 **Not done.** It does not wait for the network coming back (that would need a connectivity package): the three-minute tick and the back-off find
 it. There is no background run when the app is closed; Android limits that and the app does not ask for it.
 
-*Status note, 13 November 2026:* a sync on every change, once a day, and when the phone gets a network again now exists ([ADR-0019](ADR-0019-Sync-On-Every-Change-And-Once-A-Day-Nothing-In-Between.md)); there is still no background run with the app closed.
+*Status note, 13 November 2026:* Sync and Sync conflicts are on the Server tab now ([ADR-0021](ADR-0021-Four-Tabs-And-The-Boards-Tab.md)), not under Settings; a sync on every change, once a day, and when the phone gets a network again now exists ([ADR-0019](ADR-0019-Sync-On-Every-Change-And-Once-A-Day-Nothing-In-Between.md)); there is still no background run with the app closed.
