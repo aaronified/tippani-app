@@ -144,12 +144,12 @@ abstract class PreferencesSource implements Listenable {
 /// app looks the same offline, and so a phone that is not paired still keeps what its reader sets.
 class PairedPreferences extends ChangeNotifier implements PreferencesSource {
   PairedPreferences(this._controller, this._store) {
-    // what waited was made under one pairing: it goes when the pairing does
     // what waited was made under one pairing, and so is the copy of that account's settings: both go with it
     _controller.offline.whenCleared.add(() async {
       await _store.remove(_pendingKey);
       await _store.remove(_key);
       _prefs = ServerPrefs.empty;
+      PrefsEffects.apply(_prefs);
       notifyListeners();
     });
     final cached = _store.read(_key);
@@ -325,6 +325,9 @@ class PairedPreferences extends ChangeNotifier implements PreferencesSource {
         p[e.key] = {'v': e.value, 'b': p[e.key]?['b'] ?? before[e.key]};
       }
       await _setPending(p);
+      // listeners heard of the change before it was kept as waiting; tell them again, so the sync that sends
+      // it is asked for now and not at the next library change
+      notifyListeners();
       return null;
     }
   }

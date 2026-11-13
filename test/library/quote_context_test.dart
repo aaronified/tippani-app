@@ -246,6 +246,28 @@ void main() {
       return (lib, w);
     }
 
+    test('an old kept context is replaced by the new answer even when narrower; a fresh wide one is not', () async {
+      await rig();
+      final wide = '{"body":"${'w' * 600}"}';
+      server.contexts['annotation/7'] = answer(body: 'new');
+      await store.write(
+        'annotation-7',
+        StoredContext(at: DateTime.now(), body: wide),
+      );
+      await source.fetch(quote(), work(WorkKind.book));
+      expect((await store.read('annotation-7'))!.body, wide);
+
+      await store.write(
+        'annotation-7',
+        StoredContext(
+          at: DateTime.now().subtract(const Duration(days: 40)),
+          body: wide,
+        ),
+      );
+      await source.fetch(quote(), work(WorkKind.book));
+      expect((await store.read('annotation-7'))!.body, contains('"new"'));
+    });
+
     test(
       'a kept context is asked for again after a month, and a fresh one is not',
       () async {

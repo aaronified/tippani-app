@@ -624,6 +624,15 @@ void main() {
       },
     );
 
+    test('listeners are told again once a change is kept as waiting, so the sync that sends it is asked for', () async {
+      final r = await rig();
+      final heard = <bool>[];
+      r.prefs.addListener(() => heard.add(r.prefs.hasPending));
+      r.server.unreachable = true;
+      await r.prefs.save({'srDaily': 12});
+      expect(heard.last, isTrue);
+    });
+
     test('what waited goes when the phone is unpaired, so it is never sent to another account', () async {
       final r = await rig();
       final kept = await SharedPreferences.getInstance();

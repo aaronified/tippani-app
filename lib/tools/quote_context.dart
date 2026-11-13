@@ -151,8 +151,13 @@ class PairedQuoteContext implements QuoteContextSource {
     final store = _store;
     if (store == null) return;
     final have = await store.read(key);
-    // the widest window stays, and the answer is stamped again so it is not asked for on every run
-    final wider = have != null && !have.none && have.body!.length > body.length;
+    // The widest window stays while what is kept is fresh. Once it is old the new answer replaces it, even a
+    // narrower one: the server's context may have been edited, and what was widened by hand is read again the
+    // next time the reader widens it.
+    final stale =
+        have != null && DateTime.now().difference(have.at) >= _keptFor;
+    final wider =
+        !stale && have != null && !have.none && have.body!.length > body.length;
     await store.write(
       key,
       StoredContext(at: DateTime.now(), body: wider ? have.body! : body),

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/anthologies/anthologies.dart';
+import 'package:tippani/api/capabilities.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/settings/settings_store.dart';
 
@@ -243,6 +244,35 @@ void main() {
       expect(s.seen.last, startsWith('DELETE /anthologies/3/poster'));
     },
   );
+
+  test('the poster is offered only when the server names it, and while it is unknown', () async {
+    SharedPreferences.setMockInitialValues({
+      'server_url': 'https://q.example.org',
+    });
+    final controller = AppController(
+      SettingsStore(await SharedPreferences.getInstance(), MemoryTokenVault()),
+      clientFactory: _Server().factory,
+    );
+    await controller.load();
+    final svc = ServerAnthologies(controller);
+    expect(svc.hasPoster, isTrue, reason: 'not asked yet');
+    Capabilities caps(Set<String> features) => Capabilities(
+      version: '3.7.1',
+      apiRevision: 9,
+      minClientRevision: 1,
+      features: features,
+    );
+    await controller.connect(
+      'https://q.example.org',
+      ServerCheck.answered(caps({'trash-bin'})),
+    );
+    expect(svc.hasPoster, isFalse);
+    await controller.connect(
+      'https://q.example.org',
+      ServerCheck.answered(caps({'anthology-poster'})),
+    );
+    expect(svc.hasPoster, isTrue);
+  });
 
   test(
     'a proxy answering 502, 503 or 429 is a wait, and a 400 is a refusal',
