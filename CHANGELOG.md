@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-13
+
 ### Added
 
 - Questions in the daily review: Daily review on the Server tab lets you choose which kinds of question each deck asks, Daily and Practice separately, the same setting the web has. A deck always keeps at least one kind that suits every card, and the daily deck never offers the flip card because the server cannot check an answer you mark yourself.
