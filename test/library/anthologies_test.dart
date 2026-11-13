@@ -105,6 +105,17 @@ void main() {
       },
     );
 
+    testWidgets(
+      'a row carries the description, with the count on its own line',
+      (tester) async {
+        final a = service.seed('Openings');
+        await service.setFront(a.id, '', '', description: 'Old sayings.');
+        await openList(tester);
+        expect(find.text('Old sayings.'), findsOneWidget);
+        expect(find.text('0 passages'), findsOneWidget);
+      },
+    );
+
     testWidgets('a new anthology is made from a title and introduction', (
       tester,
     ) async {

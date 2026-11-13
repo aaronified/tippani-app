@@ -409,4 +409,14 @@ void main() {
     // with no poster the page draws one from the title
     expect(find.byType(AnthologyPoster), findsOneWidget);
   });
+
+  testWidgets(
+    'Cover and front offers a poster, and a removal only once there is one',
+    (tester) async {
+      await open(tester);
+      await choose(tester, 'Cover and front…');
+      expect(find.text('Add a poster'), findsOneWidget);
+      expect(find.text('Remove poster'), findsNothing);
+    },
+  );
 }

@@ -498,7 +498,11 @@ Future<bool> editFrontMatter(
         a.id,
         epigraph.text.trim(),
         dedication.text.trim(),
-        description: description.text.trim(),
+        // named only when the reader changed it, so a copy older than a description written on the web
+        // does not send that description back empty
+        description: description.text.trim() != a.description
+            ? description.text.trim()
+            : null,
       );
       changed = true;
     } on AnthologyException catch (e) {

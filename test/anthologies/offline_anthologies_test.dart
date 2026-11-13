@@ -508,22 +508,25 @@ void main() {
     },
   );
 
-  test('a description and a poster made with no server show at once and are sent in order', () async {
+  test('a description made with no server shows at once, and it and a poster are sent in order', () async {
     final r = await _rig();
     final a = await r.service.create('A', '');
     await r.service.get(a.id);
     r.server.up = false;
     await r.service.setFront(a.id, '', '', description: 'Written on a train.');
+    // an edit that names no description leaves the one just written
+    await r.service.setFront(a.id, 'E', '');
     await r.service.setPoster(a.id, Uint8List.fromList([1, 2]), 'wide.jpg');
     expect(
       (await r.service.get(a.id)).anthology.description,
       'Written on a train.',
     );
-    expect(r.service.pending.value, 2);
+    expect(r.service.pending.value, 3);
     r.server.up = true;
     await r.service.flush();
-    expect(r.server.sent.sublist(r.server.sent.length - 2), [
+    expect(r.server.sent.sublist(r.server.sent.length - 3), [
       'front ${a.id} Written on a train.',
+      'front ${a.id} -',
       'poster ${a.id} 2 wide.jpg',
     ]);
   });

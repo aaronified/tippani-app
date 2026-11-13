@@ -266,12 +266,17 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
                         ),
                       ),
                       title: Text(a.title),
-                      subtitle: Text(
-                        a.description.trim().isEmpty
-                            ? countWords('passage', a.entries)
-                            : '${a.description.trim()}\n${countWords('passage', a.entries)}',
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (a.description.trim().isNotEmpty)
+                            Text(
+                              a.description.trim(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          Text(countWords('passage', a.entries)),
+                        ],
                       ),
                       trailing: const Icon(Ti.chevronRight),
                       onTap: () => _open(a),
