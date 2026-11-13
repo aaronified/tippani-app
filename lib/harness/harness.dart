@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 import '../admin/admin_service.dart';
 import '../admin/server_files.dart';
@@ -21,8 +23,10 @@ import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
+import '../anthologies/offline_anthologies.dart';
 import '../boards/board_service.dart';
 import '../library/cover_cache.dart';
+import '../tools/context_store.dart';
 import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
 import '../search/search_service.dart';
@@ -33,6 +37,7 @@ import '../app_controller.dart';
 import '../library/library_backup.dart';
 import '../library/library_store.dart';
 import '../sync/auto_sync.dart';
+import '../sync/fingerprint.dart';
 import '../sync/pull_sync.dart';
 import '../sync/push_sync.dart';
 import '../settings/settings_backup.dart';
@@ -286,9 +291,49 @@ class Harness {
     final directory = PairedPeopleDirectory(controller, covers);
     pull?.onFaces = directory.rememberFaces;
     final prefs = PairedPreferences(controller, settings);
+    final anthologies = OfflineAnthologies(
+      ServerAnthologies(controller),
+      controller.offline,
+      settings,
+      lookup: library == null
+          ? null
+          : (kind, id) => _passageOf(library, kind, id),
+    );
+    final contextStore = FileContextStore(
+      () async => Directory(
+        '${(await getApplicationSupportDirectory()).path}/contexts',
+      ),
+    );
+    controller.offline.whenCleared.add(contextStore.clear);
+    final contexts = PairedQuoteContext(controller, store: contextStore);
     final l10n = L10n()..use(prefs.prefs.locale);
     Tr.current = l10n; // code with no screen (a service wording an error) speaks in the same language
     prefs.addListener(() => l10n.use(prefs.prefs.locale));
+    final auto = push == null || pull == null
+        ? null
+        : AutoSync(
+            push: push,
+            pull: pull,
+            controller: controller,
+            log: appLog,
+            after: [
+              prefs.flush,
+              anthologies.flush,
+              () => keepContexts(library!, contexts),
+            ],
+          );
+    // a change made with no server counts as something to send, so it goes up when the server next answers
+    // and not only when the library changed
+    void queued() {
+      if (anthologies.pending.value > 0 || prefs.hasPending) {
+        auto?.queueChanged();
+      }
+    }
+
+    anthologies.pending.addListener(queued);
+    prefs.addListener(queued);
+    // a queue left by the last run is sent at this one's start too
+    queued();
     return Harness(
       files: files,
       log: appLog,
@@ -300,7 +345,11 @@ class Harness {
       backup: BackupService(
         files,
         contributors: [
-          SettingsBackup(settings, onRestored: controller.refresh),
+          SettingsBackup(
+            settings,
+            onRestored: controller.refresh,
+            forget: controller.forget,
+          ),
           if (library != null) LibraryBackup(library),
         ],
       ),
@@ -309,14 +358,7 @@ class Harness {
       library: library,
       sync: push,
       pull: pull,
-      auto: push == null || pull == null
-          ? null
-          : AutoSync(
-              push: push,
-              pull: pull,
-              controller: controller,
-              log: appLog,
-            ),
+      auto: auto,
       runAutoSync: true,
       covers: covers,
       people: PairedSharePeople(controller, directory),
@@ -337,8 +379,8 @@ class Harness {
       admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
-      contexts: PairedQuoteContext(controller),
-      anthologies: ServerAnthologies(controller),
+      contexts: contexts,
+      anthologies: anthologies,
       tools: PairedServerTools(controller),
       tags: PairedTagService(controller),
       search: PairedSearch(controller),
@@ -407,7 +449,11 @@ class Harness {
       backup: BackupService(
         f,
         contributors: [
-          SettingsBackup(settings, onRestored: controller?.refresh),
+          SettingsBackup(
+            settings,
+            onRestored: controller?.refresh,
+            forget: controller?.forget,
+          ),
           if (library != null) LibraryBackup(library),
         ],
       ),
@@ -477,4 +523,27 @@ class _NoPicker implements BackupPicker {
 
   @override
   Future<PickedFile?> pick() async => null;
+}
+
+/// What the phone knows about the quote the server calls [serverId] in its [kind] table, drawn the way an
+/// anthology's passage is, so one added with no server shows its words at once (ADR-0022).
+Future<Map<String, Object?>?> _passageOf(
+  LibraryStore library,
+  String kind,
+  int serverId,
+) async {
+  for (final q in await library.quotes()) {
+    if (q.serverId != serverId) continue;
+    final w = q.workId == null ? null : await library.work(q.workId!);
+    if (entryKindOf(realmOfQuote(w)) != kind) continue;
+    return {
+      'quote': q.text,
+      'color': q.color,
+      'language': q.language,
+      'favorite': q.favorite,
+      'source': w?.title ?? '',
+      'credit': w?.creator ?? '',
+    };
+  }
+  return null;
 }

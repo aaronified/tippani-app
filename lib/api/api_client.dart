@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import 'capabilities.dart';
+import 'offline_cache.dart';
 
 enum ApiFailure {
   /// Nothing answered: no route to the host, a refused connection, a bad certificate.
@@ -140,9 +141,58 @@ class ApiClient {
           ),
   );
 
-  /// GET [path] and decode the JSON answer.
+  /// Where a screen that only reads finds the server's last answer when the server cannot be reached; set by
+  /// [AppController] on the clients it hands out. Null in a client made for a call that must be live.
+  OfflineCache? offline;
+
+  /// GET [path] and decode the JSON answer. For the paths [OfflineCache.isCacheablePath] allows, the answer is
+  /// kept, and when the server cannot be reached (no network, or too slow) the kept one is returned instead:
+  /// every other failure, a refusal included, is the server's word and is thrown.
   Future<Object?> getJson(String path) =>
+      _getThrough(path, OfflineCache.isCacheablePath(path));
+
+  /// GET [path] and decode the JSON answer, never from the phone's kept copy: for reading back what was just
+  /// saved, where an old answer served in place of a timeout would look like the save was undone.
+  Future<Object?> getJsonLive(String path) =>
       _send(() => _client.get(_uri(path), headers: _headers));
+
+  /// [getJson] for a screen that has asked to show the server's last answer whatever the path (the account
+  /// page: `/auth/me` is not kept for everyone, because the app learns it was unpaired from it).
+  Future<Object?> getJsonKept(String path) => _getThrough(path, true);
+
+  Future<Object?> _getThrough(String path, bool keep) async {
+    final cache = offline;
+    Future<http.Response> ask() => _client.get(_uri(path), headers: _headers);
+    if (cache == null || !keep) {
+      return _send(ask);
+    }
+    try {
+      final response = await _checked(ask);
+      final decoded = _decode(response);
+      try {
+        if (response.body.isNotEmpty) {
+          await cache.write(path, utf8.decode(response.bodyBytes));
+        } else {
+          await cache.remove(
+            path,
+          ); // an empty answer is the answer now; an older one is not
+        }
+      } on Object {
+        // a full or failing store must not break a read that worked
+      }
+      cache.servedFrom.value = null;
+      return decoded;
+    } on ApiException catch (e) {
+      if (e.failure == ApiFailure.network || e.failure == ApiFailure.timeout) {
+        final kept = cache.read(path);
+        if (kept != null) {
+          cache.servedFrom.value = kept.at;
+          return jsonDecode(kept.body);
+        }
+      }
+      rethrow;
+    }
+  }
 
   /// GET [path] and return the raw bytes (a picture).
   Future<Uint8List> getBytes(String path) async =>
@@ -177,9 +227,10 @@ class ApiClient {
     return http.Response.fromStream(await _client.send(req));
   });
 
-  Future<Object?> _send(Future<http.Response> Function() request) async {
-    final response = await _checked(request);
-    final status = response.statusCode;
+  Future<Object?> _send(Future<http.Response> Function() request) async =>
+      _decode(await _checked(request));
+
+  Object? _decode(http.Response response) {
     if (response.body.isEmpty) return null;
     try {
       return jsonDecode(utf8.decode(response.bodyBytes));
@@ -187,7 +238,7 @@ class ApiClient {
       throw ApiException(
         ApiFailure.badResponse,
         'the answer was not JSON',
-        status,
+        response.statusCode,
       );
     }
   }

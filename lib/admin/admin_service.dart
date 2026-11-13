@@ -583,7 +583,7 @@ class PairedAdminService implements AdminService {
   Future<UpdateInfo> setChannel(String channel) =>
       serverCall(_controller, (c) async {
         await c.postJson('/admin/update/channel', {'channel': channel});
-        final r = await c.getJson('/admin/update/check');
+        final r = await c.getJsonLive('/admin/update/check');
         return UpdateInfo.fromJson(r is Map ? r : const {});
       });
 
@@ -658,7 +658,7 @@ class PairedAdminService implements AdminService {
   Future<MetadataKeys> saveMetadataKey(String field, Object value) =>
       serverCall(_controller, (c) async {
         await c.putJson('/admin/metadata-keys', {field: value});
-        final r = await c.getJson('/admin/metadata-keys');
+        final r = await c.getJsonLive('/admin/metadata-keys');
         return MetadataKeys(asMap(r));
       });
 

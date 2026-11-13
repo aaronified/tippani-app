@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../anthologies/anthologies.dart';
+import '../anthologies/offline_anthologies.dart';
 import '../app_controller.dart';
 import '../capture/photo_source.dart';
 import '../harness/harness.dart' show BackupPicker;
@@ -11,6 +12,7 @@ import 'quiz_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import 'offline_note.dart';
 
 /// An anthology as plain text to send: its title and introduction, then each passage with where it is from and the
 /// reader's commentary on it.
@@ -204,66 +206,136 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
         icon: const Icon(Ti.plus),
         label: Text(context.tr('anthologies.list.new.label')),
       ),
-      body: _problem != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_problem!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _load,
-                      child: Text(context.tr('common.source.retry')),
-                    ),
-                  ],
-                ),
+      body: Column(
+        children: [
+          if (widget.controller != null)
+            OfflineNote(offline: widget.controller!.offline),
+          _WaitingNote(widget.service),
+          Expanded(child: _list(context, all)),
+        ],
+      ),
+    );
+  }
+
+  Widget _list(BuildContext context, List<Anthology>? all) {
+    return _problem != null
+        ? Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_problem!, textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: _load,
+                    child: Text(context.tr('common.source.retry')),
+                  ),
+                ],
               ),
-            )
-          : all == null
-          ? const Center(child: CircularProgressIndicator())
-          : all.isEmpty
-          ? Center(
-              child: Text(context.tr('app.anthologies.no_anthologies_yet')),
-            )
-          : ListView(
-              padding: const EdgeInsets.only(top: 8, bottom: 88),
-              children: [
-                for (final a in all)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 5,
-                    ),
-                    child: Card(
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: AnthologyCover(
-                            name: a.coverPath,
-                            width: 40,
-                            height: 56,
-                            fallback: const SizedBox(
-                              width: 40,
-                              height: 56,
-                              child: Icon(Ti.books),
-                            ),
+            ),
+          )
+        : all == null
+        ? const Center(child: CircularProgressIndicator())
+        : all.isEmpty
+        ? Center(child: Text(context.tr('app.anthologies.no_anthologies_yet')))
+        : ListView(
+            padding: const EdgeInsets.only(top: 8, bottom: 88),
+            children: [
+              for (final a in all)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 5,
+                  ),
+                  child: Card(
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: SizedBox(
+                          width: 80,
+                          child: AnthologyPoster(
+                            name: a.posterPath,
+                            title: a.title,
+                            compact: true,
                           ),
                         ),
-                        title: Text(a.title),
-                        subtitle: Text(countWords('passage', a.entries)),
-                        trailing: const Icon(Ti.chevronRight),
-                        onTap: () => _open(a),
                       ),
+                      title: Text(a.title),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (a.description.trim().isNotEmpty)
+                            Text(
+                              a.description.trim(),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          Text(countWords('passage', a.entries)),
+                        ],
+                      ),
+                      trailing: const Icon(Ti.chevronRight),
+                      onTap: () => _open(a),
                     ),
                   ),
-              ],
+                ),
+            ],
+          );
+  }
+}
+
+/// What waits for the server, and what it refused: shown above the list so a reader who worked with no signal
+/// can see their changes are kept (ADR-0022).
+class _WaitingNote extends StatelessWidget {
+  const _WaitingNote(this.service);
+
+  final AnthologyService service;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = service;
+    if (s is! OfflineAnthologies) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: Listenable.merge([s.pending, s.problems]),
+      builder: (context, _) {
+        final n = s.pending.value;
+        final refused = s.problems.value;
+        if (n == 0 && refused.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (n > 0)
+                    Text(
+                      n == 1
+                          ? context.tr('app.anthologies.waiting_one')
+                          : context.tr('app.anthologies.waiting_many', {
+                              'n': n,
+                            }),
+                    ),
+                  for (final r in refused)
+                    Text(
+                      context.tr('app.anthologies.not_taken', {'reason': r}),
+                    ),
+                  if (refused.isNotEmpty)
+                    TextButton(
+                      onPressed: () => s.problems.value = const [],
+                      child: Text(context.tr('common.action.done.label')),
+                    ),
+                ],
+              ),
             ),
+          ),
+        );
+      },
     );
   }
 }
@@ -712,6 +784,18 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: AnthologyPoster(name: a.posterPath, title: a.title),
+          ),
+        ),
+        if (a.description.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text(a.description.trim(), style: theme.textTheme.bodyLarge),
+          ),
         if (a.coverPath.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),

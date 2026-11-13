@@ -42,6 +42,12 @@ class Anthology {
   /// The name of the cover picture file on the server, or ''.
   String get coverPath => _s('cover_path');
 
+  /// The name of the landscape poster file on the server, or '' (the page draws one from the title).
+  String get posterPath => _s('poster_path');
+
+  /// What the reader wrote about the book, apart from the introduction.
+  String get description => _s('description');
+
   /// The reader's epigraph and dedication, shown before the passages.
   String get epigraph => _s('epigraph');
   String get dedication => _s('dedication');
@@ -399,8 +405,12 @@ String entryKindOf(Realm realm) => switch (realm) {
 
 /// Anything that went wrong with an anthology, in words for the reader.
 class AnthologyException implements Exception {
-  const AnthologyException(this.message);
+  const AnthologyException(this.message, {this.unreachable = false});
   final String message;
+
+  /// The server could not be reached at all (no network, too slow, or nothing paired), as opposed to the
+  /// server answering "no". Only this is worth keeping a change for: it goes up when the server is back.
+  final bool unreachable;
   @override
   String toString() => message;
 }
@@ -409,6 +419,10 @@ class AnthologyException implements Exception {
 abstract class AnthologyService {
   /// Whether there is a paired server to ask.
   bool get available;
+
+  /// Whether the server can keep a poster and a description (API revision 10). True while the server has not
+  /// been asked: a change made then waits, and the server's refusal is shown.
+  bool get hasPoster;
 
   Future<List<Anthology>> list();
   Future<AnthologyDetail> get(int id);
@@ -454,8 +468,19 @@ abstract class AnthologyService {
   /// How passages are grouped under headings: '', 'work', 'person' or 'character'.
   Future<void> setGrouping(int id, String groupBy);
 
-  /// The epigraph and dedication.
-  Future<void> setFront(int id, String epigraph, String dedication);
+  /// The epigraph and dedication, and the description when one is given (left alone when null).
+  Future<void> setFront(
+    int id,
+    String epigraph,
+    String dedication, {
+    String? description,
+  });
+
+  /// Sets the landscape poster; returns its file name.
+  Future<String> setPoster(int id, Uint8List bytes, String fileName);
+
+  /// Takes the poster away.
+  Future<void> removePoster(int id);
 
   /// Puts a picture on as the cover, and returns the new cover's file name.
   Future<String> setCover(int id, Uint8List bytes, String fileName);
@@ -487,36 +512,55 @@ class ServerAnthologies implements AnthologyService {
   @override
   bool get available => _controller.paired;
 
+  @override
+  bool get hasPoster {
+    final caps = _controller.check?.capabilities;
+    return caps == null || caps.has('anthology-poster');
+  }
+
   Future<T> _call<T>(Future<T> Function(ApiClient c) run) async {
     if (!available) {
-      throw const AnthologyException('This phone is not paired with a server.');
+      throw const AnthologyException(
+        'This phone is not paired with a server.',
+        unreachable: true,
+      );
     }
     try {
       // withClient answers null only when nothing is paired (checked above); a call that returns nothing
       // (a delete) is a null that is not a failure.
       return await _controller.withClient(run) as T;
     } on ApiException catch (e) {
-      throw AnthologyException(switch (e.failure) {
-        ApiFailure.network => tx(
-          'app.admin_service.the_server_could_not_be_reached',
-        ),
-        ApiFailure.timeout => tx(
-          'app.admin_service.the_server_took_too_long_to',
-        ),
-        ApiFailure.unauthorised => tx(
-          'app.board_service.the_server_no_longer_accepts_this',
-        ),
-        ApiFailure.forbidden => tx(
-          'app.account_service.the_server_does_not_allow_that',
-        ),
-        ApiFailure.rateLimited => tx(
-          'app.board_service.the_server_asks_you_to_wait',
-        ),
-        ApiFailure.server || ApiFailure.badResponse =>
-          e.detail.isNotEmpty
-              ? e.detail
-              : tx('app.admin_service.the_server_could_not_do_that'),
-      });
+      throw AnthologyException(
+        // A server that is restarting behind a proxy answers 502, 503 or 504, and one that is busy answers 429:
+        // none of those is a refusal of the change, so it waits and is sent again.
+        unreachable:
+            e.failure == ApiFailure.network ||
+            e.failure == ApiFailure.timeout ||
+            e.failure == ApiFailure.unauthorised ||
+            e.failure == ApiFailure.rateLimited ||
+            (e.failure == ApiFailure.server && (e.status ?? 0) >= 502),
+        switch (e.failure) {
+          ApiFailure.network => tx(
+            'app.admin_service.the_server_could_not_be_reached',
+          ),
+          ApiFailure.timeout => tx(
+            'app.admin_service.the_server_took_too_long_to',
+          ),
+          ApiFailure.unauthorised => tx(
+            'app.board_service.the_server_no_longer_accepts_this',
+          ),
+          ApiFailure.forbidden => tx(
+            'app.account_service.the_server_does_not_allow_that',
+          ),
+          ApiFailure.rateLimited => tx(
+            'app.board_service.the_server_asks_you_to_wait',
+          ),
+          ApiFailure.server || ApiFailure.badResponse =>
+            e.detail.isNotEmpty
+                ? e.detail
+                : tx('app.admin_service.the_server_could_not_do_that'),
+        },
+      );
     }
   }
 
@@ -663,13 +707,37 @@ class ServerAnthologies implements AnthologyService {
   });
 
   @override
-  Future<void> setFront(int id, String epigraph, String dedication) =>
+  Future<void> setFront(
+    int id,
+    String epigraph,
+    String dedication, {
+    String? description,
+  }) => _call((c) async {
+    await c.putJson('/anthologies/$id/front', {
+      'epigraph': epigraph,
+      'dedication': dedication,
+      // an older server does not know it, and one that does keeps what it holds when it is not named
+      'description': ?description,
+    });
+  });
+
+  @override
+  Future<String> setPoster(int id, Uint8List bytes, String fileName) =>
       _call((c) async {
-        await c.putJson('/anthologies/$id/front', {
-          'epigraph': epigraph,
-          'dedication': dedication,
-        });
+        final r = await c.postFile(
+          '/anthologies/$id/poster',
+          'file',
+          bytes,
+          fileName,
+        );
+        final path = r is Map ? (r['poster_path'] ?? r['path']) : null;
+        return path is String ? path : '';
       });
+
+  @override
+  Future<void> removePoster(int id) => _call((c) async {
+    await c.delete('/anthologies/$id/poster');
+  });
 
   @override
   Future<String> setCover(int id, Uint8List bytes, String fileName) =>

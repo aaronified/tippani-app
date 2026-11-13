@@ -210,6 +210,67 @@ void main() {
       expect(r.controller.isAdmin, isTrue);
     });
 
+    test('an admin phone that starts with no server still shows the administration, and forgets it when unpaired', () async {
+      final s = FakeServer(admin: true);
+      final r = await rig(
+        s,
+        saved: {
+          'server_url': 'https://q.example.org',
+          'paired_user': 'alice',
+          'paired_admin': 'yes',
+        },
+      );
+      await r.vault.write('tok-1234');
+      s.unreachable = true;
+      await r.controller.load();
+      expect(r.controller.paired, isTrue);
+      expect(r.controller.isAdmin, isTrue);
+
+      s.unreachable = false;
+      await r.controller.unpair();
+      final kept = await SharedPreferences.getInstance();
+      expect(
+        kept.getString('paired_admin'),
+        isNull,
+        reason: 'the flag is forgotten, not just hidden',
+      );
+      await r.controller.load();
+      expect(r.controller.isAdmin, isFalse);
+    });
+
+    test('what the server last said is forgotten when the phone is unpaired, the server forgotten or the token refused', () async {
+      final s = FakeServer(admin: true);
+      final r = await rig(s);
+      await r.controller.pair('ABCD2345', 'My phone');
+      expect(r.controller.authedClient()!.offline, same(r.controller.offline));
+
+      await r.controller.offline.write('/tags', '{"tags":[]}');
+      await r.controller.unpair();
+      expect(r.controller.offline.read('/tags'), isNull, reason: 'unpaired');
+
+      await r.controller.offline.write('/tags', '{"tags":[]}');
+      await r.controller.forget();
+      expect(
+        r.controller.offline.read('/tags'),
+        isNull,
+        reason: 'server forgotten',
+      );
+    });
+
+    test('what the server last said is forgotten when the server refuses the token', () async {
+      final s = FakeServer(admin: true);
+      final r = await rig(s);
+      await r.controller.pair('ABCD2345', 'My phone');
+      await r.controller.offline.write('/tags', '{"tags":[]}');
+      s.extra = (req, path) async => s.json({'error': 'no'}, 401);
+      await expectLater(
+        r.controller.withClient((c) => c.getJson('/books')),
+        throwsA(isA<ApiException>()),
+      );
+      expect(r.controller.paired, isFalse);
+      expect(r.controller.offline.read('/tags'), isNull);
+    });
+
     test('unpairing asks the server to forget this phone (the row marked current), and keeps the server address', () async {
       final s = FakeServer();
       final r = await rig(s);

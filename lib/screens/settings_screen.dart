@@ -18,6 +18,7 @@ import '../harness/harness.dart';
 import '../harness/log_screen.dart';
 import '../harness/server_log_screen.dart';
 import 'devices_screen.dart';
+import 'offline_note.dart';
 import 'prefs_entries.dart';
 import 'tags_screen.dart';
 import 'pair_screen.dart';
@@ -111,6 +112,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             if (part == SettingsPart.server) ...[
+              OfflineNote(offline: controller.offline),
               _Section(context.tr('settings.section.server.label')),
               _Group(
                 children: [
@@ -327,6 +329,14 @@ class SettingsScreen extends StatelessWidget {
                     ),
                 ],
               ),
+              // everything the account keeps on the server and shares with the web app: with no server it shows the
+              // phone's copy, and a change waits to be sent
+              if (harness.prefs != null) ...[
+                _Section(
+                  context.tr('app.settings.your_settings_on_the_server'),
+                ),
+                PrefsEntries(controller: controller, harness: harness),
+              ],
               if (harness.library != null || harness.imports != null) ...[
                 _Section(context.tr('app.settings.your_library')),
                 _Group(
@@ -449,8 +459,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
             ],
             if (part == SettingsPart.app) ...[
-              PrefsEntries(controller: controller, harness: harness),
-              const _Section('App'),
+              _Section(context.tr('app.settings.app_section')),
               _Group(
                 children: [
                   if (harness.library != null)

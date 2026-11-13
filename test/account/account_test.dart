@@ -510,6 +510,164 @@ void main() {
       expect(find.text('Password changed.'), findsOneWidget);
     });
 
+    testWidgets(
+      'the account page with the server out of reach says so and can try again, instead of staying blank',
+      (tester) async {
+        final r = (await tester.runAsync(rig))!;
+        r.server.unreachable = true;
+        await tester.pumpWidget(
+          PrefsScope(
+            source: r.prefs,
+            child: MaterialApp(
+              home: AccountScreen(account: PairedAccount(r.controller)),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.textContaining('could not be reached'), findsOneWidget);
+        expect(find.text('Try again'), findsOneWidget);
+
+        r.server.unreachable = false;
+        await tester.tap(find.text('Try again'));
+        await tester.pumpAndSettle();
+        expect(find.text('alice'), findsWidgets);
+        expect(find.text('Try again'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'the account page shows who you are from the phone when the server goes away',
+      (tester) async {
+        final r = (await tester.runAsync(rig))!;
+        Future<void> open() async {
+          await tester.pumpWidget(
+            PrefsScope(
+              source: r.prefs,
+              child: MaterialApp(
+                key: UniqueKey(),
+                home: AccountScreen(account: PairedAccount(r.controller)),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+
+        await open();
+        expect(find.text('alice'), findsWidgets);
+        r.server.unreachable = true;
+        await open();
+        expect(find.text('alice'), findsWidgets);
+        expect(find.text('Change password'), findsOneWidget);
+      },
+    );
+
+    test('a setting changed with no server is kept, survives the server being read back, and goes up', () async {
+      final r = await rig();
+      r.server.unreachable = true;
+      expect(await r.prefs.save({'srDaily': 12}), isNull);
+      expect(r.prefs.prefs.srDaily, 12);
+
+      r.server.unreachable = false;
+      await r.prefs.refresh();
+      expect(r.server.prefWrites.last['srDaily'], 12);
+      expect(r.prefs.prefs.srDaily, 12);
+
+      // nothing is left waiting
+      r.server.prefWrites.clear();
+      await r.prefs.refresh();
+      expect(r.server.prefWrites, isEmpty);
+    });
+
+    test('while the server is still out of reach the phone value stands over a read-back', () async {
+      final r = await rig();
+      r.server.unreachable = true;
+      await r.prefs.save({'srDaily': 12});
+      await r.prefs.refresh();
+      expect(r.prefs.prefs.srDaily, 12);
+    });
+
+    test('a setting changed on the web in the meantime wins over one waiting on the phone', () async {
+      final r = await rig();
+      r.server.prefs['srDaily'] = 8;
+      await r.prefs.refresh();
+      r.server.unreachable = true;
+      await r.prefs.save({'srDaily': 12});
+      // the web changes the same setting while the phone is away
+      r.server.unreachable = false;
+      r.server.prefs['srDaily'] = 15;
+      r.server.prefWrites.clear();
+      await r.prefs.refresh();
+      expect(
+        r.server.prefWrites,
+        isEmpty,
+        reason: 'the phone change is dropped',
+      );
+      expect(r.prefs.prefs.srDaily, 15);
+    });
+
+    test(
+      'a read-back is not held up by a send the server answers with an error',
+      () async {
+        final r = await rig();
+        await r.prefs.refresh();
+        r.server.unreachable = true;
+        await r.prefs.save({'srDaily': 12});
+        r.server.unreachable = false;
+        r.server.prefs['catName2'] = 'From the web';
+        r.server.extra = (req, path) async =>
+            req.method == 'PUT' && path == '/auth/me/preferences'
+            ? r.server.json({'error': 'try later'}, 500)
+            : null;
+        await r.prefs.refresh();
+        expect(r.prefs.prefs.srDaily, 12, reason: 'still waiting, still shown');
+        expect(r.prefs.prefs.raw['catName2'], 'From the web');
+      },
+    );
+
+    test('listeners are told again once a change is kept as waiting, so the sync that sends it is asked for', () async {
+      final r = await rig();
+      final heard = <bool>[];
+      r.prefs.addListener(() => heard.add(r.prefs.hasPending));
+      r.server.unreachable = true;
+      await r.prefs.save({'srDaily': 12});
+      expect(heard.last, isTrue);
+    });
+
+    test('what waited goes when the phone is unpaired, so it is never sent to another account', () async {
+      final r = await rig();
+      final kept = await SharedPreferences.getInstance();
+      r.server.unreachable = true;
+      await r.prefs.save({'srDaily': 12});
+      expect(kept.getString('outbox.preferences'), isNotNull);
+      r.server.unreachable = false;
+      await r.controller.unpair();
+      expect(kept.getString('outbox.preferences'), isNull);
+      expect(
+        kept.getString('server_prefs'),
+        isNull,
+        reason: 'the previous account\'s settings are not shown to the next',
+      );
+      expect(r.prefs.prefs.known, isFalse);
+    });
+
+    testWidgets(
+      'the account page of a phone that is not paired offers no Try again',
+      (tester) async {
+        final r = (await tester.runAsync(() => rig(paired: false)))!;
+        await tester.pumpWidget(
+          PrefsScope(
+            source: r.prefs,
+            child: MaterialApp(
+              home: AccountScreen(account: PairedAccount(r.controller)),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.textContaining('not paired'), findsOneWidget);
+        expect(find.text('Try again'), findsNothing);
+      },
+    );
+
     testWidgets('a server refusal is shown to the reader', (tester) async {
       final (r, widget) = await app(tester, const ReviewPrefsScreen());
       await tester.pumpWidget(widget);

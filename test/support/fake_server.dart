@@ -518,8 +518,13 @@ class FakeServer {
   /// A JSON answer, for an [extra] hook.
   http.Response json(Object body, [int status = 200]) => _json(body, status);
 
+  /// True for a server that cannot be reached at all: every request after the pairing fails as a dropped
+  /// network does.
+  bool unreachable = false;
+
   Future<http.Response> handle(http.Request r) async {
     requests.add(r);
+    if (unreachable) throw const SocketException('the network went away');
     final path = r.url.path.replaceFirst(RegExp(r'^.*?/api'), '');
     final hooked = await extra?.call(r, path);
     if (hooked != null) return hooked;

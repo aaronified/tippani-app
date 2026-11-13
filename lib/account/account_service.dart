@@ -130,7 +130,7 @@ class PairedAccount implements AccountService {
 
   @override
   Future<Outcome<AccountInfo>> me() => _call((c) async {
-    final j = await c.getJson('/auth/me');
+    final j = await c.getJsonKept('/auth/me');
     if (j is! Map) {
       throw const ApiException(ApiFailure.badResponse, 'not an account');
     }
@@ -164,7 +164,7 @@ class PairedAccount implements AccountService {
 
   @override
   Future<Outcome<NotifySettings>> notifications() => _call((c) async {
-    final j = await c.getJson('/auth/notifications');
+    final j = await c.getJsonKept('/auth/notifications');
     final s = j is Map && j['settings'] is Map ? j['settings'] as Map : {};
     return NotifySettings(
       pushoverUser: '${s['pushover_user'] ?? ''}',
@@ -187,7 +187,7 @@ class PairedAccount implements AccountService {
 
   @override
   Future<Outcome<String?>> widgetKey() => _call((c) async {
-    final j = await c.getJson('/auth/widget-key');
+    final j = await c.getJsonKept('/auth/widget-key');
     if (j is Map && j['exists'] == true) return '${j['created_at'] ?? ''}';
     return null;
   });

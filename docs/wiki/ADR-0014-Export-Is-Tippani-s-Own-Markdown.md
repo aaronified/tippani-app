@@ -10,5 +10,5 @@ belong to no work, and a binding only where there is a value. Yellow, the defaul
 **Why.** A library made on the phone with no server must be movable to one later, and the importer is the only reader that exists. Inventing a
 second format would need a second importer, and a file that one side cannot read is the worst kind of backup.
 
-**Consequences.** If the server's export changes shape, this file changes with it; the tests here are the reminder. The app does not import
-Markdown yet. Share uses the share sheet and Save uses the system file picker, so there is no storage permission.
+**Consequences.** If the server's export changes shape, this file changes with it; the tests here are the reminder. The app imports
+Markdown too (0.7.0). Share uses the share sheet and Save uses the system file picker, so there is no storage permission.

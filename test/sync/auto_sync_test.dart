@@ -169,6 +169,40 @@ void main() {
       },
     );
 
+    test(
+      'a change announced while a run is out is still due when the run ends',
+      () async {
+        final r = await rig();
+        late final AutoSync auto;
+        auto = AutoSync(
+          push: PushSync(r.lib, r.controller),
+          pull: PullSync(r.lib, r.controller),
+          controller: r.controller,
+          clock: r.clock.call,
+          connectivity: r.net,
+          after: [() async => auto.queueChanged()],
+        );
+        await auto.syncNow();
+        expect(
+          auto.dirty,
+          isTrue,
+          reason: 'the change came after the run began',
+        );
+        auto.dispose();
+
+        final clean = AutoSync(
+          push: PushSync(r.lib, r.controller),
+          pull: PullSync(r.lib, r.controller),
+          controller: r.controller,
+          clock: r.clock.call,
+          connectivity: r.net,
+        );
+        await clean.syncNow();
+        expect(clean.dirty, isFalse);
+        clean.dispose();
+      },
+    );
+
     test('with no server paired does nothing', () async {
       final r = await rig(paired: false);
       expect(await r.auto.syncNow(), isNull);
@@ -261,6 +295,50 @@ void main() {
   });
 
   group('when it runs', () {
+    testAuto(
+      'a change announced while a run is out makes another run once it ends',
+      (tester, r) async {
+        late final AutoSync auto;
+        var announced = false;
+        auto = AutoSync(
+          push: PushSync(r.lib, r.controller),
+          pull: PullSync(r.lib, r.controller),
+          controller: r.controller,
+          clock: r.clock.call,
+          connectivity: r.net,
+          after: [
+            () async {
+              if (!announced) {
+                announced = true;
+                auto.queueChanged();
+              }
+              return null;
+            },
+          ],
+        );
+        try {
+          await auto.start(r.lib.changes);
+          r.server.seed('/books', {'title': 'Dune', 'author': 'Herbert'});
+          var ran = 0;
+          auto.addListener(() {
+            if (!auto.syncing) ran++;
+          });
+          await auto.syncNow();
+          expect(auto.dirty, isTrue);
+          await settle(tester, const Duration(seconds: 6));
+          expect(
+            ran,
+            greaterThanOrEqualTo(2),
+            reason: 'the follow-up run happened',
+          );
+          expect(auto.dirty, isFalse, reason: 'and cleared it');
+        } finally {
+          auto.dispose();
+        }
+      },
+      lastRunAgo: const Duration(hours: 1),
+    );
+
     testAuto('on open, with no run ever made, it makes one', (tester, r) async {
       r.server.seed('/books', {'title': 'Dune', 'author': 'Herbert'});
       await r.auto.start(r.lib.changes);

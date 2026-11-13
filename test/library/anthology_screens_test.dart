@@ -7,6 +7,7 @@ import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/library_widgets.dart';
 import 'package:tippani/screens/anthologies_screen.dart';
+import 'package:tippani/screens/anthology_tools.dart';
 
 import '../support/fake_anthologies.dart';
 import '../support/fake_quiz.dart';
@@ -388,4 +389,46 @@ void main() {
     expect(find.text('Begin.'), findsOneWidget);
     expect(find.text('For you'), findsOneWidget);
   });
+
+  testWidgets('a description written by hand shows on the book\'s page', (
+    tester,
+  ) async {
+    await open(tester);
+    await choose(tester, 'Cover and front…');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Description'),
+      'Sayings gathered over a decade.',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(
+      service.rowOf(a.id)['description'],
+      'Sayings gathered over a decade.',
+    );
+    expect(find.text('Sayings gathered over a decade.'), findsOneWidget);
+    // with no poster the page draws one from the title
+    expect(find.byType(AnthologyPoster), findsOneWidget);
+  });
+
+  testWidgets(
+    'Cover and front offers a poster, and a removal only once there is one',
+    (tester) async {
+      await open(tester);
+      await choose(tester, 'Cover and front…');
+      expect(find.text('Add a poster'), findsOneWidget);
+      expect(find.text('Remove poster'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a server without posters is not offered them, nor a description',
+    (tester) async {
+      service.hasPoster = false;
+      await open(tester);
+      await choose(tester, 'Cover and front…');
+      expect(find.text('Add a poster'), findsNothing);
+      expect(find.widgetWithText(TextField, 'Description'), findsNothing);
+      expect(find.widgetWithText(TextField, 'Epigraph'), findsOneWidget);
+    },
+  );
 }

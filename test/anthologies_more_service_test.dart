@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/anthologies/anthologies.dart';
+import 'package:tippani/api/capabilities.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/settings/settings_store.dart';
 
@@ -13,6 +14,9 @@ import 'support/fake_server.dart';
 /// The fake server plus the anthology routes the screens use, recording what came in.
 class _Server extends FakeServer {
   final seen = <String>[];
+
+  /// When set, every anthology call is answered with this status.
+  int? answerWith;
 
   @override
   Future<http.Response> handle(http.Request r) async {
@@ -23,6 +27,7 @@ class _Server extends FakeServer {
     seen.add(
       '${r.method} $path${r.url.hasQuery ? '?${r.url.query}' : ''} ${r.body}',
     );
+    if (answerWith != null) return http.Response('', answerWith!);
     if (path == '/search/vocabulary') {
       return http.Response(
         jsonEncode({
@@ -50,6 +55,8 @@ class _Server extends FakeServer {
             'entries': 2,
             'group_by': 'work',
             'cover_path': '0123456789abcdef.png',
+            'poster_path': '1111222233334444.png',
+            'description': 'Typed by hand.',
             'epigraph': 'E',
             'dedication': 'D',
             'rule': 'scope=all&tag=x',
@@ -107,6 +114,12 @@ class _Server extends FakeServer {
         201,
       );
     }
+    if (r.method == 'POST' && path.endsWith('/poster')) {
+      return http.Response(
+        jsonEncode({'id': 3, 'poster_path': '5555666677778888.png'}),
+        200,
+      );
+    }
     if (r.method == 'POST' && path.endsWith('/cover')) {
       return http.Response(
         jsonEncode({
@@ -149,6 +162,8 @@ void main() {
       final a = d.anthology;
       expect(a.groupBy, 'work');
       expect(a.coverPath, '0123456789abcdef.png');
+      expect(a.posterPath, '1111222233334444.png');
+      expect(a.description, 'Typed by hand.');
       expect(a.epigraph, 'E');
       expect(a.dedication, 'D');
       expect(a.rule, 'scope=all&tag=x');
@@ -210,6 +225,85 @@ void main() {
     expect(sent['show_locator'], true, reason: 'what the server held stays');
     expect(sent['title'], 'Openings');
   });
+
+  test(
+    'the description goes only when it is given, and the poster is a file',
+    () async {
+      final (svc, s) = await rig();
+      await svc.setFront(3, 'E', 'D', description: 'About it.');
+      expect(bodyOf(s.seen.last), {
+        'epigraph': 'E',
+        'dedication': 'D',
+        'description': 'About it.',
+      });
+      expect(
+        await svc.setPoster(3, Uint8List.fromList([1]), 'p.png'),
+        '5555666677778888.png',
+      );
+      await svc.removePoster(3);
+      expect(s.seen.last, startsWith('DELETE /anthologies/3/poster'));
+    },
+  );
+
+  test('the poster is offered only when the server names it, and while it is unknown', () async {
+    SharedPreferences.setMockInitialValues({
+      'server_url': 'https://q.example.org',
+    });
+    final controller = AppController(
+      SettingsStore(await SharedPreferences.getInstance(), MemoryTokenVault()),
+      clientFactory: _Server().factory,
+    );
+    await controller.load();
+    final svc = ServerAnthologies(controller);
+    expect(svc.hasPoster, isTrue, reason: 'not asked yet');
+    Capabilities caps(Set<String> features) => Capabilities(
+      version: '3.7.1',
+      apiRevision: 9,
+      minClientRevision: 1,
+      features: features,
+    );
+    await controller.connect(
+      'https://q.example.org',
+      ServerCheck.answered(caps({'trash-bin'})),
+    );
+    expect(svc.hasPoster, isFalse);
+    await controller.connect(
+      'https://q.example.org',
+      ServerCheck.answered(caps({'anthology-poster'})),
+    );
+    expect(svc.hasPoster, isTrue);
+  });
+
+  test(
+    'a proxy answering 502, 503 or 429 is a wait, and a 400 is a refusal',
+    () async {
+      final (svc, s) = await rig();
+      for (final status in [502, 503, 504, 429]) {
+        s.answerWith = status;
+        await expectLater(
+          svc.setGrouping(3, 'work'),
+          throwsA(
+            isA<AnthologyException>().having(
+              (e) => e.unreachable,
+              'unreachable ($status)',
+              true,
+            ),
+          ),
+        );
+      }
+      s.answerWith = 400;
+      await expectLater(
+        svc.setGrouping(3, 'work'),
+        throwsA(
+          isA<AnthologyException>().having(
+            (e) => e.unreachable,
+            'unreachable (400)',
+            false,
+          ),
+        ),
+      );
+    },
+  );
 
   test('the cover goes up as a file and comes back as a name', () async {
     final (svc, s) = await rig();

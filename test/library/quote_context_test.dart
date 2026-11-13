@@ -10,6 +10,7 @@ import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/quote_screen.dart';
 import 'package:tippani/settings/settings_store.dart';
 import 'package:tippani/sync/fingerprint.dart';
+import 'package:tippani/tools/context_store.dart';
 import 'package:tippani/tools/quote_context.dart';
 
 import '../support/fake_server.dart';
@@ -117,6 +118,7 @@ void main() {
   group('asking the server', () {
     late FakeServer server;
     late PairedQuoteContext source;
+    late MemoryContextStore store;
 
     Future<void> rig({bool paired = true}) async {
       SharedPreferences.setMockInitialValues({
@@ -132,7 +134,8 @@ void main() {
       );
       await c.load();
       if (paired) await c.pair('ABCD2345', 'My phone');
-      source = PairedQuoteContext(c);
+      store = MemoryContextStore();
+      source = PairedQuoteContext(c, store: store);
     }
 
     test('a book quote is asked of the annotation route', () async {
@@ -178,6 +181,176 @@ void main() {
       expect(await source.fetch(quote(serverId: null), null), isNull);
       expect(server.contextReads, isEmpty);
     });
+
+    test('with no server a window never asked for is answered with the widest one kept', () async {
+      await rig();
+      server.contexts['annotation/7'] = answer(shownBefore: 2, shownAfter: 2);
+      final seen = await source.fetch(
+        quote(),
+        work(WorkKind.book),
+        before: 2,
+        after: 2,
+      );
+      server.unreachable = true;
+      final offline = await source.fetch(
+        quote(),
+        work(WorkKind.book),
+        before: 6,
+        after: 6,
+      );
+      expect(offline!.body, seen!.body);
+      expect(offline.before, seen.before);
+    });
+
+    test(
+      'with no server a quote never read is an error, not a blank',
+      () async {
+        await rig();
+        server.unreachable = true;
+        await expectLater(
+          source.fetch(quote(), work(WorkKind.book)),
+          throwsA(isA<ServerException>()),
+        );
+      },
+    );
+
+    Future<(MemoryLibrary, Work)> library() async {
+      final lib = MemoryLibrary();
+      final w = await lib.addWork(
+        const WorkDraft(kind: WorkKind.book, title: 'Walden'),
+      );
+      await lib.setWorkServerId(w.id, 3);
+      final withContext = await lib.addQuote(
+        QuoteDraft(text: 'Simplify.', workId: w.id),
+      );
+      await lib.setQuoteServerId(withContext.id, 7);
+      final without = await lib.addQuote(
+        QuoteDraft(text: 'No file for this one.', workId: w.id),
+      );
+      await lib.setQuoteServerId(without.id, 8);
+      final loose = await lib.addQuote(const QuoteDraft(text: 'A proverb.'));
+      await lib.setQuoteServerId(loose.id, 9);
+      server.contexts['annotation/7'] = answer();
+      server.contexts['utterance/9'] = answer(body: 'A proverb.');
+      server.extra = (r, path) async {
+        if (r.method == 'GET' && path == '/sources/context-ids') {
+          final subject = r.url.queryParameters['subject'];
+          return server.json({
+            'ids': subject == 'book'
+                ? [7]
+                : (subject == 'utterance' ? [9] : []),
+          });
+        }
+        return null;
+      };
+      return (lib, w);
+    }
+
+    test('an old kept context is replaced by the new answer even when narrower; a fresh wide one is not', () async {
+      await rig();
+      final wide = '{"body":"${'w' * 600}"}';
+      server.contexts['annotation/7'] = answer(body: 'new');
+      await store.write(
+        'annotation-7',
+        StoredContext(at: DateTime.now(), body: wide),
+      );
+      await source.fetch(quote(), work(WorkKind.book));
+      expect((await store.read('annotation-7'))!.body, wide);
+
+      await store.write(
+        'annotation-7',
+        StoredContext(
+          at: DateTime.now().subtract(const Duration(days: 40)),
+          body: wide,
+        ),
+      );
+      await source.fetch(quote(), work(WorkKind.book));
+      expect((await store.read('annotation-7'))!.body, contains('"new"'));
+    });
+
+    test(
+      'a kept context is asked for again after a month, and a fresh one is not',
+      () async {
+        await rig();
+        await store.write(
+          'annotation-7',
+          StoredContext(
+            at: DateTime.now().subtract(const Duration(days: 5)),
+            body: '{"body":"x"}',
+          ),
+        );
+        expect(await source.kept('annotation', 7), isTrue);
+        await store.write(
+          'annotation-7',
+          StoredContext(
+            at: DateTime.now().subtract(const Duration(days: 31)),
+            body: '{"body":"x"}',
+          ),
+        );
+        expect(await source.kept('annotation', 7), isFalse);
+      },
+    );
+
+    test('every synced quote that has a context is kept after a sync, and only those', () async {
+      await rig();
+      final (lib, w) = await library();
+
+      expect(await keepContexts(lib, source), 2);
+      expect(server.contextReads, [
+        '/quotes/annotation/7/context',
+        '/quotes/utterance/9/context',
+      ], reason: 'the quote the server lists none for is never asked about');
+      expect(await keepContexts(lib, source), 0, reason: 'already kept');
+
+      server.unreachable = true;
+      final read = await source.fetch(
+        (await lib.quotes(workId: w.id)).firstWhere((q) => q.serverId == 7),
+        w,
+        before: 3,
+      );
+      expect(read!.body, 'Simplify, simplify.');
+      final loose = await source.fetch(
+        (await lib.quotes(standalone: true)).single,
+        null,
+      );
+      expect(loose!.body, 'A proverb.');
+    });
+
+    test('a run keeps a few at a time and the next run continues', () async {
+      await rig();
+      final (lib, _) = await library();
+      expect(await keepContexts(lib, source, limit: 1), 1);
+      expect(await keepContexts(lib, source, limit: 1), 1);
+      expect(await keepContexts(lib, source, limit: 1), 0);
+    });
+
+    test('a quote the server lists but cannot find is noted as having none and not asked again', () async {
+      await rig();
+      final (lib, _) = await library();
+      server.contexts.remove('annotation/7');
+      await keepContexts(lib, source);
+      final asked = server.contextReads
+          .where((p) => p.contains('annotation/7'))
+          .length;
+      expect(asked, 1);
+      await keepContexts(lib, source);
+      expect(
+        server.contextReads.where((p) => p.contains('annotation/7')).length,
+        asked,
+        reason: 'the note stands for a week',
+      );
+    });
+
+    test(
+      'a server that cannot be asked leaves the keeping for the next sync',
+      () async {
+        await rig();
+        final (lib, _) = await library();
+        server.unreachable = true;
+        expect(await keepContexts(lib, source), 0);
+        expect(store.entries, isEmpty);
+      },
+    );
 
     test('a server that errors is said, with the reason', () async {
       await rig();

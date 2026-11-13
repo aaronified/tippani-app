@@ -30,6 +30,7 @@ class _AccountScreenState extends State<AccountScreen> {
   bool _hasWidgetKey = false;
   String? _problem;
   bool _busy = false;
+  bool _loading = true;
 
   final _pushUser = TextEditingController();
   final _appToken = TextEditingController();
@@ -49,11 +50,20 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _load() async {
-    final me = await widget.account.me();
-    final n = await widget.account.notifications();
-    final k = await widget.account.widgetKey();
+    if (mounted) setState(() => _loading = true);
+    // the three questions go out together: a server that cannot be reached makes each wait out its own timeout,
+    // and one after another that was a blank page for as long as all three together
+    final asked = (
+      widget.account.me(),
+      widget.account.notifications(),
+      widget.account.widgetKey(),
+    );
+    final me = await asked.$1;
+    final n = await asked.$2;
+    final k = await asked.$3;
     if (!mounted) return;
     setState(() {
+      _loading = false;
       _problem = me.error;
       _me = me.value;
       _notify = n.value;
@@ -187,8 +197,22 @@ class _AccountScreenState extends State<AccountScreen> {
     return PrefPage(
       title: context.tr('bin.kind.account.label'),
       children: [
-        if (_busy) const LinearProgressIndicator(),
-        if (_problem != null) PrefNote(_problem!),
+        if (_busy || _loading) const LinearProgressIndicator(),
+        if (_problem != null) ...[
+          PrefNote(_problem!),
+          // trying again cannot help a phone that is not paired
+          if (widget.account.available)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: OutlinedButton(
+                  onPressed: _loading ? null : _load,
+                  child: Text(context.tr('common.source.retry')),
+                ),
+              ),
+            ),
+        ],
         if (me != null) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),

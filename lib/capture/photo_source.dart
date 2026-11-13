@@ -20,6 +20,12 @@ class DevicePhotos implements PhotoSource {
       (await _picker.pickImage(source: ImageSource.camera))?.path;
 
   @override
-  Future<String?> choose() async =>
-      (await _picker.pickImage(source: ImageSource.gallery))?.path;
+  Future<String?> choose() async => (await _picker.pickImage(
+    source: ImageSource.gallery,
+    // a phone's own photo is several megabytes; the anthology's cover and poster wait in a small queue with no
+    // server, so the picture is brought down to what a screen can show
+    maxWidth: 2000,
+    maxHeight: 2000,
+    imageQuality: 85,
+  ))?.path;
 }

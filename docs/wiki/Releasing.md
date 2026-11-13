@@ -4,9 +4,9 @@ How a release of the app is cut, and what the owner has to provide once. The wor
 is [ADR-0013](ADR-0013-The-Release-Is-Cut-By-A-Workflow.md), and the names the update check reads are
 [ADR-0008](ADR-0008-Releases-Are-app-v-Tags.md).
 
-**Status: scaffolded, not yet runnable.** Nothing here has been run against GitHub. It needs the five secrets below, and until they are set the
-workflow fails in its first seconds, naming each one that is missing. That is on purpose: a release with no key would be signed with the debug key
-and could never be upgraded.
+**Status: in use.** The workflow has cut every release since `app-v0.2.0` (6 November 2026), most recently `app-v0.8.1` (13 November 2026), each with a
+signed APK. It needs the five secrets below, and when one is missing it fails in its first seconds, naming each one. That is on purpose: a release with no key
+would be signed with the debug key and could never be upgraded.
 
 ## What the owner provides, once
 
@@ -77,7 +77,8 @@ If `main` is not protected, the deploy key is still used, and still needs write 
 ### Checking what is set
 
 `gh secret list -R aaronified/tippani-app` shows the names that exist (never the values), and `gh repo deploy-key list -R aaronified/tippani-app`
-shows the deploy key. As of 6 November 2026 the four keystore secrets are set; `RELEASE_DEPLOY_KEY`, the ruleset bypass and `WIKI_TOKEN` are not.
+shows the deploy key. As of 13 November 2026 the release workflow passes its secret check and pushes its release commit to `main`, so the four keystore secrets and
+`RELEASE_DEPLOY_KEY` are set. The wiki mirror (`wiki.yml`) uses `ADMIN_TOKEN` when `GITHUB_TOKEN` is refused, and `WIKI_TOKEN` if that is set.
 
 ## Cutting a release
 
@@ -111,5 +112,5 @@ python3 tools/check_release_version.py app-v0.1.0         # does a tag match the
 python3 tools/prepare_release.py --notes 0.1.0            # the notes a release would carry
 ```
 
-The workflow itself can only be proven by running it once the secrets are set; the first release is the test, so cut it as `0.1.0` and look at the
-run before telling anyone.
+The workflow itself is proven: it has cut every release since `0.2.0`. After a change to the workflow, run it once and look at the run before telling
+anyone.

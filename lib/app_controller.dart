@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'api/api_client.dart';
 import 'api/capabilities.dart';
+import 'api/offline_cache.dart';
 import 'harness/app_log.dart';
 import 'pairing/devices.dart';
 import 'pairing/pairing_service.dart';
@@ -53,6 +54,10 @@ class AppController extends ChangeNotifier {
   bool _revoked = false;
   final ClientFactory _clientFactory;
 
+  /// What the server last said, for the screens that only read (ADR-0022). Cleared whenever the phone stops
+  /// being paired, so one account's answers never show under another.
+  late final OfflineCache offline = OfflineCache(_settings);
+
   ServerCheck? _check;
   bool _checking = false;
 
@@ -78,6 +83,8 @@ class AppController extends ChangeNotifier {
   /// the next time the app opens, not whenever a stored flag is cleared.
   bool get isAdmin => paired && _isAdmin;
 
+  static const _adminKey = 'paired_admin';
+
   bool _loaded = false;
 
   /// Whether the stored token has been read yet. Until it has, [paired] is false whatever the phone holds, so a
@@ -87,6 +94,8 @@ class AppController extends ChangeNotifier {
   /// Reads the stored token once at start.
   Future<void> load() async {
     _token = await _settings.token();
+    // the last answer, so a phone that starts with no server still shows the administration it is allowed
+    _isAdmin = _settings.read(_adminKey) == 'yes';
     _loaded = true;
     notifyListeners();
     await loadAccount();
@@ -103,6 +112,7 @@ class AppController extends ChangeNotifier {
       final me = await withClient((c) => c.getJson('/auth/me'));
       if (me is Map) {
         _isAdmin = me['is_admin'] == true;
+        await _settings.write(_adminKey, _isAdmin ? 'yes' : 'no');
         notifyListeners();
       }
     } on ApiException {
@@ -115,7 +125,7 @@ class AppController extends ChangeNotifier {
   ApiClient? authedClient() {
     final url = serverUrl;
     if (url == null || !paired) return null;
-    return _clientFactory(apiBaseOf(url), _token);
+    return _clientFactory(apiBaseOf(url), _token)..offline = offline;
   }
 
   /// Calls [run] with an authenticated client, and treats a refused token as the end of this pairing: the
@@ -131,6 +141,8 @@ class AppController extends ChangeNotifier {
           'the server refused the token this phone holds; unpairing it here',
         );
         await _settings.forgetToken();
+        await _settings.remove(_adminKey);
+        await offline.clear();
         _token = null;
         _revoked = true;
         notifyListeners();
@@ -174,6 +186,8 @@ class AppController extends ChangeNotifier {
       // unreachable or already unpaired: the local half still happens
     }
     await _settings.forgetToken();
+    await _settings.remove(_adminKey);
+    await offline.clear();
     _token = null;
     _isAdmin = false;
     _log?.info('unpaired');
@@ -230,6 +244,9 @@ class AppController extends ChangeNotifier {
   /// Forgets the server and its credential together.
   Future<void> forget() async {
     await _settings.forgetServer();
+    await _settings.remove(_adminKey);
+    await offline.clear();
+    _isAdmin = false;
     _log?.info('server forgotten');
     _token = null;
     _revoked = false;

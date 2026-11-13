@@ -57,6 +57,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     this.debounce = const Duration(seconds: 4),
     this.dailyEvery = const Duration(hours: 24),
     this.checkEvery = const Duration(minutes: 30),
+    this.after = const [],
     Connectivity? connectivity,
     DateTime Function()? clock,
   }) : _connectivity = connectivity ?? DeviceConnectivity(),
@@ -77,6 +78,10 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
 
   /// How often an app left open looks at whether a day has passed (this makes no request).
   final Duration checkEvery;
+
+  /// Other things that wait for the server (anthologies edited with no server), sent when a run found the server
+  /// answering. A failure in one is its own and does not stop the run.
+  final List<Future<Object?> Function()> after;
 
   static const _enabledKey = 'auto_sync';
   static const _lastKey = 'auto_sync_last';
@@ -171,10 +176,18 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) _opportunity();
   }
 
+  /// Counts the changes announced, so a run can tell whether one arrived while it was running.
+  int _changeCount = 0;
+
   void _changed() {
+    _changeCount++;
     _markDirty(true);
     scheduleSoon();
   }
+
+  /// Something other than the library waits for the server (an anthology change, a setting made offline): a
+  /// run is due even though no quote changed, so it goes up when the server next answers.
+  void queueChanged() => _changed();
 
   Future<void> _markDirty(bool v) async {
     if (_dirty == v) return;
@@ -216,6 +229,8 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     if (!_controller.paired) return null;
     if (_syncing) return _pull.sync();
     _syncing = true;
+    final changesAtStart = _changeCount;
+    var again = false;
     notifyListeners();
     PullResult result;
     try {
@@ -230,9 +245,22 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     _lastResult = result;
     _failure = result.stoppedBy;
     if (result.stoppedBy == null) {
+      for (final send in after) {
+        try {
+          await send();
+        } on Object catch (e) {
+          _log?.warn('sending what waited for the server failed: $e');
+        }
+      }
       _lastSynced = _clock();
       _conflicts = result.conflicts;
-      await _markDirty(false);
+      // a change announced while this run was out is not covered by it: it stays due
+      if (_changeCount == changesAtStart) {
+        await _markDirty(false);
+      } else {
+        // asked for after this run ends: while it is out, scheduleSoon does nothing
+        again = true;
+      }
       try {
         final p = await SharedPreferences.getInstance();
         await p.setInt(_lastKey, _lastSynced!.millisecondsSinceEpoch);
@@ -247,6 +275,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     }
     _syncing = false;
     notifyListeners();
+    if (again) scheduleSoon();
     return result;
   }
 

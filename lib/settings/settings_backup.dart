@@ -5,12 +5,15 @@ import 'settings_store.dart';
 /// What a backup keeps of the settings: which server the app is pointed at. NOT the device token, which is
 /// a credential and is left for the phone to pair again (see [BackupContributor]).
 class SettingsBackup implements BackupContributor {
-  SettingsBackup(this._settings, {this.onRestored});
+  SettingsBackup(this._settings, {this.onRestored, this.forget});
 
   final SettingsStore _settings;
 
   /// Called after a restore, so the screens that show the server read it again.
   final Future<void> Function()? onRestored;
+
+  /// Forgets the server and everything kept for it, when the restore points the app at a different one.
+  final Future<void> Function()? forget;
 
   @override
   String get key => 'settings';
@@ -31,7 +34,10 @@ class SettingsBackup implements BackupContributor {
     final url = raw is String ? normaliseServerUrl(raw) : null;
     if (url != null) {
       // A token is good only for the server that issued it, so pointing the app at a different one drops it.
-      if (url != _settings.serverUrl) await _settings.forgetServer();
+      if (url != _settings.serverUrl) {
+        // through the app, which also forgets what the old server last said
+        await (forget ?? _settings.forgetServer)();
+      }
       await _settings.setServerUrl(url);
     }
     await onRestored?.call();

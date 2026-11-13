@@ -18,18 +18,27 @@ flutter build apk --debug
 
 | Path | What it is |
 | --- | --- |
-| `lib/main.dart` | Opens the stored settings and starts the app. |
-| `lib/app.dart` | The theme (the phone's own colours where it has them, Tippani's red where it does not) and the bottom bar. A later phase adds its screen there. |
-| `lib/app_controller.dart` | The state more than one screen needs: which server, and whether it answered and is compatible. |
-| `lib/api/capabilities.dart` | The version handshake: the revision this build was written for, and the oldest server it accepts. |
-| `lib/api/api_client.dart` | The one way the app speaks to a server: Bearer token, timeouts, and typed failures (network, timeout, unauthorised, server, bad response). |
-| `lib/settings/server_url.dart` | Turns what a reader types into the address the app keeps, and says when plain `http` would send a credential across the internet. |
-| `lib/settings/settings_store.dart` | The server address in preferences; the device token in secure storage and nowhere else. |
-| `lib/library/` | The phone's own library: `models.dart`, the SQLite `library_store.dart`, its backup contributor, and `markdown_export.dart`. See [The local library](#the-local-library). |
+| `lib/main.dart`, `lib/app.dart` | Opens the stored settings and starts the app; the theme and the four-tab shell (Home, Boards, Server, Settings). |
+| `lib/app_controller.dart` | The state more than one screen needs: which server, whether it answered and is compatible, who the phone is paired as. |
+| `lib/api/` | The one way the app speaks to a server (`api_client.dart`), the version handshake (`capabilities.dart`), and what the server last said for the screens that only read (`offline_cache.dart`, [ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md)). |
+| `lib/settings/` | The server address and the device token (`settings_store.dart`), the address a reader types (`server_url.dart`), the settings' backup. |
+| `lib/library/` | The phone's own library: models, the SQLite store, the cover cache, bulk operations, Markdown export, the backup contributor. See [The local library](#the-local-library). |
+| `lib/sync/` | Push, pull, boards, the fingerprint of what both sides agreed, and the automatic runs. See [Sending the library to the server](#sending-the-library-to-the-server). |
+| `lib/anthologies/` | Anthologies on the server (`anthologies.dart`) and with no server (`offline_anthologies.dart`: a kept copy and an ordered queue). |
+| `lib/capture/` | Scanning a page (Tesseract), the page adjuster, word selection, and voice. |
+| `lib/quiz/`, `lib/search/`, `lib/tags/`, `lib/people/`, `lib/boards/`, `lib/share/`, `lib/speech/` | The daily quiz, search, the tag manager, people and characters, boards, share pictures, reading aloud. |
+| `lib/checks/`, `lib/imports/`, `lib/metadata/`, `lib/sources/`, `lib/admin/`, `lib/account/` | What needs a server to change anything: Checks, imports, metadata, source files, administration, the account and its preferences. |
 | `lib/pairing/` | The pairing code, the claim, and the device list. |
-| `lib/screens/` | Home, Settings, the connect, pair and devices screens. |
+| `lib/screens/` | Every screen. |
 | `lib/harness/` | The base every feature stands on: version, update check and installer, the log, backup and restore, the changelog. See [The harness](#the-harness). |
-| `test/` | One file per unit above, and `connect_flow_test.dart` for the screens. |
+| `lib/l10n/`, `lib/theme/`, `lib/widgets/`, `lib/tools/` | The words (generated from `assets/l10n`), the theme, shared widgets, and the server tools (contexts, details, lookups). |
+| `test/` | Tests by area, `test/support/` for the fakes (a server, a library, files), and `test/live/` against a real server. |
+
+## What CI runs
+
+`.github/workflows/ci.yml`, on every pull request and push to `main`: the release tools' tests and the wiki check (Python), `flutter pub get`,
+`dart format --set-exit-if-changed lib test`, `flutter analyze`, `flutter test`, and a debug build. `release.yml` runs the same checks before it builds and
+signs the APK ([Releasing](Releasing.md)); `wiki.yml` mirrors this folder to the GitHub wiki.
 
 ## The harness
 
@@ -52,7 +61,7 @@ a changelog line adds one to `CHANGELOG.md` under Unreleased.
 
 **Releasing.** You do not edit the version by hand: run the Release workflow with the version, and it bumps `pubspec.yaml` and
 `appVersion`, dates the Unreleased entries, tags `app-vX.Y.Z` and attaches `tippani-app-vX.Y.Z.apk`. The update check reads exactly
-those names. [Releasing](Releasing.md) has the secrets it needs and the steps; it is scaffolded and has not been run yet.
+those names. [Releasing](Releasing.md) has the secrets it needs and the steps; it has cut every release since `app-v0.2.0`.
 
 ## Decisions and the wiki
 
@@ -201,8 +210,8 @@ in Copy or in Share, and the server's lines are redacted on the way out like the
 
 ## Not built
 
-The pull (once the conflict screen exists), the daily quiz and the rest of phases 1 to 4, then capture, the offline queue, donation, bug reports and the first
-signed release (the workflow exists; the keys do not), are the rest of the [plan](Plan.md)'s task list, in that order.
+What is left is the open tasks in the [plan](Plan.md)'s Tasks list, which also holds the owner's 13 November 2026 asks (everything available offline and
+synced, including anthologies and contexts, and a Server tab that holds all server management).
 
 ## Sync, in four parts
 
