@@ -300,6 +300,7 @@ class Harness {
       lookup: library == null
           ? null
           : (kind, id) => _passageOf(library, kind, id),
+      keepPicture: covers.keepLocal,
     );
     final contextStore = FileContextStore(
       () async => Directory(

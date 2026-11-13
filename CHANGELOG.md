@@ -11,6 +11,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 - Covers, casts and details are kept on the phone: after each sync the phone downloads the cover pictures it does not hold and each work's description, genres and cast (60 requests a run, the rest follows at the next sync, and details are read again after two weeks), so a shelf and a work page look the same with no server. It stops after three misses in a row, when the server is not answering.
 
+### Fixed
+
+- A cover or poster chosen with no signal shows at once and says "Change" instead of "Add": the phone keeps the picture and draws it while the upload waits. Choosing again replaces the upload that is still waiting instead of queueing a second one.
+
 ## [0.8.2] - 2026-11-13
 
 ### Added

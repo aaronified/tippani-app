@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
@@ -48,6 +49,28 @@ class CoverCache implements CoverSource {
     }
     if (!await d.exists()) await d.create(recursive: true);
     return d;
+  }
+
+  /// Keeps [bytes], a picture chosen on the phone, under a name of the server's own shape and returns that
+  /// name, so a screen draws it at once while the upload waits for the server. The server names the picture
+  /// again when it takes it, and the screens follow that name.
+  Future<String> keepLocal(Uint8List bytes, String fileName) async {
+    final dot = fileName.lastIndexOf('.');
+    final ext = dot < 0 ? '' : fileName.substring(dot + 1).toLowerCase();
+    final kind = const ['jpg', 'png', 'webp', 'gif'].contains(ext)
+        ? ext
+        : 'jpg';
+    final random = Random.secure();
+    final stem = List.generate(
+      16,
+      (_) => random.nextInt(16).toRadixString(16),
+    ).join();
+    final name = '$stem.$kind';
+    final file = File('${(await _dir()).path}/$name');
+    final tmp = File('${file.path}.part');
+    await tmp.writeAsBytes(bytes, flush: true);
+    await tmp.rename(file.path);
+    return name;
   }
 
   /// Whether the picture named [name] is already on the phone.

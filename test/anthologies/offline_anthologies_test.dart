@@ -202,7 +202,8 @@ class _Server implements AnthologyService {
   Future<String> setPoster(int id, Uint8List bytes, String fileName) async {
     _reach();
     sent.add('poster $id ${bytes.length} $fileName');
-    return 'p.jpg';
+    rows[id]!['poster_path'] = 'abcdefabcdefabcd.jpg';
+    return 'abcdefabcdefabcd.jpg';
   }
 
   @override
@@ -255,7 +256,15 @@ _rig({PassageLookup? lookup}) async {
   );
   final cache = OfflineCache(store);
   final server = _Server(cache);
-  final service = OfflineAnthologies(server, cache, store, lookup: lookup);
+  var kept = 0;
+  final service = OfflineAnthologies(
+    server,
+    cache,
+    store,
+    lookup: lookup,
+    keepPicture: (bytes, name) async =>
+        '${(kept++).toRadixString(16).padLeft(16, '0')}.jpg',
+  );
   return (server: server, service: service, store: store, cache: cache);
 }
 
@@ -548,6 +557,41 @@ void main() {
     r.server.up = true;
     await r.service.flush();
     expect(r.server.sent.last, 'front ${a.id} - [Edited on the web.|For R.]');
+  });
+
+  test('a picture chosen with no server shows at once, and choosing again replaces the upload that waits', () async {
+    final r = await _rig();
+    final a = await r.service.create('A', '');
+    await r.service.get(a.id);
+    r.server.up = false;
+    final first = await r.service.setPoster(
+      a.id,
+      Uint8List.fromList([1]),
+      'one.jpg',
+    );
+    expect(first, matches(RegExp(r'^[0-9a-f]{16}\.jpg$')));
+    expect((await r.service.get(a.id)).anthology.posterPath, first);
+
+    final second = await r.service.setPoster(
+      a.id,
+      Uint8List.fromList([1, 2]),
+      'two.jpg',
+    );
+    expect(second, isNot(first));
+    expect((await r.service.get(a.id)).anthology.posterPath, second);
+    expect(r.service.pending.value, 1, reason: 'one upload waits, not two');
+
+    r.server.up = true;
+    await r.service.flush();
+    expect(r.server.sent.where((s) => s.startsWith('poster')), [
+      'poster ${a.id} 2 two.jpg',
+    ]);
+    expect(
+      (await r.service.get(a.id)).anthology.posterPath,
+      'abcdefabcdefabcd.jpg',
+      reason:
+          'the server\'s name replaces the local one once it has the picture',
+    );
   });
 
   test(

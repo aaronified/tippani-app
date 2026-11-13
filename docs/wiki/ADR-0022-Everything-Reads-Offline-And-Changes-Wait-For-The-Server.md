@@ -17,7 +17,7 @@
   What a shelf and a work page draw is kept too (`keepWorkExtras`, after a sync): cover pictures, and each work's details and cast, at most 60
   requests a run, details read again after two weeks, and a run stops after three misses in a row.
 - **A change made while the server cannot be reached is kept and sent in order.** Anthologies (`OfflineAnthologies`) apply the change to the kept copy at
-  once and queue it, headings, commentary, grouping, front matter and description, the cover and poster pictures (each up to 1.5 MB) and the fill included; the queue is sent by every
+  once and queue it, headings, commentary, grouping, front matter and description, the cover and poster pictures (each up to 1.5 MB; the phone keeps the file and shows it at once, and a second pick replaces the upload that waits) and the fill included; the queue is sent by every
   sync run that finds the server answering, and when the list is opened. The queue is read again around every send, so a change made while a request is
   out is never written over. An anthology made offline has a negative id until it is sent; what was queued against it follows it to its real id, and a
   screen that still holds the temporary id keeps working. A change the server refuses is dropped and shown. Preferences keep the settings changed offline
