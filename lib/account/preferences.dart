@@ -144,6 +144,8 @@ abstract class PreferencesSource implements Listenable {
 /// app looks the same offline, and so a phone that is not paired still keeps what its reader sets.
 class PairedPreferences extends ChangeNotifier implements PreferencesSource {
   PairedPreferences(this._controller, this._store) {
+    // what waited was made under one pairing: it goes when the pairing does
+    _controller.offline.whenCleared.add(() => _store.remove(_pendingKey));
     final cached = _store.read(_key);
     if (cached != null) {
       try {
@@ -217,72 +219,91 @@ class PairedPreferences extends ChangeNotifier implements PreferencesSource {
 
   static const _pendingKey = 'outbox.preferences';
 
-  /// The changes made while the server could not be reached, by setting, newest value of each. They go up
-  /// before the server's copy is read back: otherwise reading it back would put the old values over them.
-  Map<String, Object?> get _pending {
+  /// The changes made while the server could not be reached, by setting: the value the reader chose (`v`) and
+  /// the value the phone held for it when the change was made (`b`), which is what the server held as far as
+  /// the phone knew. The base is how a change made on the web in the meantime wins: it is sent only while the
+  /// server still holds the base.
+  Map<String, Map<String, Object?>> get _pending {
     final raw = _store.read(_pendingKey);
     if (raw == null || raw.isEmpty) return {};
     try {
-      return Map<String, Object?>.from(jsonDecode(raw) as Map);
+      return {
+        for (final e in (jsonDecode(raw) as Map).entries)
+          '${e.key}': Map<String, Object?>.from(e.value as Map),
+      };
     } on Object {
       return {};
     }
   }
 
-  Future<void> _setPending(Map<String, Object?> p) => p.isEmpty
+  Future<void> _setPending(Map<String, Map<String, Object?>> p) => p.isEmpty
       ? _store.remove(_pendingKey)
       : _store.write(_pendingKey, jsonEncode(p));
 
-  /// Sends the changes that waited for the server. True when nothing is left waiting.
+  /// The server's own copy of the preferences, or null when it could not be asked.
+  Future<Map<String, Object?>?> _serverCopy() async {
+    try {
+      final me = await _controller.withClient((c) => c.getJson('/auth/me'));
+      final p = me is Map ? me['preferences'] : null;
+      return p is Map ? p.cast<String, Object?>() : null;
+    } on ApiException {
+      return null;
+    }
+  }
+
+  /// Sends the changes that waited for the server. A change goes only if the server still holds what the
+  /// phone held when it was made; one the server has moved on from (changed on the web meanwhile) is dropped,
+  /// and the server's value stands. True when nothing is left waiting.
   Future<bool> flush() async {
     final waiting = _pending;
     if (waiting.isEmpty) return true;
     if (!_controller.paired) return false;
-    try {
-      await _controller.withClient(
-        (c) => c.putJson('/auth/me/preferences', waiting),
-      );
-      await _setPending({});
-      return true;
-    } on ApiException catch (e) {
-      if (e.status == 400) {
-        // the server will not take them (a value out of range): they are not kept for ever
-        await _setPending({});
-        return true;
+    final server = await _serverCopy();
+    if (server == null) return false;
+    final send = <String, Object?>{
+      for (final e in waiting.entries)
+        if (jsonEncode(server[e.key]) == jsonEncode(e.value['b']))
+          e.key: e.value['v'],
+    };
+    if (send.isNotEmpty) {
+      try {
+        await _controller.withClient(
+          (c) => c.putJson('/auth/me/preferences', send),
+        );
+      } on ApiException catch (e) {
+        // a value the server will not take is not kept for ever; anything else is tried again later
+        if (e.status != 400) return false;
       }
-      return false;
     }
+    await _setPending({});
+    return true;
   }
 
   @override
   Future<void> refresh() async {
     if (!_controller.paired) return;
-    // if the server cannot be reached, what the phone holds is newer than its copy
-    if (!await flush()) {
-      return;
-    }
-    try {
-      final me = await _controller.withClient((c) => c.getJson('/auth/me'));
-      final p = me is Map ? me['preferences'] : null;
-      if (p is Map) await _keep(p.cast<String, Object?>());
-    } on ApiException {
-      // keep what the phone holds
-    }
+    await flush();
+    final server = await _serverCopy();
+    if (server == null) return; // keep what the phone holds
+    // what could not be sent yet still shows, over the server's copy
+    await _keep({
+      ...server,
+      for (final e in _pending.entries) e.key: e.value['v'],
+    });
   }
 
   @override
   Future<String?> save(Map<String, Object?> patch) async {
     final before = Map<String, Object?>.of(_prefs.raw);
     await _keep({...before, ...patch});
-    if (!_controller.paired) {
-      await _setPending({..._pending, ...patch});
-      return null;
-    }
+    if (!_controller.paired) return null;
     try {
       await _controller.withClient(
-        (c) => c.putJson('/auth/me/preferences', {..._pending, ...patch}),
+        (c) => c.putJson('/auth/me/preferences', patch),
       );
-      await _setPending({});
+      // sent: whatever waited for these settings is out of date
+      final p = _pending..removeWhere((k, _) => patch.containsKey(k));
+      await _setPending(p);
       return null;
     } on ApiException catch (e) {
       if (e.status == 400) {
@@ -290,7 +311,11 @@ class PairedPreferences extends ChangeNotifier implements PreferencesSource {
         return e.detail;
       }
       // the server could not be reached: the change stays on the phone and goes up with the next run
-      await _setPending({..._pending, ...patch});
+      final p = _pending;
+      for (final e in patch.entries) {
+        p[e.key] = {'v': e.value, 'b': p[e.key]?['b'] ?? before[e.key]};
+      }
+      await _setPending(p);
       return null;
     }
   }

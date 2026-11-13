@@ -200,16 +200,18 @@ class _AccountScreenState extends State<AccountScreen> {
         if (_busy || _loading) const LinearProgressIndicator(),
         if (_problem != null) ...[
           PrefNote(_problem!),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: OutlinedButton(
-                onPressed: _loading ? null : _load,
-                child: Text(context.tr('common.source.retry')),
+          // trying again cannot help a phone that is not paired
+          if (widget.account.available)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: OutlinedButton(
+                  onPressed: _loading ? null : _load,
+                  child: Text(context.tr('common.source.retry')),
+                ),
               ),
             ),
-          ),
         ],
         if (me != null) ...[
           Padding(
