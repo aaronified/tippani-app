@@ -148,10 +148,17 @@ class ApiClient {
   /// GET [path] and decode the JSON answer. For the paths [OfflineCache.isCacheablePath] allows, the answer is
   /// kept, and when the server cannot be reached (no network, or too slow) the kept one is returned instead:
   /// every other failure, a refusal included, is the server's word and is thrown.
-  Future<Object?> getJson(String path) async {
+  Future<Object?> getJson(String path) =>
+      _getThrough(path, OfflineCache.isCacheablePath(path));
+
+  /// [getJson] for a screen that has asked to show the server's last answer whatever the path (the account
+  /// page: `/auth/me` is not kept for everyone, because the app learns it was unpaired from it).
+  Future<Object?> getJsonKept(String path) => _getThrough(path, true);
+
+  Future<Object?> _getThrough(String path, bool keep) async {
     final cache = offline;
     Future<http.Response> ask() => _client.get(_uri(path), headers: _headers);
-    if (cache == null || !OfflineCache.isCacheablePath(path)) {
+    if (cache == null || !keep) {
       return _send(ask);
     }
     try {

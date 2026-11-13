@@ -510,6 +510,57 @@ void main() {
       expect(find.text('Password changed.'), findsOneWidget);
     });
 
+    testWidgets(
+      'the account page with the server out of reach says so and can try again, instead of staying blank',
+      (tester) async {
+        final r = (await tester.runAsync(rig))!;
+        r.server.unreachable = true;
+        await tester.pumpWidget(
+          PrefsScope(
+            source: r.prefs,
+            child: MaterialApp(
+              home: AccountScreen(account: PairedAccount(r.controller)),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.textContaining('could not be reached'), findsOneWidget);
+        expect(find.text('Try again'), findsOneWidget);
+
+        r.server.unreachable = false;
+        await tester.tap(find.text('Try again'));
+        await tester.pumpAndSettle();
+        expect(find.text('alice'), findsWidgets);
+        expect(find.text('Try again'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'the account page shows who you are from the phone when the server goes away',
+      (tester) async {
+        final r = (await tester.runAsync(rig))!;
+        Future<void> open() async {
+          await tester.pumpWidget(
+            PrefsScope(
+              source: r.prefs,
+              child: MaterialApp(
+                key: UniqueKey(),
+                home: AccountScreen(account: PairedAccount(r.controller)),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+
+        await open();
+        expect(find.text('alice'), findsWidgets);
+        r.server.unreachable = true;
+        await open();
+        expect(find.text('alice'), findsWidgets);
+        expect(find.text('Change password'), findsOneWidget);
+      },
+    );
+
     testWidgets('a server refusal is shown to the reader', (tester) async {
       final (r, widget) = await app(tester, const ReviewPrefsScreen());
       await tester.pumpWidget(widget);
