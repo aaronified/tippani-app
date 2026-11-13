@@ -123,6 +123,7 @@ Future<_Rig> _rig() async {
         'work_title': 'Moby Dick (1956)',
         'character': 'Ishmael',
         'actor': 'Richard Basehart',
+        'image': '/covers/ishmael-in-moby-dick.jpg',
       },
     ],
     'lines': [],
@@ -413,6 +414,20 @@ void main() {
       expect(find.byType(FaceStack), findsOneWidget);
       expect(find.byType(PersonFace), findsOneWidget);
     });
+  });
+
+  group('a character\'s appearances', () {
+    test(
+      'carry the picture the server stores for the character there',
+      () async {
+        final r = await _rig();
+        final c = await r.service.character(7);
+        expect(
+          c!.appearances.single.characterImage,
+          '/covers/ishmael-in-moby-dick.jpg',
+        );
+      },
+    );
   });
 
   group('editing a person', () {

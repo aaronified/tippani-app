@@ -131,7 +131,8 @@ void main() {
     };
     await service.importFile('q.html', Uint8List(1), as: 'goodreads-html');
     expect(body, contains('name="as"'));
-    expect(body, contains('goodreads-html'));
+    expect(body, contains('goodreads_html'));
+    expect(body, isNot(contains('goodreads-html')));
   });
 
   test(
@@ -245,7 +246,10 @@ void main() {
       }
       if (path == '/jobs/7/result') {
         return server.json({
-          'result': {'status': 200, 'body': {}},
+          'result': {
+            'status': 200,
+            'body': {'quotes_relinked': 2},
+          },
         });
       }
       return null;
@@ -257,7 +261,27 @@ void main() {
     expect(out.ok, isTrue);
     expect(out.added, 3);
     expect(out.skipped, 1);
+    expect(out.relinked, 2);
   });
+
+  test(
+    'every source the reader can pick is sent under the name the server reads',
+    () {
+      // The server's own slugs, from internal/importer/detect.go.
+      const serverSlugs = {
+        'md',
+        'readest_json',
+        'bookcision',
+        'kindle_notebook',
+        'goodreads_html',
+        'hardcover_html',
+        'imdb',
+        'kindle_clippings',
+      };
+      final sent = {for (final s in importSources) serverImportSlug(s.kind)};
+      expect(sent, serverSlugs);
+    },
+  );
 
   test('discard sends the selection in a DELETE body', () async {
     final (server, service) = await _rig();

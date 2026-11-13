@@ -370,6 +370,15 @@ class PairedAdminService implements AdminService {
     if (passphrase.isNotEmpty) 'passphrase': passphrase,
   };
 
+  /// What a restore sends. A backup from before 1.4.1 carries no key, so the server asks for the word
+  /// `RESTORE` as well, to stand for intent; a sealed backup ignores the field. It goes every time, because
+  /// the screen already made the reader press Restore on a danger dialog, and what the reader typed does not
+  /// say whether the backup was sealed.
+  Map<String, Object?> _restoreCreds(String password, String passphrase) => {
+    ..._creds(password, passphrase),
+    'confirm': 'RESTORE',
+  };
+
   @override
   Future<List<AdminUser>> users() => serverCall(_controller, (c) async {
     final r = await c.getJson('/admin/users');
@@ -542,7 +551,7 @@ class PairedAdminService implements AdminService {
   @override
   Future<void> restoreKept({String password = '', String passphrase = ''}) =>
       _credentialed<void>((c) async {
-        await c.postJson('/admin/restore', _creds(password, passphrase));
+        await c.postJson('/admin/restore', _restoreCreds(password, passphrase));
       });
 
   @override
@@ -557,7 +566,10 @@ class PairedAdminService implements AdminService {
       'file',
       bytes,
       fileName,
-      fields: _creds(password, passphrase).map((k, v) => MapEntry(k, '$v')),
+      fields: _restoreCreds(
+        password,
+        passphrase,
+      ).map((k, v) => MapEntry(k, '$v')),
     );
   });
 

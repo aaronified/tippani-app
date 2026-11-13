@@ -51,6 +51,20 @@ void main() {
     expect(all.first.quotes, 3);
   });
 
+  test('a tag counts the standalone quotes that wear it', () async {
+    server.tags.add({
+      'id': 3,
+      'name': 'proverbs',
+      'color': 'green',
+      'style': 'sticker',
+      'annotations': 0,
+      'dialogues': 0,
+      'utterances': 4,
+    });
+    final all = await svc.list();
+    expect(all.firstWhere((t) => t.name == 'proverbs').quotes, 4);
+  });
+
   test(
     'saving sends the whole tag, so an unchanged colour is not reset',
     () async {

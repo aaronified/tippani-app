@@ -72,8 +72,9 @@ class CastAppearance {
       character: '${j['character'] ?? ''}',
       actor: '${j['actor'] ?? ''}',
       actorImage: '${j['actor_image'] ?? ''}',
+      // The server's cast row names the character's picture `image`.
       characterImage:
-          '${j['character_image'] ?? j['character_image_path'] ?? ''}',
+          '${j['image'] ?? j['character_image'] ?? j['character_image_path'] ?? ''}',
     );
   }
 }
