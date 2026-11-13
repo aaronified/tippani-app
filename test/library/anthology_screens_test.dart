@@ -419,4 +419,16 @@ void main() {
       expect(find.text('Remove poster'), findsNothing);
     },
   );
+
+  testWidgets(
+    'a server without posters is not offered them, nor a description',
+    (tester) async {
+      service.hasPoster = false;
+      await open(tester);
+      await choose(tester, 'Cover and front…');
+      expect(find.text('Add a poster'), findsNothing);
+      expect(find.widgetWithText(TextField, 'Description'), findsNothing);
+      expect(find.widgetWithText(TextField, 'Epigraph'), findsOneWidget);
+    },
+  );
 }

@@ -204,7 +204,7 @@ synced account's theme preferences are ignored here.
 ## Tasks
 
 - [ ] Re-verify this plan against the code before starting; correct what moved.
-- [ ] **Server:** shared text-cleanup step for captured text (roadmap §7); a nullable photo on a quote. (The app is built for `apiRevision` 9, the server's current one.)
+- [ ] **Server:** shared text-cleanup step for captured text (roadmap §7); a nullable photo on a quote. (The app is built for `apiRevision` 9; the server is at 10, which added the anthology poster and description, and the app offers those only when the server names the `anthology-poster` feature.)
 - [x] **Scaffold** (done 6 November 2026): package id `io.github.aaronified.tippani`, dynamic-colour theme, a bottom bar, server address
       in preferences, the HTTP client (Bearer token, timeouts, typed failures), the `GET /capabilities` check with the app's own
       revision range, the connect screen, tests, and `ci.yml`. Not in it: pairing (the client can carry a token; nothing yet gets one).

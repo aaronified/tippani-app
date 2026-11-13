@@ -99,6 +99,9 @@ class PairedQuoteContext implements QuoteContextSource {
   /// How long a note that a quote has no context is believed before the server is asked again.
   static const _noneFor = Duration(days: 7);
 
+  /// How long a kept context is believed before the server is asked again.
+  static const _keptFor = Duration(days: 30);
+
   @override
   Future<QuoteContext?> fetch(
     Quote quote,
@@ -148,15 +151,21 @@ class PairedQuoteContext implements QuoteContextSource {
     final store = _store;
     if (store == null) return;
     final have = await store.read(key);
-    if (have != null && !have.none && have.body!.length >= body.length) return;
-    await store.write(key, StoredContext(at: DateTime.now(), body: body));
+    // the widest window stays, and the answer is stamped again so it is not asked for on every run
+    final wider = have != null && !have.none && have.body!.length > body.length;
+    await store.write(
+      key,
+      StoredContext(at: DateTime.now(), body: wider ? have.body! : body),
+    );
   }
 
   /// Whether the context of the quote is already on the phone (or the server was lately told to have none).
   Future<bool> kept(String kind, int serverId) async {
     final have = await _store?.read(keyOf(kind, serverId));
     if (have == null) return false;
-    return !have.none || DateTime.now().difference(have.at) < _noneFor;
+    final age = DateTime.now().difference(have.at);
+    // a kept context is read again after a month, so one edited on the server reaches the phone
+    return age < (have.none ? _noneFor : _keptFor);
   }
 
   /// The server ids of the quotes of one work that have a stored context (`/sources/context-ids`), or of all the

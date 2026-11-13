@@ -60,6 +60,9 @@ class OfflineAnthologies implements AnthologyService {
   @override
   bool get available => true;
 
+  @override
+  bool get hasPoster => _inner.hasPoster;
+
   // ── the queue ──────────────────────────────────────────────────────────────────────────────────────
 
   _Queue _load() {

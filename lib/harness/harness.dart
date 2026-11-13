@@ -305,10 +305,37 @@ class Harness {
       ),
     );
     controller.offline.whenCleared.add(contextStore.clear);
+    // answers given with no server belong to the account that gave them
+    controller.offline.whenCleared.add(() => settings.setQuizAnswers(''));
     final contexts = PairedQuoteContext(controller, store: contextStore);
     final l10n = L10n()..use(prefs.prefs.locale);
     Tr.current = l10n; // code with no screen (a service wording an error) speaks in the same language
     prefs.addListener(() => l10n.use(prefs.prefs.locale));
+    final auto = push == null || pull == null
+        ? null
+        : AutoSync(
+            push: push,
+            pull: pull,
+            controller: controller,
+            log: appLog,
+            after: [
+              prefs.flush,
+              anthologies.flush,
+              () => keepContexts(library!, contexts),
+            ],
+          );
+    // a change made with no server counts as something to send, so it goes up when the server next answers
+    // and not only when the library changed
+    void queued() {
+      if (anthologies.pending.value > 0 || prefs.hasPending) {
+        auto?.queueChanged();
+      }
+    }
+
+    anthologies.pending.addListener(queued);
+    prefs.addListener(queued);
+    // a queue left by the last run is sent at this one's start too
+    queued();
     return Harness(
       files: files,
       log: appLog,
@@ -333,19 +360,7 @@ class Harness {
       library: library,
       sync: push,
       pull: pull,
-      auto: push == null || pull == null
-          ? null
-          : AutoSync(
-              push: push,
-              pull: pull,
-              controller: controller,
-              log: appLog,
-              after: [
-                prefs.flush,
-                anthologies.flush,
-                () => keepContexts(library!, contexts),
-              ],
-            ),
+      auto: auto,
       runAutoSync: true,
       covers: covers,
       people: PairedSharePeople(controller, directory),

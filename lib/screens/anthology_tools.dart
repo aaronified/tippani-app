@@ -381,44 +381,30 @@ Future<bool> editFrontMatter(
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: AnthologyPoster(name: poster, title: a.title),
-              ),
-              Wrap(
-                spacing: 8,
-                children: [
-                  OutlinedButton(
-                    onPressed: () async {
-                      try {
-                        final path = await (photos ?? DevicePhotos()).choose();
-                        if (path == null) return;
-                        final bytes = await File(path).readAsBytes();
-                        final name = path.split(RegExp(r'[\\/]')).last;
-                        final made = await service.setPoster(a.id, bytes, name);
-                        setState(() {
-                          poster = made;
-                          changed = true;
-                          problem = null;
-                        });
-                      } on AnthologyException catch (e) {
-                        setState(() => problem = e.message);
-                      }
-                    },
-                    child: Text(
-                      poster.isEmpty
-                          ? context.tr('app.anthology_tools.add_a_poster')
-                          : context.tr('app.anthology_tools.change_poster'),
-                    ),
-                  ),
-                  if (poster.isNotEmpty)
-                    TextButton(
+              if (service.hasPoster) ...[
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: AnthologyPoster(name: poster, title: a.title),
+                ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    OutlinedButton(
                       onPressed: () async {
                         try {
-                          await service.removePoster(a.id);
+                          final path = await (photos ?? DevicePhotos())
+                              .choose();
+                          if (path == null) return;
+                          final bytes = await File(path).readAsBytes();
+                          final name = path.split(RegExp(r'[\\/]')).last;
+                          final made = await service.setPoster(
+                            a.id,
+                            bytes,
+                            name,
+                          );
                           setState(() {
-                            poster = '';
+                            poster = made;
                             changed = true;
                             problem = null;
                           });
@@ -427,11 +413,32 @@ Future<bool> editFrontMatter(
                         }
                       },
                       child: Text(
-                        context.tr('app.anthology_tools.remove_poster'),
+                        poster.isEmpty
+                            ? context.tr('app.anthology_tools.add_a_poster')
+                            : context.tr('app.anthology_tools.change_poster'),
                       ),
                     ),
-                ],
-              ),
+                    if (poster.isNotEmpty)
+                      TextButton(
+                        onPressed: () async {
+                          try {
+                            await service.removePoster(a.id);
+                            setState(() {
+                              poster = '';
+                              changed = true;
+                              problem = null;
+                            });
+                          } on AnthologyException catch (e) {
+                            setState(() => problem = e.message);
+                          }
+                        },
+                        child: Text(
+                          context.tr('app.anthology_tools.remove_poster'),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
               if (problem != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -443,16 +450,17 @@ Future<bool> editFrontMatter(
                   ),
                 ),
               const SizedBox(height: 12),
-              TextField(
-                textCapitalization: TextCapitalization.sentences,
-                controller: description,
-                minLines: 3,
-                maxLines: 8,
-                maxLength: 4000,
-                decoration: InputDecoration(
-                  labelText: context.tr('app.anthology_tools.description'),
+              if (service.hasPoster)
+                TextField(
+                  textCapitalization: TextCapitalization.sentences,
+                  controller: description,
+                  minLines: 3,
+                  maxLines: 8,
+                  maxLength: 4000,
+                  decoration: InputDecoration(
+                    labelText: context.tr('app.anthology_tools.description'),
+                  ),
                 ),
-              ),
               TextField(
                 textCapitalization: TextCapitalization.sentences,
                 controller: epigraph,
@@ -492,7 +500,7 @@ Future<bool> editFrontMatter(
   if (saved == true &&
       (epigraph.text.trim() != a.epigraph ||
           dedication.text.trim() != a.dedication ||
-          description.text.trim() != a.description)) {
+          (service.hasPoster && description.text.trim() != a.description))) {
     try {
       await service.setFront(
         a.id,
@@ -500,7 +508,8 @@ Future<bool> editFrontMatter(
         dedication.text.trim(),
         // named only when the reader changed it, so a copy older than a description written on the web
         // does not send that description back empty
-        description: description.text.trim() != a.description
+        description:
+            service.hasPoster && description.text.trim() != a.description
             ? description.text.trim()
             : null,
       );

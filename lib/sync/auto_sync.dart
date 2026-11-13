@@ -181,6 +181,10 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     scheduleSoon();
   }
 
+  /// Something other than the library waits for the server (an anthology change, a setting made offline): a
+  /// run is due even though no quote changed, so it goes up when the server next answers.
+  void queueChanged() => _changed();
+
   Future<void> _markDirty(bool v) async {
     if (_dirty == v) return;
     _dirty = v;

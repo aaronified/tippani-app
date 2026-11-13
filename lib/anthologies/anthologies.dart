@@ -420,6 +420,10 @@ abstract class AnthologyService {
   /// Whether there is a paired server to ask.
   bool get available;
 
+  /// Whether the server can keep a poster and a description (API revision 10). True while the server has not
+  /// been asked: a change made then waits, and the server's refusal is shown.
+  bool get hasPoster;
+
   Future<List<Anthology>> list();
   Future<AnthologyDetail> get(int id);
   Future<Anthology> create(String title, String intro);
@@ -508,6 +512,12 @@ class ServerAnthologies implements AnthologyService {
   @override
   bool get available => _controller.paired;
 
+  @override
+  bool get hasPoster {
+    final caps = _controller.check?.capabilities;
+    return caps == null || caps.has('anthology-poster');
+  }
+
   Future<T> _call<T>(Future<T> Function(ApiClient c) run) async {
     if (!available) {
       throw const AnthologyException(
@@ -521,10 +531,14 @@ class ServerAnthologies implements AnthologyService {
       return await _controller.withClient(run) as T;
     } on ApiException catch (e) {
       throw AnthologyException(
+        // A server that is restarting behind a proxy answers 502, 503 or 504, and one that is busy answers 429:
+        // none of those is a refusal of the change, so it waits and is sent again.
         unreachable:
             e.failure == ApiFailure.network ||
             e.failure == ApiFailure.timeout ||
-            e.failure == ApiFailure.unauthorised,
+            e.failure == ApiFailure.unauthorised ||
+            e.failure == ApiFailure.rateLimited ||
+            (e.failure == ApiFailure.server && (e.status ?? 0) >= 502),
         switch (e.failure) {
           ApiFailure.network => tx(
             'app.admin_service.the_server_could_not_be_reached',

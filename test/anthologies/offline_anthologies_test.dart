@@ -33,6 +33,9 @@ class _Server implements AnthologyService {
   @override
   bool get available => true;
 
+  @override
+  bool get hasPoster => true;
+
   void _reach() {
     if (!up) {
       throw const AnthologyException('no route', unreachable: true);

@@ -145,7 +145,13 @@ abstract class PreferencesSource implements Listenable {
 class PairedPreferences extends ChangeNotifier implements PreferencesSource {
   PairedPreferences(this._controller, this._store) {
     // what waited was made under one pairing: it goes when the pairing does
-    _controller.offline.whenCleared.add(() => _store.remove(_pendingKey));
+    // what waited was made under one pairing, and so is the copy of that account's settings: both go with it
+    _controller.offline.whenCleared.add(() async {
+      await _store.remove(_pendingKey);
+      await _store.remove(_key);
+      _prefs = ServerPrefs.empty;
+      notifyListeners();
+    });
     final cached = _store.read(_key);
     if (cached != null) {
       try {
@@ -235,6 +241,9 @@ class PairedPreferences extends ChangeNotifier implements PreferencesSource {
       return {};
     }
   }
+
+  /// Whether a change made with no server is waiting to go up.
+  bool get hasPending => _pending.isNotEmpty;
 
   Future<void> _setPending(Map<String, Map<String, Object?>> p) => p.isEmpty
       ? _store.remove(_pendingKey)

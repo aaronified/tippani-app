@@ -21,6 +21,11 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Fixed
 
+- A change made with no signal is no longer lost when the server answers 502, 503, 504 or 429 as it comes back (a proxy restarting): it waits and is sent again. Only an answer that refuses the change drops it, and says so.
+- Changes waiting for the server go up when it next answers, not only after the library changes: an anthology edited or a setting changed in airplane mode is sent when the phone is back on a network.
+- Answers a phone gave to the daily quiz and the settings it kept from one account are forgotten on unpairing, so they are never shown to or sent for the next account.
+- A context kept on the phone is read again after a month, so one edited on the server reaches it.
+- The poster and the description are offered only when the server can keep them; a picture chosen from the gallery is brought down to 2000 pixels, so it fits in what waits for the server.
 - The Account page no longer stays blank when the server cannot be reached: it shows who you are from the phone, says what is wrong, and has a Try again button.
 - The administration shows when you open the app with no server: a phone paired as an admin remembers that it is one.
 - Nothing waiting for the server is sent to another account: unpairing, forgetting the server or restoring a backup that points at another server discards what the phone kept of the old one.

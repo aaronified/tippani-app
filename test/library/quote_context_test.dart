@@ -246,6 +246,29 @@ void main() {
       return (lib, w);
     }
 
+    test(
+      'a kept context is asked for again after a month, and a fresh one is not',
+      () async {
+        await rig();
+        await store.write(
+          'annotation-7',
+          StoredContext(
+            at: DateTime.now().subtract(const Duration(days: 5)),
+            body: '{"body":"x"}',
+          ),
+        );
+        expect(await source.kept('annotation', 7), isTrue);
+        await store.write(
+          'annotation-7',
+          StoredContext(
+            at: DateTime.now().subtract(const Duration(days: 31)),
+            body: '{"body":"x"}',
+          ),
+        );
+        expect(await source.kept('annotation', 7), isFalse);
+      },
+    );
+
     test('every synced quote that has a context is kept after a sync, and only those', () async {
       await rig();
       final (lib, w) = await library();

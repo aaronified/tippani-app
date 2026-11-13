@@ -14,6 +14,9 @@ import 'support/fake_server.dart';
 class _Server extends FakeServer {
   final seen = <String>[];
 
+  /// When set, every anthology call is answered with this status.
+  int? answerWith;
+
   @override
   Future<http.Response> handle(http.Request r) async {
     final path = r.url.path.replaceFirst(RegExp(r'^.*?/api'), '');
@@ -23,6 +26,7 @@ class _Server extends FakeServer {
     seen.add(
       '${r.method} $path${r.url.hasQuery ? '?${r.url.query}' : ''} ${r.body}',
     );
+    if (answerWith != null) return http.Response('', answerWith!);
     if (path == '/search/vocabulary') {
       return http.Response(
         jsonEncode({
@@ -237,6 +241,37 @@ void main() {
       );
       await svc.removePoster(3);
       expect(s.seen.last, startsWith('DELETE /anthologies/3/poster'));
+    },
+  );
+
+  test(
+    'a proxy answering 502, 503 or 429 is a wait, and a 400 is a refusal',
+    () async {
+      final (svc, s) = await rig();
+      for (final status in [502, 503, 504, 429]) {
+        s.answerWith = status;
+        await expectLater(
+          svc.setGrouping(3, 'work'),
+          throwsA(
+            isA<AnthologyException>().having(
+              (e) => e.unreachable,
+              'unreachable ($status)',
+              true,
+            ),
+          ),
+        );
+      }
+      s.answerWith = 400;
+      await expectLater(
+        svc.setGrouping(3, 'work'),
+        throwsA(
+          isA<AnthologyException>().having(
+            (e) => e.unreachable,
+            'unreachable (400)',
+            false,
+          ),
+        ),
+      );
     },
   );
 

@@ -9,6 +9,9 @@ class FakeAnthologies implements AnthologyService {
   @override
   bool available;
 
+  @override
+  bool hasPoster = true;
+
   /// When set, every call throws it.
   AnthologyException? fail;
 

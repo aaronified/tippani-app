@@ -633,6 +633,12 @@ void main() {
       r.server.unreachable = false;
       await r.controller.unpair();
       expect(kept.getString('outbox.preferences'), isNull);
+      expect(
+        kept.getString('server_prefs'),
+        isNull,
+        reason: 'the previous account\'s settings are not shown to the next',
+      );
+      expect(r.prefs.prefs.known, isFalse);
     });
 
     testWidgets(
