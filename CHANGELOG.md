@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-13
+
 ### Fixed
 
 - Reading a file as a chosen format works: "Read this as…" on an import sent the format under a name the server does not know, so seven of the eight choices were refused. They are sent under the server's names now.
