@@ -9,6 +9,7 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
+- Questions in the daily review: Daily review on the Server tab lets you choose which kinds of question each deck asks, Daily and Practice separately, the same setting the web has. A deck always keeps at least one kind that suits every card, and the daily deck never offers the flip card because the server cannot check an answer you mark yourself.
 - Jobs for every reader: the Server tab has Jobs for a reader who is not an administrator too, showing what is running and waiting for them and the jobs they can start. The server shows each reader only their own, so nobody sees another reader's work.
 - Unpair every device: the Paired devices screen has a button that signs out every phone of your account, this one included, after asking. Resetting the server's data stays on the web on purpose: it deletes every account's library and needs a safety copy kept somewhere a phone cannot check.
 - More changes wait for the server instead of failing: renaming or recolouring a tag, deleting a tag, restoring something from the bin and saving a context rule now work with no signal. They show at once, go up in the order you made them when the server answers, and one the server then refuses is dropped and written to the app log. Merging tags, deleting for good and emptying the bin cannot be undone and still need the server.

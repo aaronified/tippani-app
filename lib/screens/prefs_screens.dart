@@ -687,6 +687,19 @@ class ReviewPrefsScreen extends StatelessWidget {
             ),
           ],
         ),
+        for (final deck in const ['daily', 'practice'])
+          PrefGroup(
+            title: context.tr('settings.quiz.deck.title', {
+              'name': deck == 'daily'
+                  ? context.tr('settings.quiz.per-day.label')
+                  : context.tr('settings.quiz.group.practice.title'),
+            }),
+            children: [
+              for (final kind in ServerPrefs.questionKinds)
+                if (!(deck == 'daily' && kind == 'flip'))
+                  _QuestionSwitch(deck: deck, kind: kind, prefs: p),
+            ],
+          ),
         PrefGroup(
           children: [
             ListTile(
@@ -1018,4 +1031,39 @@ class _FaceDialogState extends State<_FaceDialog> {
       ),
     ],
   );
+}
+
+/// One kind of question a deck may ask. The last kind that suits every card cannot be switched off, so a deck is
+/// never configured into one that has nothing to ask a book.
+class _QuestionSwitch extends StatelessWidget {
+  const _QuestionSwitch({
+    required this.deck,
+    required this.kind,
+    required this.prefs,
+  });
+
+  final String deck, kind;
+  final ServerPrefs prefs;
+
+  @override
+  Widget build(BuildContext context) {
+    final on = prefs.questionsFor(deck);
+    final asked = on.contains(kind);
+    final next = asked ? on.where((k) => k != kind).toList() : [...on, kind];
+    final ordered = [
+      for (final k in ServerPrefs.questionKinds)
+        if (next.contains(k)) k,
+    ];
+    final leavesNothing = !ordered.any(ServerPrefs.universalQuestions.contains);
+    return SwitchListTile(
+      title: Text(context.tr('quiz.question.$kind.label')),
+      subtitle: Text(context.tr('quiz.question.$kind.hint')),
+      value: asked,
+      onChanged: asked && leavesNothing
+          ? null
+          : (_) => savePrefs(context, {
+              'srQuestions': prefs.questionsDocument(deck, ordered),
+            }),
+    );
+  }
 }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -667,6 +669,82 @@ void main() {
         expect(find.text('Try again'), findsNothing);
       },
     );
+
+    testWidgets(
+      'the daily deck asks six kinds of question and Practice seven; the flip card is never offered daily',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 5000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final (r, widget) = await app(tester, const ReviewPrefsScreen());
+        await tester.pumpWidget(widget);
+        expect(find.text('Name the source'), findsNWidgets(2));
+        expect(find.text('Flip and self-mark'), findsOneWidget);
+        expect(r.prefs.prefs.questionsFor('daily'), isNot(contains('flip')));
+        expect(r.prefs.prefs.questionsFor('practice'), contains('flip'));
+      },
+    );
+
+    testWidgets(
+      'switching a question off sends the whole srQuestions document and leaves the other deck alone',
+      (tester) async {
+        tester.view.physicalSize = const Size(800, 5000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final (r, widget) = await app(tester, const ReviewPrefsScreen());
+        await tester.pumpWidget(widget);
+        await tester.runAsync(() async {
+          await tester.tap(find.text('Name the source').first);
+        });
+        await tester.pump();
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)),
+        );
+        await tester.pump();
+        final doc = jsonDecode(
+          r.server.prefWrites.last['srQuestions']! as String,
+        ) as Map;
+        expect(doc['daily'], isNot(contains('source')));
+        expect(doc['daily'], contains('quote'));
+        expect(doc['practice'], contains('source'));
+        expect(doc['practice'], contains('flip'));
+      },
+    );
+
+    testWidgets('the last kind that suits every card cannot be switched off', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(800, 5000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final (r, widget) = await app(tester, const ReviewPrefsScreen());
+      await tester.runAsync(
+        () => r.prefs.save({
+          'srQuestions': jsonEncode({
+            'daily': ['cloze', 'speaker', 'author'],
+            'practice': [
+              'source',
+              'quote',
+              'cloze',
+              'cloze-mcq',
+              'speaker',
+              'author',
+              'flip',
+            ],
+          }),
+        }),
+      );
+      await tester.pumpWidget(widget);
+      final tile = tester.widget<SwitchListTile>(
+        find.widgetWithText(SwitchListTile, 'Fill in the blank').first,
+      );
+      expect(tile.value, isTrue);
+      expect(
+        tile.onChanged,
+        isNull,
+        reason: 'the daily deck would have nothing to ask a book',
+      );
+    });
 
     testWidgets('a server refusal is shown to the reader', (tester) async {
       final (r, widget) = await app(tester, const ReviewPrefsScreen());
