@@ -113,6 +113,21 @@ class OfflineCache {
     return null;
   }
 
+  /// The fullest answer kept for any key that starts with [prefix] (the widest context of one quote, whatever
+  /// window it was asked for), or null.
+  ({String body, DateTime at})? readWidest(String prefix) {
+    ({String body, DateTime at})? best;
+    for (final e in _entries) {
+      final key = e[0] as String;
+      if (!key.startsWith(prefix)) continue;
+      final r = read(key);
+      if (r != null && (best == null || r.body.length > best.body.length)) {
+        best = r;
+      }
+    }
+    return best;
+  }
+
   /// Keeps [body] as the answer for [key], and drops the oldest entries if the cache is over its bounds.
   Future<void> write(String key, String body, {DateTime? at}) async {
     final entry = jsonEncode({

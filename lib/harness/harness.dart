@@ -296,6 +296,7 @@ class Harness {
           ? null
           : (kind, id) => _passageOf(library, kind, id),
     );
+    final contexts = PairedQuoteContext(controller);
     final l10n = L10n()..use(prefs.prefs.locale);
     Tr.current = l10n; // code with no screen (a service wording an error) speaks in the same language
     prefs.addListener(() => l10n.use(prefs.prefs.locale));
@@ -326,7 +327,14 @@ class Harness {
               pull: pull,
               controller: controller,
               log: appLog,
-              after: [anthologies.flush],
+              after: [
+                anthologies.flush,
+                () => keepFavouriteContexts(
+                  library!,
+                  contexts,
+                  controller.offline,
+                ),
+              ],
             ),
       runAutoSync: true,
       covers: covers,
@@ -348,7 +356,7 @@ class Harness {
       admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
-      contexts: PairedQuoteContext(controller),
+      contexts: contexts,
       anthologies: anthologies,
       tools: PairedServerTools(controller),
       tags: PairedTagService(controller),

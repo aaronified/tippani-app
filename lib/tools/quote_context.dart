@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/widgets.dart';
 
 import '../api/api_client.dart';
+import '../api/offline_cache.dart';
 import '../api/server_call.dart';
 import '../app_controller.dart';
+import '../library/library_store.dart';
 import '../library/models.dart';
 import '../sync/fingerprint.dart';
 
@@ -102,14 +106,24 @@ class PairedQuoteContext implements QuoteContextSource {
       if (before != null) 'before=$before',
       if (after != null) 'after=$after',
     ].join('&');
+    final base = '/quotes/$kind/$id/context';
     return serverCall<QuoteContext?>(_controller, (c) async {
       try {
         return QuoteContext.fromJson(
-          await c.getJson('/quotes/$kind/$id/context${q.isEmpty ? '' : '?$q'}'),
+          await c.getJson('$base${q.isEmpty ? '' : '?$q'}'),
         );
       } on ApiException catch (e) {
         // "this quote has no context": nothing stored, which is an answer and not a failure
         if (e.status == 404) return null;
+        // With no server, a window never asked for before is answered with the widest one kept for the quote:
+        // more than was asked is better than nothing, and the answer says how much it shows.
+        if (e.failure == ApiFailure.network ||
+            e.failure == ApiFailure.timeout) {
+          final kept = _controller.offline.readWidest(base);
+          if (kept != null) {
+            return QuoteContext.fromJson(jsonDecode(kept.body));
+          }
+        }
         rethrow;
       }
     });
@@ -127,4 +141,30 @@ class ContextScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(ContextScope old) => old.source != source;
+}
+
+/// Keeps the context of the reader's favourite quotes on the phone, so they read with no server (ADR-0022).
+/// Asks only for the ones not kept yet, a few each run, and stops at the first answer that fails.
+Future<int> keepFavouriteContexts(
+  LibraryStore library,
+  QuoteContextSource source,
+  OfflineCache cache, {
+  int limit = 40,
+}) async {
+  var fetched = 0;
+  for (final q in await library.quotes(favouritesOnly: true, limit: 200)) {
+    if (fetched >= limit) break;
+    final id = q.serverId;
+    if (id == null) continue;
+    final work = q.workId == null ? null : await library.work(q.workId!);
+    final base = '/quotes/${contextKindOf(realmOfQuote(work))}/$id/context';
+    if (cache.readWidest(base) != null) continue;
+    try {
+      await source.fetch(q, work);
+      fetched++;
+    } on ServerException {
+      break;
+    }
+  }
+  return fetched;
 }

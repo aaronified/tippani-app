@@ -117,6 +117,7 @@ void main() {
   group('asking the server', () {
     late FakeServer server;
     late PairedQuoteContext source;
+    late AppController controller;
 
     Future<void> rig({bool paired = true}) async {
       SharedPreferences.setMockInitialValues({
@@ -132,6 +133,7 @@ void main() {
       );
       await c.load();
       if (paired) await c.pair('ABCD2345', 'My phone');
+      controller = c;
       source = PairedQuoteContext(c);
     }
 
@@ -178,6 +180,70 @@ void main() {
       expect(await source.fetch(quote(serverId: null), null), isNull);
       expect(server.contextReads, isEmpty);
     });
+
+    test('with no server a window never asked for is answered with the widest one kept', () async {
+      await rig();
+      server.contexts['annotation/7'] = answer(shownBefore: 2, shownAfter: 2);
+      final seen = await source.fetch(
+        quote(),
+        work(WorkKind.book),
+        before: 2,
+        after: 2,
+      );
+      server.unreachable = true;
+      final offline = await source.fetch(
+        quote(),
+        work(WorkKind.book),
+        before: 6,
+        after: 6,
+      );
+      expect(offline!.body, seen!.body);
+      expect(offline.before, seen.before);
+    });
+
+    test(
+      'with no server a quote never read is an error, not a blank',
+      () async {
+        await rig();
+        server.unreachable = true;
+        await expectLater(
+          source.fetch(quote(), work(WorkKind.book)),
+          throwsA(isA<ServerException>()),
+        );
+      },
+    );
+
+    test(
+      'the favourites are kept after a sync, a few at a time, and only once',
+      () async {
+        await rig();
+        final lib = MemoryLibrary();
+        final w = await lib.addWork(
+          const WorkDraft(kind: WorkKind.book, title: 'Walden'),
+        );
+        final fav = await lib.addQuote(
+          QuoteDraft(text: 'Simplify.', workId: w.id, favorite: true),
+        );
+        await lib.setQuoteServerId(fav.id, 7);
+        await lib.addQuote(QuoteDraft(text: 'Not a favourite.', workId: w.id));
+        server.contexts['annotation/7'] = answer();
+
+        expect(await keepFavouriteContexts(lib, source, controller.offline), 1);
+        expect(server.contextReads, ['/quotes/annotation/7/context']);
+        expect(
+          await keepFavouriteContexts(lib, source, controller.offline),
+          0,
+          reason: 'already kept',
+        );
+        server.unreachable = true;
+        final read = await source.fetch(
+          (await lib.quote(fav.id))!,
+          w,
+          before: 3,
+        );
+        expect(read!.body, 'Simplify, simplify.');
+      },
+    );
 
     test('a server that errors is said, with the reason', () async {
       await rig();
