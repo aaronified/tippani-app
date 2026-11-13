@@ -210,6 +210,28 @@ void main() {
       expect(r.controller.isAdmin, isTrue);
     });
 
+    test('an admin phone that starts with no server still shows the administration, and forgets it when unpaired', () async {
+      final s = FakeServer(admin: true);
+      final r = await rig(
+        s,
+        saved: {
+          'server_url': 'https://q.example.org',
+          'paired_user': 'alice',
+          'paired_admin': 'yes',
+        },
+      );
+      await r.vault.write('tok-1234');
+      s.unreachable = true;
+      await r.controller.load();
+      expect(r.controller.paired, isTrue);
+      expect(r.controller.isAdmin, isTrue);
+
+      s.unreachable = false;
+      await r.controller.unpair();
+      await r.controller.load();
+      expect(r.controller.isAdmin, isFalse);
+    });
+
     test('unpairing asks the server to forget this phone (the row marked current), and keeps the server address', () async {
       final s = FakeServer();
       final r = await rig(s);

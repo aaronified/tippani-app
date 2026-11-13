@@ -335,11 +335,12 @@ synced account's theme preferences are ignored here.
       saving to the local library, the sync push when paired) except the page and chapter proposal; donation and bug report are not.
 - [x] **Update:** the check and installer, the `app-v*` release lookup and the manifest pieces (done with the harness), and the release
       workflow that publishes what the check looks for (in use since `app-v0.2.0`, see [Releasing](Releasing.md); the owner is testing the in-app update).
-- [ ] **Everything available offline, and synced when connected** (owner, 13 November 2026): anthologies (a local copy with entries, sections, grouping, front matter
-      and cover, synced both ways), contexts and source files kept on the phone, and every other screen that reads the server checked and given a local copy or a plain
-      "needs the server" if it cannot (admin). To land in 0.8.2.
-- [ ] **A Server tab that is all server management** (owner, 13 November 2026): metadata, Checks and the bin, with every server setting, live there and sync with the
-      server; Settings keeps only the app's own. To land in 0.8.2.
+- [x] **Everything available offline, and synced when connected** (owner, 13 November 2026, [ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md);
+      to land in 0.8.2): every screen that reads the server keeps its last answer and shows it with no server; anthologies are made and edited offline and
+      go up in order; a setting changed offline is kept and sent; a quote's context and the favourites' contexts are kept; the admin section shows with no
+      server. **Not done:** source files on the phone, offline cover/fill/export of anthologies, and the contexts of quotes that are neither opened nor favourite.
+- [x] **A Server tab that is all server management** (owner, 13 November 2026; to land in 0.8.2): metadata, Checks and the bin were already there; the account,
+      colours, daily review and context rules moved in as **Your settings on the server**. Settings keeps the app's own.
 - [ ] **Donation:** port the section, regenerate the QR, the disclaimer.
 - [ ] **Bug report:** the form, `app-feedback-mail.yml`, `scripts/mail_to_issues.py` and its tests.
 - [x] **Release workflow:** `release.yml` with signing and verification, and the decision pages (run for every release since `app-v0.2.0`).

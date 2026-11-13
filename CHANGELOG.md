@@ -7,6 +7,21 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Anthologies work with no server: you can make an anthology, rename it, add and take out passages, write commentary, put headings in and move things, with no signal. It all shows at once, and the phone sends it to your server, in the order you did it, the next time the server answers. Above the list it says how many changes are waiting, and what the server did not take. A cover picture, filling from a search and exporting need the server.
+- Everything that only reads keeps its last answer: statistics, tags, the bin, people and characters, Checks, the metadata console, source files, administration's lists and the daily quiz's cards open from the phone when the server cannot be reached, with the last thing it said.
+- A quote's context reads with no server: the context you opened is kept, a wider window is answered with the widest one kept, and after each sync the phone keeps the context of your favourite quotes.
+
+### Changed
+
+- Your settings on the server are on the Server tab: Account, Colours, Daily review and Context around a quote moved from Settings to a new "Your settings on the server" group there, and a setting you change with no server is kept and sent later instead of being lost. Settings keeps the app's own: language, text and quotes, sections, tags, reading aloud, updates, backup, the log and the licences.
+
+### Fixed
+
+- The Account page no longer stays blank when the server cannot be reached: it shows who you are from the phone, says what is wrong, and has a Try again button.
+- The administration shows when you open the app with no server: a phone paired as an admin remembers that it is one.
+
 ## [0.8.1] - 2026-11-13
 
 ### Fixed

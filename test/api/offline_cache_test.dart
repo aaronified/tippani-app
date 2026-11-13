@@ -54,6 +54,8 @@ void main() {
         '/cleanup?bucket=open',
         '/metadata/library',
         '/context-rules/book/5',
+        '/review/daily?offset=0',
+        '/review/scores?offset=0',
       ]) {
         expect(OfflineCache.isCacheablePath(p), isTrue, reason: p);
       }
@@ -70,7 +72,7 @@ void main() {
         '/boards',
         '/auth/me',
         '/capabilities',
-        '/review/daily',
+        '/review/answer',
         '/jobs',
         '/anthologiesx',
       ]) {

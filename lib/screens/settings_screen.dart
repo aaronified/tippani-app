@@ -327,6 +327,14 @@ class SettingsScreen extends StatelessWidget {
                     ),
                 ],
               ),
+              if (controller.paired && harness.prefs != null) ...[
+                const _Section('Your settings on the server'),
+                PrefsEntries(
+                  controller: controller,
+                  harness: harness,
+                  serverSide: true,
+                ),
+              ],
               if (harness.library != null || harness.imports != null) ...[
                 _Section(context.tr('app.settings.your_library')),
                 _Group(

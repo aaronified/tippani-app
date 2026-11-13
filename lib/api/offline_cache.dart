@@ -9,7 +9,7 @@ import '../settings/settings_store.dart';
 ///
 /// WHAT IS KEPT. The answer to a GET, by its path and query, for the paths [isCacheablePath] allows: the screens
 /// that display what the server holds (anthologies, contexts, statistics, tags, the people records, Checks, the
-/// bin, the metadata console). Not the routes sync reads, because sync treats "the server answered" as fact and an
+/// bin, the metadata console, and the quiz's deck, whose answers have a queue of their own). Not the routes sync reads, because sync treats "the server answered" as fact and an
 /// old answer served in its place would look like a server that had lost everything; and not `/auth/me`, whose
 /// failure is how the app learns it was unpaired.
 ///
@@ -91,6 +91,9 @@ class OfflineCache {
     '/admin/update/check',
     '/admin/backup',
     '/jobs/common',
+    '/review/daily',
+    '/review/practice',
+    '/review/scores',
   ];
 
   static bool _pinned(String key) => key.startsWith('/anthologies');

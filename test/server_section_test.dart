@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tippani/account/account_service.dart';
+import 'package:tippani/account/preferences.dart';
 import 'package:tippani/app.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/harness/harness.dart';
@@ -74,6 +76,67 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('Read aloud'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'the settings kept on the server are on the Server tab; the app\'s own stay on Settings',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 3200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({
+        'server_url': 'https://q.example.org',
+      });
+      final server = FakeServer();
+      final store = SettingsStore(
+        await SharedPreferences.getInstance(),
+        MemoryTokenVault(),
+      );
+      final c = AppController(store, clientFactory: server.factory);
+      await c.load();
+      await c.pair('ABCD2345', 'My phone');
+      await tester.pumpWidget(
+        TippaniApp(
+          controller: c,
+          harness: Harness.fake(
+            store,
+            controller: c,
+            library: MemoryLibrary(),
+            prefs: PairedPreferences(c, store),
+            account: PairedAccount(c),
+            contextRules: PairedContextRules(c),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Server'));
+      await tester.pumpAndSettle();
+      for (final kept in [
+        'Your settings on the server',
+        'Account',
+        'Daily review',
+        'Context around a quote',
+      ]) {
+        expect(find.text(kept), findsOneWidget, reason: kept);
+      }
+      expect(find.text('Language'), findsNothing);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('Settings'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Language'), findsOneWidget);
+      for (final moved in [
+        'Daily review',
+        'Context around a quote',
+        'Your settings on the server',
+      ]) {
+        expect(find.text(moved), findsNothing, reason: moved);
+      }
     },
   );
 

@@ -23,6 +23,8 @@ flutter build apk --debug
 | `lib/app_controller.dart` | The state more than one screen needs: which server, and whether it answered and is compatible. |
 | `lib/api/capabilities.dart` | The version handshake: the revision this build was written for, and the oldest server it accepts. |
 | `lib/api/api_client.dart` | The one way the app speaks to a server: Bearer token, timeouts, and typed failures (network, timeout, unauthorised, server, bad response). |
+| `lib/api/offline_cache.dart` | What the server last said for the screens that only read, kept on the phone and returned when the server cannot be reached ([ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md)). |
+| `lib/anthologies/offline_anthologies.dart` | Anthologies with no server: the kept copy, an ordered queue of changes, and their replay when the server answers. |
 | `lib/settings/server_url.dart` | Turns what a reader types into the address the app keeps, and says when plain `http` would send a credential across the internet. |
 | `lib/settings/settings_store.dart` | The server address in preferences; the device token in secure storage and nowhere else. |
 | `lib/library/` | The phone's own library: `models.dart`, the SQLite `library_store.dart`, its backup contributor, and `markdown_export.dart`. See [The local library](#the-local-library). |
