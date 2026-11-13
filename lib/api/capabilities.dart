@@ -8,7 +8,7 @@ library;
 
 /// The API revision this build of the app was written against. Raise it when the app starts
 /// depending on something a later revision added.
-const int builtForRevision = 8;
+const int builtForRevision = 9;
 
 /// The oldest server revision this app still works with. Device tokens and pairing arrived in
 /// revision 1; raise it as screens come to need more, and the app will refuse an older server by

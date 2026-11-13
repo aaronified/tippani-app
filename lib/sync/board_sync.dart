@@ -387,9 +387,14 @@ class BoardSync {
       // only the phone moved it: the server's current row with the board changed
       try {
         final ok = await _controller.withClient((c) async {
-          final fresh = await c.getJson('/quotes/${f.quoteServerId}');
-          if (fresh is! Map) return false;
-          final body = Map<String, Object?>.from(fresh)..remove('board_id');
+          // The server has no GET /quotes/{id}; the one-row read is `?id=` on the list.
+          final found = await c.getJson('/quotes?id=${f.quoteServerId}');
+          final rows = found is Map ? found['utterances'] : null;
+          // A server older than 1.15.0 ignores `?id=` and answers the whole list. Saving the first
+          // row of that would overwrite another quote, so exactly the one asked for is accepted.
+          final row = rows is List && rows.length == 1 ? rows.single : null;
+          if (row is! Map || row['id'] != f.quoteServerId) return false;
+          final body = Map<String, Object?>.from(row)..remove('board_id');
           if (here != null) body['board_id'] = here;
           await c.putJson('/quotes/${f.quoteServerId}', body);
           return true;

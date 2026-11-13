@@ -247,13 +247,19 @@ class FakeServer {
     '/quotes': 'utterances',
   };
 
-  http.Response _read(String path) {
+  /// True to behave as a server older than 1.15.0, which ignores `?id=` and answers the whole list.
+  bool ignoreIdFilter = false;
+
+  /// A list read. `?id=` narrows it to one row, as the server's `quote-by-id` does: there is no
+  /// `GET /quotes/{id}`, so a single quote is asked for this way.
+  http.Response _read(String path, [String? only]) {
     if (failReadsWith != null) {
       return _json({'error': 'try later'}, failReadsWith!);
     }
     return _json({
       _listKeys[path]!: [
-        for (final r in created[path] ?? const <Map<String, Object?>>[]) r,
+        for (final r in created[path] ?? const <Map<String, Object?>>[])
+          if (only == null || ignoreIdFilter || '${r['id']}' == only) r,
       ],
     });
   }
@@ -710,7 +716,9 @@ class FakeServer {
     if (r.method == 'POST' && _createRoutes.contains(path)) {
       return _create(path, jsonDecode(r.body) as Map);
     }
-    if (r.method == 'GET' && _listKeys.containsKey(path)) return _read(path);
+    if (r.method == 'GET' && _listKeys.containsKey(path)) {
+      return _read(path, r.url.queryParameters['id']);
+    }
     final shelf = RegExp(r'^(/books|/movies)/(\d+)/status$').firstMatch(path);
     if (shelf != null && r.method == 'PUT') {
       final rows = created[shelf[1]!] ?? [];
@@ -751,6 +759,10 @@ class FakeServer {
       final route = one[1]!;
       final id = int.parse(one[2]!);
       if (r.method == 'GET') {
+        // The server has no GET /quotes/{id}; it answers 405, and the app asks `?id=` on the list.
+        if (route == '/quotes') {
+          return _json({'error': 'method not allowed'}, 405);
+        }
         final rows = created[route] ?? [];
         final hit = rows.where((x) => x['id'] == id);
         return hit.isEmpty

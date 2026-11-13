@@ -30,7 +30,9 @@ class ServerTag {
     style: (j['style'] as String?) ?? 'sticker',
     quotes:
         ((j['annotations'] as num?)?.toInt() ?? 0) +
-        ((j['dialogues'] as num?)?.toInt() ?? 0),
+        ((j['dialogues'] as num?)?.toInt() ?? 0) +
+        // Standalone quotes; a server older than 3.7.1 does not send the count.
+        ((j['utterances'] as num?)?.toInt() ?? 0),
   );
 }
 

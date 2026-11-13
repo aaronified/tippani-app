@@ -7,6 +7,15 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Fixed
+
+- Reading a file as a chosen format works: "Read this as…" on an import sent the format under a name the server does not know, so seven of the eight choices were refused. They are sent under the server's names now.
+- Moving a quote to a board on the phone reaches the server: the sync asked the server for the quote with a request it does not answer, so a quote you filed under a board on the phone but not on the server never moved. It reads the quote the way the server offers.
+- An old backup restores: a backup from before the server's 1.4.1 carries no key, and the server wants the word it asks for before it restores one. The app sends it when you press Restore.
+- Approving staged quotes says how many matched a quote you already have: the count was read under the wrong name, so the line never appeared.
+- Parts played show the character's picture: the server keeps it under a name the app did not read, so an actor's list of parts drew none.
+- A tag counts every quote that wears it: standalone quotes are included when the server is 3.7.1 or newer.
+
 ## [0.8.0] - 2026-11-09
 
 ### Changed

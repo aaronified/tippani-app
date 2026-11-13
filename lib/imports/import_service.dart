@@ -5,6 +5,20 @@ import '../api/server_call.dart';
 import '../app_controller.dart';
 import '../l10n/l10n.dart';
 
+/// The server names its importers with its own slugs (`importer/detect.go`), and the `as` field of
+/// `/import/auto` is looked up in exactly those, so a source the reader picked here has to be
+/// translated before it is sent: seven of the eight spellings differ, and an unknown one is a 400.
+String serverImportSlug(String kind) => switch (kind) {
+  'markdown' => 'md',
+  'readest' => 'readest_json',
+  'hardcover-html' => 'hardcover_html',
+  'goodreads-html' => 'goodreads_html',
+  'imdb-quotes' => 'imdb',
+  'kindle-notebook' => 'kindle_notebook',
+  'kindle-clippings' => 'kindle_clippings',
+  _ => kind,
+};
+
 /// One kind of file the server's importer reads, with the steps for getting that file, as the web's import page
 /// lists them.
 class ImportSource {
@@ -17,7 +31,7 @@ class ImportSource {
     this.caveat = '',
   });
 
-  /// The server's own name for the format (the `as` of an import).
+  /// The app's name for the format; [serverImportSlug] turns it into the server's before an import is sent.
   final String kind;
   final String title;
   final List<String> extensions;
@@ -543,8 +557,13 @@ class PairedImportService implements ImportService {
   }) async {
     final started = await serverCall(
       _controller,
-      (c) =>
-          c.postFile('/import/auto', 'file', bytes, name, fields: {'as': ?as}),
+      (c) => c.postFile(
+        '/import/auto',
+        'file',
+        bytes,
+        name,
+        fields: {'as': ?(as == null ? null : serverImportSlug(as))},
+      ),
     );
     final id = (asMap(asMap(started)['job'])['id'] as num).toInt();
     final (job, result) = await _await(id, onProgress);
@@ -642,7 +661,7 @@ class PairedImportService implements ImportService {
       added: n('added'),
       skipped: n('skipped'),
       enriched: n('enriched'),
-      relinked: n('relinked'),
+      relinked: n('quotes_relinked'),
     );
   }
 

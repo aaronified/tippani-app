@@ -189,4 +189,48 @@ void main() {
     final b = await boardNamed(r, 'Proverbs');
     expect((await r.lib.quotes()).single.boardId, b.id);
   });
+
+  test('moving one quote leaves the other quotes where they are', () async {
+    final r = await rig();
+    r.server.boards
+      ..add(board(7, 'Speeches'))
+      ..add(board(8, 'Proverbs'));
+    final first = r.server.seed('/quotes', loose('Be water.', 7));
+    final second = r.server.seed('/quotes', loose('Stay hungry.', 7));
+    await r.pull.sync();
+    final moved = (await r.lib.quotes()).firstWhere(
+      (q) => q.text == 'Stay hungry.',
+    );
+    await r.lib.setQuoteBoard(moved.id, (await boardNamed(r, 'Proverbs')).id);
+
+    await r.pull.sync();
+
+    expect(r.server.row('/quotes', second)['board_id'], 8);
+    expect(r.server.row('/quotes', second)['quote'], 'Stay hungry.');
+    expect(r.server.row('/quotes', first)['board_id'], 7);
+    expect(r.server.row('/quotes', first)['quote'], 'Be water.');
+  });
+
+  test(
+    'a server that ignores ?id= never has one quote saved over another',
+    () async {
+      final r = await rig();
+      r.server.ignoreIdFilter = true;
+      r.server.boards
+        ..add(board(7, 'Speeches'))
+        ..add(board(8, 'Proverbs'));
+      final first = r.server.seed('/quotes', loose('Be water.', 7));
+      final second = r.server.seed('/quotes', loose('Stay hungry.', 7));
+      await r.pull.sync();
+      final moved = (await r.lib.quotes()).firstWhere(
+        (q) => q.text == 'Stay hungry.',
+      );
+      await r.lib.setQuoteBoard(moved.id, (await boardNamed(r, 'Proverbs')).id);
+
+      await r.pull.sync();
+
+      expect(r.server.row('/quotes', first)['quote'], 'Be water.');
+      expect(r.server.row('/quotes', second)['quote'], 'Stay hungry.');
+    },
+  );
 }
