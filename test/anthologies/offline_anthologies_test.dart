@@ -20,6 +20,9 @@ class _Server implements AnthologyService {
 
   final OfflineCache cache;
   bool up = true;
+
+  /// Writes get through but the reads that follow them do not.
+  bool refuseReads = false;
   int _next = 100;
   final rows = <int, Map<String, Object?>>{};
   final entries = <int, List<Map<String, Object?>>>{};
@@ -76,6 +79,9 @@ class _Server implements AnthologyService {
   @override
   Future<List<Anthology>> list() async {
     _reach();
+    if (refuseReads) {
+      throw const AnthologyException('no route', unreachable: true);
+    }
     await _remember();
     return [for (final id in rows.keys) Anthology.fromJson(_row(id))];
   }
@@ -130,6 +136,7 @@ class _Server implements AnthologyService {
 
   @override
   Future<bool> add(int id, String kind, int itemId) async {
+    attempts.add(_key);
     _reach();
     sent.add('add $id $kind/$itemId');
     keys.add(_key);
@@ -699,6 +706,53 @@ void main() {
       other,
       second,
     }, reason: 'uploaded pictures are removed from the phone');
+  });
+
+  test('a passage added live and then queued is replayed under the key it was tried with', () async {
+    final r = await _rig();
+    final made = await r.service.create('A', '');
+    await r.service.get(made.id);
+    r.server.attempts.clear();
+    r.server.keys.clear();
+    r.server.up = false;
+    await r.service.add(made.id, 'book', 1);
+    final tried = r.server.attempts.single;
+    expect(tried, isNotNull);
+    r.server.up = true;
+    await r.service.flush();
+    expect(
+      r.server.keys,
+      [tried],
+      reason:
+          'the replay repeats the key of the attempt that may have been lost',
+    );
+  });
+
+  test('an uploaded cover is removed from the phone, but only once the screens read the server\'s name for it', () async {
+    final r = await _rig();
+    final a = await r.service.create('A', '');
+    await r.service.get(a.id);
+    r.server.up = false;
+    final local = await r.service.setCover(
+      a.id,
+      Uint8List.fromList([1]),
+      'c.jpg',
+    );
+    r.server.up = true;
+    r.server.refuseReads = true;
+    await r.service.flush();
+    expect(r.server.sent.where((s) => s.startsWith('cover')), hasLength(1));
+    expect(
+      r.discarded,
+      isEmpty,
+      reason: 'the kept copy still names the local file, so it is still drawn',
+    );
+
+    r.server.refuseReads = false;
+    await r.service.flush();
+    expect(r.discarded, [
+      local,
+    ], reason: 'removed once a read of the server succeeds');
   });
 
   test(

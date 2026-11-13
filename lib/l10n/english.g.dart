@@ -486,6 +486,7 @@ const Map<String, String> englishTokens = {
   'app.admin_jobs.stop_every_job': 'Stop every job?',
   'app.admin_jobs.stop_every_job_2': 'Stop every job',
   'app.admin_jobs.stop_your_jobs': 'Stop your jobs?',
+  'app.admin_jobs.stop_your_jobs_2': 'Stop your jobs',
   'app.admin_jobs.test_the_metadata_sources': 'Test the metadata sources',
   'app.admin_jobs.the_running_job_and_every_waiting': 'The running job and every waiting one are stopped.',
   'app.admin_jobs.this_job_logged_nothing': 'This job logged nothing.',

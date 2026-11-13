@@ -299,4 +299,18 @@ void main() {
       await expectLater(c.getJson('/tags'), throwsA(isA<ApiException>()));
     });
   });
+
+  test('a callback that fails when the cache is cleared does not leave the others undone', () async {
+    final cache = await _cache();
+    final ran = <String>[];
+    cache.whenCleared.add(
+      () async =>
+          throw const FileSystemException('a picture was being written'),
+    );
+    cache.whenCleared.add(
+      () async => ran.add('the queue that must not outlive the pairing'),
+    );
+    await cache.clear();
+    expect(ran, ['the queue that must not outlive the pairing']);
+  });
 }

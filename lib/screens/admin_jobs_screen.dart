@@ -400,7 +400,11 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
           actions: [
             if (cur != null && cur.jobs.isNotEmpty)
               IconButton(
-                tooltip: context.tr('app.admin_jobs.stop_every_job_2'),
+                tooltip: context.tr(
+                  widget.ownOnly
+                      ? 'app.admin_jobs.stop_your_jobs_2'
+                      : 'app.admin_jobs.stop_every_job_2',
+                ),
                 icon: const Icon(Ti.playerStop),
                 onPressed: _stopAll,
               ),

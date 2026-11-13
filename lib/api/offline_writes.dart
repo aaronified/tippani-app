@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../app_controller.dart';
+import '../harness/app_log.dart';
 import '../settings/settings_store.dart';
 import 'api_client.dart';
 
@@ -16,7 +17,7 @@ import 'api_client.dart';
 /// one it could not be asked about stays and is tried again. The queue goes when the pairing does, so a change
 /// is never sent to another account.
 class OfflineWrites {
-  OfflineWrites(this._controller, this._store) {
+  OfflineWrites(this._controller, this._store, {this._log}) {
     pending.value = _load().length;
     _controller.offline.whenCleared.add(() async {
       await _store.remove(_key);
@@ -29,11 +30,13 @@ class OfflineWrites {
 
   final AppController _controller;
   final SettingsStore _store;
+  final AppLog? _log;
 
   /// How many changes wait.
   final pending = ValueNotifier<int>(0);
 
-  /// What the server refused, in plain words, since the list was last read.
+  /// What the server refused and the phone dropped, in plain words, oldest first (each is also written to the app
+  /// log). It is kept for the run of the app.
   final problems = ValueNotifier<List<String>>(const []);
 
   bool _flushing = false;
@@ -101,7 +104,11 @@ class OfflineWrites {
       throw const ApiException(ApiFailure.unauthorised, 'not paired');
     }
     if (_load().isNotEmpty) await flush();
-    if (_load().isEmpty && _controller.paired) {
+    // the flush above can end the pairing (a refused token clears the queue): nothing is kept after that either
+    if (!_controller.paired) {
+      throw const ApiException(ApiFailure.unauthorised, 'not paired');
+    }
+    if (_load().isEmpty) {
       try {
         final answer = await _send({
           'method': method,
@@ -146,6 +153,9 @@ class OfflineWrites {
           now.removeAt(0);
         }
         await _save(now);
+      }
+      for (final p in refused) {
+        _log?.warn('a change made offline was refused and dropped: $p');
       }
       if (refused.isNotEmpty) problems.value = [...problems.value, ...refused];
       return _load().length;

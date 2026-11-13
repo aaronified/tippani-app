@@ -296,8 +296,19 @@ class PairedContextRules implements ContextRules {
   };
 
   @override
-  Future<Outcome<ContextRule>> global() =>
-      _call((c) async => _rule(await c.getJson('/context-rules/global')));
+  Future<Outcome<ContextRule>> global() => _call((c) async {
+    await _flushWaiting();
+    return _rule(await c.getJson('/context-rules/global'));
+  });
+
+  /// A rule saved with no signal goes first, so a rule read now is not the old one.
+  Future<void> _flushWaiting() async {
+    try {
+      await writes?.flush();
+    } on Object {
+      // the rule is still read
+    }
+  }
 
   /// Saves [rule] at [path]: at once, or kept and shown on the copy of the rule the phone holds.
   Future<Outcome<Object?>> _save(String path, Map<String, Object?> body) async {
@@ -334,7 +345,10 @@ class PairedContextRules implements ContextRules {
 
   @override
   Future<Outcome<ContextRule>> forWork(String scope, int id) =>
-      _call((c) async => _rule(await c.getJson('/context-rules/$scope/$id')));
+      _call((c) async {
+        await _flushWaiting();
+        return _rule(await c.getJson('/context-rules/$scope/$id'));
+      });
 
   @override
   Future<Outcome<int>> setForWork(

@@ -341,6 +341,12 @@ class PairedServerTools implements ServerTools {
 
   @override
   Future<Bin> bin() => serverCall(_controller, (c) async {
+    // a restore made with no signal goes first, so the bin read now does not show it again
+    try {
+      await writes?.flush();
+    } on Object {
+      // the bin is still read
+    }
     final body = asMap(await c.getJson('/trash'));
     final all = body['trash'];
     return Bin((body['days'] as num?)?.toInt() ?? 30, [

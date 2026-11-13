@@ -45,6 +45,7 @@ void main() {
   late CoverCache covers;
   late MemoryLibrary lib;
   late _Details details;
+  late DateTime now;
   final clock = DateTime.utc(2026, 11, 13, 12);
 
   Future<void> rig() async {
@@ -60,7 +61,12 @@ void main() {
     await controller.pair('ABCD2345', 'My phone');
     final dir = await Directory.systemTemp.createTemp('tippani_keeper');
     addTearDown(() => dir.delete(recursive: true));
-    covers = CoverCache(controller, folder: Directory('${dir.path}/covers'));
+    now = DateTime.utc(2026, 11, 13, 12);
+    covers = CoverCache(
+      controller,
+      folder: Directory('${dir.path}/covers'),
+      clock: () => now,
+    );
     lib = MemoryLibrary();
     details = _Details();
   }
@@ -189,6 +195,8 @@ void main() {
     expect(missed, {bad1, bad2, bad3});
 
     server.coverReads.clear();
+    // past the cache's own two-minute retry window: only the missed set can keep these from being asked again
+    now = now.add(const Duration(minutes: 10));
     await keepWorkExtras(
       lib,
       covers,

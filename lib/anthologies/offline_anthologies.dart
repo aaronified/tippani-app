@@ -118,7 +118,16 @@ class OfflineAnthologies implements AnthologyService {
   /// temporary id out twice). Only the op that was sent is taken off, and the ids the server gave are added.
   Future<int> flush() async {
     if (_flushing) return 0;
-    if (_load().ops.isEmpty) return 0;
+    if (_load().ops.isEmpty) {
+      // a picture whose upload went while the server could not be read again is removed on a later run
+      if (_uploaded.isNotEmpty && await _refresh(const {})) {
+        for (final name in _uploaded) {
+          await _discard(name);
+        }
+        _uploaded.clear();
+      }
+      return 0;
+    }
     _flushing = true;
     var sent = 0;
     final touched = <int>{};
@@ -146,11 +155,14 @@ class OfflineAnthologies implements AnthologyService {
         await _save(now);
         sent++;
       }
-      if (sent > 0) await _refresh(touched);
-      for (final name in _uploaded) {
-        await _discard(name);
+      final fresh = sent == 0 || await _refresh(touched);
+      // a kept picture goes only when the screens read the server's name for it; until then it is still drawn
+      if (fresh) {
+        for (final name in _uploaded) {
+          await _discard(name);
+        }
+        _uploaded.clear();
       }
-      _uploaded.clear();
     } finally {
       _flushing = false;
     }
@@ -161,14 +173,17 @@ class OfflineAnthologies implements AnthologyService {
   }
 
   /// Reads the lists the server holds now, so what was kept on the phone is the server's word again.
-  Future<void> _refresh(Set<int> touched) async {
+  /// Reads the list and what was touched again. True when the kept copy now says what the server does.
+  Future<bool> _refresh(Set<int> touched) async {
     try {
       await _inner.list();
       for (final id in touched) {
         if (id > 0) await _inner.get(id);
       }
+      return true;
     } on AnthologyException {
       // the kept copy stands until the next time
+      return false;
     }
   }
 

@@ -84,7 +84,12 @@ class CoverCache implements CoverSource {
   Future<void> clear() async {
     final dir = await _dir();
     await for (final f in dir.list()) {
-      if (f is File) await f.delete();
+      if (f is! File) continue;
+      try {
+        await f.delete();
+      } on FileSystemException {
+        // a picture that was being written as this ran: the next clear takes it
+      }
     }
     _failedAt.clear();
   }

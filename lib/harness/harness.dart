@@ -311,16 +311,7 @@ class Harness {
       keepPicture: covers.keepLocal,
       discardPicture: covers.discard,
     );
-    final writes = OfflineWrites(controller, settings);
-    // a change the server refused is dropped; the log is where the reader can see what was
-    var logged = 0;
-    writes.problems.addListener(() {
-      final all = writes.problems.value;
-      for (final p in all.skip(logged)) {
-        appLog.warn('a change made offline was refused and dropped: $p');
-      }
-      logged = all.length;
-    });
+    final writes = OfflineWrites(controller, settings, log: appLog);
     final contextStore = FileContextStore(
       () async => Directory(
         '${(await getApplicationSupportDirectory()).path}/contexts',

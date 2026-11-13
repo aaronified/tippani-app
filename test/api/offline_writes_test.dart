@@ -6,6 +6,7 @@ import 'package:tippani/account/account_service.dart';
 import 'package:tippani/api/api_client.dart';
 import 'package:tippani/api/offline_writes.dart';
 import 'package:tippani/app_controller.dart';
+import 'package:tippani/harness/app_log.dart';
 import 'package:tippani/settings/settings_store.dart';
 import 'package:tippani/tags/tag_service.dart';
 import 'package:tippani/tools/server_tools.dart';
@@ -18,6 +19,7 @@ void main() {
   late OfflineWrites writes;
   late PairedTagService tags;
   late SharedPreferences prefs;
+  late AppLog log;
 
   Map<String, Object?> tag(int id, String name) => {
     'id': id,
@@ -38,7 +40,8 @@ void main() {
     controller = AppController(settings, clientFactory: server.factory);
     await controller.load();
     await controller.pair('ABCD2345', 'My phone');
-    writes = OfflineWrites(controller, settings);
+    log = AppLog();
+    writes = OfflineWrites(controller, settings, log: log);
     tags = PairedTagService(controller, writes: writes);
     server.tags.addAll([tag(1, 'life'), tag(2, 'craft')]);
     // the Tags page has been opened once with a server: its answer is kept
@@ -144,6 +147,68 @@ void main() {
       0,
       reason: 'the waiting change was sent first',
     );
+  });
+
+  test('a token refused while the waiting changes are sent ends the pairing, and the new change is not kept for the next account', () async {
+    server.unreachable = true;
+    await tags.delete(ServerTag.fromJson(tag(1, 'life')));
+    expect(writes.pending.value, 1);
+    server.unreachable = false;
+    server.tokenValid = false;
+    await expectLater(
+      tags.delete(ServerTag.fromJson(tag(2, 'craft'))),
+      throwsA(anything),
+    );
+    expect(
+      controller.paired,
+      isFalse,
+      reason: 'the refused token ended the pairing',
+    );
+    expect(
+      writes.pending.value,
+      0,
+      reason: 'nothing waits for whoever pairs next',
+    );
+    expect(prefs.getString('outbox.writes'), isNull);
+  });
+
+  test(
+    'every refused change is written to the app log, not only the last',
+    () async {
+      server.unreachable = true;
+      await tags.save(ServerTag.fromJson(tag(1, 'life')), name: 'CRAFT');
+      await tags.save(ServerTag.fromJson(tag(2, 'craft')), name: 'LIFE');
+      server.unreachable = false;
+      await writes.flush();
+      expect(writes.problems.value, hasLength(2));
+      expect(
+        log.lines.where((l) => l.contains('refused and dropped')),
+        hasLength(2),
+      );
+    },
+  );
+
+  test('reading the bin sends a restore that waited first, so the restored item is not listed again', () async {
+    server.trash.add({'id': 5, 'kind': 'annotation', 'title': 'A quote'});
+    final tools = PairedServerTools(controller, writes: writes);
+    await tools.bin();
+    server.unreachable = true;
+    await tools.restore(5);
+    server.unreachable = false;
+    final bin = await tools.bin();
+    expect(bin.entries.where((e) => e.id == 5), isEmpty);
+    expect(server.trash, isEmpty);
+    expect(writes.pending.value, 0);
+  });
+
+  test('reading a context rule sends a rule that waited first, so the old one is not shown', () async {
+    final rules = PairedContextRules(controller, writes: writes);
+    server.unreachable = true;
+    await rules.setGlobal(const ContextRule(before: 7, after: 8));
+    server.unreachable = false;
+    final rule = await rules.global();
+    expect(rule.value!.before, 7);
+    expect(writes.pending.value, 0);
   });
 
   test(

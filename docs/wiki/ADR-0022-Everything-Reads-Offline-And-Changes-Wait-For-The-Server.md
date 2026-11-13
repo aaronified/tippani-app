@@ -41,7 +41,7 @@
 - **Unpairing, forgetting the server or a refused token discards the copy and everything that waited** (`OfflineCache.clear` and what registers with it), so
   a queued change is never sent to another account or another server.
 
-**What stays online, and says so.** A count of what an anthology's fill would find, and an EPUB (Markdown is made from the phone's copy); the bin's restore
+**What stays online, and says so.** A count of what an anthology's fill would find, and an EPUB (Markdown is made from the phone's copy); emptying the bin and deleting from it for good (a restore waits, above)
 and every other write the server must judge; search through the server; the server's own log and the live job list. Source files stay on the server: only
 their list and each quote's context are kept on the phone.
 
