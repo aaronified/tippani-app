@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-13
+
 ### Added
 
 - Anthologies work with no server: you can make an anthology, rename it, add and take out passages, write commentary, put headings in and move things, change its front matter and grouping, put a cover picture on it and set the search that fills it, all with no signal. It shows at once, and the phone sends it to your server, in the order you did it, the next time the server answers. Above the list it says how many changes are waiting and what the server did not take. Counting what a fill would find and making an EPUB need the server; a Markdown file is made from the phone's copy.
