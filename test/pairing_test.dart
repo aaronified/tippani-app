@@ -501,8 +501,11 @@ class _Throwing extends ApiClient {
   final ApiFailure failure;
 
   @override
-  Future<Object?> postJson(String path, Map<String, Object?> body) async =>
-      failure == ApiFailure.badResponse
+  Future<Object?> postJson(
+    String path,
+    Map<String, Object?> body, {
+    String? idempotencyKey,
+  }) async => failure == ApiFailure.badResponse
       ? <String, Object?>{'token': 5}
       : throw ApiException(failure, 'x');
 }

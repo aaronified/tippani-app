@@ -47,4 +47,4 @@ their list and each quote's context are kept on the phone.
 
 **Consequences.** The cache is bounded (3 MB, 400 entries, the oldest written first, anthologies pinned to two thirds, an answer larger than the cache not
 kept). Moving a heading offline moves only the heading; the server settles the passages under it when the move is sent. A crash between sending a queued
-change and saving the queue can send a new anthology or heading twice, because the server has no idempotency key.
+change and saving the queue is safe against a server on API revision 11 or later (3.9.0): every create carries an `Idempotency-Key`, the same whether it was sent at once or waited, and the server answers a repeat with the first answer. A server older than that makes a second anthology or heading.

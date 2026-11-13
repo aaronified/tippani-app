@@ -343,7 +343,7 @@ synced account's theme preferences are ignored here.
       commentary, grouping, front matter, cover picture and fill) are made and edited offline and go up in order; a setting changed offline is kept and sent
       unless the web changed it meanwhile; the context of every synced quote is kept on the phone; the admin section shows with no server. **Not done:** a
       count of what a fill would find and an EPUB need the server; source files stay on the server (only the list and each quote's context are kept); a crash
-      between sending a queued change and saving the queue may send a new anthology or heading twice (needs the server's idempotency keys, Tippani issue 97).
+      between sending a queued change and saving the queue is safe against a server on 3.9.0 or later (Idempotency-Key, built in 0.9.0); an older server may make a new anthology or heading twice.
       Built in 0.9.0: covers, cast and details kept after every sync ([#88](https://github.com/aaronified/tippani-app/issues/88)). A cover or poster picked offline shows at once ([#92](https://github.com/aaronified/tippani-app/issues/92)), built in 0.9.0. Filed as issues, not built: writes beyond settings
       and anthologies queued offline ([#91](https://github.com/aaronified/tippani-app/issues/91)).
 - [x] **A Server tab that is all server management** (owner, 13 November 2026; to land in 0.8.2): metadata, Checks and the bin were already there; the account,

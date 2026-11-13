@@ -67,6 +67,17 @@ class OfflineAnthologies implements AnthologyService {
   @override
   bool get hasPoster => _inner.hasPoster;
 
+  @override
+  Future<T> keyed<T>(String? key, Future<T> Function() run) =>
+      _inner.keyed(key, run);
+
+  static int _keys = 0;
+
+  /// A key for one change, the same whether it is sent now or waits in the queue: a request that reached the
+  /// server and lost its reply is then recognised when it is sent again.
+  String _newKey() =>
+      'a${_clock().microsecondsSinceEpoch.toRadixString(36)}${(_keys++).toRadixString(36)}';
+
   // ── the queue ──────────────────────────────────────────────────────────────────────────────────────
 
   _Queue _load() {
@@ -108,7 +119,10 @@ class OfflineAnthologies implements AnthologyService {
         final op = q.ops.first;
         final gained = <String, int>{};
         try {
-          await _replay(op, q, touched, gained);
+          await _inner.keyed(
+            op['k'] as String?,
+            () => _replay(op, q, touched, gained),
+          );
         } on AnthologyException catch (e) {
           if (e.unreachable) break;
           refused.add(e.message);
@@ -286,12 +300,13 @@ class OfflineAnthologies implements AnthologyService {
     required Future<T> Function() local,
     int? anthologyId,
   }) async {
+    op['k'] ??= _newKey();
     final onlyHere = anthologyId != null && anthologyId < 0;
     if (!onlyHere) {
       if (_load().ops.isNotEmpty) await flush();
       if (_load().ops.isEmpty) {
         try {
-          return await online();
+          return await _inner.keyed(op['k'] as String?, online);
         } on AnthologyException catch (e) {
           if (!e.unreachable) rethrow;
         }
@@ -494,17 +509,24 @@ class OfflineAnthologies implements AnthologyService {
 
   @override
   Future<Anthology> create(String title, String intro) async {
+    final key = _newKey();
     if (_load().ops.isNotEmpty) await flush();
     if (_load().ops.isEmpty) {
       try {
-        return await _inner.create(title, intro);
+        return await _inner.keyed(key, () => _inner.create(title, intro));
       } on AnthologyException catch (e) {
         if (!e.unreachable) rethrow;
       }
     }
     final q = _load();
     final tmp = q.next--;
-    q.ops.add({'op': 'create', 'tmp': tmp, 'title': title, 'intro': intro});
+    q.ops.add({
+      'op': 'create',
+      'k': key,
+      'tmp': tmp,
+      'title': title,
+      'intro': intro,
+    });
     await _save(q);
     final row = <String, Object?>{
       'id': tmp,
@@ -696,11 +718,15 @@ class OfflineAnthologies implements AnthologyService {
     ({String kind, int itemId})? after,
   }) async {
     id = _id(id);
+    final key = _newKey();
     if (id > 0) {
       if (_load().ops.isNotEmpty) await flush();
       if (_load().ops.isEmpty) {
         try {
-          return await _inner.addSection(id, title, prose, after: after);
+          return await _inner.keyed(
+            key,
+            () => _inner.addSection(id, title, prose, after: after),
+          );
         } on AnthologyException catch (e) {
           if (!e.unreachable) rethrow;
         }
@@ -710,6 +736,7 @@ class OfflineAnthologies implements AnthologyService {
     final tmp = q.next--;
     q.ops.add({
       'op': 'section',
+      'k': key,
       'id': id,
       'tmp': tmp,
       'title': title,

@@ -103,10 +103,22 @@ class ApiClient {
   }
 
   /// POST [body] as JSON to [path] and decode the JSON answer (null for an empty one).
-  Future<Object?> postJson(String path, Map<String, Object?> body) => _send(
+  ///
+  /// [idempotencyKey] marks a write that may be sent twice (a queued change whose reply was lost): the server
+  /// answers a repeated key with the first answer and makes nothing twice. A server that does not know the header
+  /// ignores it.
+  Future<Object?> postJson(
+    String path,
+    Map<String, Object?> body, {
+    String? idempotencyKey,
+  }) => _send(
     () => _client.post(
       _uri(path),
-      headers: {..._headers, 'Content-Type': 'application/json'},
+      headers: {
+        ..._headers,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': ?idempotencyKey,
+      },
       body: jsonEncode(body),
     ),
   );

@@ -36,6 +36,20 @@ class _Server implements AnthologyService {
   @override
   bool get hasPoster => true;
 
+  /// The key each request was sent under, in order (null: none).
+  final keys = <String?>[];
+  String? _key;
+
+  @override
+  Future<T> keyed<T>(String? key, Future<T> Function() run) async {
+    _key = key;
+    try {
+      return await run();
+    } finally {
+      _key = null;
+    }
+  }
+
   void _reach() {
     if (!up) {
       throw const AnthologyException('no route', unreachable: true);
@@ -86,6 +100,7 @@ class _Server implements AnthologyService {
   Future<Anthology> create(String title, String intro) async {
     _reach();
     sent.add('create $title');
+    keys.add(_key);
     final id = _next++;
     rows[id] = {'id': id, 'title': title, 'intro': intro};
     entries[id] = [];
@@ -112,6 +127,7 @@ class _Server implements AnthologyService {
   Future<bool> add(int id, String kind, int itemId) async {
     _reach();
     sent.add('add $id $kind/$itemId');
+    keys.add(_key);
     entries[id]!.add({
       'kind': kind,
       'item_id': itemId,
@@ -154,6 +170,7 @@ class _Server implements AnthologyService {
   }) async {
     _reach();
     sent.add('section $id $title after ${after?.itemId}');
+    keys.add(_key);
     final s = {'id': _next++, 'position': 9.0, 'title': title, 'prose': prose};
     sections[id]!.add(s);
     return AnthologySection.fromJson(s);
@@ -591,6 +608,35 @@ void main() {
       'abcdefabcdefabcd.jpg',
       reason:
           'the server\'s name replaces the local one once it has the picture',
+    );
+  });
+
+  test('a queued create carries one key, the same whether it was tried now or waited', () async {
+    final r = await _rig();
+    r.server.up = false;
+    final made = await r.service.create('Draft', '');
+    await r.service.addSection(made.id, 'Heading', '');
+    expect(
+      r.server.keys,
+      isEmpty,
+      reason: 'nothing was sent while it was out of reach',
+    );
+    r.server.up = true;
+    await r.service.flush();
+    expect(r.server.keys, hasLength(2));
+    expect(r.server.keys.every((k) => k != null && k.isNotEmpty), isTrue);
+    expect(
+      r.server.keys.toSet(),
+      hasLength(2),
+      reason: 'each change has its own key',
+    );
+
+    final online = await r.service.create('Online', '');
+    expect(online.title, 'Online');
+    expect(
+      r.server.keys.last,
+      isNotNull,
+      reason: 'a change sent at once carries a key too',
     );
   });
 

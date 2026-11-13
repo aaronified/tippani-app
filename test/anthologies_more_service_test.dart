@@ -18,6 +18,9 @@ class _Server extends FakeServer {
   /// When set, every anthology call is answered with this status.
   int? answerWith;
 
+  /// The Idempotency-Key of every anthology request, in order (null: none).
+  final keys = <String?>[];
+
   @override
   Future<http.Response> handle(http.Request r) async {
     final path = r.url.path.replaceFirst(RegExp(r'^.*?/api'), '');
@@ -27,6 +30,7 @@ class _Server extends FakeServer {
     seen.add(
       '${r.method} $path${r.url.hasQuery ? '?${r.url.query}' : ''} ${r.body}',
     );
+    keys.add(r.headers['Idempotency-Key']);
     if (answerWith != null) return http.Response('', answerWith!);
     if (path == '/search/vocabulary') {
       return http.Response(
@@ -93,6 +97,12 @@ class _Server extends FakeServer {
     }
     if (r.method == 'GET' && path.contains('/export')) {
       return http.Response.bytes([1, 2, 3], 200);
+    }
+    if (r.method == 'POST' && path == '/anthologies') {
+      return http.Response(
+        jsonEncode({'id': 9, 'title': 'T', 'intro': '', 'entries': 0}),
+        201,
+      );
     }
     if (r.method == 'POST' && path.endsWith('/fill')) {
       return http.Response(
@@ -272,6 +282,16 @@ void main() {
       ServerCheck.answered(caps({'anthology-poster'})),
     );
     expect(svc.hasPoster, isTrue);
+  });
+
+  test('a keyed create, heading and entry go out under their key, and nothing else does', () async {
+    final (svc, s) = await rig();
+    await svc.keyed('key-a', () => svc.create('T', ''));
+    await svc.keyed('key-b', () => svc.addSection(3, 'H', ''));
+    await svc.keyed('key-c', () => svc.add(3, 'book', 1));
+    await svc.create('Plain', '');
+    await svc.setGrouping(3, 'work');
+    expect(s.keys, ['key-a', 'key-b', 'key-c', null, null]);
   });
 
   test(

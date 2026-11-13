@@ -13,6 +13,7 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Fixed
 
+- A change that reached the server while its reply was lost is no longer made twice: every anthology, heading and passage you add, sent now or waiting, carries a key of its own, and a server on 3.9.0 or later answers the repeat with the first answer instead of making a second anthology or heading. An older server ignores the key and behaves as before.
 - A cover or poster chosen with no signal shows at once and says "Change" instead of "Add": the phone keeps the picture and draws it while the upload waits. Choosing again replaces the upload that is still waiting instead of queueing a second one.
 
 ## [0.8.2] - 2026-11-13
