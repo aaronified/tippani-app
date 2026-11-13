@@ -51,6 +51,7 @@ Map<String, Object?> _card(String direction, {int id = 1}) => {
 };
 
 void main() {
+  quizClearingTests();
   test('the daily deck, the practice deck and the scores are read as the server sends them', () async {
     final (server, quiz, _, _) = await _rig();
     server.reviewDaily = {
@@ -227,5 +228,34 @@ void main() {
     await quiz.resetPractice();
     expect(server.reviewSeen.single, {'kind': 'screen', 'id': 4});
     expect(server.practiceResets, 1);
+  });
+}
+
+void quizClearingTests() {
+  test('answers waiting for the server go when the phone is unpaired, and the count is told', () async {
+    SharedPreferences.setMockInitialValues({
+      'server_url': 'https://q.example.org',
+    });
+    final server = FakeServer();
+    final settings = SettingsStore(
+      await SharedPreferences.getInstance(),
+      MemoryTokenVault(),
+    );
+    final controller = AppController(settings, clientFactory: server.factory);
+    await controller.load();
+    await controller.pair('ABCD2345', 'My phone');
+    final quiz = ServerQuiz(controller, settings);
+    server.unreachable = true;
+    await quiz.queue.keep(
+      const QuizAnswer(kind: 'annotation', id: 1, result: 'got', mode: 'daily'),
+      offset: 0,
+    );
+    expect(quiz.queue.length, 1);
+    var told = 0;
+    quiz.queue.addListener(() => told++);
+    await controller.unpair();
+    expect(quiz.queue.length, 0, reason: 'never sent for the next account');
+    expect(settings.quizAnswers, isNull);
+    expect(told, greaterThan(0));
   });
 }

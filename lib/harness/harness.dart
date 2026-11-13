@@ -305,8 +305,6 @@ class Harness {
       ),
     );
     controller.offline.whenCleared.add(contextStore.clear);
-    // answers given with no server belong to the account that gave them
-    controller.offline.whenCleared.add(() => settings.setQuizAnswers(''));
     final contexts = PairedQuoteContext(controller, store: contextStore);
     final l10n = L10n()..use(prefs.prefs.locale);
     Tr.current = l10n; // code with no screen (a service wording an error) speaks in the same language

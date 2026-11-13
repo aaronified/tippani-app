@@ -232,11 +232,20 @@ class OfflineAnthologies implements AnthologyService {
       case 'group':
         await _inner.setGrouping(id, op['by'] as String? ?? '');
       case 'front':
+        // Each piece goes only where the server still holds what the phone held when it was changed, so a
+        // piece edited on the web meanwhile is not written back over (the rule the settings follow).
+        final fresh = (await _inner.get(id)).anthology;
+        String pick(String key, String base, String now) =>
+            !op.containsKey(base) || op[base] == now
+            ? (op[key] as String? ?? now)
+            : now;
         await _inner.setFront(
           id,
-          op['epigraph'] as String? ?? '',
-          op['dedication'] as String? ?? '',
-          description: op['description'] as String?,
+          pick('epigraph', 'bEpigraph', fresh.epigraph),
+          pick('dedication', 'bDedication', fresh.dedication),
+          description: op['description'] == null
+              ? null
+              : pick('description', 'bDescription', fresh.description),
         );
       case 'restore':
         await _inner.restore(id, kind, item);
@@ -773,6 +782,9 @@ class OfflineAnthologies implements AnthologyService {
     String? description,
   }) {
     id = _id(id);
+    // what the phone holds now is what the server held, as far as the phone knows
+    final held = _read('/anthologies/$id')?['anthology'];
+    final base = held is Map ? Map<String, Object?>.from(held) : null;
     return _change(
       {
         'op': 'front',
@@ -780,6 +792,11 @@ class OfflineAnthologies implements AnthologyService {
         'epigraph': epigraph,
         'dedication': dedication,
         'description': ?description,
+        if (base != null) ...{
+          'bEpigraph': base['epigraph'] as String? ?? '',
+          'bDedication': base['dedication'] as String? ?? '',
+          'bDescription': base['description'] as String? ?? '',
+        },
       },
       anthologyId: id,
       online: () =>

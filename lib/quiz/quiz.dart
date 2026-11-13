@@ -476,6 +476,10 @@ class AnswerQueue extends ChangeNotifier {
 
   int get length => _entries().length;
 
+  /// Forgets every answer that waits (the pairing they were given under has gone) and tells whoever shows the
+  /// count.
+  Future<void> clear() => _save([]);
+
   static int _counter = 0;
 
   /// Keeps [a], tries to send the queue once, and gives what the server said about [a] (null: it waits).
@@ -557,6 +561,8 @@ class ServerQuiz extends ChangeNotifier implements QuizService {
       send: _send,
       clock: clock,
     )..addListener(notifyListeners);
+    // answers given with no server belong to the account that gave them, so they go when the pairing does
+    _controller.offline.whenCleared.add(queue.clear);
   }
 
   final AppController _controller;

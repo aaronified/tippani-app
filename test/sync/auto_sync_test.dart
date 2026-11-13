@@ -169,6 +169,40 @@ void main() {
       },
     );
 
+    test(
+      'a change announced while a run is out is still due when the run ends',
+      () async {
+        final r = await rig();
+        late final AutoSync auto;
+        auto = AutoSync(
+          push: PushSync(r.lib, r.controller),
+          pull: PullSync(r.lib, r.controller),
+          controller: r.controller,
+          clock: r.clock.call,
+          connectivity: r.net,
+          after: [() async => auto.queueChanged()],
+        );
+        await auto.syncNow();
+        expect(
+          auto.dirty,
+          isTrue,
+          reason: 'the change came after the run began',
+        );
+        auto.dispose();
+
+        final clean = AutoSync(
+          push: PushSync(r.lib, r.controller),
+          pull: PullSync(r.lib, r.controller),
+          controller: r.controller,
+          clock: r.clock.call,
+          connectivity: r.net,
+        );
+        await clean.syncNow();
+        expect(clean.dirty, isFalse);
+        clean.dispose();
+      },
+    );
+
     test('with no server paired does nothing', () async {
       final r = await rig(paired: false);
       expect(await r.auto.syncNow(), isNull);

@@ -176,7 +176,11 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) _opportunity();
   }
 
+  /// Counts the changes announced, so a run can tell whether one arrived while it was running.
+  int _changeCount = 0;
+
   void _changed() {
+    _changeCount++;
     _markDirty(true);
     scheduleSoon();
   }
@@ -225,6 +229,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     if (!_controller.paired) return null;
     if (_syncing) return _pull.sync();
     _syncing = true;
+    final changesAtStart = _changeCount;
     notifyListeners();
     PullResult result;
     try {
@@ -248,7 +253,12 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
       }
       _lastSynced = _clock();
       _conflicts = result.conflicts;
-      await _markDirty(false);
+      // a change announced while this run was out is not covered by it: it stays due
+      if (_changeCount == changesAtStart) {
+        await _markDirty(false);
+      } else {
+        scheduleSoon();
+      }
       try {
         final p = await SharedPreferences.getInstance();
         await p.setInt(_lastKey, _lastSynced!.millisecondsSinceEpoch);

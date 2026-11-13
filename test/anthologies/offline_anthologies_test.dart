@@ -192,7 +192,10 @@ class _Server implements AnthologyService {
     String? description,
   }) async {
     _reach();
-    sent.add('front $id ${description ?? '-'}');
+    sent.add('front $id ${description ?? '-'} [$epigraph|$dedication]');
+    rows[id]!['epigraph'] = epigraph;
+    rows[id]!['dedication'] = dedication;
+    if (description != null) rows[id]!['description'] = description;
   }
 
   @override
@@ -528,10 +531,23 @@ void main() {
     r.server.up = true;
     await r.service.flush();
     expect(r.server.sent.sublist(r.server.sent.length - 3), [
-      'front ${a.id} Written on a train.',
-      'front ${a.id} -',
+      'front ${a.id} Written on a train. [|]',
+      'front ${a.id} - [E|]',
       'poster ${a.id} 2 wide.jpg',
     ]);
+  });
+
+  test('a front-matter change made with no server does not write over a piece edited on the web meanwhile', () async {
+    final r = await _rig();
+    final a = await r.service.create('A', '');
+    r.server.rows[a.id]!['epigraph'] = 'Old epigraph.';
+    await r.service.get(a.id);
+    r.server.up = false;
+    await r.service.setFront(a.id, 'Old epigraph.', 'For R.');
+    r.server.rows[a.id]!['epigraph'] = 'Edited on the web.';
+    r.server.up = true;
+    await r.service.flush();
+    expect(r.server.sent.last, 'front ${a.id} - [Edited on the web.|For R.]');
   });
 
   test(
