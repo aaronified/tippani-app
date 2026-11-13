@@ -58,6 +58,8 @@ class SettingsStore {
 
   Future<void> write(String key, String value) => _prefs.setString(key, value);
 
+  Future<void> remove(String key) => _prefs.remove(key);
+
   static const _seenKey = 'last_seen_version';
 
   /// The app version this phone last showed "what is new" for, or null on a first install.

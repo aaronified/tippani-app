@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import 'api/api_client.dart';
 import 'api/capabilities.dart';
+import 'api/offline_cache.dart';
 import 'harness/app_log.dart';
 import 'pairing/devices.dart';
 import 'pairing/pairing_service.dart';
@@ -52,6 +53,10 @@ class AppController extends ChangeNotifier {
   String? _token;
   bool _revoked = false;
   final ClientFactory _clientFactory;
+
+  /// What the server last said, for the screens that only read (ADR-0022). Cleared whenever the phone stops
+  /// being paired, so one account's answers never show under another.
+  late final OfflineCache offline = OfflineCache(_settings);
 
   ServerCheck? _check;
   bool _checking = false;
@@ -115,7 +120,7 @@ class AppController extends ChangeNotifier {
   ApiClient? authedClient() {
     final url = serverUrl;
     if (url == null || !paired) return null;
-    return _clientFactory(apiBaseOf(url), _token);
+    return _clientFactory(apiBaseOf(url), _token)..offline = offline;
   }
 
   /// Calls [run] with an authenticated client, and treats a refused token as the end of this pairing: the
@@ -131,6 +136,7 @@ class AppController extends ChangeNotifier {
           'the server refused the token this phone holds; unpairing it here',
         );
         await _settings.forgetToken();
+        await offline.clear();
         _token = null;
         _revoked = true;
         notifyListeners();
@@ -174,6 +180,7 @@ class AppController extends ChangeNotifier {
       // unreachable or already unpaired: the local half still happens
     }
     await _settings.forgetToken();
+    await offline.clear();
     _token = null;
     _isAdmin = false;
     _log?.info('unpaired');
@@ -230,6 +237,7 @@ class AppController extends ChangeNotifier {
   /// Forgets the server and its credential together.
   Future<void> forget() async {
     await _settings.forgetServer();
+    await offline.clear();
     _log?.info('server forgotten');
     _token = null;
     _revoked = false;
