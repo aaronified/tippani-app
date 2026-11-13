@@ -138,6 +138,14 @@ class OfflineCache {
     }
   }
 
+  /// Forgets one answer.
+  Future<void> remove(String key) async {
+    final entries = _entries;
+    entries.removeWhere((e) => e[0] == key);
+    await _store.remove('$_prefix$key');
+    await _store.write(_indexKey, jsonEncode(entries));
+  }
+
   /// Forgets everything kept (the phone was unpaired from this server: another account's answers must not
   /// show under the next one).
   Future<void> clear() async {

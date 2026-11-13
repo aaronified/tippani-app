@@ -399,8 +399,12 @@ String entryKindOf(Realm realm) => switch (realm) {
 
 /// Anything that went wrong with an anthology, in words for the reader.
 class AnthologyException implements Exception {
-  const AnthologyException(this.message);
+  const AnthologyException(this.message, {this.unreachable = false});
   final String message;
+
+  /// The server could not be reached at all (no network, too slow, or nothing paired), as opposed to the
+  /// server answering "no". Only this is worth keeping a change for: it goes up when the server is back.
+  final bool unreachable;
   @override
   String toString() => message;
 }
@@ -489,34 +493,41 @@ class ServerAnthologies implements AnthologyService {
 
   Future<T> _call<T>(Future<T> Function(ApiClient c) run) async {
     if (!available) {
-      throw const AnthologyException('This phone is not paired with a server.');
+      throw const AnthologyException(
+        'This phone is not paired with a server.',
+        unreachable: true,
+      );
     }
     try {
       // withClient answers null only when nothing is paired (checked above); a call that returns nothing
       // (a delete) is a null that is not a failure.
       return await _controller.withClient(run) as T;
     } on ApiException catch (e) {
-      throw AnthologyException(switch (e.failure) {
-        ApiFailure.network => tx(
-          'app.admin_service.the_server_could_not_be_reached',
-        ),
-        ApiFailure.timeout => tx(
-          'app.admin_service.the_server_took_too_long_to',
-        ),
-        ApiFailure.unauthorised => tx(
-          'app.board_service.the_server_no_longer_accepts_this',
-        ),
-        ApiFailure.forbidden => tx(
-          'app.account_service.the_server_does_not_allow_that',
-        ),
-        ApiFailure.rateLimited => tx(
-          'app.board_service.the_server_asks_you_to_wait',
-        ),
-        ApiFailure.server || ApiFailure.badResponse =>
-          e.detail.isNotEmpty
-              ? e.detail
-              : tx('app.admin_service.the_server_could_not_do_that'),
-      });
+      throw AnthologyException(
+        unreachable:
+            e.failure == ApiFailure.network || e.failure == ApiFailure.timeout,
+        switch (e.failure) {
+          ApiFailure.network => tx(
+            'app.admin_service.the_server_could_not_be_reached',
+          ),
+          ApiFailure.timeout => tx(
+            'app.admin_service.the_server_took_too_long_to',
+          ),
+          ApiFailure.unauthorised => tx(
+            'app.board_service.the_server_no_longer_accepts_this',
+          ),
+          ApiFailure.forbidden => tx(
+            'app.account_service.the_server_does_not_allow_that',
+          ),
+          ApiFailure.rateLimited => tx(
+            'app.board_service.the_server_asks_you_to_wait',
+          ),
+          ApiFailure.server || ApiFailure.badResponse =>
+            e.detail.isNotEmpty
+                ? e.detail
+                : tx('app.admin_service.the_server_could_not_do_that'),
+        },
+      );
     }
   }
 

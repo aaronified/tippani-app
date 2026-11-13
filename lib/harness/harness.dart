@@ -21,6 +21,7 @@ import '../people/people_service.dart';
 import '../quiz/quiz.dart';
 import '../share/share_people.dart';
 import '../anthologies/anthologies.dart';
+import '../anthologies/offline_anthologies.dart';
 import '../boards/board_service.dart';
 import '../library/cover_cache.dart';
 import '../tools/quote_context.dart';
@@ -33,6 +34,7 @@ import '../app_controller.dart';
 import '../library/library_backup.dart';
 import '../library/library_store.dart';
 import '../sync/auto_sync.dart';
+import '../sync/fingerprint.dart';
 import '../sync/pull_sync.dart';
 import '../sync/push_sync.dart';
 import '../settings/settings_backup.dart';
@@ -286,6 +288,14 @@ class Harness {
     final directory = PairedPeopleDirectory(controller, covers);
     pull?.onFaces = directory.rememberFaces;
     final prefs = PairedPreferences(controller, settings);
+    final anthologies = OfflineAnthologies(
+      ServerAnthologies(controller),
+      controller.offline,
+      settings,
+      lookup: library == null
+          ? null
+          : (kind, id) => _passageOf(library, kind, id),
+    );
     final l10n = L10n()..use(prefs.prefs.locale);
     Tr.current = l10n; // code with no screen (a service wording an error) speaks in the same language
     prefs.addListener(() => l10n.use(prefs.prefs.locale));
@@ -316,6 +326,7 @@ class Harness {
               pull: pull,
               controller: controller,
               log: appLog,
+              after: [anthologies.flush],
             ),
       runAutoSync: true,
       covers: covers,
@@ -338,7 +349,7 @@ class Harness {
       quiz: ServerQuiz(controller, settings),
       details: PairedWorkDetails(controller),
       contexts: PairedQuoteContext(controller),
-      anthologies: ServerAnthologies(controller),
+      anthologies: anthologies,
       tools: PairedServerTools(controller),
       tags: PairedTagService(controller),
       search: PairedSearch(controller),
@@ -477,4 +488,27 @@ class _NoPicker implements BackupPicker {
 
   @override
   Future<PickedFile?> pick() async => null;
+}
+
+/// What the phone knows about the quote the server calls [serverId] in its [kind] table, drawn the way an
+/// anthology's passage is, so one added with no server shows its words at once (ADR-0022).
+Future<Map<String, Object?>?> _passageOf(
+  LibraryStore library,
+  String kind,
+  int serverId,
+) async {
+  for (final q in await library.quotes()) {
+    if (q.serverId != serverId) continue;
+    final w = q.workId == null ? null : await library.work(q.workId!);
+    if (entryKindOf(realmOfQuote(w)) != kind) continue;
+    return {
+      'quote': q.text,
+      'color': q.color,
+      'language': q.language,
+      'favorite': q.favorite,
+      'source': w?.title ?? '',
+      'credit': w?.creator ?? '',
+    };
+  }
+  return null;
 }

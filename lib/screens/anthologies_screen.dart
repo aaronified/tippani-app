@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../anthologies/anthologies.dart';
+import '../anthologies/offline_anthologies.dart';
 import '../app_controller.dart';
 import '../capture/photo_source.dart';
 import '../harness/harness.dart' show BackupPicker;
@@ -204,66 +205,121 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
         icon: const Icon(Ti.plus),
         label: Text(context.tr('anthologies.list.new.label')),
       ),
-      body: _problem != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_problem!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _load,
-                      child: Text(context.tr('common.source.retry')),
-                    ),
-                  ],
-                ),
+      body: Column(
+        children: [
+          _WaitingNote(widget.service),
+          Expanded(child: _list(context, all)),
+        ],
+      ),
+    );
+  }
+
+  Widget _list(BuildContext context, List<Anthology>? all) {
+    return _problem != null
+        ? Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_problem!, textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: _load,
+                    child: Text(context.tr('common.source.retry')),
+                  ),
+                ],
               ),
-            )
-          : all == null
-          ? const Center(child: CircularProgressIndicator())
-          : all.isEmpty
-          ? Center(
-              child: Text(context.tr('app.anthologies.no_anthologies_yet')),
-            )
-          : ListView(
-              padding: const EdgeInsets.only(top: 8, bottom: 88),
-              children: [
-                for (final a in all)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 5,
-                    ),
-                    child: Card(
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
-                        ),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: AnthologyCover(
-                            name: a.coverPath,
+            ),
+          )
+        : all == null
+        ? const Center(child: CircularProgressIndicator())
+        : all.isEmpty
+        ? Center(child: Text(context.tr('app.anthologies.no_anthologies_yet')))
+        : ListView(
+            padding: const EdgeInsets.only(top: 8, bottom: 88),
+            children: [
+              for (final a in all)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 5,
+                  ),
+                  child: Card(
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      leading: ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: AnthologyCover(
+                          name: a.coverPath,
+                          width: 40,
+                          height: 56,
+                          fallback: const SizedBox(
                             width: 40,
                             height: 56,
-                            fallback: const SizedBox(
-                              width: 40,
-                              height: 56,
-                              child: Icon(Ti.books),
-                            ),
+                            child: Icon(Ti.books),
                           ),
                         ),
-                        title: Text(a.title),
-                        subtitle: Text(countWords('passage', a.entries)),
-                        trailing: const Icon(Ti.chevronRight),
-                        onTap: () => _open(a),
                       ),
+                      title: Text(a.title),
+                      subtitle: Text(countWords('passage', a.entries)),
+                      trailing: const Icon(Ti.chevronRight),
+                      onTap: () => _open(a),
                     ),
                   ),
-              ],
+                ),
+            ],
+          );
+  }
+}
+
+/// What waits for the server, and what it refused: shown above the list so a reader who worked with no signal
+/// can see their changes are kept (ADR-0022).
+class _WaitingNote extends StatelessWidget {
+  const _WaitingNote(this.service);
+
+  final AnthologyService service;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = service;
+    if (s is! OfflineAnthologies) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: Listenable.merge([s.pending, s.problems]),
+      builder: (context, _) {
+        final n = s.pending.value;
+        final refused = s.problems.value;
+        if (n == 0 && refused.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (n > 0)
+                    Text(
+                      n == 1
+                          ? '1 change is kept on this phone and goes to the server when it answers.'
+                          : '$n changes are kept on this phone and go to the server when it answers.',
+                    ),
+                  for (final r in refused)
+                    Text('The server did not take one: $r'),
+                  if (refused.isNotEmpty)
+                    TextButton(
+                      onPressed: () => s.problems.value = const [],
+                      child: Text(context.tr('common.action.done.label')),
+                    ),
+                ],
+              ),
             ),
+          ),
+        );
+      },
     );
   }
 }
