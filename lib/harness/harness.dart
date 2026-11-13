@@ -27,6 +27,7 @@ import '../anthologies/offline_anthologies.dart';
 import '../boards/board_service.dart';
 import '../library/cover_cache.dart';
 import '../library/work_keeper.dart';
+import '../api/offline_writes.dart';
 import '../tools/context_store.dart';
 import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
@@ -302,6 +303,16 @@ class Harness {
           : (kind, id) => _passageOf(library, kind, id),
       keepPicture: covers.keepLocal,
     );
+    final writes = OfflineWrites(controller, settings);
+    // a change the server refused is dropped; the log is where the reader can see what was
+    writes.problems.addListener(() {
+      final all = writes.problems.value;
+      if (all.isNotEmpty) {
+        appLog.warn(
+          'a change made offline was refused and dropped: ${all.last}',
+        );
+      }
+    });
     final contextStore = FileContextStore(
       () async => Directory(
         '${(await getApplicationSupportDirectory()).path}/contexts',
@@ -322,6 +333,7 @@ class Harness {
             after: [
               prefs.flush,
               anthologies.flush,
+              writes.flush,
               () => keepContexts(library!, contexts),
               () => keepWorkExtras(library!, covers, workDetails),
             ],
@@ -329,12 +341,15 @@ class Harness {
     // a change made with no server counts as something to send, so it goes up when the server next answers
     // and not only when the library changed
     void queued() {
-      if (anthologies.pending.value > 0 || prefs.hasPending) {
+      if (anthologies.pending.value > 0 ||
+          writes.pending.value > 0 ||
+          prefs.hasPending) {
         auto?.queueChanged();
       }
     }
 
     anthologies.pending.addListener(queued);
+    writes.pending.addListener(queued);
     prefs.addListener(queued);
     // a queue left by the last run is sent at this one's start too
     queued();
@@ -374,7 +389,7 @@ class Harness {
       localeFetch: () =>
           controller.withClient<Object?>((c) => c.getJson('/locales')),
       account: PairedAccount(controller),
-      contextRules: PairedContextRules(controller),
+      contextRules: PairedContextRules(controller, writes: writes),
       peopleService: PairedPeopleService(controller),
       coverSearch: PairedCoverSearch(controller),
       metadata: PairedMetadataService(controller),
@@ -385,8 +400,8 @@ class Harness {
       details: workDetails,
       contexts: contexts,
       anthologies: anthologies,
-      tools: PairedServerTools(controller),
-      tags: PairedTagService(controller),
+      tools: PairedServerTools(controller, writes: writes),
+      tags: PairedTagService(controller, writes: writes),
       search: PairedSearch(controller),
       lookup: PairedWorkLookup(controller),
       boards: library == null ? null : ServerBoards(controller, library),

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/widgets.dart';
 
 import '../api/api_client.dart';
+import '../api/offline_writes.dart';
 import '../app_controller.dart';
 import '../l10n/l10n.dart';
 
@@ -253,9 +254,12 @@ class ContextRulesScope extends InheritedWidget {
 }
 
 class PairedContextRules implements ContextRules {
-  PairedContextRules(this._controller);
+  PairedContextRules(this._controller, {this.writes});
 
   final AppController _controller;
+
+  /// Where a saved rule waits when the server cannot be reached.
+  final OfflineWrites? writes;
 
   @override
   bool get available => _controller.paired;
@@ -295,9 +299,35 @@ class PairedContextRules implements ContextRules {
   Future<Outcome<ContextRule>> global() =>
       _call((c) async => _rule(await c.getJson('/context-rules/global')));
 
+  /// Saves [rule] at [path]: at once, or kept and shown on the copy of the rule the phone holds.
+  Future<Outcome<Object?>> _save(String path, Map<String, Object?> body) async {
+    final w = writes;
+    if (w == null) return _call((c) => c.putJson(path, body));
+    try {
+      final r = await w.write(
+        'PUT',
+        path,
+        body,
+        local: () => w.patchKept(
+          path,
+          (j) => {...(j is Map ? Map<String, Object?>.from(j) : {}), ...body},
+        ),
+      );
+      return Outcome.ok(r.answer);
+    } on ApiException catch (e) {
+      return Outcome.fail(
+        e.detail.isEmpty
+            ? tx('app.account_service.the_server_refused_that')
+            : e.detail,
+      );
+    }
+  }
+
   @override
-  Future<Outcome<void>> setGlobal(ContextRule rule) =>
-      _call((c) => c.putJson('/context-rules/global', _body(rule)));
+  Future<Outcome<void>> setGlobal(ContextRule rule) async {
+    final r = await _save('/context-rules/global', _body(rule));
+    return r.ok ? Outcome.ok(null) : Outcome.fail(r.error!);
+  }
 
   @override
   Future<Outcome<ContextRule>> forWork(String scope, int id) =>
@@ -309,11 +339,10 @@ class PairedContextRules implements ContextRules {
     int id,
     ContextRule rule, {
     String enforce = '',
-  }) => _call((c) async {
-    final j = await c.putJson(
-      '/context-rules/$scope/$id',
-      _body(rule, enforce),
-    );
-    return j is Map ? (j['changed'] as num?)?.toInt() ?? 0 : 0;
-  });
+  }) async {
+    final r = await _save('/context-rules/$scope/$id', _body(rule, enforce));
+    if (!r.ok) return Outcome.fail(r.error!);
+    final j = r.value;
+    return Outcome.ok(j is Map ? (j['changed'] as num?)?.toInt() ?? 0 : 0);
+  }
 }

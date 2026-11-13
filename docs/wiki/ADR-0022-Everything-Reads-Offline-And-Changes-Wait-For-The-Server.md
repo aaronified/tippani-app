@@ -14,6 +14,10 @@
   reads (a stale answer there would look like a server that had lost everything) and not `/auth/me`, whose failure is how the app learns it was
   unpaired; the Account page reads its own three answers through `getJsonKept` instead. A read of what was just saved is live (`getJsonLive`), so an old
   copy is never served in place of a timeout. A screen that shows a kept answer says so, with its date (`OfflineNote`).
+  Small writes outside anthologies and settings wait the same way (`OfflineWrites`, `outbox.writes`): a tag's name, colour or style, a tag deleted, an
+  item restored from the bin and a context rule. Each is applied at once to the kept copy of the screen it changes, goes up in order, and is dropped
+  with a line in the app log when the server refuses it. A change made when the server is back goes after the ones that waited. What cannot be undone
+  (merging tags, deleting for good, emptying the bin) and what has to be answered (a password, a name check) stays online and says so.
   What a shelf and a work page draw is kept too (`keepWorkExtras`, after a sync): cover pictures, and each work's details and cast, at most 60
   requests a run, details read again after two weeks, and a run stops after three misses in a row.
 - **A change made while the server cannot be reached is kept and sent in order.** Anthologies (`OfflineAnthologies`) apply the change to the kept copy at

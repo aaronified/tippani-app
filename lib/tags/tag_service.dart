@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../api/server_call.dart';
+import '../api/offline_writes.dart';
 import '../app_controller.dart';
 
 /// The looks a tag can wear on the web: a sticker, a banner, a flyout, a piece of tape or a film reel.
@@ -59,8 +60,11 @@ abstract class TagService {
 }
 
 class PairedTagService implements TagService {
-  PairedTagService(this._controller);
+  PairedTagService(this._controller, {this.writes});
   final AppController _controller;
+
+  /// Where a rename, a colour or style change and a delete wait when the server cannot be reached.
+  final OfflineWrites? writes;
 
   @override
   bool get available => _controller.paired;
@@ -91,20 +95,61 @@ class PairedTagService implements TagService {
     String? color,
     String? style,
   }) => serverCall(_controller, (c) async {
-    return ServerTag.fromJson(
-      asMap(
-        await c.putJson('/tags/${tag.id}', {
-          'name': name ?? tag.name,
-          'color': color ?? tag.color,
-          'style': style ?? tag.style,
-        }),
-      ),
+    final body = <String, Object?>{
+      'name': name ?? tag.name,
+      'color': color ?? tag.color,
+      'style': style ?? tag.style,
+    };
+    final w = writes;
+    if (w == null) {
+      return ServerTag.fromJson(
+        asMap(await c.putJson('/tags/${tag.id}', body)),
+      );
+    }
+    final r = await w.write(
+      'PUT',
+      '/tags/${tag.id}',
+      body,
+      local: () => w.patchKept('/tags', (j) {
+        final m = Map<String, Object?>.from(asMap(j));
+        m['tags'] = [
+          for (final t in (m['tags'] as List? ?? const []))
+            t is Map && t['id'] == tag.id ? {...t, ...body} : t,
+        ];
+        return m;
+      }),
     );
+    return r.sent
+        ? ServerTag.fromJson(asMap(r.answer))
+        : ServerTag(
+            id: tag.id,
+            name: body['name']! as String,
+            color: body['color']! as String,
+            style: body['style']! as String,
+            quotes: tag.quotes,
+          );
   });
 
   @override
   Future<void> delete(ServerTag tag) => serverCall(_controller, (c) async {
-    await c.delete('/tags/${tag.id}');
+    final w = writes;
+    if (w == null) {
+      await c.delete('/tags/${tag.id}');
+      return;
+    }
+    await w.write(
+      'DELETE',
+      '/tags/${tag.id}',
+      null,
+      local: () => w.patchKept('/tags', (j) {
+        final m = Map<String, Object?>.from(asMap(j));
+        m['tags'] = [
+          for (final t in (m['tags'] as List? ?? const []))
+            if (!(t is Map && t['id'] == tag.id)) t,
+        ];
+        return m;
+      }),
+    );
   });
 
   @override
