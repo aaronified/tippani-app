@@ -440,6 +440,48 @@ void main() {
     );
 
     testWidgets(
+      'Unpair every device asks first, signs out every device of the account and unpairs this phone too',
+      (tester) async {
+        final s = FakeServer();
+        final r = await rig(s);
+        await r.controller.pair('ABCD2345', 'My Android phone');
+        await open(tester, r);
+        await tester.tap(find.text('Server'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Paired devices'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.widgetWithText(OutlinedButton, 'Unpair every device'),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        expect(
+          s.paths.where((p) => p.contains('revoke-all')),
+          isEmpty,
+          reason: 'Cancel signs nobody out',
+        );
+        expect(r.controller.paired, isTrue);
+
+        await tester.tap(
+          find.widgetWithText(OutlinedButton, 'Unpair every device'),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.widgetWithText(FilledButton, 'Unpair every device'),
+        );
+        await tester.pumpAndSettle();
+        expect(s.paths.where((p) => p.contains('revoke-all')), hasLength(1));
+        expect(
+          r.controller.paired,
+          isFalse,
+          reason: 'this phone was one of them',
+        );
+      },
+    );
+
+    testWidgets(
       'on a server too old to mark the current device, the list says so',
       (tester) async {
         final s = FakeServer(revision: 8);

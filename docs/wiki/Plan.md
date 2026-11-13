@@ -347,6 +347,8 @@ synced account's theme preferences are ignored here.
       Built in 0.9.0: covers, cast and details kept after every sync ([#88](https://github.com/aaronified/tippani-app/issues/88)); a cover or poster picked
       offline shown at once ([#92](https://github.com/aaronified/tippani-app/issues/92)); tag rename, colour, style and delete, bin restore and context rules waiting
       offline ([#91](https://github.com/aaronified/tippani-app/issues/91)). Account, people and Checks decisions still need the server.
+      Unpair every device is built ([#93](https://github.com/aaronified/tippani-app/issues/93)). **Reset all data is deliberately not on the phone**: it deletes every account's library on
+      the server, needs a downloaded safety copy the phone cannot check the owner has kept, and is one tap from a wrong screen. It stays on the web.
 - [x] **A Server tab that is all server management** (owner, 13 November 2026; to land in 0.8.2): metadata, Checks and the bin were already there; the account,
       language, text and quotes, colours, sections (with the bin's keep time), daily review and context rules moved in as **Your settings on the server**. Settings
       keeps the app's own: app colours, tags (library data), reading aloud, updates, backup, the log and the licences.

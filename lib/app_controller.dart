@@ -175,6 +175,13 @@ class AppController extends ChangeNotifier {
     await withClient((c) => revokeDevice(c, id));
   }
 
+  /// Unpairs every device of the account, this phone too: the server ends all their tokens, so this phone
+  /// forgets its own as well.
+  Future<void> revokeAll() async {
+    await withClient((c) => c.postJson('/auth/devices/revoke-all', {}));
+    await unpair();
+  }
+
   /// Unpairs this phone: asks the server to forget it (best effort; a server that cannot be reached is not
   /// a reason to keep the token), then forgets the token here. The server address stays.
   Future<void> unpair() async {

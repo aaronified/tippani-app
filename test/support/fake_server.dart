@@ -950,6 +950,11 @@ class FakeServer {
         ],
       });
     }
+    if (r.method == 'POST' && path == '/auth/devices/revoke-all') {
+      devices.clear();
+      tokenValid = false;
+      return http.Response('', 204);
+    }
     final del = RegExp(r'^/auth/devices/(\d+)$').firstMatch(path);
     if (r.method == 'DELETE' && del != null) {
       final id = int.parse(del[1]!);

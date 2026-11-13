@@ -1401,3 +1401,7 @@ app.anthology_tools.add_a_poster = পোস্টার যোগ করুন
 app.anthology_tools.change_poster = পোস্টার বদলান
 app.anthology_tools.remove_poster = পোস্টার সরান
 app.anthology_tools.description = বিবরণ
+app.devices.unpair_every_device = সব ডিভাইস বিযুক্ত করুন
+app.devices.unpair_every_device_title = সব ডিভাইস বিযুক্ত করবেন?
+app.devices.unpair_every_device_body = এই অ্যাকাউন্টের সাথে যুক্ত প্রতিটি ফোন, এটিসহ, সাইন-আউট হয়ে যাবে। নতুন কোড দিয়ে আবার যুক্ত করতে পারবেন।
+app.devices.could_not_unpair_every_device = ডিভাইসগুলো বিযুক্ত করা যায়নি। সংযোগ দেখে আবার চেষ্টা করুন।
