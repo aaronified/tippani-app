@@ -522,6 +522,9 @@ class FakeServer {
   /// network does.
   bool unreachable = false;
 
+  /// What the bin holds: `GET /trash`, and `POST /trash/{id}/restore` takes one out.
+  final trash = <Map<String, Object?>>[];
+
   Future<http.Response> handle(http.Request r) async {
     requests.add(r);
     if (unreachable) throw const SocketException('the network went away');
@@ -910,6 +913,18 @@ class FakeServer {
         'files': localeFiles,
       });
     }
+    if (path == '/trash' && r.method == 'GET') {
+      return _json({'trash': trash, 'days': 30});
+    }
+    final restore = RegExp(r'^/trash/(\d+)/restore$').firstMatch(path);
+    if (restore != null && r.method == 'POST') {
+      final id = int.parse(restore[1]!);
+      final had = trash.any((e) => e['id'] == id);
+      trash.removeWhere((e) => e['id'] == id);
+      return had
+          ? _json({'ok': true})
+          : http.Response(jsonEncode({'error': 'not in the bin'}), 404);
+    }
     final rule = RegExp(r'^/context-rules/(global|(book|movie)/(\d+))$')
         .firstMatch(path);
     if (rule != null) {
@@ -934,6 +949,11 @@ class FakeServer {
             {...d, if (revision >= 9 && d['id'] == currentId) 'current': true},
         ],
       });
+    }
+    if (r.method == 'POST' && path == '/auth/devices/revoke-all') {
+      devices.clear();
+      tokenValid = false;
+      return http.Response('', 204);
     }
     final del = RegExp(r'^/auth/devices/(\d+)$').firstMatch(path);
     if (r.method == 'DELETE' && del != null) {

@@ -104,6 +104,55 @@ class ServerPrefs {
   bool get srLadder => flag('srLadder');
   bool get srPracticeCounts => flag('srPracticeCounts');
 
+  /// Every kind of question a review deck can ask, in the server's order.
+  static const questionKinds = [
+    'source',
+    'quote',
+    'cloze',
+    'cloze-mcq',
+    'speaker',
+    'author',
+    'flip',
+  ];
+
+  /// The kinds that suit every card. A deck keeps at least one of them: the server puts a deck back to its
+  /// defaults otherwise, because "who said this?" alone leaves every book with nothing to ask.
+  static const universalQuestions = {
+    'source',
+    'quote',
+    'cloze',
+    'cloze-mcq',
+    'flip',
+  };
+
+  /// What each deck asks, as the server holds it (`srQuestions`, `daily` and `practice`); the server's defaults
+  /// where the reader has said nothing. The daily deck never offers the flip card: the server cannot check an
+  /// answer the reader marks.
+  List<String> questionsFor(String deck) {
+    final defaults = deck == 'daily'
+        ? questionKinds.where((k) => k != 'flip').toList()
+        : List<String>.of(questionKinds);
+    final s = raw['srQuestions'];
+    if (s is! String || s.isEmpty) return defaults;
+    try {
+      final j = jsonDecode(s);
+      final list = j is Map ? j[deck] : null;
+      if (list is! List) return defaults;
+      return [
+        for (final k in questionKinds)
+          if (list.contains(k) && !(deck == 'daily' && k == 'flip')) k,
+      ];
+    } on FormatException {
+      return defaults;
+    }
+  }
+
+  /// The `srQuestions` document with [deck] asking [kinds] and the other deck as it is.
+  String questionsDocument(String deck, List<String> kinds) => jsonEncode({
+    'daily': deck == 'daily' ? kinds : questionsFor('daily'),
+    'practice': deck == 'practice' ? kinds : questionsFor('practice'),
+  });
+
   /// Days the Bin keeps things: 7, 30, 90, or -1 for ever.
   int get trashDays => integer('trashDays', 30);
 

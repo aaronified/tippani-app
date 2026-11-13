@@ -343,9 +343,12 @@ synced account's theme preferences are ignored here.
       commentary, grouping, front matter, cover picture and fill) are made and edited offline and go up in order; a setting changed offline is kept and sent
       unless the web changed it meanwhile; the context of every synced quote is kept on the phone; the admin section shows with no server. **Not done:** a
       count of what a fill would find and an EPUB need the server; source files stay on the server (only the list and each quote's context are kept); a crash
-      between sending a queued change and saving the queue may send a new anthology or heading twice (needs the server's idempotency keys, Tippani issue 97).
-      Filed as issues, not built: covers, cast and details kept after every sync ([#88](https://github.com/aaronified/tippani-app/issues/88)); writes beyond settings
-      and anthologies queued offline ([#91](https://github.com/aaronified/tippani-app/issues/91)); a cover or poster picked offline shown at once ([#92](https://github.com/aaronified/tippani-app/issues/92)).
+      between sending a queued change and saving the queue is safe against a server on 3.9.0 or later (Idempotency-Key, built in 0.9.0); an older server may make a new anthology or heading twice.
+      Built in 0.9.0: covers, cast and details kept after every sync ([#88](https://github.com/aaronified/tippani-app/issues/88)); a cover or poster picked
+      offline shown at once ([#92](https://github.com/aaronified/tippani-app/issues/92), without the "waiting" mark ([#96](https://github.com/aaronified/tippani-app/issues/96)) and without a size ceiling on the cover folder ([#95](https://github.com/aaronified/tippani-app/issues/95)); tag rename, colour, style and delete, bin restore and context rules waiting
+      offline ([#91](https://github.com/aaronified/tippani-app/issues/91)). Account, people and Checks decisions still need the server.
+      Which questions each review deck asks is built, and the rest of the web's settings are web-only on purpose ([#89](https://github.com/aaronified/tippani-app/issues/89), [ADR-0023](ADR-0023-Which-Server-Settings-The-Phone-Offers.md)). Jobs for every reader is built ([#90](https://github.com/aaronified/tippani-app/issues/90)). Unpair every device is built ([#93](https://github.com/aaronified/tippani-app/issues/93)). **Reset all data is deliberately not on the phone**: it deletes every account's library on
+      the server, needs a downloaded safety copy the phone cannot check the owner has kept, and is one tap from a wrong screen. It stays on the web.
 - [x] **A Server tab that is all server management** (owner, 13 November 2026; to land in 0.8.2): metadata, Checks and the bin were already there; the account,
       language, text and quotes, colours, sections (with the bin's keep time), daily review and context rules moved in as **Your settings on the server**. Settings
       keeps the app's own: app colours, tags (library data), reading aloud, updates, backup, the log and the licences.

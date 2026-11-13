@@ -1,3 +1,4 @@
+import 'admin_jobs_screen.dart';
 import 'admin_screen.dart';
 import 'checks_entry.dart';
 import 'metadata_tools_screen.dart';
@@ -342,6 +343,26 @@ class SettingsScreen extends StatelessWidget {
                 _Group(
                   children: [
                     ChecksEntry(controller: controller, harness: harness),
+                    // every reader has a queue of their own on the server, so the administrator's Jobs
+                    // is not the only way in; the server shows a reader only their own jobs
+                    if (harness.admin != null && !controller.isAdmin)
+                      ListTile(
+                        leading: const Icon(Ti.history),
+                        title: Text(context.tr('settings.section.jobs.label')),
+                        subtitle: Text(
+                          context.tr(
+                            'app.admin.what_is_running_and_waiting_what',
+                          ),
+                        ),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => AdminJobsScreen(
+                              service: harness.admin!,
+                              ownOnly: true,
+                            ),
+                          ),
+                        ),
+                      ),
                     if (harness.sources != null && harness.library != null)
                       ListTile(
                         leading: const Icon(Ti.fileText),

@@ -51,5 +51,6 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0020](ADR-0020-The-Colours-Are-Chosen-In-Settings.md): The colours are chosen in Settings
 - [ADR-0021](ADR-0021-Four-Tabs-And-The-Boards-Tab.md): Four tabs, and the Boards tab
 - [ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md): Everything reads offline, and a change made offline waits for the server
+- [ADR-0023](ADR-0023-Which-Server-Settings-The-Phone-Offers.md): Which server settings the phone offers
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)

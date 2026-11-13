@@ -183,7 +183,12 @@ class OfflineCache {
     _index = [];
     servedFrom.value = null;
     for (final forget in List.of(whenCleared)) {
-      await forget();
+      // one that fails must not leave the rest undone: the queues that must not outlive the pairing are among them
+      try {
+        await forget();
+      } on Object {
+        // carried on
+      }
     }
   }
 }

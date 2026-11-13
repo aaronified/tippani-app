@@ -79,6 +79,41 @@ class _DevicesScreenState extends State<DevicesScreen> {
     await _load();
   }
 
+  Future<void> _revokeAll() async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.tr('app.devices.unpair_every_device_title')),
+        content: Text(context.tr('app.devices.unpair_every_device_body')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.tr('common.action.cancel.label')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.tr('app.devices.unpair_every_device')),
+          ),
+        ],
+      ),
+    );
+    if (yes != true) return;
+    try {
+      await widget.controller.revokeAll();
+      if (mounted) Navigator.of(context).maybePop();
+    } on ApiException {
+      if (!mounted) return;
+      setState(
+        () =>
+            _problem = context.tr('app.devices.could_not_unpair_every_device'),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final devices = _devices;
@@ -102,6 +137,21 @@ class _DevicesScreenState extends State<DevicesScreen> {
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(
                   context.tr('app.devices.this_server_is_too_old_to'),
+                ),
+              ),
+            if (devices != null && devices.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: scheme.error,
+                      side: BorderSide(color: scheme.error),
+                    ),
+                    onPressed: _revokeAll,
+                    child: Text(context.tr('app.devices.unpair_every_device')),
+                  ),
                 ),
               ),
             for (final d in devices ?? const <DeviceInfo>[])

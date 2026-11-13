@@ -29,6 +29,8 @@ class OfflineAnthologies implements AnthologyService {
     this._cache,
     this._store, {
     this.lookup,
+    this.keepPicture,
+    this.discardPicture,
     DateTime Function()? clock,
   }) : _clock = clock ?? DateTime.now {
     pending.value = _load().ops.length;
@@ -45,6 +47,12 @@ class OfflineAnthologies implements AnthologyService {
   final OfflineCache _cache;
   final SettingsStore _store;
   final PassageLookup? lookup;
+
+  /// Keeps a picture chosen with no server on the phone and returns its name, so it shows at once.
+  final Future<String> Function(Uint8List bytes, String fileName)? keepPicture;
+
+  /// Removes a kept picture that is no longer needed (it was uploaded, or replaced by another pick).
+  final Future<void> Function(String name)? discardPicture;
   final DateTime Function() _clock;
 
   static const _key = 'outbox.anthologies';
@@ -62,6 +70,24 @@ class OfflineAnthologies implements AnthologyService {
 
   @override
   bool get hasPoster => _inner.hasPoster;
+
+  @override
+  Future<T> keyed<T>(String? key, Future<T> Function() run) =>
+      _inner.keyed(key, run);
+
+  static int _keys = 0;
+
+  /// Kept pictures whose upload went, to be removed once the screens read the server's name for them.
+  final _uploaded = <Object?>[];
+
+  Future<void> _discard(Object? name) async {
+    if (name is String && name.isNotEmpty) await discardPicture?.call(name);
+  }
+
+  /// A key for one change, the same whether it is sent now or waits in the queue: a request that reached the
+  /// server and lost its reply is then recognised when it is sent again.
+  String _newKey() =>
+      'a${_clock().microsecondsSinceEpoch.toRadixString(36)}${(_keys++).toRadixString(36)}';
 
   // ── the queue ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -92,7 +118,16 @@ class OfflineAnthologies implements AnthologyService {
   /// temporary id out twice). Only the op that was sent is taken off, and the ids the server gave are added.
   Future<int> flush() async {
     if (_flushing) return 0;
-    if (_load().ops.isEmpty) return 0;
+    if (_load().ops.isEmpty) {
+      // a picture whose upload went while the server could not be read again is removed on a later run
+      if (_uploaded.isNotEmpty && await _refresh(const {})) {
+        for (final name in _uploaded) {
+          await _discard(name);
+        }
+        _uploaded.clear();
+      }
+      return 0;
+    }
     _flushing = true;
     var sent = 0;
     final touched = <int>{};
@@ -104,7 +139,10 @@ class OfflineAnthologies implements AnthologyService {
         final op = q.ops.first;
         final gained = <String, int>{};
         try {
-          await _replay(op, q, touched, gained);
+          await _inner.keyed(
+            op['k'] as String?,
+            () => _replay(op, q, touched, gained),
+          );
         } on AnthologyException catch (e) {
           if (e.unreachable) break;
           refused.add(e.message);
@@ -117,7 +155,14 @@ class OfflineAnthologies implements AnthologyService {
         await _save(now);
         sent++;
       }
-      if (sent > 0) await _refresh(touched);
+      final fresh = sent == 0 || await _refresh(touched);
+      // a kept picture goes only when the screens read the server's name for it; until then it is still drawn
+      if (fresh) {
+        for (final name in _uploaded) {
+          await _discard(name);
+        }
+        _uploaded.clear();
+      }
     } finally {
       _flushing = false;
     }
@@ -128,14 +173,17 @@ class OfflineAnthologies implements AnthologyService {
   }
 
   /// Reads the lists the server holds now, so what was kept on the phone is the server's word again.
-  Future<void> _refresh(Set<int> touched) async {
+  /// Reads the list and what was touched again. True when the kept copy now says what the server does.
+  Future<bool> _refresh(Set<int> touched) async {
     try {
       await _inner.list();
       for (final id in touched) {
         if (id > 0) await _inner.get(id);
       }
+      return true;
     } on AnthologyException {
       // the kept copy stands until the next time
+      return false;
     }
   }
 
@@ -255,6 +303,7 @@ class OfflineAnthologies implements AnthologyService {
           base64Decode(op['bytes'] as String? ?? ''),
           op['name'] as String? ?? 'cover.jpg',
         );
+        _uploaded.add(op['local']);
       case 'removeCover':
         await _inner.removeCover(id);
       case 'poster':
@@ -263,6 +312,7 @@ class OfflineAnthologies implements AnthologyService {
           base64Decode(op['bytes'] as String? ?? ''),
           op['name'] as String? ?? 'poster.jpg',
         );
+        _uploaded.add(op['local']);
       case 'removePoster':
         await _inner.removePoster(id);
       case 'fill':
@@ -280,20 +330,33 @@ class OfflineAnthologies implements AnthologyService {
     Map<String, Object?> op, {
     required Future<T> Function() online,
     required Future<T> Function() local,
+    Future<void> Function(Map<String, Object?> op)? prepare,
     int? anthologyId,
   }) async {
+    op['k'] ??= _newKey();
     final onlyHere = anthologyId != null && anthologyId < 0;
     if (!onlyHere) {
       if (_load().ops.isNotEmpty) await flush();
       if (_load().ops.isEmpty) {
         try {
-          return await online();
+          return await _inner.keyed(op['k'] as String?, online);
         } on AnthologyException catch (e) {
           if (!e.unreachable) rethrow;
         }
       }
     }
-    final q = _load()..ops.add(op);
+    final q = _load();
+    // a picture picked again replaces the one still waiting, instead of queueing a second upload
+    if (op['replaces'] == true) {
+      bool same(Map<String, Object?> o) =>
+          o['op'] == op['op'] && o['id'] == op['id'];
+      for (final o in q.ops.where(same)) {
+        await _discard(o['local']);
+      }
+      q.ops.removeWhere(same);
+    }
+    await prepare?.call(op);
+    q.ops.add(op);
     await _save(q);
     return local();
   }
@@ -485,17 +548,24 @@ class OfflineAnthologies implements AnthologyService {
 
   @override
   Future<Anthology> create(String title, String intro) async {
+    final key = _newKey();
     if (_load().ops.isNotEmpty) await flush();
     if (_load().ops.isEmpty) {
       try {
-        return await _inner.create(title, intro);
+        return await _inner.keyed(key, () => _inner.create(title, intro));
       } on AnthologyException catch (e) {
         if (!e.unreachable) rethrow;
       }
     }
     final q = _load();
     final tmp = q.next--;
-    q.ops.add({'op': 'create', 'tmp': tmp, 'title': title, 'intro': intro});
+    q.ops.add({
+      'op': 'create',
+      'k': key,
+      'tmp': tmp,
+      'title': title,
+      'intro': intro,
+    });
     await _save(q);
     final row = <String, Object?>{
       'id': tmp,
@@ -687,11 +757,15 @@ class OfflineAnthologies implements AnthologyService {
     ({String kind, int itemId})? after,
   }) async {
     id = _id(id);
+    final key = _newKey();
     if (id > 0) {
       if (_load().ops.isNotEmpty) await flush();
       if (_load().ops.isEmpty) {
         try {
-          return await _inner.addSection(id, title, prose, after: after);
+          return await _inner.keyed(
+            key,
+            () => _inner.addSection(id, title, prose, after: after),
+          );
         } on AnthologyException catch (e) {
           if (!e.unreachable) rethrow;
         }
@@ -701,6 +775,7 @@ class OfflineAnthologies implements AnthologyService {
     final tmp = q.next--;
     q.ops.add({
       'op': 'section',
+      'k': key,
       'id': id,
       'tmp': tmp,
       'title': title,
@@ -833,17 +908,58 @@ class OfflineAnthologies implements AnthologyService {
   /// A picture as large as this is not kept in a queue stored with the phone's small settings.
   static const _largestPicture = 1500000;
 
-  @override
-  Future<String> setCover(int id, Uint8List bytes, String fileName) async {
-    id = _id(id);
+  /// A picture chosen for [field] (`cover_path` or `poster_path`): sent now, or kept on the phone and shown at once
+  /// while its upload waits. Choosing again replaces the upload that is still waiting.
+  Future<String> _picture(
+    String op,
+    String field,
+    int id,
+    Uint8List bytes,
+    String fileName,
+    Future<String> Function() online,
+  ) async {
     if (bytes.length > _largestPicture && (id < 0 || !await _reachable())) {
       return _needsServer();
     }
     return _change(
-      {'op': 'cover', 'id': id, 'name': fileName, 'bytes': base64Encode(bytes)},
+      {
+        'op': op,
+        'id': id,
+        'name': fileName,
+        'bytes': base64Encode(bytes),
+        'replaces': true,
+      },
       anthologyId: id,
-      online: () => _inner.setCover(id, bytes, fileName),
-      local: () async => '',
+      online: online,
+      // the picture is kept on the phone when it has to wait, and its name goes in the queued change so the
+      // file can be removed once it has been uploaded or replaced
+      prepare: (op) async {
+        op['local'] = await keepPicture?.call(bytes, fileName) ?? '';
+      },
+      local: () async {
+        final name = _load().ops.lastWhere(
+          (o) => o['op'] == op && o['id'] == id,
+          orElse: () => const {},
+        )['local'];
+        if (name is String && name.isNotEmpty) {
+          await _patch(id, {field: name});
+          return name;
+        }
+        return '';
+      },
+    );
+  }
+
+  @override
+  Future<String> setCover(int id, Uint8List bytes, String fileName) {
+    id = _id(id);
+    return _picture(
+      'cover',
+      'cover_path',
+      id,
+      bytes,
+      fileName,
+      () => _inner.setCover(id, bytes, fileName),
     );
   }
 
@@ -859,21 +975,15 @@ class OfflineAnthologies implements AnthologyService {
   }
 
   @override
-  Future<String> setPoster(int id, Uint8List bytes, String fileName) async {
+  Future<String> setPoster(int id, Uint8List bytes, String fileName) {
     id = _id(id);
-    if (bytes.length > _largestPicture && (id < 0 || !await _reachable())) {
-      return _needsServer();
-    }
-    return _change(
-      {
-        'op': 'poster',
-        'id': id,
-        'name': fileName,
-        'bytes': base64Encode(bytes),
-      },
-      anthologyId: id,
-      online: () => _inner.setPoster(id, bytes, fileName),
-      local: () async => '',
+    return _picture(
+      'poster',
+      'poster_path',
+      id,
+      bytes,
+      fileName,
+      () => _inner.setPoster(id, bytes, fileName),
     );
   }
 

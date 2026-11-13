@@ -175,6 +175,27 @@ class AppController extends ChangeNotifier {
     await withClient((c) => revokeDevice(c, id));
   }
 
+  /// Unpairs every device of the account, this phone too: the server ends all their tokens, so this phone
+  /// forgets its own as well.
+  Future<void> revokeAll() async {
+    await withClient<Object?>(
+      (c) => c.postJson('/auth/devices/revoke-all', {}),
+    );
+    // The token is gone with the rest. Asking the server to forget this phone would be answered 401 and read as
+    // "unpaired from the server", an alert about something the reader just did on purpose.
+    await _forgetPairing();
+    _log?.info('unpaired every device');
+  }
+
+  Future<void> _forgetPairing() async {
+    await _settings.forgetToken();
+    await _settings.remove(_adminKey);
+    await offline.clear();
+    _token = null;
+    _isAdmin = false;
+    notifyListeners();
+  }
+
   /// Unpairs this phone: asks the server to forget it (best effort; a server that cannot be reached is not
   /// a reason to keep the token), then forgets the token here. The server address stays.
   Future<void> unpair() async {
@@ -185,13 +206,8 @@ class AppController extends ChangeNotifier {
     } on ApiException {
       // unreachable or already unpaired: the local half still happens
     }
-    await _settings.forgetToken();
-    await _settings.remove(_adminKey);
-    await offline.clear();
-    _token = null;
-    _isAdmin = false;
+    await _forgetPairing();
     _log?.info('unpaired');
-    notifyListeners();
   }
 
   bool get checking => _checking;

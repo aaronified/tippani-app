@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
@@ -49,6 +50,54 @@ class CoverCache implements CoverSource {
     if (!await d.exists()) await d.create(recursive: true);
     return d;
   }
+
+  /// Keeps [bytes], a picture chosen on the phone, under a name of the server's own shape and returns that
+  /// name, so a screen draws it at once while the upload waits for the server. The server names the picture
+  /// again when it takes it, and the screens follow that name.
+  Future<String> keepLocal(Uint8List bytes, String fileName) async {
+    final dot = fileName.lastIndexOf('.');
+    final ext = dot < 0 ? '' : fileName.substring(dot + 1).toLowerCase();
+    final kind = const ['jpg', 'png', 'webp', 'gif'].contains(ext)
+        ? ext
+        : 'jpg';
+    final random = Random.secure();
+    final stem = List.generate(
+      16,
+      (_) => random.nextInt(16).toRadixString(16),
+    ).join();
+    final name = '$stem.$kind';
+    final file = File('${(await _dir()).path}/$name');
+    final tmp = File('${file.path}.part');
+    await tmp.writeAsBytes(bytes, flush: true);
+    await tmp.rename(file.path);
+    return name;
+  }
+
+  /// Removes the picture named [name] from the phone, if it is there.
+  Future<void> discard(String name) async {
+    if (!coverName.hasMatch(name)) return;
+    final file = File('${(await _dir()).path}/$name');
+    if (await file.exists()) await file.delete();
+  }
+
+  /// Removes every picture kept: the phone was unpaired, and what it kept is the last account's.
+  Future<void> clear() async {
+    final dir = await _dir();
+    await for (final f in dir.list()) {
+      if (f is! File) continue;
+      try {
+        await f.delete();
+      } on FileSystemException {
+        // a picture that was being written as this ran: the next clear takes it
+      }
+    }
+    _failedAt.clear();
+  }
+
+  /// Whether the picture named [name] is already on the phone.
+  Future<bool> kept(String name) async =>
+      coverName.hasMatch(name) &&
+      await File('${(await _dir()).path}/$name').exists();
 
   @override
   Future<File?> fileFor(String name) {

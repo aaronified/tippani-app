@@ -14,8 +14,17 @@
   reads (a stale answer there would look like a server that had lost everything) and not `/auth/me`, whose failure is how the app learns it was
   unpaired; the Account page reads its own three answers through `getJsonKept` instead. A read of what was just saved is live (`getJsonLive`), so an old
   copy is never served in place of a timeout. A screen that shows a kept answer says so, with its date (`OfflineNote`).
+  Small writes outside anthologies and settings wait the same way (`OfflineWrites`, `outbox.writes`): a tag's name, colour or style, a tag deleted, an
+  item restored from the bin and a context rule. Each is applied at once to the kept copy of the screen it changes, goes up in order, and is dropped
+  with a line in the app log when the server refuses it. A change made when the server is back goes after the ones that waited. What cannot be undone
+  (merging tags, deleting for good, emptying the bin) and what has to be answered (a password, a name check) stays online and says so.
+  What a shelf and a work page draw is kept too (`keepWorkExtras`, after a sync): cover pictures, and each work's details and cast, at most 60
+  requests a run (a work's details and its cast count as two), the works oldest first, details read again after two weeks. A cover the server cannot
+  serve is skipped and not asked for again until the app is next opened; three works in a row whose details cannot be fetched end the run. The pictures
+  are the phone's, not the account's: unpairing removes the cover folder. **Not built:** a size ceiling on that folder (it grows with the library and with
+  covers that changed, since the server never reuses a name) and a "waiting" mark on a picture that has not been uploaded yet.
 - **A change made while the server cannot be reached is kept and sent in order.** Anthologies (`OfflineAnthologies`) apply the change to the kept copy at
-  once and queue it, headings, commentary, grouping, front matter and description, the cover and poster pictures (each up to 1.5 MB) and the fill included; the queue is sent by every
+  once and queue it, headings, commentary, grouping, front matter and description, the cover and poster pictures (each up to 1.5 MB; the phone keeps the file and shows it at once, a second pick replaces the upload that waits, and the file is removed once it is uploaded or replaced) and the fill included; the queue is sent by every
   sync run that finds the server answering, and when the list is opened. The queue is read again around every send, so a change made while a request is
   out is never written over. An anthology made offline has a negative id until it is sent; what was queued against it follows it to its real id, and a
   screen that still holds the temporary id keeps working. A change the server refuses is dropped and shown. Preferences keep the settings changed offline
@@ -32,7 +41,7 @@
 - **Unpairing, forgetting the server or a refused token discards the copy and everything that waited** (`OfflineCache.clear` and what registers with it), so
   a queued change is never sent to another account or another server.
 
-**What stays online, and says so.** A count of what an anthology's fill would find, and an EPUB (Markdown is made from the phone's copy); the bin's restore
+**What stays online, and says so.** A count of what an anthology's fill would find, and an EPUB (Markdown is made from the phone's copy); emptying the bin and deleting from it for good (a restore waits, above)
 and every other write the server must judge; search through the server; the server's own log and the live job list. Source files stay on the server: only
 their list and each quote's context are kept on the phone.
 
@@ -45,4 +54,4 @@ their list and each quote's context are kept on the phone.
 
 **Consequences.** The cache is bounded (3 MB, 400 entries, the oldest written first, anthologies pinned to two thirds, an answer larger than the cache not
 kept). Moving a heading offline moves only the heading; the server settles the passages under it when the move is sent. A crash between sending a queued
-change and saving the queue can send a new anthology or heading twice, because the server has no idempotency key.
+change and saving the queue is safe against a server on API revision 11 or later (3.9.0): every create carries an `Idempotency-Key`, the same whether it was sent at once or waited, and the server answers a repeat with the first answer. A server older than that makes a second anthology or heading.

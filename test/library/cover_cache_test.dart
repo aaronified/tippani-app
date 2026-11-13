@@ -105,6 +105,18 @@ void main() {
       },
     );
 
+    test('a picture chosen on the phone is kept under a server-shaped name and drawn without the server', () async {
+      final r = await rig(paired: false);
+      final kept = await r.cache.keepLocal(png, 'My Photo.PNG');
+      expect(kept, matches(coverName));
+      expect(kept, endsWith('.png'));
+      expect(await r.cache.kept(kept), isTrue);
+      final file = await r.cache.fileFor(kept);
+      expect(await file!.readAsBytes(), png);
+      expect(r.server.coverReads, isEmpty);
+      expect(await r.cache.keepLocal(png, 'noextension'), endsWith('.jpg'));
+    });
+
     test('two askers at once share one request', () async {
       final r = await rig();
       r.server.covers[name] = png;

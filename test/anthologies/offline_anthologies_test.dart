@@ -20,6 +20,9 @@ class _Server implements AnthologyService {
 
   final OfflineCache cache;
   bool up = true;
+
+  /// Writes get through but the reads that follow them do not.
+  bool refuseReads = false;
   int _next = 100;
   final rows = <int, Map<String, Object?>>{};
   final entries = <int, List<Map<String, Object?>>>{};
@@ -35,6 +38,23 @@ class _Server implements AnthologyService {
 
   @override
   bool get hasPoster => true;
+
+  /// The key each request was sent under, in order (null: none).
+  final keys = <String?>[];
+
+  /// The key of every create tried, whether or not the server could be reached.
+  final attempts = <String?>[];
+  String? _key;
+
+  @override
+  Future<T> keyed<T>(String? key, Future<T> Function() run) async {
+    _key = key;
+    try {
+      return await run();
+    } finally {
+      _key = null;
+    }
+  }
 
   void _reach() {
     if (!up) {
@@ -59,6 +79,9 @@ class _Server implements AnthologyService {
   @override
   Future<List<Anthology>> list() async {
     _reach();
+    if (refuseReads) {
+      throw const AnthologyException('no route', unreachable: true);
+    }
     await _remember();
     return [for (final id in rows.keys) Anthology.fromJson(_row(id))];
   }
@@ -84,8 +107,11 @@ class _Server implements AnthologyService {
 
   @override
   Future<Anthology> create(String title, String intro) async {
+    // the key of every attempt is recorded, including one that did not get through
+    attempts.add(_key);
     _reach();
     sent.add('create $title');
+    keys.add(_key);
     final id = _next++;
     rows[id] = {'id': id, 'title': title, 'intro': intro};
     entries[id] = [];
@@ -110,8 +136,10 @@ class _Server implements AnthologyService {
 
   @override
   Future<bool> add(int id, String kind, int itemId) async {
+    attempts.add(_key);
     _reach();
     sent.add('add $id $kind/$itemId');
+    keys.add(_key);
     entries[id]!.add({
       'kind': kind,
       'item_id': itemId,
@@ -154,6 +182,7 @@ class _Server implements AnthologyService {
   }) async {
     _reach();
     sent.add('section $id $title after ${after?.itemId}');
+    keys.add(_key);
     final s = {'id': _next++, 'position': 9.0, 'title': title, 'prose': prose};
     sections[id]!.add(s);
     return AnthologySection.fromJson(s);
@@ -202,7 +231,8 @@ class _Server implements AnthologyService {
   Future<String> setPoster(int id, Uint8List bytes, String fileName) async {
     _reach();
     sent.add('poster $id ${bytes.length} $fileName');
-    return 'p.jpg';
+    rows[id]!['poster_path'] = 'abcdefabcdefabcd.jpg';
+    return 'abcdefabcdefabcd.jpg';
   }
 
   @override
@@ -245,6 +275,7 @@ Future<
     OfflineAnthologies service,
     SettingsStore store,
     OfflineCache cache,
+    List<String> discarded,
   })
 >
 _rig({PassageLookup? lookup}) async {
@@ -255,8 +286,24 @@ _rig({PassageLookup? lookup}) async {
   );
   final cache = OfflineCache(store);
   final server = _Server(cache);
-  final service = OfflineAnthologies(server, cache, store, lookup: lookup);
-  return (server: server, service: service, store: store, cache: cache);
+  var kept = 0;
+  final discarded = <String>[];
+  final service = OfflineAnthologies(
+    server,
+    cache,
+    store,
+    lookup: lookup,
+    keepPicture: (bytes, name) async =>
+        '${(kept++).toRadixString(16).padLeft(16, '0')}.jpg',
+    discardPicture: (name) async => discarded.add(name),
+  );
+  return (
+    server: server,
+    service: service,
+    store: store,
+    cache: cache,
+    discarded: discarded,
+  );
 }
 
 void main() {
@@ -548,6 +595,164 @@ void main() {
     r.server.up = true;
     await r.service.flush();
     expect(r.server.sent.last, 'front ${a.id} - [Edited on the web.|For R.]');
+  });
+
+  test('a picture chosen with no server shows at once, and choosing again replaces the upload that waits', () async {
+    final r = await _rig();
+    final a = await r.service.create('A', '');
+    await r.service.get(a.id);
+    r.server.up = false;
+    final first = await r.service.setPoster(
+      a.id,
+      Uint8List.fromList([1]),
+      'one.jpg',
+    );
+    expect(first, matches(RegExp(r'^[0-9a-f]{16}\.jpg$')));
+    expect((await r.service.get(a.id)).anthology.posterPath, first);
+
+    final second = await r.service.setPoster(
+      a.id,
+      Uint8List.fromList([1, 2]),
+      'two.jpg',
+    );
+    expect(second, isNot(first));
+    expect((await r.service.get(a.id)).anthology.posterPath, second);
+    expect(r.service.pending.value, 1, reason: 'one upload waits, not two');
+
+    r.server.up = true;
+    await r.service.flush();
+    expect(r.server.sent.where((s) => s.startsWith('poster')), [
+      'poster ${a.id} 2 two.jpg',
+    ]);
+    expect(
+      (await r.service.get(a.id)).anthology.posterPath,
+      'abcdefabcdefabcd.jpg',
+      reason:
+          'the server\'s name replaces the local one once it has the picture',
+    );
+  });
+
+  test('a create tried live and then queued is replayed under the key it was tried with', () async {
+    final r = await _rig();
+    r.server.up = false;
+    final made = await r.service.create('Draft', '');
+    await r.service.addSection(made.id, 'Heading', '');
+    expect(
+      r.server.keys,
+      isEmpty,
+      reason: 'nothing got through while it was out of reach',
+    );
+    final tried = r.server.attempts.single;
+    expect(tried, isNotNull);
+
+    r.server.up = true;
+    await r.service.flush();
+    expect(r.server.keys, hasLength(2));
+    expect(
+      r.server.keys.first,
+      tried,
+      reason: 'the replay carries the key of the attempt whose reply may have been lost',
+    );
+    expect(
+      r.server.keys.toSet(),
+      hasLength(2),
+      reason: 'each change has its own key',
+    );
+
+    final online = await r.service.create('Online', '');
+    expect(online.title, 'Online');
+    expect(
+      r.server.keys.last,
+      isNotNull,
+      reason: 'a change sent at once carries a key too',
+    );
+  });
+
+  test('a kept picture is removed once it is uploaded or replaced, and replacing one anthology\'s leaves another\'s', () async {
+    final r = await _rig();
+    final a = await r.service.create('A', '');
+    final b = await r.service.create('B', '');
+    await r.service.get(a.id);
+    await r.service.get(b.id);
+    r.server.up = false;
+    final first = await r.service.setPoster(
+      a.id,
+      Uint8List.fromList([1]),
+      'one.jpg',
+    );
+    final other = await r.service.setPoster(
+      b.id,
+      Uint8List.fromList([2]),
+      'two.jpg',
+    );
+    final second = await r.service.setPoster(
+      a.id,
+      Uint8List.fromList([3]),
+      'three.jpg',
+    );
+    expect(r.discarded, [
+      first,
+    ], reason: 'only the replaced picture of the same anthology goes');
+    expect(r.service.pending.value, 2, reason: 'one upload for each anthology');
+
+    r.server.up = true;
+    await r.service.flush();
+    expect(r.server.sent.where((s) => s.startsWith('poster')), [
+      'poster ${b.id} 1 two.jpg',
+      'poster ${a.id} 1 three.jpg',
+    ]);
+    expect(r.discarded.toSet(), {
+      first,
+      other,
+      second,
+    }, reason: 'uploaded pictures are removed from the phone');
+  });
+
+  test('a passage added live and then queued is replayed under the key it was tried with', () async {
+    final r = await _rig();
+    final made = await r.service.create('A', '');
+    await r.service.get(made.id);
+    r.server.attempts.clear();
+    r.server.keys.clear();
+    r.server.up = false;
+    await r.service.add(made.id, 'book', 1);
+    final tried = r.server.attempts.single;
+    expect(tried, isNotNull);
+    r.server.up = true;
+    await r.service.flush();
+    expect(
+      r.server.keys,
+      [tried],
+      reason:
+          'the replay repeats the key of the attempt that may have been lost',
+    );
+  });
+
+  test('an uploaded cover is removed from the phone, but only once the screens read the server\'s name for it', () async {
+    final r = await _rig();
+    final a = await r.service.create('A', '');
+    await r.service.get(a.id);
+    r.server.up = false;
+    final local = await r.service.setCover(
+      a.id,
+      Uint8List.fromList([1]),
+      'c.jpg',
+    );
+    r.server.up = true;
+    r.server.refuseReads = true;
+    await r.service.flush();
+    expect(r.server.sent.where((s) => s.startsWith('cover')), hasLength(1));
+    expect(
+      r.discarded,
+      isEmpty,
+      reason: 'the kept copy still names the local file, so it is still drawn',
+    );
+
+    r.server.refuseReads = false;
+    await r.service.flush();
+    expect(r.discarded, [
+      local,
+    ], reason: 'removed once a read of the server succeeds');
   });
 
   test(

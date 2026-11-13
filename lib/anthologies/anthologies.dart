@@ -424,6 +424,10 @@ abstract class AnthologyService {
   /// been asked: a change made then waits, and the server's refusal is shown.
   bool get hasPoster;
 
+  /// Runs [run], which makes a request that may be sent twice, under [key]: the server answers a repeated key
+  /// with the first answer, so a request whose reply was lost makes nothing twice. A null key is no key.
+  Future<T> keyed<T>(String? key, Future<T> Function() run);
+
   Future<List<Anthology>> list();
   Future<AnthologyDetail> get(int id);
   Future<Anthology> create(String title, String intro);
@@ -512,6 +516,18 @@ class ServerAnthologies implements AnthologyService {
   @override
   bool get available => _controller.paired;
 
+  String? _key;
+
+  @override
+  Future<T> keyed<T>(String? key, Future<T> Function() run) async {
+    _key = key;
+    try {
+      return await run();
+    } finally {
+      _key = null;
+    }
+  }
+
   @override
   bool get hasPoster {
     final caps = _controller.check?.capabilities;
@@ -599,7 +615,7 @@ class ServerAnthologies implements AnthologyService {
     final made = await c.postJson('/anthologies', {
       'title': title,
       'intro': intro,
-    });
+    }, idempotencyKey: _key);
     return Anthology.fromJson(_map(made));
   });
 
@@ -634,7 +650,7 @@ class ServerAnthologies implements AnthologyService {
       'items': [
         {'kind': kind, 'item_id': itemId},
       ],
-    });
+    }, idempotencyKey: _key);
     return r is Map && (r['added'] as num? ?? 0) > 0;
   });
 
@@ -683,7 +699,7 @@ class ServerAnthologies implements AnthologyService {
       'title': title,
       'prose': prose,
       if (after != null) 'after': _ref(after),
-    });
+    }, idempotencyKey: _key);
     return AnthologySection.fromJson(_map(r));
   });
 

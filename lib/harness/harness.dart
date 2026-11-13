@@ -26,6 +26,8 @@ import '../anthologies/anthologies.dart';
 import '../anthologies/offline_anthologies.dart';
 import '../boards/board_service.dart';
 import '../library/cover_cache.dart';
+import '../library/work_keeper.dart';
+import '../api/offline_writes.dart';
 import '../tools/context_store.dart';
 import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
@@ -288,6 +290,14 @@ class Harness {
         ? null
         : PullSync(library, controller, log: appLog);
     final covers = CoverCache(controller);
+    final workDetails = PairedWorkDetails(controller);
+    // covers the server could not serve are not asked for again until the app is next opened
+    final missedCovers = <String>{};
+    // pictures kept for the last account are not shown to the next
+    controller.offline.whenCleared.add(() async {
+      missedCovers.clear();
+      await covers.clear();
+    });
     final directory = PairedPeopleDirectory(controller, covers);
     pull?.onFaces = directory.rememberFaces;
     final prefs = PairedPreferences(controller, settings);
@@ -298,7 +308,10 @@ class Harness {
       lookup: library == null
           ? null
           : (kind, id) => _passageOf(library, kind, id),
+      keepPicture: covers.keepLocal,
+      discardPicture: covers.discard,
     );
+    final writes = OfflineWrites(controller, settings, log: appLog);
     final contextStore = FileContextStore(
       () async => Directory(
         '${(await getApplicationSupportDirectory()).path}/contexts',
@@ -319,18 +332,28 @@ class Harness {
             after: [
               prefs.flush,
               anthologies.flush,
+              writes.flush,
               () => keepContexts(library!, contexts),
+              () => keepWorkExtras(
+                library!,
+                covers,
+                workDetails,
+                missed: missedCovers,
+              ),
             ],
           );
     // a change made with no server counts as something to send, so it goes up when the server next answers
     // and not only when the library changed
     void queued() {
-      if (anthologies.pending.value > 0 || prefs.hasPending) {
+      if (anthologies.pending.value > 0 ||
+          writes.pending.value > 0 ||
+          prefs.hasPending) {
         auto?.queueChanged();
       }
     }
 
     anthologies.pending.addListener(queued);
+    writes.pending.addListener(queued);
     prefs.addListener(queued);
     // a queue left by the last run is sent at this one's start too
     queued();
@@ -370,7 +393,7 @@ class Harness {
       localeFetch: () =>
           controller.withClient<Object?>((c) => c.getJson('/locales')),
       account: PairedAccount(controller),
-      contextRules: PairedContextRules(controller),
+      contextRules: PairedContextRules(controller, writes: writes),
       peopleService: PairedPeopleService(controller),
       coverSearch: PairedCoverSearch(controller),
       metadata: PairedMetadataService(controller),
@@ -378,11 +401,11 @@ class Harness {
       peopleConsole: PairedPeopleConsole(controller),
       admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
-      details: PairedWorkDetails(controller),
+      details: workDetails,
       contexts: contexts,
       anthologies: anthologies,
-      tools: PairedServerTools(controller),
-      tags: PairedTagService(controller),
+      tools: PairedServerTools(controller, writes: writes),
+      tags: PairedTagService(controller, writes: writes),
       search: PairedSearch(controller),
       lookup: PairedWorkLookup(controller),
       boards: library == null ? null : ServerBoards(controller, library),

@@ -75,9 +75,13 @@ class AdminJobsScreen extends StatefulWidget {
     super.key,
     required this.service,
     this.pollEvery = const Duration(seconds: 3),
+    this.ownOnly = false,
   });
 
   final AdminService service;
+
+  /// A reader who is not an administrator: the server shows and stops only their own jobs, and the words say so.
+  final bool ownOnly;
   final Duration pollEvery;
 
   @override
@@ -148,8 +152,16 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
   Future<void> _stopAll() async {
     final ok = await confirmDialog(
       context,
-      title: context.tr('app.admin_jobs.stop_every_job'),
-      body: context.tr('app.admin_jobs.the_running_job_and_every_waiting'),
+      title: context.tr(
+        widget.ownOnly
+            ? 'app.admin_jobs.stop_your_jobs'
+            : 'app.admin_jobs.stop_every_job',
+      ),
+      body: context.tr(
+        widget.ownOnly
+            ? 'app.admin_jobs.your_running_job_and_every_waiting'
+            : 'app.admin_jobs.the_running_job_and_every_waiting',
+      ),
       yes: context.tr('settings.jobs.current.stop-all.label'),
       danger: true,
     );
@@ -388,7 +400,11 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
           actions: [
             if (cur != null && cur.jobs.isNotEmpty)
               IconButton(
-                tooltip: context.tr('app.admin_jobs.stop_every_job_2'),
+                tooltip: context.tr(
+                  widget.ownOnly
+                      ? 'app.admin_jobs.stop_your_jobs_2'
+                      : 'app.admin_jobs.stop_every_job_2',
+                ),
                 icon: const Icon(Ti.playerStop),
                 onPressed: _stopAll,
               ),

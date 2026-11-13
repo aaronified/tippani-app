@@ -1,3 +1,4 @@
+import '../api/offline_writes.dart';
 import '../api/server_call.dart';
 import '../app_controller.dart';
 
@@ -328,14 +329,24 @@ abstract class ServerTools {
 }
 
 class PairedServerTools implements ServerTools {
-  PairedServerTools(this._controller);
+  PairedServerTools(this._controller, {this.writes});
   final AppController _controller;
+
+  /// Where a restore waits when the server cannot be reached. Deleting for good and emptying the bin cannot be
+  /// undone, so they are not queued.
+  final OfflineWrites? writes;
 
   @override
   bool get available => _controller.paired;
 
   @override
   Future<Bin> bin() => serverCall(_controller, (c) async {
+    // a restore made with no signal goes first, so the bin read now does not show it again
+    try {
+      await writes?.flush();
+    } on Object {
+      // the bin is still read
+    }
     final body = asMap(await c.getJson('/trash'));
     final all = body['trash'];
     return Bin((body['days'] as num?)?.toInt() ?? 30, [
@@ -346,7 +357,24 @@ class PairedServerTools implements ServerTools {
 
   @override
   Future<void> restore(int id) => serverCall(_controller, (c) async {
-    await c.postJson('/trash/$id/restore', {});
+    final w = writes;
+    if (w == null) {
+      await c.postJson('/trash/$id/restore', {});
+      return;
+    }
+    await w.write(
+      'POST',
+      '/trash/$id/restore',
+      const {},
+      local: () => w.patchKept('/trash', (j) {
+        final m = Map<String, Object?>.from(asMap(j));
+        m['trash'] = [
+          for (final e in (m['trash'] as List? ?? const []))
+            if (!(e is Map && e['id'] == id)) e,
+        ];
+        return m;
+      }),
+    );
   });
 
   @override

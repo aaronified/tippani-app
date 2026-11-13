@@ -4,8 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/account/account_service.dart';
 import 'package:tippani/account/preferences.dart';
 import 'package:tippani/app.dart';
+import 'package:tippani/admin/admin_service.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/harness/harness.dart';
+import 'package:tippani/screens/admin_jobs_screen.dart';
 import 'package:tippani/settings/settings_store.dart';
 
 import 'support/fake_server.dart';
@@ -261,4 +263,61 @@ void main() {
       findsOneWidget,
     );
   });
+
+  Future<(AppController, FakeServer)> openPaired(
+    WidgetTester tester, {
+    required bool admin,
+  }) async {
+    tester.view.physicalSize = const Size(800, 3600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({
+      'server_url': 'https://q.example.org',
+    });
+    final server = FakeServer(admin: admin);
+    final store = SettingsStore(
+      await SharedPreferences.getInstance(),
+      MemoryTokenVault(),
+    );
+    final c = AppController(store, clientFactory: server.factory);
+    await c.load();
+    await c.pair('ABCD2345', 'My phone');
+    await tester.pumpWidget(
+      TippaniApp(
+        controller: c,
+        harness: Harness.fake(
+          store,
+          controller: c,
+          library: MemoryLibrary(),
+          admin: PairedAdminService(c),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Server'));
+    await tester.pumpAndSettle();
+    return (c, server);
+  }
+
+  testWidgets(
+    'a reader who is not an administrator has Jobs on the Server tab',
+    (tester) async {
+      final (c, _) = await openPaired(tester, admin: false);
+      expect(c.isAdmin, isFalse);
+      expect(find.text('Jobs'), findsOneWidget);
+      await tester.tap(find.text('Jobs'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AdminJobsScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'an administrator reaches Jobs through Run the server, not twice',
+    (tester) async {
+      final (c, _) = await openPaired(tester, admin: true);
+      expect(c.isAdmin, isTrue);
+      expect(find.text('Jobs'), findsNothing);
+      expect(find.text('Run the server'), findsOneWidget);
+    },
+  );
 }

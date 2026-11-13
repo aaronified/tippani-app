@@ -440,6 +440,53 @@ void main() {
     );
 
     testWidgets(
+      'Unpair every device asks first, signs out every device of the account and unpairs this phone too',
+      (tester) async {
+        final s = FakeServer();
+        final r = await rig(s);
+        await r.controller.pair('ABCD2345', 'My Android phone');
+        await open(tester, r);
+        await tester.tap(find.text('Server'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Paired devices'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.widgetWithText(OutlinedButton, 'Unpair every device'),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        expect(
+          s.paths.where((p) => p.contains('revoke-all')),
+          isEmpty,
+          reason: 'Cancel signs nobody out',
+        );
+        expect(r.controller.paired, isTrue);
+
+        await tester.tap(
+          find.widgetWithText(OutlinedButton, 'Unpair every device'),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.widgetWithText(FilledButton, 'Unpair every device'),
+        );
+        await tester.pumpAndSettle();
+        expect(s.paths.where((p) => p.contains('revoke-all')), hasLength(1));
+        expect(
+          r.controller.paired,
+          isFalse,
+          reason: 'this phone was one of them',
+        );
+        expect(
+          r.controller.revoked,
+          isFalse,
+          reason: 'the reader did this on purpose: no unpaired-from-the-server alert',
+        );
+      },
+    );
+
+    testWidgets(
       'on a server too old to mark the current device, the list says so',
       (tester) async {
         final s = FakeServer(revision: 8);
@@ -501,8 +548,11 @@ class _Throwing extends ApiClient {
   final ApiFailure failure;
 
   @override
-  Future<Object?> postJson(String path, Map<String, Object?> body) async =>
-      failure == ApiFailure.badResponse
+  Future<Object?> postJson(
+    String path,
+    Map<String, Object?> body, {
+    String? idempotencyKey,
+  }) async => failure == ApiFailure.badResponse
       ? <String, Object?>{'token': 5}
       : throw ApiException(failure, 'x');
 }
