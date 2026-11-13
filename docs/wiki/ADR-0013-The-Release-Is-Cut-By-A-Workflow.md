@@ -1,6 +1,6 @@
 # ADR-0013: A release is cut by a workflow, signed with a key that is never in the repository
 
-- **Status:** Accepted. Scaffolded 6 November 2026, after Fluenough and Lexodle; the keys are the owner's to add.
+- **Status:** Accepted. Scaffolded 6 November 2026, after Fluenough and Lexodle; in use since `app-v0.2.0`, with the keys added by the owner.
 
 **Decided.** The owner runs the **Release** workflow from `main` and types a version. Its prepare job runs `tools/prepare_release.py` (bumps
 `pubspec.yaml` and `appVersion`, moves the changelog's Unreleased entries under the version, refuses an empty Unreleased or a version that is not

@@ -8,3 +8,5 @@ and admin. Only then the new features: capture with Tesseract, donation, bug rep
 **Consequences.** The local library comes first because the core must work alone ([ADR-0003](ADR-0003-The-App-Works-On-Its-Own.md)). Pairing and
 the harness, already built, are unaffected. The release workflow is scaffolded now so it is ready, but it cannot run until the owner sets its
 secrets ([Releasing](Releasing.md)).
+
+*Status note, 13 November 2026:* the workflow has since run for every release from `app-v0.2.0` to `app-v0.8.1`; the sentence above is how it stood on the day.

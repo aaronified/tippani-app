@@ -52,7 +52,7 @@ a changelog line adds one to `CHANGELOG.md` under Unreleased.
 
 **Releasing.** You do not edit the version by hand: run the Release workflow with the version, and it bumps `pubspec.yaml` and
 `appVersion`, dates the Unreleased entries, tags `app-vX.Y.Z` and attaches `tippani-app-vX.Y.Z.apk`. The update check reads exactly
-those names. [Releasing](Releasing.md) has the secrets it needs and the steps; it is scaffolded and has not been run yet.
+those names. [Releasing](Releasing.md) has the secrets it needs and the steps; it has cut every release since `app-v0.2.0`.
 
 ## Decisions and the wiki
 
@@ -201,8 +201,8 @@ in Copy or in Share, and the server's lines are redacted on the way out like the
 
 ## Not built
 
-The pull (once the conflict screen exists), the daily quiz and the rest of phases 1 to 4, then capture, the offline queue, donation, bug reports and the first
-signed release (the workflow exists; the keys do not), are the rest of the [plan](Plan.md)'s task list, in that order.
+What is left is the open tasks in the [plan](Plan.md)'s Tasks list, which also holds the owner's 13 November 2026 asks (everything available offline and
+synced, including anthologies and contexts, and a Server tab that holds all server management).
 
 ## Sync, in four parts
 
