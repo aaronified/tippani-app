@@ -505,7 +505,9 @@ class ServerAnthologies implements AnthologyService {
     } on ApiException catch (e) {
       throw AnthologyException(
         unreachable:
-            e.failure == ApiFailure.network || e.failure == ApiFailure.timeout,
+            e.failure == ApiFailure.network ||
+            e.failure == ApiFailure.timeout ||
+            e.failure == ApiFailure.unauthorised,
         switch (e.failure) {
           ApiFailure.network => tx(
             'app.admin_service.the_server_could_not_be_reached',

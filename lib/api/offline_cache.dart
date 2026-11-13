@@ -30,6 +30,9 @@ class OfflineCache {
   /// A screen can say "from this phone, as of …" while it holds a date.
   final ValueNotifier<DateTime?> servedFrom = ValueNotifier(null);
 
+  /// Things to forget along with the cache (a queue of changes made under the pairing that is ending).
+  final List<Future<void> Function()> whenCleared = [];
+
   List<List<Object?>>? _index;
 
   List<List<Object?>> get _entries {
@@ -173,5 +176,8 @@ class OfflineCache {
     _index = [];
     await _store.remove(_indexKey);
     servedFrom.value = null;
+    for (final forget in List.of(whenCleared)) {
+      await forget();
+    }
   }
 }

@@ -304,11 +304,15 @@ class _WaitingNote extends StatelessWidget {
                   if (n > 0)
                     Text(
                       n == 1
-                          ? '1 change is kept on this phone and goes to the server when it answers.'
-                          : '$n changes are kept on this phone and go to the server when it answers.',
+                          ? context.tr('app.anthologies.waiting_one')
+                          : context.tr('app.anthologies.waiting_many', {
+                              'n': n,
+                            }),
                     ),
                   for (final r in refused)
-                    Text('The server did not take one: $r'),
+                    Text(
+                      context.tr('app.anthologies.not_taken', {'reason': r}),
+                    ),
                   if (refused.isNotEmpty)
                     TextButton(
                       onPressed: () => s.problems.value = const [],
