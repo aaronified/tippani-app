@@ -38,6 +38,9 @@ class _Server implements AnthologyService {
 
   /// The key each request was sent under, in order (null: none).
   final keys = <String?>[];
+
+  /// The key of every create tried, whether or not the server could be reached.
+  final attempts = <String?>[];
   String? _key;
 
   @override
@@ -98,6 +101,8 @@ class _Server implements AnthologyService {
 
   @override
   Future<Anthology> create(String title, String intro) async {
+    // the key of every attempt is recorded, including one that did not get through
+    attempts.add(_key);
     _reach();
     sent.add('create $title');
     keys.add(_key);
@@ -611,7 +616,7 @@ void main() {
     );
   });
 
-  test('a queued create carries one key, the same whether it was tried now or waited', () async {
+  test('a create tried live and then queued is replayed under the key it was tried with', () async {
     final r = await _rig();
     r.server.up = false;
     final made = await r.service.create('Draft', '');
@@ -619,12 +624,19 @@ void main() {
     expect(
       r.server.keys,
       isEmpty,
-      reason: 'nothing was sent while it was out of reach',
+      reason: 'nothing got through while it was out of reach',
     );
+    final tried = r.server.attempts.single;
+    expect(tried, isNotNull);
+
     r.server.up = true;
     await r.service.flush();
     expect(r.server.keys, hasLength(2));
-    expect(r.server.keys.every((k) => k != null && k.isNotEmpty), isTrue);
+    expect(
+      r.server.keys.first,
+      tried,
+      reason: 'the replay carries the key of the attempt whose reply may have been lost',
+    );
     expect(
       r.server.keys.toSet(),
       hasLength(2),

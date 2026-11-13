@@ -305,13 +305,13 @@ class Harness {
     );
     final writes = OfflineWrites(controller, settings);
     // a change the server refused is dropped; the log is where the reader can see what was
+    var logged = 0;
     writes.problems.addListener(() {
       final all = writes.problems.value;
-      if (all.isNotEmpty) {
-        appLog.warn(
-          'a change made offline was refused and dropped: ${all.last}',
-        );
+      for (final p in all.skip(logged)) {
+        appLog.warn('a change made offline was refused and dropped: $p');
       }
+      logged = all.length;
     });
     final contextStore = FileContextStore(
       () async => Directory(

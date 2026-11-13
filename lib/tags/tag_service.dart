@@ -71,6 +71,12 @@ class PairedTagService implements TagService {
 
   @override
   Future<List<ServerTag>> list() => serverCall(_controller, (c) async {
+    // what was changed with no signal goes first, so a list read now does not show the old names
+    try {
+      await writes?.flush();
+    } on Object {
+      // the list is still read
+    }
     final body = asMap(await c.getJson('/tags'));
     final all = body['tags'];
     return [

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/account/account_service.dart';
+import 'package:tippani/api/api_client.dart';
 import 'package:tippani/api/offline_writes.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/settings/settings_store.dart';
@@ -81,6 +82,44 @@ void main() {
     server.unreachable = false;
     await writes.flush();
     expect(server.tags.map((t) => t['name']), ['making']);
+  });
+
+  test(
+    'two changes to one tag go up oldest first, so the later one wins',
+    () async {
+      server.unreachable = true;
+      await tags.save(ServerTag.fromJson(tag(1, 'life')), name: 'first');
+      await tags.save(ServerTag.fromJson(tag(1, 'first')), name: 'second');
+      server.unreachable = false;
+      await writes.flush();
+      expect(server.tags.first['name'], 'second');
+    },
+  );
+
+  test('nothing is kept for a phone that is not paired', () async {
+    await controller.unpair();
+    await expectLater(
+      writes.write('DELETE', '/tags/1', null, local: () async {}),
+      throwsA(isA<ApiException>()),
+    );
+    expect(writes.pending.value, 0);
+  });
+
+  test('a context rule saved after the pairing ended is refused, not queued for the next account', () async {
+    final rules = PairedContextRules(controller, writes: writes);
+    await controller.unpair();
+    final saved = await rules.setGlobal(const ContextRule(before: 1));
+    expect(saved.ok, isFalse);
+    expect(writes.pending.value, 0);
+  });
+
+  test('reading the tag list sends what waited first, so an edit does not look undone', () async {
+    server.unreachable = true;
+    await tags.save(ServerTag.fromJson(tag(1, 'life')), name: 'living');
+    server.unreachable = false;
+    final listed = await tags.list();
+    expect(listed.map((t) => t.name), contains('living'));
+    expect(writes.pending.value, 0);
   });
 
   test('a change the server refuses is dropped and listed, and the ones behind it still go', () async {

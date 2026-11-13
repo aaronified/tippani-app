@@ -71,14 +71,18 @@ class OfflineWrites {
     final body = op['body'] is Map
         ? Map<String, Object?>.from(op['body'] as Map)
         : <String, Object?>{};
-    return _controller.withClient((c) async {
+    // THE TYPE ARGUMENT IS NOT OPTIONAL. Left to be inferred, withClient's result type becomes the Future the
+    // closure returns, nothing waits for the request, and the client is closed with the request still in flight:
+    // every queued write was then cut off on a real connection. The mock client the other tests use cannot
+    // show that; offline_writes_wire_test.dart can.
+    return _controller.withClient<Object?>((c) async {
       switch (op['method']) {
         case 'PUT':
-          return c.putJson(path, body);
+          return await c.putJson(path, body);
         case 'POST':
-          return c.postJson(path, body);
+          return await c.postJson(path, body);
         default:
-          return c.delete(path);
+          return await c.delete(path);
       }
     });
   }
@@ -92,6 +96,10 @@ class OfflineWrites {
     Map<String, Object?>? body, {
     required Future<void> Function() local,
   }) async {
+    // nothing is kept for a phone that is not paired: the queue would be sent to whichever account pairs next
+    if (!_controller.paired) {
+      throw const ApiException(ApiFailure.unauthorised, 'not paired');
+    }
     if (_load().isNotEmpty) await flush();
     if (_load().isEmpty && _controller.paired) {
       try {

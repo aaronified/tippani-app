@@ -303,6 +303,9 @@ class PairedContextRules implements ContextRules {
   Future<Outcome<Object?>> _save(String path, Map<String, Object?> body) async {
     final w = writes;
     if (w == null) return _call((c) => c.putJson(path, body));
+    if (!_controller.paired) {
+      return Outcome.fail(tx('app.account_service.this_phone_is_not_paired'));
+    }
     try {
       final r = await w.write(
         'PUT',
