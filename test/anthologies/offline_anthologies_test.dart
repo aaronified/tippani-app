@@ -182,6 +182,30 @@ class _Server implements AnthologyService {
   }
 
   @override
+  Future<void> setFront(
+    int id,
+    String epigraph,
+    String dedication, {
+    String? description,
+  }) async {
+    _reach();
+    sent.add('front $id ${description ?? '-'}');
+  }
+
+  @override
+  Future<String> setPoster(int id, Uint8List bytes, String fileName) async {
+    _reach();
+    sent.add('poster $id ${bytes.length} $fileName');
+    return 'p.jpg';
+  }
+
+  @override
+  Future<void> removePoster(int id) async {
+    _reach();
+    sent.add('poster- $id');
+  }
+
+  @override
   Future<FillResult> fill(
     int id,
     String rule, {
@@ -483,6 +507,26 @@ void main() {
       ]);
     },
   );
+
+  test('a description and a poster made with no server show at once and are sent in order', () async {
+    final r = await _rig();
+    final a = await r.service.create('A', '');
+    await r.service.get(a.id);
+    r.server.up = false;
+    await r.service.setFront(a.id, '', '', description: 'Written on a train.');
+    await r.service.setPoster(a.id, Uint8List.fromList([1, 2]), 'wide.jpg');
+    expect(
+      (await r.service.get(a.id)).anthology.description,
+      'Written on a train.',
+    );
+    expect(r.service.pending.value, 2);
+    r.server.up = true;
+    await r.service.flush();
+    expect(r.server.sent.sublist(r.server.sent.length - 2), [
+      'front ${a.id} Written on a train.',
+      'poster ${a.id} 2 wide.jpg',
+    ]);
+  });
 
   test(
     'a Markdown export with no server is made from the phone\'s copy',

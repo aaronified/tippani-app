@@ -50,6 +50,8 @@ class _Server extends FakeServer {
             'entries': 2,
             'group_by': 'work',
             'cover_path': '0123456789abcdef.png',
+            'poster_path': '1111222233334444.png',
+            'description': 'Typed by hand.',
             'epigraph': 'E',
             'dedication': 'D',
             'rule': 'scope=all&tag=x',
@@ -107,6 +109,12 @@ class _Server extends FakeServer {
         201,
       );
     }
+    if (r.method == 'POST' && path.endsWith('/poster')) {
+      return http.Response(
+        jsonEncode({'id': 3, 'poster_path': '5555666677778888.png'}),
+        200,
+      );
+    }
     if (r.method == 'POST' && path.endsWith('/cover')) {
       return http.Response(
         jsonEncode({
@@ -149,6 +157,8 @@ void main() {
       final a = d.anthology;
       expect(a.groupBy, 'work');
       expect(a.coverPath, '0123456789abcdef.png');
+      expect(a.posterPath, '1111222233334444.png');
+      expect(a.description, 'Typed by hand.');
       expect(a.epigraph, 'E');
       expect(a.dedication, 'D');
       expect(a.rule, 'scope=all&tag=x');
@@ -210,6 +220,25 @@ void main() {
     expect(sent['show_locator'], true, reason: 'what the server held stays');
     expect(sent['title'], 'Openings');
   });
+
+  test(
+    'the description goes only when it is given, and the poster is a file',
+    () async {
+      final (svc, s) = await rig();
+      await svc.setFront(3, 'E', 'D', description: 'About it.');
+      expect(bodyOf(s.seen.last), {
+        'epigraph': 'E',
+        'dedication': 'D',
+        'description': 'About it.',
+      });
+      expect(
+        await svc.setPoster(3, Uint8List.fromList([1]), 'p.png'),
+        '5555666677778888.png',
+      );
+      await svc.removePoster(3);
+      expect(s.seen.last, startsWith('DELETE /anthologies/3/poster'));
+    },
+  );
 
   test('the cover goes up as a file and comes back as a name', () async {
     final (svc, s) = await rig();

@@ -327,11 +327,32 @@ class FakeAnthologies implements AnthologyService {
   }
 
   @override
-  Future<void> setFront(int id, String epigraph, String dedication) async {
+  Future<void> setFront(
+    int id,
+    String epigraph,
+    String dedication, {
+    String? description,
+  }) async {
     _check();
     calls.add('front $id');
     _rows[id]!['epigraph'] = epigraph;
     _rows[id]!['dedication'] = dedication;
+    if (description != null) _rows[id]!['description'] = description;
+  }
+
+  @override
+  Future<String> setPoster(int id, Uint8List bytes, String fileName) async {
+    _check();
+    calls.add('poster $id ${bytes.length}');
+    _rows[id]!['poster_path'] = 'fedcba9876543210.png';
+    return 'fedcba9876543210.png';
+  }
+
+  @override
+  Future<void> removePoster(int id) async {
+    _check();
+    calls.add('poster- $id');
+    _rows[id]!['poster_path'] = '';
   }
 
   @override

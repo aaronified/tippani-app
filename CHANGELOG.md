@@ -13,6 +13,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 - Everything that only reads keeps its last answer: statistics, tags, the bin, people and characters, Checks, the metadata console, source files, imports waiting, devices, administration's lists and the daily quiz's cards open from the phone when the server cannot be reached, with a line saying it is the phone's copy and from when.
 - A quote's context is on the phone for every synced quote: after each sync the phone fetches the context of every quote the server has one for, 150 at a time, so Show where it comes from works with no server. A wider window than the one you last opened is answered with the widest the phone holds.
 
+- Anthologies look like a book: each has a landscape poster (one you choose, or one drawn from its title) and a description you write yourself, apart from the introduction. Both show on the anthology's page and in the list, and you set them from Cover and front. They work with no signal like the rest of an anthology, and the server must be updated to keep them.
+
 ### Changed
 
 - Your settings on the server are on the Server tab: Account, Language, Text and quotes, Colours, Sections (and how long the bin keeps things), Daily review and Context around a quote moved there from Settings, and they show and change with no server too. A setting you change with no server is kept and sent later, unless you changed the same setting on the web meanwhile, which wins. Settings keeps the app's own: App colours (renamed from Colours, so the two are not confused), Tags, Read aloud, updates, backup, the log and the licences.

@@ -7,6 +7,7 @@ import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/library_widgets.dart';
 import 'package:tippani/screens/anthologies_screen.dart';
+import 'package:tippani/screens/anthology_tools.dart';
 
 import '../support/fake_anthologies.dart';
 import '../support/fake_quiz.dart';
@@ -387,5 +388,25 @@ void main() {
     expect(service.rowOf(a.id)['epigraph'], 'Begin.');
     expect(find.text('Begin.'), findsOneWidget);
     expect(find.text('For you'), findsOneWidget);
+  });
+
+  testWidgets('a description written by hand shows on the book\'s page', (
+    tester,
+  ) async {
+    await open(tester);
+    await choose(tester, 'Cover and front…');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Description'),
+      'Sayings gathered over a decade.',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(
+      service.rowOf(a.id)['description'],
+      'Sayings gathered over a decade.',
+    );
+    expect(find.text('Sayings gathered over a decade.'), findsOneWidget);
+    // with no poster the page draws one from the title
+    expect(find.byType(AnthologyPoster), findsOneWidget);
   });
 }

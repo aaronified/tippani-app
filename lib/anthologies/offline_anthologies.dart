@@ -233,6 +233,7 @@ class OfflineAnthologies implements AnthologyService {
           id,
           op['epigraph'] as String? ?? '',
           op['dedication'] as String? ?? '',
+          description: op['description'] as String?,
         );
       case 'restore':
         await _inner.restore(id, kind, item);
@@ -244,6 +245,14 @@ class OfflineAnthologies implements AnthologyService {
         );
       case 'removeCover':
         await _inner.removeCover(id);
+      case 'poster':
+        await _inner.setPoster(
+          id,
+          base64Decode(op['bytes'] as String? ?? ''),
+          op['name'] as String? ?? 'poster.jpg',
+        );
+      case 'removePoster':
+        await _inner.removePoster(id);
       case 'fill':
         await _inner.fill(
           id,
@@ -754,13 +763,29 @@ class OfflineAnthologies implements AnthologyService {
   }
 
   @override
-  Future<void> setFront(int id, String epigraph, String dedication) {
+  Future<void> setFront(
+    int id,
+    String epigraph,
+    String dedication, {
+    String? description,
+  }) {
     id = _id(id);
     return _change(
-      {'op': 'front', 'id': id, 'epigraph': epigraph, 'dedication': dedication},
+      {
+        'op': 'front',
+        'id': id,
+        'epigraph': epigraph,
+        'dedication': dedication,
+        'description': ?description,
+      },
       anthologyId: id,
-      online: () => _inner.setFront(id, epigraph, dedication),
-      local: () => _patch(id, {'epigraph': epigraph, 'dedication': dedication}),
+      online: () =>
+          _inner.setFront(id, epigraph, dedication, description: description),
+      local: () => _patch(id, {
+        'epigraph': epigraph,
+        'dedication': dedication,
+        'description': ?description,
+      }),
     );
   }
 
@@ -810,6 +835,36 @@ class OfflineAnthologies implements AnthologyService {
       anthologyId: id,
       online: () => _inner.removeCover(id),
       local: () => _patch(id, {'cover_path': ''}),
+    );
+  }
+
+  @override
+  Future<String> setPoster(int id, Uint8List bytes, String fileName) async {
+    id = _id(id);
+    if (bytes.length > _largestPicture && (id < 0 || !await _reachable())) {
+      return _needsServer();
+    }
+    return _change(
+      {
+        'op': 'poster',
+        'id': id,
+        'name': fileName,
+        'bytes': base64Encode(bytes),
+      },
+      anthologyId: id,
+      online: () => _inner.setPoster(id, bytes, fileName),
+      local: () async => '',
+    );
+  }
+
+  @override
+  Future<void> removePoster(int id) {
+    id = _id(id);
+    return _change(
+      {'op': 'removePoster', 'id': id},
+      anthologyId: id,
+      online: () => _inner.removePoster(id),
+      local: () => _patch(id, {'poster_path': ''}),
     );
   }
 

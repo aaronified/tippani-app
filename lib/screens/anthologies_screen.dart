@@ -256,19 +256,23 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
                       ),
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(6),
-                        child: AnthologyCover(
-                          name: a.coverPath,
-                          width: 40,
-                          height: 56,
-                          fallback: const SizedBox(
-                            width: 40,
-                            height: 56,
-                            child: Icon(Ti.books),
+                        child: SizedBox(
+                          width: 80,
+                          child: AnthologyPoster(
+                            name: a.posterPath,
+                            title: a.title,
+                            compact: true,
                           ),
                         ),
                       ),
                       title: Text(a.title),
-                      subtitle: Text(countWords('passage', a.entries)),
+                      subtitle: Text(
+                        a.description.trim().isEmpty
+                            ? countWords('passage', a.entries)
+                            : '${a.description.trim()}\n${countWords('passage', a.entries)}',
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       trailing: const Icon(Ti.chevronRight),
                       onTap: () => _open(a),
                     ),
@@ -775,6 +779,18 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: AnthologyPoster(name: a.posterPath, title: a.title),
+          ),
+        ),
+        if (a.description.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text(a.description.trim(), style: theme.textTheme.bodyLarge),
+          ),
         if (a.coverPath.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),

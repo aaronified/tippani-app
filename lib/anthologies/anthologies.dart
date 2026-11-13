@@ -42,6 +42,12 @@ class Anthology {
   /// The name of the cover picture file on the server, or ''.
   String get coverPath => _s('cover_path');
 
+  /// The name of the landscape poster file on the server, or '' (the page draws one from the title).
+  String get posterPath => _s('poster_path');
+
+  /// What the reader wrote about the book, apart from the introduction.
+  String get description => _s('description');
+
   /// The reader's epigraph and dedication, shown before the passages.
   String get epigraph => _s('epigraph');
   String get dedication => _s('dedication');
@@ -458,8 +464,19 @@ abstract class AnthologyService {
   /// How passages are grouped under headings: '', 'work', 'person' or 'character'.
   Future<void> setGrouping(int id, String groupBy);
 
-  /// The epigraph and dedication.
-  Future<void> setFront(int id, String epigraph, String dedication);
+  /// The epigraph and dedication, and the description when one is given (left alone when null).
+  Future<void> setFront(
+    int id,
+    String epigraph,
+    String dedication, {
+    String? description,
+  });
+
+  /// Sets the landscape poster; returns its file name.
+  Future<String> setPoster(int id, Uint8List bytes, String fileName);
+
+  /// Takes the poster away.
+  Future<void> removePoster(int id);
 
   /// Puts a picture on as the cover, and returns the new cover's file name.
   Future<String> setCover(int id, Uint8List bytes, String fileName);
@@ -676,13 +693,37 @@ class ServerAnthologies implements AnthologyService {
   });
 
   @override
-  Future<void> setFront(int id, String epigraph, String dedication) =>
+  Future<void> setFront(
+    int id,
+    String epigraph,
+    String dedication, {
+    String? description,
+  }) => _call((c) async {
+    await c.putJson('/anthologies/$id/front', {
+      'epigraph': epigraph,
+      'dedication': dedication,
+      // an older server does not know it, and one that does keeps what it holds when it is not named
+      'description': ?description,
+    });
+  });
+
+  @override
+  Future<String> setPoster(int id, Uint8List bytes, String fileName) =>
       _call((c) async {
-        await c.putJson('/anthologies/$id/front', {
-          'epigraph': epigraph,
-          'dedication': dedication,
-        });
+        final r = await c.postFile(
+          '/anthologies/$id/poster',
+          'file',
+          bytes,
+          fileName,
+        );
+        final path = r is Map ? (r['poster_path'] ?? r['path']) : null;
+        return path is String ? path : '';
       });
+
+  @override
+  Future<void> removePoster(int id) => _call((c) async {
+    await c.delete('/anthologies/$id/poster');
+  });
 
   @override
   Future<String> setCover(int id, Uint8List bytes, String fileName) =>

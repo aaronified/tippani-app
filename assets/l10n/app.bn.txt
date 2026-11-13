@@ -1397,3 +1397,7 @@ app.add.file = ফাইল আমদানি করুন
 app.add.file_note = কিন্ডলের ক্লিপিং বা মার্কডাউন এক্সপোর্ট
 app.boards_tab.previous = আগের বোর্ড
 app.boards_tab.next = পরের বোর্ড
+app.anthology_tools.add_a_poster = পোস্টার যোগ করুন
+app.anthology_tools.change_poster = পোস্টার বদলান
+app.anthology_tools.remove_poster = পোস্টার সরান
+app.anthology_tools.description = বিবরণ

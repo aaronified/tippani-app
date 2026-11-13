@@ -65,6 +65,59 @@ class AnthologyCover extends StatelessWidget {
   }
 }
 
+/// An anthology's landscape poster: the picture the reader gave it, or one drawn from its title while there is
+/// none, so every anthology looks like a book on a shelf. [aspect] is width over height.
+class AnthologyPoster extends StatelessWidget {
+  const AnthologyPoster({
+    super.key,
+    required this.name,
+    required this.title,
+    this.aspect = 16 / 9,
+    this.compact = false,
+  });
+
+  final String name, title;
+  final double aspect;
+
+  /// A thumbnail in a row: the title is left to the row beside it.
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final drawn = Container(
+      alignment: Alignment.center,
+      padding: EdgeInsets.all(compact ? 4 : 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [scheme.primaryContainer, scheme.secondaryContainer],
+        ),
+      ),
+      child: compact
+          ? Icon(Ti.books, color: scheme.onPrimaryContainer)
+          : Text(
+              title,
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: scheme.onPrimaryContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+    );
+    return AspectRatio(
+      aspectRatio: aspect,
+      child: AnthologyCover(
+        name: name,
+        width: double.infinity,
+        height: double.infinity,
+        fallback: SizedBox.expand(child: drawn),
+      ),
+    );
+  }
+}
+
 /// Asks for a heading and the words under it. Null if the reader backs out.
 Future<({String title, String prose})?> askSection(
   BuildContext context, {
@@ -237,7 +290,9 @@ Future<bool> editFrontMatter(
 }) async {
   final epigraph = TextEditingController(text: a.epigraph);
   final dedication = TextEditingController(text: a.dedication);
+  final description = TextEditingController(text: a.description);
   var cover = a.coverPath;
+  var poster = a.posterPath;
   var changed = false;
   String? problem;
   final saved = await showDialog<bool>(
@@ -326,6 +381,57 @@ Future<bool> editFrontMatter(
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: AnthologyPoster(name: poster, title: a.title),
+              ),
+              Wrap(
+                spacing: 8,
+                children: [
+                  OutlinedButton(
+                    onPressed: () async {
+                      try {
+                        final path = await (photos ?? DevicePhotos()).choose();
+                        if (path == null) return;
+                        final bytes = await File(path).readAsBytes();
+                        final name = path.split(RegExp(r'[\\/]')).last;
+                        final made = await service.setPoster(a.id, bytes, name);
+                        setState(() {
+                          poster = made;
+                          changed = true;
+                          problem = null;
+                        });
+                      } on AnthologyException catch (e) {
+                        setState(() => problem = e.message);
+                      }
+                    },
+                    child: Text(
+                      poster.isEmpty
+                          ? context.tr('app.anthology_tools.add_a_poster')
+                          : context.tr('app.anthology_tools.change_poster'),
+                    ),
+                  ),
+                  if (poster.isNotEmpty)
+                    TextButton(
+                      onPressed: () async {
+                        try {
+                          await service.removePoster(a.id);
+                          setState(() {
+                            poster = '';
+                            changed = true;
+                            problem = null;
+                          });
+                        } on AnthologyException catch (e) {
+                          setState(() => problem = e.message);
+                        }
+                      },
+                      child: Text(
+                        context.tr('app.anthology_tools.remove_poster'),
+                      ),
+                    ),
+                ],
+              ),
               if (problem != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -337,6 +443,16 @@ Future<bool> editFrontMatter(
                   ),
                 ),
               const SizedBox(height: 12),
+              TextField(
+                textCapitalization: TextCapitalization.sentences,
+                controller: description,
+                minLines: 3,
+                maxLines: 8,
+                maxLength: 4000,
+                decoration: InputDecoration(
+                  labelText: context.tr('app.anthology_tools.description'),
+                ),
+              ),
               TextField(
                 textCapitalization: TextCapitalization.sentences,
                 controller: epigraph,
@@ -375,12 +491,14 @@ Future<bool> editFrontMatter(
   );
   if (saved == true &&
       (epigraph.text.trim() != a.epigraph ||
-          dedication.text.trim() != a.dedication)) {
+          dedication.text.trim() != a.dedication ||
+          description.text.trim() != a.description)) {
     try {
       await service.setFront(
         a.id,
         epigraph.text.trim(),
         dedication.text.trim(),
+        description: description.text.trim(),
       );
       changed = true;
     } on AnthologyException catch (e) {
