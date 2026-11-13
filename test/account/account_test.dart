@@ -561,6 +561,36 @@ void main() {
       },
     );
 
+    test('a setting changed with no server is kept, survives the server being read back, and goes up', () async {
+      final r = await rig();
+      r.server.unreachable = true;
+      expect(await r.prefs.save({'srDaily': 12}), isNull);
+      expect(r.prefs.prefs.srDaily, 12);
+
+      r.server.unreachable = false;
+      await r.prefs.refresh();
+      expect(r.server.prefWrites.last['srDaily'], 12);
+      expect(r.prefs.prefs.srDaily, 12);
+
+      // nothing is left waiting
+      r.server.prefWrites.clear();
+      await r.prefs.refresh();
+      expect(r.server.prefWrites, isEmpty);
+    });
+
+    test('a setting changed with no server is not overwritten by an old server copy', () async {
+      final r = await rig();
+      r.server.unreachable = true;
+      await r.prefs.save({'srDaily': 12});
+      r.server.unreachable = true;
+      await r.prefs.refresh();
+      expect(
+        r.prefs.prefs.srDaily,
+        12,
+        reason: 'still unreachable: the phone\'s value stands',
+      );
+    });
+
     testWidgets('a server refusal is shown to the reader', (tester) async {
       final (r, widget) = await app(tester, const ReviewPrefsScreen());
       await tester.pumpWidget(widget);

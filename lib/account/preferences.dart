@@ -215,9 +215,52 @@ class PairedPreferences extends ChangeNotifier implements PreferencesSource {
     notifyListeners();
   }
 
+  static const _pendingKey = 'outbox.preferences';
+
+  /// The changes made while the server could not be reached, by setting, newest value of each. They go up
+  /// before the server's copy is read back: otherwise reading it back would put the old values over them.
+  Map<String, Object?> get _pending {
+    final raw = _store.read(_pendingKey);
+    if (raw == null || raw.isEmpty) return {};
+    try {
+      return Map<String, Object?>.from(jsonDecode(raw) as Map);
+    } on Object {
+      return {};
+    }
+  }
+
+  Future<void> _setPending(Map<String, Object?> p) => p.isEmpty
+      ? _store.remove(_pendingKey)
+      : _store.write(_pendingKey, jsonEncode(p));
+
+  /// Sends the changes that waited for the server. True when nothing is left waiting.
+  Future<bool> flush() async {
+    final waiting = _pending;
+    if (waiting.isEmpty) return true;
+    if (!_controller.paired) return false;
+    try {
+      await _controller.withClient(
+        (c) => c.putJson('/auth/me/preferences', waiting),
+      );
+      await _setPending({});
+      return true;
+    } on ApiException catch (e) {
+      if (e.status == 400) {
+        // the server will not take them (a value out of range): they are not kept for ever
+        await _setPending({});
+        return true;
+      }
+      return false;
+    }
+  }
+
   @override
   Future<void> refresh() async {
     if (!_controller.paired) return;
+    // if the server cannot be reached, what the phone holds is newer than its copy
+    if (!await flush()) {
+      return;
+    }
     try {
       final me = await _controller.withClient((c) => c.getJson('/auth/me'));
       final p = me is Map ? me['preferences'] : null;
@@ -231,18 +274,23 @@ class PairedPreferences extends ChangeNotifier implements PreferencesSource {
   Future<String?> save(Map<String, Object?> patch) async {
     final before = Map<String, Object?>.of(_prefs.raw);
     await _keep({...before, ...patch});
-    if (!_controller.paired) return null;
+    if (!_controller.paired) {
+      await _setPending({..._pending, ...patch});
+      return null;
+    }
     try {
       await _controller.withClient(
-        (c) => c.putJson('/auth/me/preferences', patch),
+        (c) => c.putJson('/auth/me/preferences', {..._pending, ...patch}),
       );
+      await _setPending({});
       return null;
     } on ApiException catch (e) {
       if (e.status == 400) {
         await _keep(before);
         return e.detail;
       }
-      // the server could not be reached: the change stays on the phone and goes up with the next one
+      // the server could not be reached: the change stays on the phone and goes up with the next run
+      await _setPending({..._pending, ...patch});
       return null;
     }
   }

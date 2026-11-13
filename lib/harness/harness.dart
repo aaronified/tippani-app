@@ -328,6 +328,7 @@ class Harness {
               controller: controller,
               log: appLog,
               after: [
+                prefs.flush,
                 anthologies.flush,
                 () => keepFavouriteContexts(
                   library!,
