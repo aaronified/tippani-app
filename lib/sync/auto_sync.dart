@@ -230,6 +230,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     if (_syncing) return _pull.sync();
     _syncing = true;
     final changesAtStart = _changeCount;
+    var again = false;
     notifyListeners();
     PullResult result;
     try {
@@ -257,7 +258,8 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
       if (_changeCount == changesAtStart) {
         await _markDirty(false);
       } else {
-        scheduleSoon();
+        // asked for after this run ends: while it is out, scheduleSoon does nothing
+        again = true;
       }
       try {
         final p = await SharedPreferences.getInstance();
@@ -273,6 +275,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     }
     _syncing = false;
     notifyListeners();
+    if (again) scheduleSoon();
     return result;
   }
 

@@ -22,7 +22,7 @@ version. Write each entry for the person using the app, in plain words. **Start 
 ### Fixed
 
 - Front matter changed with no signal no longer writes over what you edited on the web meanwhile: the epigraph, dedication and description each go up only if the server still holds what the phone held when you changed it.
-- A change made while a sync was running is no longer forgotten when that run ends: it stays due and goes up next.
+- A change made while a sync was running is no longer forgotten when that run ends: another run starts and sends it.
 - Quiz answers waiting for the server are cleared, and the waiting count updated, when you unpair.
 - A change made with no signal is no longer lost when the server answers 502, 503, 504 or 429 as it comes back (a proxy restarting): it waits and is sent again. Only an answer that refuses the change drops it, and says so.
 - Changes waiting for the server go up when it next answers, not only after the library changes: an anthology edited or a setting changed in airplane mode is sent when the phone is back on a network.
