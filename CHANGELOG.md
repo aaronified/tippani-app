@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Covers, casts and details are kept on the phone: after each sync the phone downloads the cover pictures it does not hold and each work's description, genres and cast (60 requests a run, the rest follows at the next sync, and details are read again after two weeks), so a shelf and a work page look the same with no server. It stops after three misses in a row, when the server is not answering.
+
 ## [0.8.2] - 2026-11-13
 
 ### Added

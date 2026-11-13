@@ -14,6 +14,8 @@
   reads (a stale answer there would look like a server that had lost everything) and not `/auth/me`, whose failure is how the app learns it was
   unpaired; the Account page reads its own three answers through `getJsonKept` instead. A read of what was just saved is live (`getJsonLive`), so an old
   copy is never served in place of a timeout. A screen that shows a kept answer says so, with its date (`OfflineNote`).
+  What a shelf and a work page draw is kept too (`keepWorkExtras`, after a sync): cover pictures, and each work's details and cast, at most 60
+  requests a run, details read again after two weeks, and a run stops after three misses in a row.
 - **A change made while the server cannot be reached is kept and sent in order.** Anthologies (`OfflineAnthologies`) apply the change to the kept copy at
   once and queue it, headings, commentary, grouping, front matter and description, the cover and poster pictures (each up to 1.5 MB) and the fill included; the queue is sent by every
   sync run that finds the server answering, and when the list is opened. The queue is read again around every send, so a change made while a request is

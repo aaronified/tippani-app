@@ -50,6 +50,11 @@ class CoverCache implements CoverSource {
     return d;
   }
 
+  /// Whether the picture named [name] is already on the phone.
+  Future<bool> kept(String name) async =>
+      coverName.hasMatch(name) &&
+      await File('${(await _dir()).path}/$name').exists();
+
   @override
   Future<File?> fileFor(String name) {
     if (!coverName.hasMatch(name)) return Future.value(null);

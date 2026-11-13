@@ -26,6 +26,7 @@ import '../anthologies/anthologies.dart';
 import '../anthologies/offline_anthologies.dart';
 import '../boards/board_service.dart';
 import '../library/cover_cache.dart';
+import '../library/work_keeper.dart';
 import '../tools/context_store.dart';
 import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
@@ -288,6 +289,7 @@ class Harness {
         ? null
         : PullSync(library, controller, log: appLog);
     final covers = CoverCache(controller);
+    final workDetails = PairedWorkDetails(controller);
     final directory = PairedPeopleDirectory(controller, covers);
     pull?.onFaces = directory.rememberFaces;
     final prefs = PairedPreferences(controller, settings);
@@ -320,6 +322,7 @@ class Harness {
               prefs.flush,
               anthologies.flush,
               () => keepContexts(library!, contexts),
+              () => keepWorkExtras(library!, covers, workDetails),
             ],
           );
     // a change made with no server counts as something to send, so it goes up when the server next answers
@@ -378,7 +381,7 @@ class Harness {
       peopleConsole: PairedPeopleConsole(controller),
       admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
-      details: PairedWorkDetails(controller),
+      details: workDetails,
       contexts: contexts,
       anthologies: anthologies,
       tools: PairedServerTools(controller),
