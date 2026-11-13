@@ -291,6 +291,13 @@ class Harness {
         : PullSync(library, controller, log: appLog);
     final covers = CoverCache(controller);
     final workDetails = PairedWorkDetails(controller);
+    // covers the server could not serve are not asked for again until the app is next opened
+    final missedCovers = <String>{};
+    // pictures kept for the last account are not shown to the next
+    controller.offline.whenCleared.add(() async {
+      missedCovers.clear();
+      await covers.clear();
+    });
     final directory = PairedPeopleDirectory(controller, covers);
     pull?.onFaces = directory.rememberFaces;
     final prefs = PairedPreferences(controller, settings);
@@ -302,6 +309,7 @@ class Harness {
           ? null
           : (kind, id) => _passageOf(library, kind, id),
       keepPicture: covers.keepLocal,
+      discardPicture: covers.discard,
     );
     final writes = OfflineWrites(controller, settings);
     // a change the server refused is dropped; the log is where the reader can see what was
@@ -335,7 +343,12 @@ class Harness {
               anthologies.flush,
               writes.flush,
               () => keepContexts(library!, contexts),
-              () => keepWorkExtras(library!, covers, workDetails),
+              () => keepWorkExtras(
+                library!,
+                covers,
+                workDetails,
+                missed: missedCovers,
+              ),
             ],
           );
     // a change made with no server counts as something to send, so it goes up when the server next answers

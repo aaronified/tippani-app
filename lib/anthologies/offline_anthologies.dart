@@ -30,6 +30,7 @@ class OfflineAnthologies implements AnthologyService {
     this._store, {
     this.lookup,
     this.keepPicture,
+    this.discardPicture,
     DateTime Function()? clock,
   }) : _clock = clock ?? DateTime.now {
     pending.value = _load().ops.length;
@@ -49,6 +50,9 @@ class OfflineAnthologies implements AnthologyService {
 
   /// Keeps a picture chosen with no server on the phone and returns its name, so it shows at once.
   final Future<String> Function(Uint8List bytes, String fileName)? keepPicture;
+
+  /// Removes a kept picture that is no longer needed (it was uploaded, or replaced by another pick).
+  final Future<void> Function(String name)? discardPicture;
   final DateTime Function() _clock;
 
   static const _key = 'outbox.anthologies';
@@ -72,6 +76,13 @@ class OfflineAnthologies implements AnthologyService {
       _inner.keyed(key, run);
 
   static int _keys = 0;
+
+  /// Kept pictures whose upload went, to be removed once the screens read the server's name for them.
+  final _uploaded = <Object?>[];
+
+  Future<void> _discard(Object? name) async {
+    if (name is String && name.isNotEmpty) await discardPicture?.call(name);
+  }
 
   /// A key for one change, the same whether it is sent now or waits in the queue: a request that reached the
   /// server and lost its reply is then recognised when it is sent again.
@@ -136,6 +147,10 @@ class OfflineAnthologies implements AnthologyService {
         sent++;
       }
       if (sent > 0) await _refresh(touched);
+      for (final name in _uploaded) {
+        await _discard(name);
+      }
+      _uploaded.clear();
     } finally {
       _flushing = false;
     }
@@ -273,6 +288,7 @@ class OfflineAnthologies implements AnthologyService {
           base64Decode(op['bytes'] as String? ?? ''),
           op['name'] as String? ?? 'cover.jpg',
         );
+        _uploaded.add(op['local']);
       case 'removeCover':
         await _inner.removeCover(id);
       case 'poster':
@@ -281,6 +297,7 @@ class OfflineAnthologies implements AnthologyService {
           base64Decode(op['bytes'] as String? ?? ''),
           op['name'] as String? ?? 'poster.jpg',
         );
+        _uploaded.add(op['local']);
       case 'removePoster':
         await _inner.removePoster(id);
       case 'fill':
@@ -298,6 +315,7 @@ class OfflineAnthologies implements AnthologyService {
     Map<String, Object?> op, {
     required Future<T> Function() online,
     required Future<T> Function() local,
+    Future<void> Function(Map<String, Object?> op)? prepare,
     int? anthologyId,
   }) async {
     op['k'] ??= _newKey();
@@ -315,8 +333,14 @@ class OfflineAnthologies implements AnthologyService {
     final q = _load();
     // a picture picked again replaces the one still waiting, instead of queueing a second upload
     if (op['replaces'] == true) {
-      q.ops.removeWhere((o) => o['op'] == op['op'] && o['id'] == op['id']);
+      bool same(Map<String, Object?> o) =>
+          o['op'] == op['op'] && o['id'] == op['id'];
+      for (final o in q.ops.where(same)) {
+        await _discard(o['local']);
+      }
+      q.ops.removeWhere(same);
     }
+    await prepare?.call(op);
     q.ops.add(op);
     await _save(q);
     return local();
@@ -892,10 +916,21 @@ class OfflineAnthologies implements AnthologyService {
       },
       anthologyId: id,
       online: online,
+      // the picture is kept on the phone when it has to wait, and its name goes in the queued change so the
+      // file can be removed once it has been uploaded or replaced
+      prepare: (op) async {
+        op['local'] = await keepPicture?.call(bytes, fileName) ?? '';
+      },
       local: () async {
-        final name = await keepPicture?.call(bytes, fileName) ?? '';
-        if (name.isNotEmpty) await _patch(id, {field: name});
-        return name;
+        final name = _load().ops.lastWhere(
+          (o) => o['op'] == op && o['id'] == id,
+          orElse: () => const {},
+        )['local'];
+        if (name is String && name.isNotEmpty) {
+          await _patch(id, {field: name});
+          return name;
+        }
+        return '';
       },
     );
   }

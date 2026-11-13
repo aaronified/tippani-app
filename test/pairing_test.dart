@@ -478,6 +478,11 @@ void main() {
           isFalse,
           reason: 'this phone was one of them',
         );
+        expect(
+          r.controller.revoked,
+          isFalse,
+          reason: 'the reader did this on purpose: no unpaired-from-the-server alert',
+        );
       },
     );
 

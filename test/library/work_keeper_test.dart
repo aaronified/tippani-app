@@ -82,7 +82,7 @@ void main() {
     await addWork('Dune', 4, cover: two);
 
     final made = await keepWorkExtras(lib, covers, details, clock: () => clock);
-    expect(made, 4, reason: 'two covers and two details');
+    expect(made, 6, reason: 'two covers, and two details with their casts');
     expect(await covers.kept(one), isTrue);
     expect(await covers.kept(two), isTrue);
     expect((await lib.work(a.id))!.details.description, 'About Walden');
@@ -149,7 +149,7 @@ void main() {
         details,
         clock: () => clock,
       );
-      expect(made, 3);
+      expect(made, 6);
       expect(details.asked, hasLength(3));
     },
   );
@@ -159,4 +159,83 @@ void main() {
     await lib.addWork(const WorkDraft(title: 'Only here'));
     expect(await keepWorkExtras(lib, covers, details, clock: () => clock), 0);
   });
+
+  test('a cover the server cannot serve does not end the run, and is not asked for again while the app is open', () async {
+    await rig();
+    const bad1 = '1111111111111111.png';
+    const bad2 = '2222222222222222.png';
+    const bad3 = '3333333333333333.png';
+    const good = '4444444444444444.png';
+    server.covers[good] = png;
+    final stale = WorkDetails(fetchedAt: clock);
+    for (final (i, c) in [bad1, bad2, bad3, good].indexed) {
+      final w = await addWork('Book $i', 10 + i, cover: c);
+      await lib.setWorkDetails(w.id, stale);
+    }
+    final missed = <String>{};
+
+    await keepWorkExtras(
+      lib,
+      covers,
+      details,
+      clock: () => clock,
+      missed: missed,
+    );
+    expect(
+      await covers.kept(good),
+      isTrue,
+      reason: 'three covers that 404 do not hide the fourth',
+    );
+    expect(missed, {bad1, bad2, bad3});
+
+    server.coverReads.clear();
+    await keepWorkExtras(
+      lib,
+      covers,
+      details,
+      clock: () => clock,
+      missed: missed,
+    );
+    expect(
+      server.coverReads,
+      isEmpty,
+      reason: 'a cover that missed is not asked for on every sync',
+    );
+  });
+
+  test(
+    'works go oldest first, so each run moves on from where the last stopped',
+    () async {
+      await rig();
+      // alphabetical order is Alpha, Beta, Gamma, Zed; oldest first is Beta (never), Gamma (60 days), Alpha (30)
+      final alpha = await addWork('Alpha', 1);
+      await lib.setWorkDetails(
+        alpha.id,
+        WorkDetails(fetchedAt: clock.subtract(const Duration(days: 30))),
+      );
+      final beta = await addWork('Beta', 2);
+      final gamma = await addWork('Gamma', 3);
+      await lib.setWorkDetails(
+        gamma.id,
+        WorkDetails(fetchedAt: clock.subtract(const Duration(days: 60))),
+      );
+      final zed = await addWork('Zed', 4);
+      await lib.setWorkDetails(zed.id, WorkDetails(fetchedAt: clock));
+      await keepWorkExtras(lib, covers, details, clock: () => clock);
+      expect(details.asked, [beta.serverId, gamma.serverId, alpha.serverId]);
+    },
+  );
+
+  test(
+    'clearing the cover folder removes what was kept for the last account',
+    () async {
+      await rig();
+      const one = '0123456789abcdef.png';
+      server.covers[one] = png;
+      await covers.fileFor(one);
+      expect(await covers.kept(one), isTrue);
+      await covers.clear();
+      expect(await covers.kept(one), isFalse);
+    },
+  );
 }

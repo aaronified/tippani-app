@@ -692,6 +692,22 @@ void main() {
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.reset);
         final (r, widget) = await app(tester, const ReviewPrefsScreen());
+        // the other deck already differs from its defaults: a document that reset it would show
+        await tester.runAsync(
+          () => r.prefs.save({
+            'srQuestions': jsonEncode({
+              'daily': [
+                'source',
+                'quote',
+                'cloze',
+                'cloze-mcq',
+                'speaker',
+                'author',
+              ],
+              'practice': ['source', 'quote', 'cloze', 'flip'],
+            }),
+          }),
+        );
         await tester.pumpWidget(widget);
         await tester.runAsync(() async {
           await tester.tap(find.text('Name the source').first);
@@ -706,8 +722,12 @@ void main() {
         ) as Map;
         expect(doc['daily'], isNot(contains('source')));
         expect(doc['daily'], contains('quote'));
-        expect(doc['practice'], contains('source'));
-        expect(doc['practice'], contains('flip'));
+        expect(
+          doc['practice'],
+          ['source', 'quote', 'cloze', 'flip'],
+          reason:
+              'the other deck is sent as it was, not put back to its defaults',
+        );
       },
     );
 

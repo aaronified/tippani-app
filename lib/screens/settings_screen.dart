@@ -356,8 +356,10 @@ class SettingsScreen extends StatelessWidget {
                         ),
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (_) =>
-                                AdminJobsScreen(service: harness.admin!),
+                            builder: (_) => AdminJobsScreen(
+                              service: harness.admin!,
+                              ownOnly: true,
+                            ),
                           ),
                         ),
                       ),

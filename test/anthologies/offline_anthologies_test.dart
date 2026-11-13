@@ -268,6 +268,7 @@ Future<
     OfflineAnthologies service,
     SettingsStore store,
     OfflineCache cache,
+    List<String> discarded,
   })
 >
 _rig({PassageLookup? lookup}) async {
@@ -279,6 +280,7 @@ _rig({PassageLookup? lookup}) async {
   final cache = OfflineCache(store);
   final server = _Server(cache);
   var kept = 0;
+  final discarded = <String>[];
   final service = OfflineAnthologies(
     server,
     cache,
@@ -286,8 +288,15 @@ _rig({PassageLookup? lookup}) async {
     lookup: lookup,
     keepPicture: (bytes, name) async =>
         '${(kept++).toRadixString(16).padLeft(16, '0')}.jpg',
+    discardPicture: (name) async => discarded.add(name),
   );
-  return (server: server, service: service, store: store, cache: cache);
+  return (
+    server: server,
+    service: service,
+    store: store,
+    cache: cache,
+    discarded: discarded,
+  );
 }
 
 void main() {
@@ -650,6 +659,46 @@ void main() {
       isNotNull,
       reason: 'a change sent at once carries a key too',
     );
+  });
+
+  test('a kept picture is removed once it is uploaded or replaced, and replacing one anthology\'s leaves another\'s', () async {
+    final r = await _rig();
+    final a = await r.service.create('A', '');
+    final b = await r.service.create('B', '');
+    await r.service.get(a.id);
+    await r.service.get(b.id);
+    r.server.up = false;
+    final first = await r.service.setPoster(
+      a.id,
+      Uint8List.fromList([1]),
+      'one.jpg',
+    );
+    final other = await r.service.setPoster(
+      b.id,
+      Uint8List.fromList([2]),
+      'two.jpg',
+    );
+    final second = await r.service.setPoster(
+      a.id,
+      Uint8List.fromList([3]),
+      'three.jpg',
+    );
+    expect(r.discarded, [
+      first,
+    ], reason: 'only the replaced picture of the same anthology goes');
+    expect(r.service.pending.value, 2, reason: 'one upload for each anthology');
+
+    r.server.up = true;
+    await r.service.flush();
+    expect(r.server.sent.where((s) => s.startsWith('poster')), [
+      'poster ${b.id} 1 two.jpg',
+      'poster ${a.id} 1 three.jpg',
+    ]);
+    expect(r.discarded.toSet(), {
+      first,
+      other,
+      second,
+    }, reason: 'uploaded pictures are removed from the phone');
   });
 
   test(

@@ -1408,3 +1408,5 @@ app.devices.unpair_every_device = Unpair every device
 app.devices.unpair_every_device_title = Unpair every device?
 app.devices.unpair_every_device_body = Every phone paired with this account, this one too, is signed out. You can pair each one again with a new code.
 app.devices.could_not_unpair_every_device = Could not unpair the devices. Check the connection and try again.
+app.admin_jobs.stop_your_jobs = Stop your jobs?
+app.admin_jobs.your_running_job_and_every_waiting = Your running job and every waiting one of yours are stopped.

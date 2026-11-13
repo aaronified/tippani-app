@@ -73,6 +73,22 @@ class CoverCache implements CoverSource {
     return name;
   }
 
+  /// Removes the picture named [name] from the phone, if it is there.
+  Future<void> discard(String name) async {
+    if (!coverName.hasMatch(name)) return;
+    final file = File('${(await _dir()).path}/$name');
+    if (await file.exists()) await file.delete();
+  }
+
+  /// Removes every picture kept: the phone was unpaired, and what it kept is the last account's.
+  Future<void> clear() async {
+    final dir = await _dir();
+    await for (final f in dir.list()) {
+      if (f is File) await f.delete();
+    }
+    _failedAt.clear();
+  }
+
   /// Whether the picture named [name] is already on the phone.
   Future<bool> kept(String name) async =>
       coverName.hasMatch(name) &&

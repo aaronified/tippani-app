@@ -1405,3 +1405,5 @@ app.devices.unpair_every_device = সব ডিভাইস বিযুক্�
 app.devices.unpair_every_device_title = সব ডিভাইস বিযুক্ত করবেন?
 app.devices.unpair_every_device_body = এই অ্যাকাউন্টের সাথে যুক্ত প্রতিটি ফোন, এটিসহ, সাইন-আউট হয়ে যাবে। নতুন কোড দিয়ে আবার যুক্ত করতে পারবেন।
 app.devices.could_not_unpair_every_device = ডিভাইসগুলো বিযুক্ত করা যায়নি। সংযোগ দেখে আবার চেষ্টা করুন।
+app.admin_jobs.stop_your_jobs = আপনার কাজগুলো থামাবেন?
+app.admin_jobs.your_running_job_and_every_waiting = আপনার চলমান কাজ আর আপনার অপেক্ষায় থাকা প্রতিটি কাজ থামানো হবে।
