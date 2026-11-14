@@ -31,6 +31,7 @@ import 'shelf_card.dart';
 import 'work_form_screen.dart';
 import 'work_read_screen.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// One work: its details, the quotes taken from it, and what can be done with it (edit, export, delete).
 class WorkScreen extends StatefulWidget {
@@ -368,7 +369,7 @@ class _WorkScreenState extends State<WorkScreen> {
     final w = _work;
     if (_loaded && w == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: ShellAppBar(),
         body: Center(
           child: Text(context.tr('app.work.this_work_is_no_longer_in')),
         ),
@@ -405,7 +406,7 @@ class _WorkScreenState extends State<WorkScreen> {
                 done: _bulkDone,
               ).bar(context),
             )
-          : AppBar(
+          : ShellAppBar(
               title: Text(w?.title ?? ''),
               actions: [
                 if (w != null) ...[

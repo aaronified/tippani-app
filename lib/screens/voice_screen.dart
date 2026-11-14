@@ -4,6 +4,7 @@ import '../capture/voice_listener.dart';
 import 'capture_screen.dart' show CapturedText;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Turns speech into words: press the microphone, say them, press again, and correct the text. Pops a
 /// [CapturedText] for the quote form to put in the words. The app keeps no audio.
@@ -88,7 +89,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.voice.say_a_quote'))),
+      appBar: ShellAppBar(title: Text(context.tr('app.voice.say_a_quote'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

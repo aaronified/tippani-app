@@ -4,6 +4,7 @@ import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 String _slug(String s) {
   final out = s
@@ -31,7 +32,9 @@ class AdminFoldersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.tr('settings.library.folders.label'))),
+    appBar: ShellAppBar(
+      title: Text(context.tr('settings.library.folders.label')),
+    ),
     body: Loader<LibraryFolders>(
       load: service.folders,
       builder: (context, folders, reload) =>
@@ -144,7 +147,7 @@ class _Folders extends StatelessWidget {
               for (final m in folders.mounts)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: Card(
+                  child: SurfaceCard(
                     child: ListTile(
                       leading: Icon(
                         m.ok ? Ti.folder : Ti.folderOff,
@@ -166,7 +169,7 @@ class _Folders extends StatelessWidget {
                   ),
                 ),
               AdminHeading(context.tr('account.notify.event.backup.title')),
-              Card(
+              SurfaceCard(
                 child: SwitchListTile(
                   title: Text(
                     context.tr(
@@ -189,7 +192,7 @@ class _Folders extends StatelessWidget {
                 ),
               ),
               AdminHeading(context.tr('app.admin_folders.tidy_up')),
-              Card(
+              SurfaceCard(
                 child: ListTile(
                   title: Text(
                     folders.orphanFiles == 0

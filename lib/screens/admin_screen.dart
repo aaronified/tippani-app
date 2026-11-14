@@ -10,6 +10,7 @@ import 'admin_update_screen.dart';
 import 'admin_users_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Running the server: its users, jobs, backups, updates, library folders and metadata sources. Only an admin
 /// account is offered this (Settings hides it for anyone else), and the server checks again on every call.
@@ -34,7 +35,7 @@ class AdminScreen extends StatelessWidget {
       Widget Function() to,
     ) => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      child: Card(
+      child: SurfaceCard(
         child: ListTile(
           leading: Icon(icon),
           title: Text(title),
@@ -47,7 +48,7 @@ class AdminScreen extends StatelessWidget {
       ),
     );
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('app.admin.server_administration')),
       ),
       body: ListView(

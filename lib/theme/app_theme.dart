@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'tabler.dart';
 
 import '../account/preferences.dart';
+import 'material_surface.dart';
+import 'materials.dart';
 
 /// The face for the words of a quote, and for the large display lines: Source Serif 4 (SIL OFL, bundled).
 const String quoteFont = 'SourceSerif4';
@@ -14,7 +16,12 @@ const String uiFont = 'Inter';
 /// Tippani's look over whichever Material You colours the phone gave: shape, type, spacing and the way bars,
 /// cards, inputs and dialogs sit. Colours are never chosen here, only taken from [scheme] (the owner's rule: the
 /// phone's own colours, nothing else).
-ThemeData buildTheme(ColorScheme scheme) {
+ThemeData buildTheme(
+  ColorScheme scheme, {
+  MaterialLook look = MaterialLook.none,
+}) {
+  // A textured ground is painted by the page transition under every page, so the page's own scaffold lets it show.
+  final ground = !textiles[look.tileFor('ground')]!.isFlat;
   final base = ThemeData(
     colorScheme: scheme,
     useMaterial3: true,
@@ -27,14 +34,20 @@ ThemeData buildTheme(ColorScheme scheme) {
   );
   return base.copyWith(
     textTheme: text,
-    scaffoldBackgroundColor: scheme.surface,
+    scaffoldBackgroundColor: ground ? Colors.transparent : scheme.surface,
     splashFactory: InkSparkle.splashFactory,
     visualDensity: VisualDensity.standard,
-    pageTransitionsTheme: const PageTransitionsTheme(
+    pageTransitionsTheme: PageTransitionsTheme(
       builders: {
-        TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.android: ground
+            ? GroundTransitions(
+                const PredictiveBackPageTransitionsBuilder(),
+                look,
+                scheme.surface,
+              )
+            : const PredictiveBackPageTransitionsBuilder(),
+        TargetPlatform.iOS: const CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: const CupertinoPageTransitionsBuilder(),
       },
     ),
     appBarTheme: AppBarTheme(
@@ -113,7 +126,8 @@ ThemeData buildTheme(ColorScheme scheme) {
     navigationBarTheme: NavigationBarThemeData(
       height: 72,
       elevation: 0,
-      backgroundColor: scheme.surfaceContainer,
+      // Drawn by the shell surface the bar sits in (a plain one when the look has no material).
+      backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       indicatorColor: scheme.secondaryContainer,
       indicatorShape: const StadiumBorder(),
@@ -267,6 +281,44 @@ Widget quoteMeasure(BuildContext context, double size, Widget child) {
     child: ConstrainedBox(
       constraints: BoxConstraints(maxWidth: m * size * 0.52),
       child: child,
+    ),
+  );
+}
+
+/// Paints the ground material under every page, then lets the page's transition run over it. Each page brings its own
+/// opaque ground, so the page underneath never shows through while one is pushed.
+class GroundTransitions extends PageTransitionsBuilder {
+  const GroundTransitions(this.inner, this.look, this.colour);
+
+  final PageTransitionsBuilder inner;
+  final MaterialLook look;
+  final Color colour;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => inner.buildTransitions<T>(
+    route,
+    context,
+    animation,
+    secondaryAnimation,
+    Stack(
+      fit: StackFit.expand,
+      children: [
+        RepaintBoundary(
+          child: MaterialSurface(
+            slot: 'ground',
+            color: colour,
+            look: look,
+            child: const SizedBox.expand(),
+          ),
+        ),
+        child,
+      ],
     ),
   );
 }

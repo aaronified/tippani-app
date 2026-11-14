@@ -6,6 +6,7 @@ import '../library/library_store.dart';
 import '../library/models.dart';
 import '../tools/work_details_source.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The word the server uses for "in progress" on a work: reading a book, watching a film or show, playing a game.
 String activeStatusOf(WorkKind kind) => switch (kind) {
@@ -111,7 +112,7 @@ class _ShelfCardState extends State<ShelfCard> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-      child: Card(
+      child: SurfaceCard(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

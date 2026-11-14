@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../account/preferences.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Saves [patch] to the account's preferences and tells the reader when the server refused it, in its words.
 Future<void> savePrefs(BuildContext context, Map<String, Object?> patch) async {
@@ -44,7 +45,7 @@ class PrefGroup extends StatelessWidget {
                 ),
               ),
             ),
-          Card(
+          SurfaceCard(
             margin: const EdgeInsets.symmetric(horizontal: 16),
             clipBehavior: Clip.antiAlias,
             child: Column(children: children),
@@ -232,7 +233,7 @@ class PrefPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title)),
+    appBar: ShellAppBar(title: Text(title)),
     body: ListView(
       padding: const EdgeInsets.only(top: 4, bottom: 32),
       children: children,

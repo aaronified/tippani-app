@@ -13,6 +13,7 @@ import 'checks_tabs.dart';
 import 'staging_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Where the things that wait on the reader are: files imported into the server's queue, stray marks in the
 /// words, corrections from a work's own file, and times and places from it. Each tab carries a count of what is
@@ -113,7 +114,7 @@ class _ChecksScreenState extends State<ChecksScreen> {
     return DefaultTabController(
       length: tabs.length,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: ShellAppBar(
           title: Text(context.tr('app.checks_entry.import_and_checks')),
           bottom: tabs.length > 1
               ? TabBar(
@@ -254,7 +255,7 @@ class _ImportsTabState extends State<ImportsTab> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: [
         if (_server && pending > 0)
-          Card(
+          SurfaceCard(
             color: scheme.primaryContainer,
             child: ListTile(
               leading: Icon(Ti.inbox, color: scheme.onPrimaryContainer),
@@ -292,7 +293,7 @@ class _ImportsTabState extends State<ImportsTab> {
             ),
           )
         else
-          Card(
+          SurfaceCard(
             child: ListTile(
               leading: const Icon(Ti.cloudOff),
               title: Text(
@@ -348,7 +349,7 @@ class _ImportsTabState extends State<ImportsTab> {
                 : null,
           ),
         const SizedBox(height: 8),
-        Card(
+        SurfaceCard(
           child: ExpansionTile(
             shape: const Border(),
             collapsedShape: const Border(),
@@ -404,7 +405,7 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return SurfaceCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -492,7 +493,7 @@ class _ResultCardState extends State<_ResultCard> {
     } else {
       line = '';
     }
-    return Card(
+    return SurfaceCard(
       color: bad ? scheme.errorContainer : null,
       child: Padding(
         padding: const EdgeInsets.all(16),

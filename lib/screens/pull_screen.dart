@@ -5,6 +5,7 @@ import '../sync/auto_sync.dart';
 import '../sync/pull_sync.dart';
 import 'conflicts_screen.dart';
 import '../l10n/l10n.dart';
+import '../theme/material_surface.dart';
 
 /// What a sync did, in plain words. Counts only: it never repeats what anything said.
 List<String> describePull(PullResult r) {
@@ -92,7 +93,7 @@ class PullScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.pull.sync_with_server'))),
+      appBar: ShellAppBar(title: Text(context.tr('app.pull.sync_with_server'))),
       body: ListenableBuilder(
         listenable: auto,
         builder: (context, _) {

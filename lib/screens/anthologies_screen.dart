@@ -13,6 +13,7 @@ import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import 'offline_note.dart';
+import '../theme/material_surface.dart';
 
 /// An anthology as plain text to send: its title and introduction, then each passage with where it is from and the
 /// reader's commentary on it.
@@ -199,7 +200,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
     return Scaffold(
       appBar: widget.embedded
           ? null
-          : AppBar(title: Text(context.tr('nav.tab.anthologies.label'))),
+          : ShellAppBar(title: Text(context.tr('nav.tab.anthologies.label'))),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'add-anthology',
         onPressed: _create,
@@ -248,7 +249,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
                     horizontal: 16,
                     vertical: 5,
                   ),
-                  child: Card(
+                  child: SurfaceCard(
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -307,7 +308,7 @@ class _WaitingNote extends StatelessWidget {
         if (n == 0 && refused.isEmpty) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Card(
+          child: SurfaceCard(
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -723,7 +724,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
               ),
             ),
           ),
-        Card(
+        SurfaceCard(
           clipBehavior: Clip.antiAlias,
           margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: Container(
@@ -856,7 +857,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     final d = _detail;
     final slots = d?.slots ?? const <AnthologySlot>[];
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(
           d?.anthology.title ?? context.tr('common.field.anthology.label'),
         ),

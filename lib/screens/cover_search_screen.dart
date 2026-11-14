@@ -7,6 +7,7 @@ import '../library/models.dart';
 import '../tools/cover_search.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Finds a cover or poster online: search by title, creator or ISBN (the work's own are filled in), see what the
 /// catalogues and picture suppliers have with the name of each, and press one to use it. Pops the chosen picture's
@@ -136,7 +137,7 @@ class _CoverSearchScreenState extends State<CoverSearchScreen> {
         if (_source.isEmpty || o.source == _source) o,
     ];
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('app.cover_search.find_a_cover_online')),
       ),
       body: Column(

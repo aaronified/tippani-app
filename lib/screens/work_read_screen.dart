@@ -8,6 +8,7 @@ import '../library/work_order.dart';
 import '../speech/speaker.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// A work's quotes as one document to read straight through, by chapter, in reading order. The reader sets
 /// the text size and whether translations and their own notes show, and can send the whole thing as text.
@@ -83,7 +84,7 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
     final scheme = theme.colorScheme;
     final groups = groupByChapter(widget.quotes);
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(widget.work.title),
         actions: [
           IconButton(

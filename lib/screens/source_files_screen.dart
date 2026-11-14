@@ -9,6 +9,7 @@ import '../sources/source_picker.dart';
 import '../sources/sources_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The source a work's file belongs to: 'book' for a book, 'screen' for a film or a show (a game has none).
 String? sourceSubjectOf(Work w) => switch (w.kind) {
@@ -460,7 +461,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
           for (final s in list)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Card(
+              child: SurfaceCard(
                 child: ListTile(
                   leading: Icon(
                     s.state == 'missing' ? Ti.unlink : Ti.fileText,
@@ -662,7 +663,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
 
   Widget _foundTile(FoundFile f) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-    child: Card(
+    child: SurfaceCard(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
         child: Column(
@@ -713,7 +714,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Card(
+        SurfaceCard(
           child: ListTile(
             leading: const Icon(Ti.folderOpen),
             title: Text(
@@ -733,7 +734,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
           ),
         ),
         const SizedBox(height: 8),
-        Card(
+        SurfaceCard(
           child: ListTile(
             leading: const Icon(Ti.fileUpload),
             title: Text(context.tr('app.source_files.from_this_phone')),
@@ -755,7 +756,7 @@ class _SourceFilesScreenState extends State<SourceFilesScreen>
   Widget build(BuildContext context) {
     final attached = _attached;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('metadata.section.files.label')),
         bottom: TabBar(
           controller: _tabs,
@@ -871,7 +872,7 @@ class _BrowseScreenState extends State<_BrowseScreen> {
   Widget build(BuildContext context) {
     final l = _list;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(
           l == null || l.root ? context.tr('app.checks.choose_a_file') : l.path,
         ),

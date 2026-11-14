@@ -8,6 +8,7 @@ import 'library_widgets.dart' show EmptyState;
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Which deck a round is.
 enum QuizMode { daily, practice }
@@ -182,7 +183,7 @@ class _QuizScreenState extends State<QuizScreen> {
         ? context.tr('quiz.daily.label')
         : context.tr('quiz.practice.label');
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(title),
         actions: [
           if (!_daily && !_loading && !_finished && _cards.isNotEmpty)
@@ -358,7 +359,7 @@ class _QuizScreenState extends State<QuizScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     if (c.direction == 'quote') {
-      return Card(
+      return SurfaceCard(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -391,7 +392,7 @@ class _QuizScreenState extends State<QuizScreen> {
       );
     }
     final style = quoteStyle(context, size: 20, height: 1.55);
-    return Card(
+    return SurfaceCard(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
         child: Column(
@@ -730,7 +731,7 @@ class _QuizScreenState extends State<QuizScreen> {
       if (c.timestamp.isNotEmpty) c.timestamp,
       if (c.occasionDate.isNotEmpty) c.occasionDate,
     ];
-    return Card(
+    return SurfaceCard(
       color: scheme.surfaceContainerHigh,
       child: Padding(
         padding: const EdgeInsets.all(14),

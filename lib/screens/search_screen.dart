@@ -22,6 +22,7 @@ import 'quote_screen.dart';
 import 'work_screen.dart';
 import '../theme/app_theme.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Opens the search page over the current screen. [initial] is what the box starts with.
 Future<void> openSearch(
@@ -502,7 +503,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final r = _results;
     final suggestions = _suggestions;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         titleSpacing: 0,
         title: TextField(
           textCapitalization: TextCapitalization.none,
@@ -767,7 +768,7 @@ class _SearchScreenState extends State<SearchScreen> {
     ].join(' · ');
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Card(
+      child: SurfaceCard(
         child: InkWell(
           onTap: () => _openWork(h),
           child: Padding(
@@ -869,7 +870,7 @@ class _SearchScreenState extends State<SearchScreen> {
     ].join(' · ');
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Card(
+      child: SurfaceCard(
         child: InkWell(
           onTap: () => _openQuote(q),
           child: Padding(

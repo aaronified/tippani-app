@@ -15,6 +15,7 @@ import '../tools/work_details_source.dart';
 import '../widgets/edge_fade_row.dart';
 import 'person_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
+import '../theme/material_surface.dart';
 
 /// How many more paragraphs (or subtitle lines) each edge of the scroller asks for.
 const contextWindow = 6;
@@ -303,7 +304,7 @@ class _QuoteContextScreenState extends State<QuoteContextScreen> {
     ];
     final locator = _locator;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

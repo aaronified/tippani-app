@@ -6,6 +6,7 @@ import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// What a kind of job is called, in words. A kind the app has no words for is shown as "Job".
 String jobKindName(String kind) =>
@@ -225,7 +226,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
     final counts = j.counts.entries.where((e) => e.value > 0).toList();
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      child: Card(
+      child: SurfaceCard(
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () => _log(j),
@@ -360,7 +361,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
     final last = j.last;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      child: Card(
+      child: SurfaceCard(
         child: ListTile(
           title: Text(commonJobName(j.id)),
           subtitle: Text(
@@ -395,7 +396,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: ShellAppBar(
           title: Text(context.tr('settings.section.jobs.label')),
           actions: [
             if (cur != null && cur.jobs.isNotEmpty)

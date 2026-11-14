@@ -19,6 +19,7 @@ import 'share_screen.dart';
 import 'work_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Shares a picture through Android's share sheet. A function so a test can stand in for it.
 typedef ShareImage = Future<void> Function(
@@ -266,7 +267,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
     final theme = Theme.of(context);
     if (!_loaded || q == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: ShellAppBar(),
         body: _loaded
             ? Center(
                 child: Text(context.tr('app.quote.this_quote_is_not_here_any')),
@@ -279,7 +280,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
       q.location,
     ].where((s) => s.isNotEmpty).join(' · ');
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('common.field.quote.label')),
         actions: [
           IconButton(
@@ -381,7 +382,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
             onFilter: (f) => Navigator.of(context).pop(f),
           ),
           if (_work != null)
-            Card(
+            SurfaceCard(
               child: ListTile(
                 leading: const Icon(Ti.book2),
                 title: Text(_work!.title),

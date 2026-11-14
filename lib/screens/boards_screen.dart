@@ -14,6 +14,7 @@ import 'board_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The picture of a board, or [fallback] while there is none (and while it loads).
 class BoardPicture extends StatelessWidget {
@@ -409,7 +410,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
     return Padding(
       key: ValueKey('board-${b.id}'),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      child: Card(
+      child: SurfaceCard(
         child: ListTile(
           contentPadding: const EdgeInsets.fromLTRB(16, 6, 4, 6),
           leading: b.imagePath.isEmpty
@@ -514,7 +515,7 @@ class _BoardsScreenState extends State<BoardsScreen> {
     final boards = _boards;
     final canOrder = _service != null && (boards?.length ?? 0) > 1;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('tour.step.boards.name'))),
+      appBar: ShellAppBar(title: Text(context.tr('tour.step.boards.name'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _edit(),
         icon: const Icon(Ti.plus),

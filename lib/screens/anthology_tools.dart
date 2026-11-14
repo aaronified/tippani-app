@@ -9,6 +9,7 @@ import '../capture/photo_source.dart';
 import '../library/cover_cache.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Sends a file through Android's share sheet. A function so a test can stand in for it.
 typedef ShareFile = Future<void> Function(Uint8List bytes, String fileName);
@@ -621,7 +622,7 @@ class _RemovedScreenState extends State<RemovedScreen> {
         if (!didPop) Navigator.of(context).pop(_restored);
       },
       child: Scaffold(
-        appBar: AppBar(
+        appBar: ShellAppBar(
           title: Text(context.tr('app.anthology_tools.taken_out')),
         ),
         body: _problem != null
@@ -649,7 +650,7 @@ class _RemovedScreenState extends State<RemovedScreen> {
                     ),
                   ),
                   for (final p in all)
-                    Card(
+                    SurfaceCard(
                       child: ListTile(
                         title: Text(
                           context.tr('app.anthologies.trim', {
@@ -782,7 +783,7 @@ class _FillScreenState extends State<FillScreen> {
     return PopScope(
       canPop: !_busy,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: ShellAppBar(
           title: Text(context.tr('app.anthology_tools.fill_from')),
         ),
         body: ListView(

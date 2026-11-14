@@ -4,6 +4,7 @@ import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The name of a metadata source in words.
 String sourceName(String s) =>
@@ -131,7 +132,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
     final text = Theme.of(context).textTheme;
     final sources = _sources, keys = _keys;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('metadata.help.metadata-sources.term')),
         actions: [
           IconButton(
@@ -180,7 +181,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                         horizontal: 16,
                         vertical: 4,
                       ),
-                      child: Card(
+                      child: SurfaceCard(
                         child: ListTile(
                           title: Text(sourceName(s.source)),
                           subtitle: Text(
@@ -230,7 +231,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                         horizontal: 16,
                         vertical: 4,
                       ),
-                      child: Card(
+                      child: SurfaceCard(
                         child: ListTile(
                           title: Text(context.tr(f.label)),
                           subtitle: Text(
@@ -253,7 +254,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                       horizontal: 16,
                       vertical: 4,
                     ),
-                    child: Card(
+                    child: SurfaceCard(
                       child: SwitchListTile(
                         title: Text(
                           context.tr(
@@ -284,7 +285,7 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
                       horizontal: 16,
                       vertical: 4,
                     ),
-                    child: Card(
+                    child: SurfaceCard(
                       child: ListTile(
                         title: Text(
                           context.tr(

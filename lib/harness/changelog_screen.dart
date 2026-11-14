@@ -7,6 +7,7 @@ import 'update_ui.dart';
 import 'version.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Opens a web address in the phone's browser; false if nothing could. A function so a test can stand in for it.
 typedef OpenLink = Future<bool> Function(Uri url);
@@ -30,7 +31,7 @@ class ChangelogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.changelog.what_s_new'))),
+      appBar: ShellAppBar(title: Text(context.tr('app.changelog.what_s_new'))),
       body: FutureBuilder<List<ChangelogEntry>>(
         future: harness.changelog(),
         builder: (context, snap) {

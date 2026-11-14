@@ -9,10 +9,11 @@ import '../sync/fingerprint.dart' show realmOfQuote;
 import 'anthologies_screen.dart' show askAnthologyText;
 import 'quote_form_screen.dart' show quoteColour, quoteColourName;
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The bar that replaces a list's title while things are selected: how many, a way out, select everything, and the
 /// actions that suit what is selected.
-AppBar bulkAppBar(
+PreferredSizeWidget bulkAppBar(
   BuildContext context, {
   required int count,
   required int total,
@@ -20,7 +21,7 @@ AppBar bulkAppBar(
   required VoidCallback onAll,
   required List<Widget> actions,
 }) {
-  return AppBar(
+  return ShellAppBar(
     leading: IconButton(
       tooltip: context.tr('common.action.cancel.label'),
       icon: const Icon(Ti.x),

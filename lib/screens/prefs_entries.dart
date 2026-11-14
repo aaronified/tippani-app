@@ -5,6 +5,7 @@ import '../app_controller.dart';
 import '../harness/harness.dart';
 import '../l10n/l10n.dart';
 import 'account_screen.dart';
+import 'materials_screen.dart';
 import 'prefs_screens.dart';
 import 'prefs_widgets.dart';
 import '../theme/tabler.dart';
@@ -83,6 +84,13 @@ class PrefsEntries extends StatelessWidget {
                 context.tr('app.prefs.names_shades_and_which_are_offered'),
               ),
               onTap: () => _open(context, const ColoursScreen()),
+            ),
+            ListTile(
+              key: const ValueKey('open-materials'),
+              leading: const Icon(Ti.layoutBoard),
+              title: Text(context.tr('app.materials.title')),
+              subtitle: Text(context.tr('app.materials.sub')),
+              onTap: () => _open(context, const MaterialsScreen()),
             ),
             ListTile(
               leading: const Icon(Ti.carouselHorizontal),

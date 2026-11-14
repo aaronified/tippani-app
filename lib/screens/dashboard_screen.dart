@@ -19,6 +19,7 @@ import 'quote_screen.dart';
 import 'search_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The words at the top of Home for [now]: a greeting for the time of day (with [name] when the phone knows who it is
 /// paired as), and one line about keeping quotes for the day.
@@ -543,7 +544,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Card(
+    return SurfaceCard(
       color: scheme.secondaryContainer,
       child: InkWell(
         onTap: onTap,
@@ -581,7 +582,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Card(
+      child: SurfaceCard(
         color: scheme.secondaryContainer,
         child: ListTile(
           leading: Icon(Ti.archive, color: scheme.onSecondaryContainer),
@@ -606,7 +607,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final n = widget.quiz.waiting;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Card(
+      child: SurfaceCard(
         color: scheme.tertiaryContainer,
         child: ListTile(
           leading: Icon(Ti.cloudUpload, color: scheme.onTertiaryContainer),
@@ -716,7 +717,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Card(
+      child: SurfaceCard(
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
@@ -763,7 +764,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final available = widget.quiz.available;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Card(
+      child: SurfaceCard(
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
@@ -850,7 +851,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Card(
+      child: SurfaceCard(
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(

@@ -54,3 +54,4 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0023](ADR-0023-Which-Server-Settings-The-Phone-Offers.md): Which server settings the phone offers
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)
+- [ADR-0024](ADR-0024-The-App-Wears-The-Accounts-Materials-Over-Material-You.md): The app wears the account's materials over Material You

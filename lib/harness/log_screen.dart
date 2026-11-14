@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'app_log.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Shares text through Android's share sheet. A function so a test can stand in for it.
 typedef ShareText = Future<void> Function(String text, String subject);
@@ -75,7 +76,7 @@ class _LogScreenState extends State<LogScreen> {
   Widget build(BuildContext context) {
     final text = _text;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('app.log.log')),
         actions: [
           IconButton(

@@ -15,6 +15,7 @@ import '../theme/app_theme.dart';
 import 'people_console_actions.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Opens the page of whoever a pill names: a person's, or (for a character in a film, show or game) the character's.
 /// A name the server holds no record of still gets a page (their picture, the quotes), with a note saying so.
@@ -207,7 +208,7 @@ class _Parts {
         for (final l in lines)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Card(
+            child: SurfaceCard(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -587,7 +588,7 @@ class _PersonScreenState extends State<PersonScreen> {
         return a.year.compareTo(b.year);
       });
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         actions: [
           if (canEdit)
             PopupMenuButton<String>(
@@ -1195,7 +1196,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
     }
     if (actors.isEmpty && widget.actor.isNotEmpty) actors.add(widget.actor);
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         actions: [
           if (c != null && _console != null)
             PopupMenuButton<String>(

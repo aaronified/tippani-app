@@ -7,6 +7,7 @@ import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 String _kindWord(String kind) => switch (kind) {
   'book' => 'book',
@@ -307,7 +308,7 @@ class _StagingScreenState extends State<StagingScreen> {
     final hasSelection = _picked.isNotEmpty;
     final shown = _quotes.length;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('shell.drawer.pending.label')),
         actions: [
           if (pending > 0)
@@ -551,7 +552,7 @@ class _GroupCard extends StatelessWidget {
       if (work.author.isNotEmpty) work.author,
       if (work.year > 0) '${work.year}',
     ].join(' · ');
-    return Card(
+    return SurfaceCard(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       child: Column(

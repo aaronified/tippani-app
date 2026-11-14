@@ -8,6 +8,7 @@ import 'library_widgets.dart';
 import 'quote_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The quotes that carry one tag, or match one search (a person's name, a work's title), as a plain list: the place
 /// a name or a tag on a statistics or tags page leads to.
@@ -68,7 +69,7 @@ class _FilteredQuotesScreenState extends State<FilteredQuotesScreen> {
   Widget build(BuildContext context) {
     final quotes = _quotes;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: ShellAppBar(title: Text(widget.title)),
       body: quotes == null
           ? const Center(child: CircularProgressIndicator())
           : quotes.isEmpty

@@ -11,6 +11,7 @@ import '../tools/server_tools.dart';
 import 'filtered_quotes_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
+import '../theme/material_surface.dart';
 
 const _green = Color(0xFF6BAA75);
 const _amber = Color(0xFFE59A4A);
@@ -95,7 +96,7 @@ class _StatsScreenState extends State<StatsScreen> {
         style: theme.textTheme.titleMedium,
       ),
     );
-    Widget big(String label, Object value) => Card(
+    Widget big(String label, Object value) => SurfaceCard(
       color: scheme.secondaryContainer,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -120,7 +121,7 @@ class _StatsScreenState extends State<StatsScreen> {
       ),
     );
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.settings.statistics'))),
+      appBar: ShellAppBar(title: Text(context.tr('app.settings.statistics'))),
       body: _problem != null
           ? Center(
               child: Padding(
@@ -207,7 +208,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       s.busiestMonth.isNotEmpty ||
                       s.mostQuoted.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    Card(
+                    SurfaceCard(
                       child: Column(
                         children: [
                           if (s.firstSaved.isNotEmpty)
@@ -231,7 +232,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   ],
                   if (s.topTags.isNotEmpty) ...[
                     _Head(context.tr('stats.top-tags.title')),
-                    Card(
+                    SurfaceCard(
                       child: Column(
                         children: [
                           for (final t in s.topTags)
@@ -283,7 +284,7 @@ class _Titled extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return SurfaceCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

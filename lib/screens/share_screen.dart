@@ -13,6 +13,7 @@ import 'quote_card.dart' show captureCard;
 import 'quote_screen.dart' show ShareImage;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Puts text on the clipboard. A function so a test can stand in for the clipboard.
 typedef CopyText = Future<void> Function(String text);
@@ -293,7 +294,7 @@ class _ShareScreenState extends State<ShareScreen> {
     final picture = _format == ShareFormat.picture;
     final look = _look ?? theme.brightness;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('common.action.share.label'))),
+      appBar: ShellAppBar(title: Text(context.tr('common.action.share.label'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

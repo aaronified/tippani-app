@@ -4,6 +4,7 @@ import '../speech/speaker.dart';
 import '../speech/speech_settings.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Chooses how the app reads aloud: which voice, how fast, how high. The voices are the ones Android's speech
 /// service offers, so the natural-sounding ones appear after installing them in Android's own settings.
@@ -126,7 +127,7 @@ class _ReadAloudSettingsScreenState extends State<ReadAloudSettingsScreen> {
             return a.name.compareTo(b.name);
           }));
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('speech.play.aria'))),
+      appBar: ShellAppBar(title: Text(context.tr('speech.play.aria'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

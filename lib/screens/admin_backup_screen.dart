@@ -6,6 +6,7 @@ import '../api/server_call.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// What the reader typed to open or seal a backup: the account's password, or a passphrase.
 typedef BackupSecret = ({String password, String passphrase});
@@ -355,7 +356,9 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
     final text = Theme.of(context).textTheme;
     final info = _info;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.admin_backup.server_backup'))),
+      appBar: ShellAppBar(
+        title: Text(context.tr('app.admin_backup.server_backup')),
+      ),
       body: _problem != null
           ? Center(
               child: Padding(
@@ -379,7 +382,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 if (_working != null)
-                  Card(
+                  SurfaceCard(
                     color: scheme.primaryContainer,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -393,7 +396,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                       ),
                     ),
                   ),
-                Card(
+                SurfaceCard(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -445,7 +448,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Card(
+                SurfaceCard(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(

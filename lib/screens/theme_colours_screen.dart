@@ -4,6 +4,7 @@ import '../capture/photo_source.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/theme_choice.dart';
+import '../theme/material_surface.dart';
 
 /// Chooses where the app's colours come from: the phone's own (Material You, which follows the wallpaper), the colours of a
 /// photo, or one of the app's palettes. The change shows at once, and stays on this phone.
@@ -61,7 +62,7 @@ class _ThemeColoursScreenState extends State<ThemeColoursScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.theme.title'))),
+      appBar: ShellAppBar(title: Text(context.tr('app.theme.title'))),
       body: ListenableBuilder(
         listenable: widget.choice,
         builder: (context, _) {

@@ -12,6 +12,7 @@ import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 class _Row {
   _Row(this.name, this.local, this.server);
@@ -436,7 +437,7 @@ class _TagsScreenState extends State<TagsScreen> {
         if (_picked.contains(foldTag(r.name))) r,
     ];
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(
           selecting
               ? '${picked.length} selected'
@@ -550,7 +551,7 @@ class _TagsScreenState extends State<TagsScreen> {
         : quoteColour(r.server!.color);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Card(
+      child: SurfaceCard(
         color: on ? scheme.secondaryContainer : null,
         child: ListTile(
           leading: selecting

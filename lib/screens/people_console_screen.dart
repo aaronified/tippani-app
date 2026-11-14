@@ -8,6 +8,7 @@ import 'people_console_actions.dart';
 import 'person_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Every person and character the server keeps: search them, see which have no photo, open one, rename its
 /// spellings, merge two that are the same, remove one, make a character, and ask the server to fetch the photos
@@ -292,7 +293,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
     final picked = _picked.contains(id);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Card(
+      child: SurfaceCard(
         color: picked ? scheme.secondaryContainer : null,
         child: ListTile(
           leading: picked
@@ -527,7 +528,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
     final people = _people, characters = _characters;
     final selecting = _picked.isNotEmpty;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         leading: selecting
             ? IconButton(
                 tooltip: context.tr('app.metadata_tools.clear_the_choice'),

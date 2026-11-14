@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Textures and the texture mixer: Settings has Materials, the same look as the web. Pick a material set, give the background, bars, cards or covers a different texture, and change how each material catches the light. It is saved to your account, so the web wears the same look. A phone that has not reached the server yet, or one set to high contrast, stays plain.
+
 ## [0.9.0] - 2026-11-13
 
 ### Added

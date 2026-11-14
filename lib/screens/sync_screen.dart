@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/api_client.dart';
 import '../sync/push_sync.dart';
 import '../l10n/l10n.dart';
+import '../theme/material_surface.dart';
 
 /// What a push did, in plain words, for the screen. Counts and the phone's own item numbers only: it never
 /// repeats what anything said.
@@ -107,7 +108,7 @@ class _SyncScreenState extends State<SyncScreen> {
     final p = _pending;
     final nothing = p != null && p.works == 0 && p.quotes == 0;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('app.settings.send_library_to_server')),
       ),
       body: ListView(
