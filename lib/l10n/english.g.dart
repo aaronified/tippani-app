@@ -976,6 +976,7 @@ const Map<String, String> englishTokens = {
   'app.materials.dials_hint': 'How each material in use catches the light. Stone gives a small bright highlight; wool a wide, dim one.',
   'app.materials.each_surface': 'Each surface',
   'app.materials.each_surface_hint': 'A set gives all four surfaces a material. Pick another for any one of them; the set\'s own is always the first choice.',
+  'app.materials.not_yet': 'Materials come from your Tippani account. Pair this phone with your server and they appear here.',
   'app.materials.slot.card': 'Cards',
   'app.materials.slot.cover': 'Covers',
   'app.materials.slot.ground': 'Background',

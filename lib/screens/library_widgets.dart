@@ -24,7 +24,6 @@ import 'work_form_screen.dart' show workKindLabel;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
-import '../theme/materials.dart';
 
 /// One quote in a list, as a card: the work it is from in a header (cover, title, who made it and where in it), the
 /// words in the serif beside a bar in the quote's colour, the people on it as chips, and a footer with its tags and
@@ -559,7 +558,7 @@ class MonogramCover extends StatelessWidget {
         ? '?'
         : String.fromCharCode(work.title.trim().runes.first).toUpperCase();
     final look = materialLookOf(context);
-    if (!textiles[look.tileFor('cover')]!.isFlat) {
+    if (look.drawn('cover')) {
       // the cover slot: what the book is bound in
       return SizedBox(
         width: width,

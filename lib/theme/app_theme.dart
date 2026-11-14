@@ -21,7 +21,7 @@ ThemeData buildTheme(
   MaterialLook look = MaterialLook.none,
 }) {
   // A textured ground is painted by the page transition under every page, so the page's own scaffold lets it show.
-  final ground = !textiles[look.tileFor('ground')]!.isFlat;
+  final ground = look.drawn('ground');
   final base = ThemeData(
     colorScheme: scheme,
     useMaterial3: true,
@@ -293,6 +293,18 @@ class GroundTransitions extends PageTransitionsBuilder {
   final PageTransitionsBuilder inner;
   final MaterialLook look;
   final Color colour;
+
+  // Equal when it would draw the same, so a rebuild of the theme for an unrelated reason is not a new theme (an unequal
+  // one animates the whole app's theme for 200 ms).
+  @override
+  bool operator ==(Object other) =>
+      other is GroundTransitions &&
+      other.inner == inner &&
+      other.look == look &&
+      other.colour == colour;
+
+  @override
+  int get hashCode => Object.hash(inner, look, colour);
 
   @override
   Widget buildTransitions<T>(

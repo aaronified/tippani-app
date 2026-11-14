@@ -99,7 +99,7 @@ class _MaterialSurfaceState extends State<MaterialSurface> {
     // The reader asked their phone for more contrast or less transparency: every decorative layer drops to zero, as
     // the web does.
     final media = MediaQuery.maybeOf(context);
-    final plain = media?.highContrast ?? false;
+    final plain = (media?.highContrast ?? false) || look.reduced;
     if (textile.isFlat || plain) {
       return DecoratedBox(
         decoration: BoxDecoration(
@@ -398,7 +398,7 @@ class ShellAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final look = materialLookOf(context);
     final scheme = Theme.of(context).colorScheme;
-    final flat = textiles[look.tileFor('shell')]!.isFlat;
+    final flat = !look.drawn('shell');
     return AppBar(
       title: title,
       actions: actions,
@@ -444,7 +444,7 @@ class SurfaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final look = materialLookOf(context);
-    if (textiles[look.tileFor('card')]!.isFlat) {
+    if (!look.drawn('card')) {
       return Card(
         color: color,
         margin: margin,

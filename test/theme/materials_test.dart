@@ -214,6 +214,44 @@ void main() {
 
     double mean(List<int> reds) => reds.reduce((a, b) => a + b) / reds.length;
 
+    testWidgets(
+      'keeps its grain under the veil, so it is a texture and not a photograph',
+      (tester) async {
+        final reds = await sample(
+          tester,
+          const MaterialLook(
+            set: 'atrium',
+            overrides: {'card': 'granite'},
+            tweaks: {},
+          ),
+        );
+        var biggest = 0;
+        for (var i = 1; i < reds.length; i++) {
+          final d = (reds[i] - reds[i - 1]).abs();
+          if (d > biggest) biggest = d;
+        }
+        // granite at strength .08 moves neighbouring pixels by up to about 15 levels; the bare tile, with no veil, by close to 200
+        expect(biggest, lessThan(40));
+        expect(biggest, greaterThan(1));
+      },
+    );
+
+    testWidgets('is plain when the account asked for more contrast', (
+      tester,
+    ) async {
+      final reds = await sample(
+        tester,
+        MaterialLook.fromPrefs(
+          ServerPrefs({
+            'materialSet': 'quarry',
+            'tileCard': 'granite',
+            'contrast': 'more',
+          }),
+        ),
+      );
+      expect(jumps(reds), 0);
+    });
+
     testWidgets('lights differently when its dials are turned', (tester) async {
       MaterialLook dialled(int v) => MaterialLook(
         set: 'atrium',
@@ -309,6 +347,22 @@ void main() {
     });
   });
 
+  test(
+    'the theme is the same theme when only an unrelated preference changed',
+    () {
+      final scheme = ColorScheme.fromSeed(seedColor: Colors.teal);
+      const look = MaterialLook(set: 'quarry', overrides: {}, tweaks: {});
+      final a = buildTheme(scheme, look: look).pageTransitionsTheme;
+      final b = buildTheme(scheme, look: look).pageTransitionsTheme;
+      expect(a, b);
+      final c = buildTheme(
+        scheme,
+        look: const MaterialLook(set: 'atelier', overrides: {}, tweaks: {}),
+      ).pageTransitionsTheme;
+      expect(a == c, isFalse);
+    },
+  );
+
   group('the materials screen', () {
     Future<(Rig, Widget)> app(
       WidgetTester tester, [
@@ -332,6 +386,22 @@ void main() {
       );
       await tester.pumpAndSettle();
     }
+
+    testWidgets(
+      'a phone that has not heard from the account offers nothing to choose',
+      (tester) async {
+        final r = (await tester.runAsync(rig))!;
+        await tester.pumpWidget(
+          PrefsScope(
+            source: r.prefs,
+            child: const MaterialApp(home: MaterialsScreen()),
+          ),
+        );
+        expect(find.byKey(const ValueKey('materials-not-yet')), findsOneWidget);
+        expect(find.byKey(const ValueKey('slot-card')), findsNothing);
+        expect(find.byType(Slider), findsNothing);
+      },
+    );
 
     testWidgets('choosing a set saves it to the account', (tester) async {
       final (r, widget) = await app(tester);

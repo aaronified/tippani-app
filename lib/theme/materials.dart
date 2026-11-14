@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show mapEquals;
+
 import '../account/preferences.dart';
 
 /// One texture: the file under `assets/textures/`, the two sizes it is laid at (logical pixels), and how strongly its
@@ -181,6 +183,7 @@ class MaterialLook {
     required this.set,
     required this.overrides,
     required this.tweaks,
+    this.reduced = false,
   });
 
   /// The look of a phone that has not heard from the server: no material in any slot, which is how the app looked before
@@ -203,6 +206,7 @@ class MaterialLook {
       set: set,
       overrides: overrides,
       tweaks: parseTweaks(prefs.raw['texTweak']),
+      reduced: prefs.str('contrast') == 'more',
     );
   }
 
@@ -211,6 +215,28 @@ class MaterialLook {
   /// slot to material name, only for the slots the reader changed from the set's own.
   final Map<String, String> overrides;
   final Map<String, Map<String, int>> tweaks;
+
+  /// The account asked for more contrast, which removes every texture, as it does on the web.
+  final bool reduced;
+
+  /// Whether [slot] is drawn with a material: it has one, and the reader has not asked for them to go.
+  bool drawn(String slot) => !reduced && !textiles[tileFor(slot)]!.isFlat;
+
+  @override
+  bool operator ==(Object other) =>
+      other is MaterialLook &&
+      other.set == set &&
+      other.reduced == reduced &&
+      mapEquals(other.overrides, overrides) &&
+      jsonEncode(other.tweaks) == jsonEncode(tweaks);
+
+  @override
+  int get hashCode => Object.hash(
+    set,
+    reduced,
+    Object.hashAll(overrides.entries.map((e) => '${e.key}${e.value}')),
+    jsonEncode(tweaks),
+  );
 
   /// The material of [slot]: the reader's own if they set one, else the set's.
   String tileFor(String slot) =>
@@ -230,7 +256,7 @@ class MaterialLook {
   }
 
   /// Whether any slot wears a texture, so a surface can skip all drawing for a look that has none.
-  bool get hasMaterial => slots.any((s) => !textiles[tileFor(s)]!.isFlat);
+  bool get hasMaterial => slots.any(drawn);
 
   /// The materials in play, each once, for the dials the mixer offers (`flat` has nothing to change).
   List<String> get materialsInUse => [

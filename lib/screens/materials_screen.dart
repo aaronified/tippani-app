@@ -23,6 +23,21 @@ class MaterialsScreen extends StatelessWidget {
     final p = PrefsScope.of(context);
     final look = MaterialLook.fromPrefs(p);
     final scheme = Theme.of(context).colorScheme;
+    if (!p.raw.containsKey('materialSet')) {
+      // Nothing to choose from until the account has answered: a pick saved now would have no set to sit on.
+      return PrefPage(
+        title: context.tr('app.materials.title'),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 16, 24, 16),
+            child: Text(
+              context.tr('app.materials.not_yet'),
+              key: const ValueKey('materials-not-yet'),
+            ),
+          ),
+        ],
+      );
+    }
     return PrefPage(
       title: context.tr('app.materials.title'),
       children: [
