@@ -160,8 +160,14 @@ class MaterialPainter extends CustomPainter {
     if (size.isEmpty) return;
     final rect = Offset.zero & size;
     final shape = radius.toRRect(rect);
-    // Everything is composited in one isolated layer, so a blend mode sees this surface and not the page behind it.
-    canvas.saveLayer(rect, Paint());
+    // A pane is translucent, so it is composited in its own layer and a blend mode sees the pane and not the page
+    // behind it. Every other material is opaque from its first pixel, and a layer per card is a cost a long list
+    // would pay for nothing.
+    if (_glassy) {
+      canvas.saveLayer(rect, Paint());
+    } else {
+      canvas.save();
+    }
     canvas.clipRRect(shape);
     final s = textile.strength;
 
@@ -182,6 +188,10 @@ class MaterialPainter extends CustomPainter {
       rect,
       Paint()..color = color.withValues(alpha: (1 - s).clamp(0, 1)),
     );
+
+    // What the material does with the light goes over the grain and under the sheen, as the web stacks it. A pane
+    // carries no light layers of its own there: its sweep is its highlight.
+    if (!_glassy) _lights(canvas, rect);
 
     if (_glassy) {
       final hi1 = dark ? 0.16 : 0.55;
@@ -220,7 +230,6 @@ class MaterialPainter extends CustomPainter {
           ),
       );
     }
-    _lights(canvas, rect);
     canvas.restore();
   }
 
@@ -254,18 +263,19 @@ class MaterialPainter extends CustomPainter {
     final diff = phys.diff / 100;
     final refl = phys.refl / 100;
 
-    final spread = (52 + 40 * (1 - hard)).roundToDouble() / 100;
-    final peak = (dark ? 0.012 : 0.018) + (dark ? 0.038 : 0.052) * hard;
-    final warm = diff > 0.02
-        ? Color.fromARGB(
-            255,
-            (255 - 10 * diff).round(),
-            (250 - 18 * diff).round(),
-            (242 - 6 * diff).round(),
-          )
-        : Colors.white;
-    if (peak > 0.004) {
-      _glow(canvas, rect, spread, _light, warm, peak, BlendMode.screen);
+    // Bottom to top: the wall's wash, the glow from within, then the highlight, which is the order the web lists them
+    // in reverse (its first layer is the top one).
+    if (refl > 0.06) {
+      final a = (dark ? 0.016 : 0.024) * refl;
+      _glow(
+        canvas,
+        rect,
+        0.9,
+        _lightBack,
+        const Color.fromARGB(255, 236, 240, 248),
+        a,
+        BlendMode.screen,
+      );
     }
     if (sss > 0.04) {
       final a = (dark ? 0.020 : 0.030) * sss;
@@ -279,17 +289,18 @@ class MaterialPainter extends CustomPainter {
         BlendMode.softLight,
       );
     }
-    if (refl > 0.06) {
-      final a = (dark ? 0.016 : 0.024) * refl;
-      _glow(
-        canvas,
-        rect,
-        0.9,
-        _lightBack,
-        const Color.fromARGB(255, 236, 240, 248),
-        a,
-        BlendMode.screen,
-      );
+    final spread = (52 + 40 * (1 - hard)).roundToDouble() / 100;
+    final peak = (dark ? 0.012 : 0.018) + (dark ? 0.038 : 0.052) * hard;
+    final warm = diff > 0.02
+        ? Color.fromARGB(
+            255,
+            (255 - 10 * diff).round(),
+            (250 - 18 * diff).round(),
+            (242 - 6 * diff).round(),
+          )
+        : Colors.white;
+    if (peak > 0.004) {
+      _glow(canvas, rect, spread, _light, warm, peak, BlendMode.screen);
     }
   }
 

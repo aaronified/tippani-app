@@ -1417,3 +1417,4 @@ app.materials.slot.ground = পটভূমি
 app.materials.slot.shell = বার
 app.materials.slot.card = কার্ড
 app.materials.slot.cover = মলাট
+app.materials.dials_hint = এখন যে উপকরণগুলো ব্যবহার হচ্ছে, প্রতিটি আলোয় কীভাবে সাড়া দেয়। পাথরে ছোট উজ্জ্বল ছটা পড়ে; উলে চওড়া, ম্লান।

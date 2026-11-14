@@ -188,7 +188,9 @@ class MaterialLook {
   static const none = MaterialLook(set: 'atrium', overrides: {}, tweaks: {});
 
   factory MaterialLook.fromPrefs(ServerPrefs prefs) {
-    if (!prefs.known) return none;
+    // The server's answer always carries the set (empty when never chosen); a phone that has only its own settings
+    // (a language, a type size) has not heard from the server and stays plain.
+    if (!prefs.raw.containsKey('materialSet')) return none;
     final set = materialSets.containsKey(prefs.str('materialSet'))
         ? prefs.str('materialSet')
         : materialSetDefault;
@@ -262,23 +264,31 @@ String editedTweaks(Object? raw, String material, Map<String, int>? dials) {
     all = {};
   }
   final base = factoryPhys[material] ?? factoryPhys['matte']!;
-  final changed = <String, int>{
-    if (dials != null)
-      for (final d in dials.entries)
-        if (d.value !=
-            switch (d.key) {
-              'hard' => base.hard,
-              'sss' => base.sss,
-              'diff' => base.diff,
-              'refl' => base.refl,
-              _ => -1,
-            })
-          d.key: d.value,
+  final factory = {
+    'hard': base.hard,
+    'sss': base.sss,
+    'diff': base.diff,
+    'refl': base.refl,
   };
-  if (changed.isEmpty) {
+  // The material's own entry is merged into, never replaced: the glass material's key is also where the web keeps the
+  // lens's dials (clarity, refract, bevel, fringe, gain, blur), and those are not this screen's to drop.
+  final existing = all[material];
+  final entry = <String, Object?>{
+    if (existing is Map)
+      for (final e in existing.entries) '${e.key}': e.value,
+  };
+  for (final dial in factory.keys) {
+    final v = dials?[dial];
+    if (v == null || v == factory[dial]) {
+      entry.remove(dial);
+    } else {
+      entry[dial] = v;
+    }
+  }
+  if (entry.isEmpty) {
     all.remove(material);
   } else {
-    all[material] = changed;
+    all[material] = entry;
   }
   return all.isEmpty ? '' : jsonEncode(all);
 }

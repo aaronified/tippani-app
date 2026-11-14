@@ -973,6 +973,7 @@ const Map<String, String> englishTokens = {
   'app.log.log_copied': 'Log copied',
   'app.log.the_log_is_empty': 'The log is empty.',
   'app.log.this_empties_the_log_on_this': 'This empties the log on this phone, including earlier runs. Nothing else changes.',
+  'app.materials.dials_hint': 'How each material in use catches the light. Stone gives a small bright highlight; wool a wide, dim one.',
   'app.materials.each_surface': 'Each surface',
   'app.materials.each_surface_hint': 'A set gives all four surfaces a material. Pick another for any one of them; the set\'s own is always the first choice.',
   'app.materials.slot.card': 'Cards',

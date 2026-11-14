@@ -91,7 +91,7 @@ class MaterialsScreen extends StatelessWidget {
         else
           PrefGroup(
             title: context.tr('settings.appearance.phys.open.tip'),
-            footer: context.tr('settings.appearance.phys.info.body'),
+            footer: context.tr('app.materials.dials_hint'),
             children: [
               for (final name in look.materialsInUse)
                 _Dials(
@@ -184,6 +184,13 @@ class _Dials extends StatefulWidget {
 class _DialsState extends State<_Dials> {
   final Map<String, double> _drag = {};
 
+  @override
+  void didUpdateWidget(_Dials old) {
+    super.didUpdateWidget(old);
+    // The saved value has arrived: stop holding the dragged one, so the slider does not step back while it waits.
+    if (old.phys != widget.phys) _drag.clear();
+  }
+
   int _value(String dial) => switch (dial) {
     'hard' => widget.phys.hard,
     'sss' => widget.phys.sss,
@@ -247,7 +254,7 @@ class _DialsState extends State<_Dials> {
                         for (final (d, _) in physDials)
                           d: d == dial ? v.round() : _value(d),
                       };
-                      setState(_drag.clear);
+                      setState(() => _drag[dial] = v);
                       _save(now);
                     },
                   ),

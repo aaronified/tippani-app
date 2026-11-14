@@ -1420,3 +1420,4 @@ app.materials.slot.ground = Background
 app.materials.slot.shell = Bars
 app.materials.slot.card = Cards
 app.materials.slot.cover = Covers
+app.materials.dials_hint = How each material in use catches the light. Stone gives a small bright highlight; wool a wide, dim one.

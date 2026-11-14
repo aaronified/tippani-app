@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tippani/account/preferences.dart';
 import 'package:tippani/screens/materials_screen.dart';
+import 'package:tippani/theme/app_theme.dart';
 import 'package:tippani/theme/material_surface.dart';
 import 'package:tippani/theme/materials.dart';
 
@@ -35,8 +36,12 @@ void main() {
     });
 
     test('a phone that has not heard from the server has no material', () {
-      final look = MaterialLook.fromPrefs(ServerPrefs.empty);
-      expect(look.hasMaterial, isFalse);
+      expect(MaterialLook.fromPrefs(ServerPrefs.empty).hasMaterial, isFalse);
+      // it has only its own settings, a language or a type size, and that is not the server's word
+      final own = MaterialLook.fromPrefs(
+        ServerPrefs({'locale': 'bn', 'sizeUi': 125}),
+      );
+      expect(own.hasMaterial, isFalse);
     });
 
     test('the account\'s set is worn, and a slot the reader changed wins', () {
@@ -49,7 +54,7 @@ void main() {
 
     test('an account with no set wears Manuscript, and an unknown tile is the set\'s own', () {
       final look = MaterialLook.fromPrefs(
-        ServerPrefs({'sizeUi': 100, 'tileCover': 'unobtainium'}),
+        ServerPrefs({'materialSet': '', 'tileCover': 'unobtainium'}),
       );
       expect(look.set, 'manuscript');
       expect(look.tileFor('cover'), 'wood');
@@ -82,6 +87,23 @@ void main() {
       expect(next, contains('"paper":{"hard":90}'));
       // sss 22 is wood's own, so only hard is stored
       expect(next, contains('"wood":{"hard":10}'));
+    });
+
+    test('editing the glass material keeps the lens dials the web stores under the same name', () {
+      const raw = '{"glass":{"clarity":60,"fringe":30,"hard":90}}';
+      final next = editedTweaks(raw, 'glass', {
+        'hard': 50,
+        'sss': 0,
+        'diff': 54,
+        'refl': 66,
+      });
+      expect(next, contains('"clarity":60'));
+      expect(next, contains('"fringe":30'));
+      expect(next, contains('"hard":50'));
+      expect(next, isNot(contains('"sss"')));
+      // putting the glass material back leaves the lens alone
+      final back = editedTweaks(next, 'glass', null);
+      expect(back, '{"glass":{"clarity":60,"fringe":30}}');
     });
 
     test('putting a material back removes its edits and nothing else', () {
@@ -190,6 +212,21 @@ void main() {
       expect(jumps(reds), greaterThan(500));
     });
 
+    double mean(List<int> reds) => reds.reduce((a, b) => a + b) / reds.length;
+
+    testWidgets('lights differently when its dials are turned', (tester) async {
+      MaterialLook dialled(int v) => MaterialLook(
+        set: 'atrium',
+        overrides: const {'card': 'granite'},
+        tweaks: {
+          'granite': {'hard': v, 'sss': v, 'diff': v, 'refl': v},
+        },
+      );
+      final low = mean(await sample(tester, dialled(0)));
+      final high = mean(await sample(tester, dialled(100)));
+      expect((high - low).abs(), greaterThan(0.5));
+    });
+
     testWidgets('draws every material, in light and dark, without error', (
       tester,
     ) async {
@@ -206,6 +243,69 @@ void main() {
           );
         }
       }
+    });
+  });
+
+  group('the ground', () {
+    Future<List<int>> page(WidgetTester tester, MaterialLook look) async {
+      final key = GlobalKey();
+      await tester.runAsync(() async {
+        for (final t in textiles.values) {
+          await TileCache.load(t.file, _FileBundle());
+        }
+      });
+      final scheme = ColorScheme.fromSeed(
+        seedColor: Colors.teal,
+        surface: const Color(0xFF808080),
+      );
+      Widget app() => MaterialApp(
+        theme: buildTheme(scheme, look: look),
+        builder: (context, child) => Center(
+          child: RepaintBoundary(
+            key: key,
+            child: SizedBox(width: 300, height: 300, child: child),
+          ),
+        ),
+        home: const Scaffold(body: SizedBox.expand()),
+      );
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      final bytes = await tester.runAsync(() async {
+        final boundary =
+            key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+        final img = await boundary.toImage();
+        final data = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+        return data!.buffer.asUint8List();
+      });
+      return [for (var i = 0; i < bytes!.length; i += 4) bytes[i]];
+    }
+
+    int jumps(List<int> reds) {
+      var n = 0;
+      for (var i = 1; i < reds.length; i++) {
+        if ((reds[i] - reds[i - 1]).abs() >= 2) n++;
+      }
+      return n;
+    }
+
+    testWidgets('of a page is textured when the set says so', (tester) async {
+      final reds = await page(
+        tester,
+        const MaterialLook(set: 'quarry', overrides: {}, tweaks: {}),
+      );
+      expect(jumps(reds), greaterThan(500));
+    });
+
+    testWidgets('of a page is plain when the set has no material', (
+      tester,
+    ) async {
+      final reds = await page(
+        tester,
+        const MaterialLook(set: 'atrium', overrides: {}, tweaks: {}),
+      );
+      expect(jumps(reds), 0);
     });
   });
 
@@ -299,6 +399,25 @@ void main() {
       final saved = r.server.prefWrites.last['texTweak']! as String;
       expect(saved, contains('"clarity":250'));
       expect(saved, contains('"paper":{"hard":'));
+    });
+
+    testWidgets('moving a glass dial keeps the lens dials stored beside it', (
+      tester,
+    ) async {
+      final (r, widget) = await app(tester, {
+        'materialSet': 'office',
+        'texTweak': '{"glass":{"clarity":60}}',
+      });
+      await tester.pumpWidget(widget);
+      final slider = find.byKey(const ValueKey('dial-glass-sss'));
+      await tester.scrollUntilVisible(slider, 200);
+      await tester.ensureVisible(slider);
+      await tester.pumpAndSettle();
+      await tester.drag(slider, const Offset(80, 0));
+      await settle(tester);
+      final saved = r.server.prefWrites.last['texTweak']! as String;
+      expect(saved, contains('"clarity":60'));
+      expect(saved, contains('"sss":'));
     });
 
     testWidgets('a material offers its reset only after it was edited', (
