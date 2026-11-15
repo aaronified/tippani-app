@@ -34,7 +34,9 @@ Future<(FakeServer, PairedPeopleDirectory, Directory)> _rig() async {
   await controller.load();
   await controller.pair('ABCD2345', 'My phone');
   final dir = await Directory.systemTemp.createTemp('tippani_people');
-  addTearDown(() => dir.delete(recursive: true));
+  addTearDown(
+    () => dir.delete(recursive: true).catchError((Object _) => dir),
+  ); // a file still being written must not fail a finished test
   final directory = PairedPeopleDirectory(
     controller,
     CoverCache(controller, folder: Directory('${dir.path}/covers')),

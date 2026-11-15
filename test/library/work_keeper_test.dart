@@ -60,7 +60,9 @@ void main() {
     await controller.load();
     await controller.pair('ABCD2345', 'My phone');
     final dir = await Directory.systemTemp.createTemp('tippani_keeper');
-    addTearDown(() => dir.delete(recursive: true));
+    addTearDown(
+      () => dir.delete(recursive: true).catchError((Object _) => dir),
+    ); // a file still being written must not fail a finished test
     now = DateTime.utc(2026, 11, 13, 12);
     covers = CoverCache(
       controller,
