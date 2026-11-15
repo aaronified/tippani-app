@@ -370,7 +370,18 @@ class AnthologyScreen extends StatefulWidget {
   State<AnthologyScreen> createState() => _AnthologyScreenState();
 }
 
-enum _Menu { practise, heading, group, display, front, fill, removed, export }
+enum _Menu {
+  practise,
+  heading,
+  group,
+  display,
+  front,
+  fill,
+  removed,
+  export,
+  edit,
+  delete,
+}
 
 class _AnthologyScreenState extends State<AnthologyScreen> {
   AnthologyDetail? _detail;
@@ -461,6 +472,22 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
 
   Future<void> _remove(AnthologyEntry e) =>
       _do(() => widget.service.removeEntry(widget.id, e.kind, e.itemId));
+
+  /// What this passage shows and says in this anthology only (its own choices over the anthology's, and its own
+  /// words for the parts of the quote an anthology may restate). The quote in the library is never written.
+  Future<void> _display(AnthologyEntry e) async {
+    final r = await askEntryDisplay(context, _detail!.anthology, e);
+    if (r == null || (r.fields.isEmpty && r.edits.isEmpty)) return;
+    await _do(
+      () => widget.service.setEntryDisplay(
+        widget.id,
+        e.kind,
+        e.itemId,
+        fields: r.fields,
+        edits: r.edits,
+      ),
+    );
+  }
 
   Future<void> _commentary(AnthologyEntry e) async {
     final note = await askCommentary(context, e.note);
@@ -568,6 +595,10 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                   }),
           );
         }
+      case _Menu.edit:
+        await _edit();
+      case _Menu.delete:
+        await _delete();
       case _Menu.removed:
         final back = await Navigator.of(context).push<bool>(
           MaterialPageRoute(
@@ -618,12 +649,16 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
             await _moveTo(slots, i, i + 1);
           case 'note':
             await _commentary(slot.entry!);
+          case 'display':
+            await _display(slot.entry!);
           case 'edit':
             await _editHeading(slot.section!);
           case 'delete':
             await _deleteHeading(slot.section!);
           case 'after':
             await _addHeading(after: slot);
+          case 'remove':
+            await _remove(slot.entry!);
         }
       },
       itemBuilder: (_) => [
@@ -642,6 +677,11 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
             value: 'note',
             child: Text(context.tr('app.anthologies.commentary')),
           ),
+        if (slot.entry != null)
+          PopupMenuItem(
+            value: 'display',
+            child: Text(context.tr('anthologies.entry.display.label')),
+          ),
         if (slot.section != null) ...[
           PopupMenuItem(
             value: 'edit',
@@ -656,6 +696,16 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           value: 'after',
           child: Text(context.tr('app.anthologies.add_a_heading_after')),
         ),
+        // One menu per passage and no loose cross beside it: a second icon on a card a thumb has to hit
+        // made the removal one slip away from the menu.
+        if (slot.entry != null)
+          PopupMenuItem(
+            value: 'remove',
+            child: Text(
+              context.tr('app.anthologies.remove_from_anthology'),
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
+          ),
       ],
     );
 
@@ -694,11 +744,29 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
         by.isNotEmpty &&
         gk.isNotEmpty &&
         (prev == null || prev.groupKey(by) != gk);
+    // What THIS passage shows: its own choice if it has one, else the anthology's.
+    bool eff(String name) => e.shownIn(a, name);
     final from = [
-      if (!a.flag('hide_credit')) e.credit,
-      if (!a.flag('hide_source')) e.source,
-      if (a.flag('show_locator')) e.locator,
+      if (eff('credit')) e.credit,
+      if (eff('source')) e.source,
+      if (eff('locator')) e.locator,
     ].map((s) => s.trim()).where((s) => s.isNotEmpty).join(', ');
+    String line(String part, Map<String, String> values) => [
+      for (final sw in anthologySwitches.where((x) => x.part == part))
+        if (eff(sw.name) && (values[sw.name] ?? '').trim().isNotEmpty)
+          values[sw.name]!.trim(),
+    ].join(' · ');
+    final workLine = line('work', e.work);
+    final personLine = line('person', e.person);
+    Widget quiet(String text, {bool italic = false}) => Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Text(
+        text,
+        style: theme.textTheme.bodySmall?.copyWith(
+          fontStyle: italic ? FontStyle.italic : null,
+        ),
+      ),
+    );
     return Column(
       key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -713,7 +781,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
               ),
             ),
           ),
-        if (!a.flag('hide_commentary') && e.note.trim().isNotEmpty)
+        if (eff('commentary') && e.note.trim().isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: Text(
@@ -728,7 +796,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           clipBehavior: Clip.antiAlias,
           margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
           child: Container(
-            decoration: a.flag('hide_colour')
+            decoration: !eff('colour')
                 ? null
                 : BoxDecoration(
                     border: Border(
@@ -743,12 +811,24 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (eff('context') && e.contextBefore.trim().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            e.contextBefore.trim(),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
                       Text(
                         context.tr('app.anthologies.trim', {
                           'trim': e.quote.trim(),
                         }),
                         style: theme.textTheme.titleMedium,
                       ),
+                      if (eff('context') && e.contextAfter.trim().isNotEmpty)
+                        quiet(e.contextAfter.trim(), italic: true),
                       if (from.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 6),
@@ -757,18 +837,23 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                             style: theme.textTheme.bodySmall,
                           ),
                         ),
-                      if (a.flag('show_date') && e.date.isNotEmpty)
+                      if (eff('date') && e.date.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(e.date, style: theme.textTheme.bodySmall),
                         ),
+                      if (eff('translation') && e.translation.trim().isNotEmpty)
+                        quiet(e.translation.trim(), italic: true),
+                      if (eff('note') && e.quoteNote.trim().isNotEmpty)
+                        quiet(e.quoteNote.trim()),
+                      if (eff('language') && e.language.trim().isNotEmpty)
+                        quiet(e.language.trim()),
+                      if (eff('tags') && e.tags.isNotEmpty)
+                        quiet(e.tags.join(' · ')),
+                      if (workLine.isNotEmpty) quiet(workLine),
+                      if (personLine.isNotEmpty) quiet(personLine),
                     ],
                   ),
-                ),
-                IconButton(
-                  tooltip: context.tr('app.anthologies.remove_from_anthology'),
-                  icon: const Icon(Ti.x),
-                  onPressed: () => _remove(e),
                 ),
                 menu,
               ],
@@ -869,16 +954,6 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
               onPressed: () =>
                   widget.share(anthologyShareText(d), d.anthology.title),
             ),
-            IconButton(
-              tooltip: context.tr('common.action.edit.label'),
-              icon: const Icon(Ti.pencil),
-              onPressed: _edit,
-            ),
-            IconButton(
-              tooltip: context.tr('common.action.delete.label'),
-              icon: const Icon(Ti.trash),
-              onPressed: _delete,
-            ),
             PopupMenuButton<_Menu>(
               tooltip: context.tr('settings.appearance.contrast.more.label'),
               onSelected: _menu,
@@ -915,6 +990,22 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                 PopupMenuItem(
                   value: _Menu.export,
                   child: Text(context.tr('app.anthologies.export')),
+                ),
+                // Edit and Delete live here and not as two more icons in the bar: four icons left the title
+                // eight letters ("Stoic mo..."), where the reader is there to read it.
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: _Menu.edit,
+                  child: Text(context.tr('common.action.edit.label')),
+                ),
+                PopupMenuItem(
+                  value: _Menu.delete,
+                  child: Text(
+                    context.tr('common.action.delete.label'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ),
               ],
             ),

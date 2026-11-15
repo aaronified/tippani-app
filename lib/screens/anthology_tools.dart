@@ -9,6 +9,7 @@ import '../capture/photo_source.dart';
 import '../library/cover_cache.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import 'prefs_widgets.dart' show Choice, ChoiceTile;
 import '../theme/material_surface.dart';
 
 /// Sends a file through Android's share sheet. A function so a test can stand in for it.
@@ -239,43 +240,305 @@ Future<String?> askGrouping(BuildContext context, String current) =>
       ),
     );
 
-/// Which parts of each passage the anthology shows. Null if the reader backs out.
+/// The heading of each group of switches, in the order the dialog draws them.
+String _partTitle(BuildContext context, String part) =>
+    context.tr(switch (part) {
+      'quote' => 'anthologies.form.fields.quote.label',
+      'work' => 'anthologies.form.fields.work.label',
+      'person' => 'anthologies.form.fields.person.label',
+      _ => 'anthologies.form.fields.label',
+    });
+
+/// Which parts of each passage the anthology shows. Null if the reader backs out. The answer is keyed the way the
+/// server stores it (`hide_credit`, `translation`, ...), with every switch present.
 Future<Map<String, bool>?> askSwitches(BuildContext context, Anthology a) {
   // on = shown; the server stores a "hide" switch the other way up
   final shown = {
     for (final s in anthologySwitches)
-      s.key: s.hide ? !a.flag(s.key) : a.flag(s.key),
+      s.key: s.stored
+          ? a.shows(s.key)
+          : s.hide
+          ? !a.flag(s.key)
+          : a.flag(s.key),
   };
-  return showDialog<Map<String, bool>>(
+  return showModalBottomSheet<Map<String, bool>>(
     context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
     builder: (context) => StatefulBuilder(
-      builder: (context, setState) => AlertDialog(
-        title: Text(context.tr('app.anthology_tools.what_it_shows')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final s in anthologySwitches)
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(context.tr(s.label)),
-                value: shown[s.key]!,
-                onChanged: (v) => setState(() => shown[s.key] = v),
+      builder: (context, setState) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    context.tr('app.anthology_tools.what_it_shows'),
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
               ),
-          ],
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final part in const [
+                      'passage',
+                      'quote',
+                      'work',
+                      'person',
+                    ]) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                        child: Text(
+                          _partTitle(context, part),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                        ),
+                      ),
+                      for (final s in anthologySwitches.where(
+                        (x) => x.part == part,
+                      ))
+                        SwitchListTile(
+                          key: ValueKey('switch-${s.key}'),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                          ),
+                          title: Text(s.label),
+                          value: shown[s.key]!,
+                          onChanged: (v) => setState(() => shown[s.key] = v),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(context.tr('common.action.cancel.label')),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop({
+                        for (final s in anthologySwitches)
+                          s.key: s.stored || !s.hide
+                              ? shown[s.key]!
+                              : !shown[s.key]!,
+                      }),
+                      child: Text(context.tr('common.action.save.label')),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(context.tr('common.action.cancel.label')),
+      ),
+    ),
+  );
+}
+
+/// What one passage shows and says in this anthology only. Null if the reader backs out; otherwise the changes, in the
+/// form [AnthologyService.setEntryDisplay] takes: a null value puts that key back to the anthology's choice, or to the
+/// quote's own words. A text equal to the quote's own is not a restatement and is sent as "put back".
+Future<({Map<String, bool?> fields, Map<String, String?> edits})?>
+askEntryDisplay(BuildContext context, Anthology a, AnthologyEntry e) {
+  // 0 inherit, 1 show, 2 hide, per registry key
+  int modeOf(String name) => switch (e.fields[name]) {
+    true => 1,
+    false => 2,
+    null => 0,
+  };
+  final start = {for (final s in anthologySwitches) s.name: modeOf(s.name)};
+  final mode = {...start};
+  final texts = <String, TextEditingController>{
+    'quote': TextEditingController(text: e.quote),
+    'note': TextEditingController(text: e.quoteNote),
+    'translation': TextEditingController(text: e.translation),
+    'context_before': TextEditingController(text: e.contextBefore),
+    'context_after': TextEditingController(text: e.contextAfter),
+  };
+  final labels = {
+    'quote': context.tr('anthologies.display.text.quote'),
+    'note': context.tr('anthologies.display.text.note'),
+    'translation': context.tr('anthologies.display.text.translation'),
+    'context_before': context.tr('anthologies.display.text.context-before'),
+    'context_after': context.tr('anthologies.display.text.context-after'),
+  };
+  String original(String key) =>
+      e.originals[key] ??
+      switch (key) {
+        'quote' => e.quote,
+        'note' => e.quoteNote,
+        'translation' => e.translation,
+        'context_before' => e.contextBefore,
+        _ => e.contextAfter,
+      };
+  String current(String key) => switch (key) {
+    'quote' => e.quote,
+    'note' => e.quoteNote,
+    'translation' => e.translation,
+    'context_before' => e.contextBefore,
+    _ => e.contextAfter,
+  };
+  return showModalBottomSheet<
+    ({Map<String, bool?> fields, Map<String, String?> edits})
+  >(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop({
-              for (final s in anthologySwitches)
-                s.key: s.hide ? !shown[s.key]! : shown[s.key]!,
-            }),
-            child: Text(context.tr('common.action.save.label')),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 4),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      context.tr('anthologies.display.title'),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                  child: Text(
+                    context.tr('anthologies.display.body'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    children: [
+                      Text(
+                        context.tr('anthologies.display.shows.label'),
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                      for (final s in anthologySwitches)
+                        ChoiceTile<int>(
+                          key: ValueKey('display-${s.name}'),
+                          title: s.label,
+                          value: mode[s.name]!,
+                          choices: [
+                            Choice(
+                              0,
+                              context.tr(
+                                a.shows(s.name)
+                                    ? 'anthologies.display.inherit.shown'
+                                    : 'anthologies.display.inherit.hidden',
+                              ),
+                            ),
+                            Choice(
+                              1,
+                              context.tr('anthologies.display.show.label'),
+                            ),
+                            Choice(
+                              2,
+                              context.tr('anthologies.display.hide.label'),
+                            ),
+                          ],
+                          onChanged: (v) => setState(() => mode[s.name] = v),
+                        ),
+                      const SizedBox(height: 12),
+                      Text(
+                        context.tr('anthologies.display.says.label'),
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                      for (final entry in texts.entries) ...[
+                        const SizedBox(height: 8),
+                        TextField(
+                          key: ValueKey('say-${entry.key}'),
+                          controller: entry.value,
+                          textCapitalization: TextCapitalization.sentences,
+                          minLines: 1,
+                          maxLines: 6,
+                          onChanged: (_) => setState(() {}),
+                          decoration: InputDecoration(
+                            labelText: labels[entry.key],
+                            suffixIcon: entry.value.text == original(entry.key)
+                                ? null
+                                : IconButton(
+                                    key: ValueKey('put-back-${entry.key}'),
+                                    tooltip: context.tr(
+                                      'anthologies.display.put-back.label',
+                                    ),
+                                    icon: const Icon(Ti.history),
+                                    onPressed: () => setState(
+                                      () => entry.value.text = original(
+                                        entry.key,
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(context.tr('common.action.cancel.label')),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: () {
+                          final fields = <String, bool?>{
+                            for (final s in anthologySwitches)
+                              if (mode[s.name] != start[s.name])
+                                s.name: switch (mode[s.name]) {
+                                  1 => true,
+                                  2 => false,
+                                  _ => null,
+                                },
+                          };
+                          final edits = <String, String?>{
+                            for (final t in texts.entries)
+                              if (t.value.text != current(t.key))
+                                t.key: t.value.text == original(t.key)
+                                    ? null
+                                    : t.value.text,
+                          };
+                          Navigator.of(context)
+                              .pop((fields: fields, edits: edits));
+                        },
+                        child: Text(context.tr('common.action.save.label')),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     ),
   );

@@ -88,7 +88,10 @@ ThemeData buildTheme(
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: scheme.surfaceContainerHigh,
+      // A WELL, not a patch of the page: the fill is the container above the dialog's own (a dialog is
+      // surfaceContainerHigh, and a field filled with that vanished into it), with a hairline so it reads in light
+      // and dark on any card.
+      fillColor: scheme.surfaceContainerHighest,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -96,7 +99,7 @@ ThemeData buildTheme(
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
+        borderSide: BorderSide(color: scheme.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),

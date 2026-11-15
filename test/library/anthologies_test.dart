@@ -182,7 +182,9 @@ void main() {
       await openList(tester);
       await tester.tap(find.text('Openings'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Remove from anthology'));
+      await tester.tap(find.byTooltip('More for this one'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove from anthology'));
       await tester.pumpAndSettle();
       expect(service.calls, ['remove ${a.id} book 1']);
       expect(find.text('“Call me Ishmael.”'), findsNothing);
@@ -195,7 +197,9 @@ void main() {
       await openList(tester);
       await tester.tap(find.text('Openings'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Edit'));
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.widgetWithText(TextField, 'Title'),
@@ -215,12 +219,16 @@ void main() {
       await openList(tester);
       await tester.tap(find.text('Openings'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Delete'));
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Keep it'));
       await tester.pumpAndSettle();
       expect(service.calls, isEmpty);
-      await tester.tap(find.byTooltip('Delete'));
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Delete').last);
       await tester.pumpAndSettle();

@@ -7,8 +7,13 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Fixed
+
+- Anthology screens, tidied: the title is no longer cut to a few letters (Edit and Delete are in the menu), each passage has one menu with Remove in it instead of a loose cross beside it, and text boxes read as wells in light and dark, in dialogs too.
+
 ### Added
 
+- A passage shows and says its own parts: What it shows now lists everything a quote has (its note, translation, language, tags, the text around it, and what its book or film and its person know), and a passage's menu has What it shows and says, where the passage can show or hide any of them for itself and say the quote, its note, its translation and the context in its own words. It changes that anthology only: the quote and any other anthology holding it stay as they were, and Put back returns the quote's own words. It works with no server and goes up later.
 - Textures and the texture mixer: Settings has Materials, the web's materials in the app. Pick a material set, give the background, bars, cards or covers a different texture, and change how each material catches the light. It is saved to your account, so the web wears the same look. A phone that has not reached the server yet stays plain, and so does one set to more contrast, on the phone or under Contrast on your account.
 
 ## [0.9.0] - 2026-11-13

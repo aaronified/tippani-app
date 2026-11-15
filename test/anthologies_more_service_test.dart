@@ -236,6 +236,57 @@ void main() {
     expect(sent['title'], 'Openings');
   });
 
+  test('the switches beyond the first six travel inside `fields`, keeping what the server held', () async {
+    final (svc, s) = await rig();
+    final a = (await svc.get(3)).anthology;
+    await svc.setSwitches(a, {
+      'translation': true,
+      'show_date': true,
+      'note': false,
+    });
+    final sent = bodyOf(s.seen.last)! as Map;
+    expect(
+      sent['show_date'],
+      true,
+      reason: 'a column of its own stays at the top',
+    );
+    expect(
+      sent.containsKey('translation'),
+      isFalse,
+      reason: 'it is not a top-level field',
+    );
+    expect(sent['fields'], {'translation': true, 'note': false});
+  });
+
+  test(
+    'what one passage shows and says goes to that passage and to no quote',
+    () async {
+      final (svc, s) = await rig();
+      await svc.setEntryDisplay(
+        3,
+        'book',
+        9,
+        fields: {'translation': true, 'tags': null},
+        edits: {'context_after': 'And after.', 'quote': null},
+      );
+      expect(
+        s.seen.last,
+        startsWith('PUT /anthologies/3/entries/book/9/display '),
+      );
+      expect(bodyOf(s.seen.last), {
+        'fields': {'translation': true, 'tags': null},
+        'edits': {'context_after': 'And after.', 'quote': null},
+      });
+      expect(
+        s.seen.where(
+          (x) =>
+              x.startsWith('PUT /quotes') || x.startsWith('PUT /annotations'),
+        ),
+        isEmpty,
+      );
+    },
+  );
+
   test(
     'the description goes only when it is given, and the poster is a file',
     () async {

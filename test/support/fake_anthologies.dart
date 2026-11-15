@@ -47,23 +47,7 @@ class FakeAnthologies implements AnthologyService {
   }
 
   AnthologyEntry _withPosition(AnthologyEntry e, double p, {String? note}) =>
-      AnthologyEntry(
-        kind: e.kind,
-        itemId: e.itemId,
-        quote: e.quote,
-        note: note ?? e.note,
-        source: e.source,
-        credit: e.credit,
-        color: e.color,
-        language: e.language,
-        locator: e.locator,
-        position: p,
-        favorite: e.favorite,
-        workId: e.workId,
-        personName: e.personName,
-        characterName: e.characterName,
-        date: e.date,
-      );
+      e.copyWith(position: p, note: note);
 
   void _check() {
     final f = fail;
@@ -146,7 +130,20 @@ class FakeAnthologies implements AnthologyService {
   Future<void> setSwitches(Anthology a, Map<String, bool> switches) async {
     _check();
     calls.add('switches ${a.id} $switches');
-    _rows[a.id]!.addAll(switches);
+    // the server keeps the six with a column of their own at the top and every later one inside `fields`
+    final stored = {
+      for (final x in anthologySwitches)
+        if (x.stored) x.key,
+    };
+    final fields = {...a.extra};
+    for (final e in switches.entries) {
+      if (stored.contains(e.key)) {
+        fields[e.key] = e.value;
+      } else {
+        _rows[a.id]![e.key] = e.value;
+      }
+    }
+    _rows[a.id]!['fields'] = fields;
   }
 
   @override
@@ -209,6 +206,71 @@ class FakeAnthologies implements AnthologyService {
     final list = _entries[id]!;
     final i = list.indexWhere((e) => e.kind == kind && e.itemId == itemId);
     list[i] = _withPosition(list[i], list[i].position, note: note);
+  }
+
+  @override
+  Future<void> setEntryDisplay(
+    int id,
+    String kind,
+    int itemId, {
+    Map<String, bool?> fields = const {},
+    Map<String, String?> edits = const {},
+  }) async {
+    _check();
+    calls.add('display $id $kind/$itemId $fields $edits');
+    final list = _entries[id]!;
+    final i = list.indexWhere((e) => e.kind == kind && e.itemId == itemId);
+    var e = list[i];
+    final own = {...e.fields};
+    for (final f in fields.entries) {
+      f.value == null ? own.remove(f.key) : own[f.key] = f.value!;
+    }
+    final said = {...e.edits};
+    final kept = {...e.originals};
+    var quote = e.quote, note = e.quoteNote, tr = e.translation;
+    var before = e.contextBefore, after = e.contextAfter;
+    for (final x in edits.entries) {
+      final back = x.value == null;
+      final text = back ? (kept[x.key] ?? '') : x.value!;
+      if (back) {
+        said.remove(x.key);
+      } else {
+        said[x.key] = text;
+        kept.putIfAbsent(
+          x.key,
+          () => switch (x.key) {
+            'quote' => quote,
+            'note' => note,
+            'translation' => tr,
+            'context_before' => before,
+            _ => after,
+          },
+        );
+      }
+      switch (x.key) {
+        case 'quote':
+          quote = text;
+        case 'note':
+          note = text;
+        case 'translation':
+          tr = text;
+        case 'context_before':
+          before = text;
+        default:
+          after = text;
+      }
+      if (back) kept.remove(x.key);
+    }
+    list[i] = e.copyWith(
+      fields: own,
+      edits: said,
+      originals: kept,
+      quote: quote,
+      quoteNote: note,
+      translation: tr,
+      contextBefore: before,
+      contextAfter: after,
+    );
   }
 
   @override

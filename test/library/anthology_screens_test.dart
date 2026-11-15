@@ -8,6 +8,7 @@ import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/library_widgets.dart';
 import 'package:tippani/screens/anthologies_screen.dart';
 import 'package:tippani/screens/anthology_tools.dart';
+import 'package:tippani/theme/app_theme.dart';
 
 import '../support/fake_anthologies.dart';
 import '../support/fake_quiz.dart';
@@ -19,6 +20,10 @@ AnthologyEntry entry(
   String source = '',
   int workId = 0,
   String character = '',
+  String translation = '',
+  String quoteNote = '',
+  List<String> tags = const [],
+  String contextAfter = '',
 }) => AnthologyEntry(
   kind: 'book',
   itemId: id,
@@ -31,6 +36,10 @@ AnthologyEntry entry(
   locator: '',
   workId: workId,
   characterName: character,
+  translation: translation,
+  quoteNote: quoteNote,
+  tags: tags,
+  contextAfter: contextAfter,
 );
 
 class _Picker implements BackupPicker {
@@ -252,7 +261,9 @@ void main() {
     tester,
   ) async {
     await open(tester);
-    await tester.tap(find.byTooltip('Remove from anthology').first);
+    await tester.tap(find.byTooltip('More for this one').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove from anthology'));
     await tester.pumpAndSettle();
     expect(find.text('“First one.”'), findsNothing);
     await choose(tester, 'Taken out…');
@@ -431,4 +442,188 @@ void main() {
       expect(find.widgetWithText(TextField, 'Epigraph'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'the bar leaves the title its room: Edit and Delete are in the menu, not two more icons',
+    (tester) async {
+      await open(tester);
+      expect(find.byTooltip('Edit'), findsNothing);
+      expect(find.byTooltip('Delete'), findsNothing);
+      await choose(tester, 'Edit');
+      expect(find.text('Edit anthology'), findsOneWidget);
+    },
+  );
+
+  testWidgets('a passage has one menu, and removing it is in that menu', (
+    tester,
+  ) async {
+    await open(tester);
+    // no loose cross beside the menu: the old one sat a slip away from it
+    expect(find.byTooltip('Remove from anthology'), findsNothing);
+    await tester.tap(find.byTooltip('More for this one').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove from anthology'));
+    await tester.pumpAndSettle();
+    expect(find.text('“First one.”'), findsNothing);
+    expect(find.text('“Second one.”'), findsOneWidget);
+  });
+
+  test('a text field is a well: its fill is not the colour of the dialog it sits in', () {
+    for (final b in Brightness.values) {
+      final scheme = ColorScheme.fromSeed(
+        seedColor: const Color(0xFFB4482D),
+        brightness: b,
+      );
+      final theme = buildTheme(scheme);
+      expect(
+        theme.inputDecorationTheme.fillColor,
+        isNot(scheme.surfaceContainerHigh),
+        reason:
+            'a dialog is surfaceContainerHigh; a field of that colour vanishes into it ($b)',
+      );
+      final border =
+          theme.inputDecorationTheme.enabledBorder! as OutlineInputBorder;
+      expect(border.borderSide, isNot(BorderSide.none));
+    }
+  });
+
+  // the sheet is a long list; the part wanted is built only once it is scrolled to
+  Finder sheetScroll() => find
+      .descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(Scrollable),
+      )
+      .first;
+
+  group('what a passage shows and says (the quote\'s own parts)', () {
+    setUp(() {
+      service = FakeAnthologies();
+      a = service.seed('Poems');
+      service.put(
+        a.id,
+        entry(
+          1,
+          'Where the mind is without fear',
+          translation: 'A mind with no fear in it.',
+          quoteNote: 'My father\'s favourite.',
+          tags: ['hope', 'poems'],
+          contextAfter: 'And the head is held high.',
+        ),
+      );
+    });
+
+    testWidgets(
+      'the quote\'s note shows as it always did, the rest wait to be asked for',
+      (tester) async {
+        await open(tester);
+        expect(find.text('My father\'s favourite.'), findsOneWidget);
+        for (final hidden in [
+          'A mind with no fear in it.',
+          'hope · poems',
+          'And the head is held high.',
+        ]) {
+          expect(find.text(hidden), findsNothing, reason: hidden);
+        }
+      },
+    );
+
+    testWidgets(
+      'switching them on in What it shows draws them, and saves them as the server stores them',
+      (tester) async {
+        await open(tester);
+        await choose(tester, 'What it shows…');
+        for (final k in ['translation', 'tags', 'context']) {
+          await tester.ensureVisible(find.byKey(ValueKey('switch-$k')));
+          await tester.tap(find.byKey(ValueKey('switch-$k')));
+        }
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(
+          service.calls.last,
+          allOf(
+            contains('translation: true'),
+            contains('tags: true'),
+            contains('context: true'),
+          ),
+        );
+        expect(find.text('A mind with no fear in it.'), findsOneWidget);
+        expect(find.text('hope · poems'), findsOneWidget);
+        expect(find.text('And the head is held high.'), findsOneWidget);
+      },
+    );
+
+    testWidgets('one passage can hide what its anthology shows', (
+      tester,
+    ) async {
+      await open(tester);
+      await choose(tester, 'What it shows…');
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('switch-translation')),
+      );
+      await tester.tap(find.byKey(const ValueKey('switch-translation')));
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('A mind with no fear in it.'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('More for this one').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('What it shows and says'));
+      await tester.pumpAndSettle();
+      final row = find.byKey(const ValueKey('display-translation'));
+      await tester.ensureVisible(row);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hide').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(service.calls.last, contains('translation: false'));
+      expect(find.text('A mind with no fear in it.'), findsNothing);
+    });
+
+    testWidgets(
+      'a passage can say its translation differently, and put the quote\'s own back',
+      (tester) async {
+        await open(tester);
+        await tester.tap(find.byTooltip('More for this one').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('What it shows and says'));
+        await tester.pumpAndSettle();
+        final box = find.byKey(const ValueKey('say-translation'));
+        await tester.scrollUntilVisible(box, 300, scrollable: sheetScroll());
+        await tester.enterText(box, 'A fearless mind.');
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(service.calls.last, contains('translation: A fearless mind.'));
+        // the entry now says it, and the library's words are kept for putting back
+        final e = (await service.get(a.id)).entries.single;
+        expect(e.translation, 'A fearless mind.');
+        expect(e.originals['translation'], 'A mind with no fear in it.');
+
+        await tester.tap(find.byTooltip('More for this one').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('What it shows and says'));
+        await tester.pumpAndSettle();
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('put-back-translation')),
+          300,
+          scrollable: sheetScroll(),
+        );
+        await tester.tap(find.byKey(const ValueKey('put-back-translation')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(
+          (await service.get(a.id)).entries.single.translation,
+          'A mind with no fear in it.',
+        );
+        // put back is "forget the restatement", not "restate it as the quote's own words": the second would go
+        // on saying the old words after the library's change
+        expect(service.calls.last, contains('translation: null'));
+        expect((await service.get(a.id)).entries.single.edits, isEmpty);
+      },
+    );
+  });
 }

@@ -165,6 +165,18 @@ class _Server implements AnthologyService {
   }
 
   @override
+  Future<void> setEntryDisplay(
+    int id,
+    String kind,
+    int itemId, {
+    Map<String, bool?> fields = const {},
+    Map<String, String?> edits = const {},
+  }) async {
+    _reach();
+    sent.add('display $id $kind/$itemId $fields $edits');
+  }
+
+  @override
   Future<void> removeEntry(int id, String kind, int itemId) async {
     _reach();
     sent.add('remove $id $kind/$itemId');
@@ -399,6 +411,43 @@ void main() {
       ]);
     },
   );
+
+  test('what a passage shows and says is changed here with no server, kept apart from the quote, and sent in order', () async {
+    final r = await _rig();
+    final made = await r.service.create('Poems', '');
+    await r.service.add(made.id, 'book', 1);
+    await r.service.get(made.id);
+    r.server.up = false;
+    await r.service.setEntryDisplay(
+      made.id,
+      'book',
+      1,
+      fields: {'translation': true},
+      edits: {'translation': 'A fearless mind.'},
+    );
+    var e = (await r.service.get(made.id)).entries.single;
+    expect(e.translation, 'A fearless mind.');
+    expect(e.fields, {'translation': true});
+    expect(e.originals, {'translation': ''});
+
+    // put back: the quote's own words return and the restatement is forgotten
+    await r.service.setEntryDisplay(
+      made.id,
+      'book',
+      1,
+      edits: {'translation': null},
+    );
+    e = (await r.service.get(made.id)).entries.single;
+    expect(e.translation, '');
+    expect(e.edits, isEmpty);
+
+    r.server.up = true;
+    await r.service.flush();
+    expect(r.server.sent.where((s) => s.startsWith('display')), [
+      'display ${made.id} book/1 {translation: true} {translation: A fearless mind.}',
+      'display ${made.id} book/1 {} {translation: null}',
+    ]);
+  });
 
   test('a change made online waits behind changes already waiting', () async {
     final r = await _rig();
