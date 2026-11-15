@@ -342,6 +342,35 @@ void main() {
     expect(svc.hasPoster, isTrue);
   });
 
+  test('the passage controls are offered only when the server names them, and while it is unknown', () async {
+    SharedPreferences.setMockInitialValues({
+      'server_url': 'https://q.example.org',
+    });
+    final controller = AppController(
+      SettingsStore(await SharedPreferences.getInstance(), MemoryTokenVault()),
+      clientFactory: _Server().factory,
+    );
+    await controller.load();
+    final svc = ServerAnthologies(controller);
+    expect(svc.hasEntryDisplay, isTrue, reason: 'not asked yet');
+    Capabilities caps(Set<String> features) => Capabilities(
+      version: '3.9.1',
+      apiRevision: 11,
+      minClientRevision: 1,
+      features: features,
+    );
+    await controller.connect(
+      'https://q.example.org',
+      ServerCheck.answered(caps({'anthology-poster'})),
+    );
+    expect(svc.hasEntryDisplay, isFalse);
+    await controller.connect(
+      'https://q.example.org',
+      ServerCheck.answered(caps({'anthology-entry-display'})),
+    );
+    expect(svc.hasEntryDisplay, isTrue);
+  });
+
   test('a keyed create, heading and entry go out under their key, and nothing else does', () async {
     final (svc, s) = await rig();
     await svc.keyed('key-a', () => svc.create('T', ''));

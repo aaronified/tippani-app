@@ -10,7 +10,7 @@ before and after it. A text box that differs from the quote's own is a restateme
 quote's own words back, which sends "forget the restatement" and not the quote's words again, so a later change to the quote shows through.
 
 **Older servers.** The server names the feature `anthology-entry-display` (API revision 12); without it the quote's own-part switches and the passage's
-menu item are not offered, so no control saves and comes back off.
+menu item are not offered, so no control saves and comes back off. Until the server has been asked (a phone that has not reached it yet) they are offered, as the poster's are; a change made then to a server that turns out to be older is refused when it goes up.
 
 **Offline.** The change is applied to the cached anthology at once and waits in the queue like every other (`display`), in order with the rest.
 
