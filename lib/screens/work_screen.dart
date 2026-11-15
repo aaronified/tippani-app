@@ -14,6 +14,7 @@ import '../library/cover_cache.dart';
 import '../tools/work_details_source.dart';
 import '../tools/work_edit_service.dart';
 import 'work_details_form_screen.dart';
+import 'work_source_screen.dart';
 import '../widgets/text_prompt.dart';
 import 'work_details_section.dart';
 
@@ -161,7 +162,19 @@ class _WorkScreenState extends State<WorkScreen> {
     if (!mounted) return;
     final it = items.isEmpty ? null : items.first;
     if (it == null || it.status == 'unpinned') {
-      say(tr('app.work.no_source_linked'));
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(tr('app.work.no_source_linked')),
+            action: WorkEditScope.of(context) == null
+                ? null
+                : SnackBarAction(
+                    label: tr('app.work.find_it_online'),
+                    onPressed: _findOnline,
+                  ),
+          ),
+        );
       return;
     }
     if (!it.checked) {
@@ -191,6 +204,24 @@ class _WorkScreenState extends State<WorkScreen> {
     final d = await source.fetch(w);
     if (d == null || !mounted) return;
     await widget.store.setWorkDetails(w.id, d);
+    if (mounted) await _load();
+  }
+
+  /// Lists what the server's catalogues say this work might be and links the one the reader picks, so the work has a
+  /// source to fetch metadata from. What linking changes on the server is pulled in at once.
+  Future<void> _findOnline() async {
+    final w = _work;
+    final service = WorkEditScope.of(context);
+    if (w == null || service == null) return;
+    final linked = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => WorkSourceScreen(work: w, service: service),
+      ),
+    );
+    if (linked != true || !mounted) return;
+    await _refetchDetails();
+    if (!mounted) return;
+    await AutoSyncScope.of(context)?.syncNow();
     if (mounted) await _load();
   }
 
@@ -567,6 +598,8 @@ class _WorkScreenState extends State<WorkScreen> {
                           _fetchMetadata();
                         case 'details':
                           _editDetails();
+                        case 'online':
+                          _findOnline();
                         case 'cover':
                           _chooseCover();
                         case 'context':
@@ -596,6 +629,12 @@ class _WorkScreenState extends State<WorkScreen> {
                         PopupMenuItem(
                           value: 'details',
                           child: Text(context.tr('app.work.edit_details')),
+                        ),
+                      if (w.serverId != null &&
+                          WorkEditScope.of(context) != null)
+                        PopupMenuItem(
+                          value: 'online',
+                          child: Text(context.tr('app.work.find_it_online')),
                         ),
                       if (w.serverId != null &&
                           MetadataScope.of(context)?.available == true)

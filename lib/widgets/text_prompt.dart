@@ -52,6 +52,7 @@ class _TextPromptState extends State<_TextPrompt> {
         controller: _text,
         autofocus: true,
         keyboardType: widget.keyboard,
+        textCapitalization: TextCapitalization.none,
         decoration: InputDecoration(labelText: widget.label),
         onChanged: (_) => setState(() {}),
       ),

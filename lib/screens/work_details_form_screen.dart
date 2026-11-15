@@ -139,6 +139,7 @@ class _WorkDetailsFormScreenState extends State<WorkDetailsFormScreen> {
     String? helper,
     int lines = 1,
     TextInputType? keyboard,
+    TextCapitalization caps = TextCapitalization.sentences,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: TextField(
@@ -146,6 +147,7 @@ class _WorkDetailsFormScreenState extends State<WorkDetailsFormScreen> {
       minLines: lines,
       maxLines: lines == 1 ? 1 : lines + 4,
       keyboardType: keyboard ?? (lines == 1 ? null : TextInputType.multiline),
+      textCapitalization: caps,
       decoration: InputDecoration(labelText: label, helperText: helper),
     ),
   );
@@ -192,6 +194,7 @@ class _WorkDetailsFormScreenState extends State<WorkDetailsFormScreen> {
               _seriesNo,
               context.tr('common.field.series-no.label'),
               keyboard: const TextInputType.numberWithOptions(decimal: true),
+              caps: TextCapitalization.none,
             ),
             if (_hasPublisher)
               _field(_publisher, context.tr('common.field.publisher.label')),
@@ -200,14 +203,20 @@ class _WorkDetailsFormScreenState extends State<WorkDetailsFormScreen> {
                 _pages,
                 context.tr('common.field.pages.label'),
                 keyboard: TextInputType.number,
+                caps: TextCapitalization.none,
               ),
-              _field(_isbn, context.tr('common.field.isbn.label')),
+              _field(
+                _isbn,
+                context.tr('common.field.isbn.label'),
+                caps: TextCapitalization.none,
+              ),
             ],
             _field(
               _links,
               context.tr('common.field.links.label'),
               helper: context.tr('app.work.details_links_hint'),
               lines: 3,
+              caps: TextCapitalization.none,
             ),
           ],
         ],

@@ -226,6 +226,27 @@ class FakeServer {
   List<Map<String, Object?>> tvdbCast = [];
   List<Map<String, Object?>> imdbCast = [];
 
+  /// The candidates `POST /books/lookup` and `POST /movies/lookup` answer with, and every lookup asked, as
+  /// `route body` (`/books/lookup {"title":...}`).
+  List<Map<String, Object?>> bookCandidates = [];
+  List<Map<String, Object?>> movieCandidates = [];
+  final lookups = <String>[];
+
+  /// A lookup answers 503 with this sentence instead, when set (no catalogue key configured on the server).
+  String? lookupRefusal;
+
+  http.Response? _lookup(http.Request r, String path) {
+    if (r.method != 'POST' ||
+        (path != '/books/lookup' && path != '/movies/lookup')) {
+      return null;
+    }
+    lookups.add('$path ${r.body}');
+    if (lookupRefusal != null) return _json({'error': lookupRefusal!}, 503);
+    return _json({
+      'candidates': path == '/books/lookup' ? bookCandidates : movieCandidates,
+    });
+  }
+
   http.Response? _castWrite(http.Request r, String path) {
     final add = RegExp(r'^(/books|/movies)/(\d+)/cast(/tvdb|/imdb)?$');
     final m = add.firstMatch(path);
@@ -358,6 +379,15 @@ class FakeServer {
     final rows = created[route] ?? [];
     final i = rows.indexWhere((r) => r['id'] == id);
     if (i < 0) return _json({'error': 'not found'}, 404);
+    if (route == '/movies' && '${body['source'] ?? ''}'.isNotEmpty) {
+      // a source and its id re-sync the film from that supplier, as the server's PUT does
+      updated.add((path: '$route/$id', body: Map<String, Object?>.from(body)));
+      rows[i] = {
+        ...rows[i],
+        'linked': '${body['source']}:${body['source_id']}',
+      };
+      return _json(rows[i]);
+    }
     final isWork = route == '/books' || route == '/movies';
     if (isWork && (body['title'] as String? ?? '').trim().isEmpty) {
       return _json({'error': 'title is required'}, 400);
@@ -675,6 +705,8 @@ class FakeServer {
           ? _json({'error': 'this quote has no context'}, 404)
           : _json(c);
     }
+    final lookup = _lookup(r, path);
+    if (lookup != null) return lookup;
     final castWrite = _castWrite(r, path);
     if (castWrite != null) return castWrite;
     final castRoute = RegExp(r'^(/books|/movies)/(\d+)/cast$').firstMatch(path);

@@ -339,6 +339,7 @@ class _CastRowDialogState extends State<_CastRowDialog> {
           TextField(
             controller: _character,
             autofocus: true,
+            textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
               labelText: context.tr('common.field.character.label'),
             ),
@@ -347,6 +348,7 @@ class _CastRowDialogState extends State<_CastRowDialog> {
           if (widget.withActor)
             TextField(
               controller: _actor,
+              textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(
                 labelText: context.tr('common.field.actor.label'),
               ),
@@ -398,6 +400,7 @@ class _ImdbDialogState extends State<_ImdbDialog> {
         controller: _link,
         autofocus: true,
         keyboardType: TextInputType.url,
+        textCapitalization: TextCapitalization.none,
         decoration: InputDecoration(
           labelText: context.tr('app.cast.imdb_link'),
         ),
