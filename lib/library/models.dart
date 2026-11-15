@@ -135,11 +135,15 @@ class Work {
 /// A character in a work, and the actor who plays them (empty for a book).
 class CastMember {
   const CastMember({
+    this.id = 0,
     required this.character,
     this.actor = '',
     this.characterImage = '',
     this.actorImage = '',
   });
+
+  /// The server's id for this row (0 where it is not known), which an edit or a removal names.
+  final int id;
   final String character;
   final String actor;
 
@@ -149,6 +153,7 @@ class CastMember {
   final String actorImage;
 
   Map<String, Object?> toJson() => {
+    if (id > 0) 'id': id,
     'character': character,
     'actor': actor,
     if (characterImage.isNotEmpty) 'character_image': characterImage,
@@ -172,6 +177,7 @@ class CastMember {
         ? img('character_image')
         : img('character_record_image');
     return CastMember(
+      id: j['id'] is int ? j['id'] as int : 0,
       character: character,
       actor: actor,
       characterImage: own,

@@ -31,6 +31,7 @@ import '../api/offline_writes.dart';
 import '../tools/context_store.dart';
 import '../tools/quote_context.dart';
 import '../tools/work_details_source.dart';
+import '../tools/work_edit_service.dart';
 import '../search/search_service.dart';
 import '../tags/tag_service.dart';
 import '../tools/server_tools.dart';
@@ -136,6 +137,7 @@ class Harness {
     this.serverFiles = const SystemServerFiles(),
     this.quiz,
     this.details,
+    this.workEdit,
     this.contexts,
     this.anthologies,
     this.tools,
@@ -239,6 +241,9 @@ class Harness {
 
   /// Fetches a work's description, genres and cast from the paired server. Null in a test about something else.
   final WorkDetailsSource? details;
+
+  /// Writes a work's cast (and its details, cover) through to the paired server. Null in a test about something else.
+  final WorkEditService? workEdit;
 
   /// Fetches the stored context of a quote from the paired server. Null in a test about something else.
   final QuoteContextSource? contexts;
@@ -402,6 +407,7 @@ class Harness {
       admin: PairedAdminService(controller),
       quiz: ServerQuiz(controller, settings),
       details: workDetails,
+      workEdit: PairedWorkEdit(controller),
       contexts: contexts,
       anthologies: anthologies,
       tools: PairedServerTools(controller, writes: writes),
@@ -443,6 +449,7 @@ class Harness {
     ServerFiles? serverFiles,
     QuizService? quiz,
     WorkDetailsSource? details,
+    WorkEditService? workEdit,
     QuoteContextSource? contexts,
     AnthologyService? anthologies,
     ServerTools? tools,
@@ -508,6 +515,7 @@ class Harness {
       serverFiles: serverFiles ?? const SystemServerFiles(),
       quiz: quiz,
       details: details,
+      workEdit: workEdit,
       contexts: contexts,
       anthologies: anthologies,
       tools: tools,

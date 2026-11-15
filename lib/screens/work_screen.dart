@@ -180,6 +180,17 @@ class _WorkScreenState extends State<WorkScreen> {
     await _load();
   }
 
+  /// Fetches the work's record and cast again after something was written on the server, and redraws.
+  Future<void> _refetchDetails() async {
+    final w = _work;
+    final source = DetailsScope.of(context);
+    if (w == null || source == null) return;
+    final d = await source.fetch(w);
+    if (d == null || !mounted) return;
+    await widget.store.setWorkDetails(w.id, d);
+    if (mounted) await _load();
+  }
+
   Future<void> _edit() async {
     final saved = await Navigator.of(context).push<Work>(
       MaterialPageRoute(
@@ -642,6 +653,7 @@ class _WorkScreenState extends State<WorkScreen> {
                 WorkDetailsSection(
                   work: w,
                   onFilter: (f) => Navigator.of(context).pop(f),
+                  onChanged: _refetchDetails,
                 ),
                 if (_quotes.isEmpty)
                   Padding(

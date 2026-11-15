@@ -217,6 +217,93 @@ class FakeServer {
   /// A cast read answers with this status instead, when set.
   int? failCastWith;
 
+  /// Every cast write the fake accepted, in order: the method and route (`POST /movies/4/cast`) and the body.
+  final castWrites = <({String call, Map<String, Object?> body})>[];
+
+  /// Whether a film already has a TheTVDB id (otherwise `POST /movies/{id}/cast/tvdb` needs one in its body, and
+  /// answers 409 without), and the rows a TheTVDB / IMDb pull brings.
+  bool tvdbPinned = true;
+  List<Map<String, Object?>> tvdbCast = [];
+  List<Map<String, Object?>> imdbCast = [];
+
+  http.Response? _castWrite(http.Request r, String path) {
+    final add = RegExp(r'^(/books|/movies)/(\d+)/cast(/tvdb|/imdb)?$');
+    final m = add.firstMatch(path);
+    final one = RegExp(r'^/cast/(\d+)(/actor)?$').firstMatch(path);
+    if (m == null && one == null) return null;
+    final body = r.body.isEmpty
+        ? <String, Object?>{}
+        : Map<String, Object?>.from(jsonDecode(r.body) as Map);
+    if (r.method == 'POST' && m != null) {
+      final key = '${m[1]}/${m[2]}';
+      final rows = casts.putIfAbsent(key, () => []);
+      castWrites.add((call: 'POST $path', body: body));
+      switch (m[3]) {
+        case '/tvdb':
+          if (!tvdbPinned && body['tvdb_id'] == null) {
+            return _json({
+              'error': 'this title has no TheTVDB id — set one, or use Look up to match it first',
+            }, 409);
+          }
+          for (final x in tvdbCast) {
+            rows.add({...x, 'id': _nextId++});
+          }
+          return _json({'added': tvdbCast.length, 'cast': rows});
+        case '/imdb':
+          if (!'${body['imdb']}'.contains('tt')) {
+            return _json({
+              'error': 'paste an IMDb title link or id (tt…)',
+            }, 400);
+          }
+          for (final x in imdbCast) {
+            rows.add({...x, 'id': _nextId++});
+          }
+          return _json({'added': imdbCast.length, 'cast': rows});
+      }
+      if ('${body['character'] ?? ''}'.trim().isEmpty) {
+        return _json({'error': 'a cast row needs a character'}, 400);
+      }
+      if (m[1] == '/books' && '${body['actor'] ?? ''}'.isNotEmpty) {
+        return _json({
+          'error': 'a book has characters, not a cast — a novel has speakers',
+        }, 400);
+      }
+      final row = {
+        'id': _nextId++,
+        'character': body['character'],
+        'actor': body['actor'] ?? '',
+      };
+      rows.add(row);
+      return _json(row, 201);
+    }
+    if (one != null) {
+      final id = int.parse(one[1]!);
+      for (final rows in casts.values) {
+        final i = rows.indexWhere((x) => x['id'] == id);
+        if (i < 0) continue;
+        castWrites.add((call: '${r.method} $path', body: body));
+        if (r.method == 'PUT') {
+          rows[i] = {
+            ...rows[i],
+            'character': body['character'],
+            'actor': body['actor'],
+          };
+          return _json(rows[i]);
+        }
+        if (r.method == 'DELETE' && one[2] != null) {
+          rows[i] = {...rows[i], 'actor': ''};
+          return http.Response('', 204);
+        }
+        if (r.method == 'DELETE') {
+          rows.removeAt(i);
+          return http.Response('', 204);
+        }
+      }
+      return _json({'error': 'cast row not found'}, 404);
+    }
+    return null;
+  }
+
   /// Puts a row on the server as if it had been made on the web, and returns its id. [path] is a create
   /// route (`/books`, `/annotations`...). The row is what the server's list would give back.
   int seed(String path, Map<String, Object?> fields, {int? id}) {
@@ -571,6 +658,8 @@ class FakeServer {
           ? _json({'error': 'this quote has no context'}, 404)
           : _json(c);
     }
+    final castWrite = _castWrite(r, path);
+    if (castWrite != null) return castWrite;
     final castRoute = RegExp(r'^(/books|/movies)/(\d+)/cast$').firstMatch(path);
     if (r.method == 'GET' && castRoute != null) {
       castReads.add('${castRoute[1]}/${castRoute[2]}');

@@ -9,6 +9,7 @@ import 'harness/harness.dart';
 import 'library/cover_cache.dart';
 import 'tools/quote_context.dart';
 import 'tools/work_details_source.dart';
+import 'tools/work_edit_service.dart';
 import 'harness/update_ui.dart';
 import 'screens/add_quote_sheet.dart';
 import 'screens/boards_tab.dart';
@@ -116,7 +117,10 @@ class TippaniApp extends StatelessWidget {
                                                 service: harness.metadata,
                                                 child: AutoSyncScope(
                                                   auto: harness.auto,
-                                                  child: child!,
+                                                  child: WorkEditScope(
+                                                    service: harness.workEdit,
+                                                    child: child!,
+                                                  ),
                                                 ),
                                               ),
                                             ),
