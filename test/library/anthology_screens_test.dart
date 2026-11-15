@@ -497,6 +497,28 @@ void main() {
       )
       .first;
 
+  testWidgets(
+    'a server that cannot keep a passage\'s own parts is not offered them',
+    (tester) async {
+      service.hasEntryDisplay = false;
+      await open(tester);
+      await tester.tap(find.byTooltip('More for this one').first);
+      await tester.pumpAndSettle();
+      expect(find.text('What it shows and says'), findsNothing);
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
+      await choose(tester, 'What it shows…');
+      // the switches of an older server are all still there, and the new ones are not
+      expect(find.byKey(const ValueKey('switch-hide_credit')), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('switch-publisher')),
+        300,
+        scrollable: sheetScroll(),
+      );
+      expect(find.byKey(const ValueKey('switch-translation')), findsNothing);
+    },
+  );
+
   group('what a passage shows and says (the quote\'s own parts)', () {
     setUp(() {
       service = FakeAnthologies();

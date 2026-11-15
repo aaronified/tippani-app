@@ -656,6 +656,10 @@ abstract class AnthologyService {
   /// been asked: a change made then waits, and the server's refusal is shown.
   bool get hasPoster;
 
+  /// Whether the server can keep what one passage shows and says, and the quote's own parts as switches (API revision
+  /// 12). True while the server has not been asked, like [hasPoster].
+  bool get hasEntryDisplay;
+
   /// Runs [run], which makes a request that may be sent twice, under [key]: the server answers a repeated key
   /// with the first answer, so a request whose reply was lost makes nothing twice. A null key is no key.
   Future<T> keyed<T>(String? key, Future<T> Function() run);
@@ -775,6 +779,12 @@ class ServerAnthologies implements AnthologyService {
   bool get hasPoster {
     final caps = _controller.check?.capabilities;
     return caps == null || caps.has('anthology-poster');
+  }
+
+  @override
+  bool get hasEntryDisplay {
+    final caps = _controller.check?.capabilities;
+    return caps == null || caps.has('anthology-entry-display');
   }
 
   Future<T> _call<T>(Future<T> Function(ApiClient c) run) async {

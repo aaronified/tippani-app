@@ -9,6 +9,9 @@ What it shows and says: for each switch, As the anthology / Show / Hide, and tex
 before and after it. A text box that differs from the quote's own is a restatement for this anthology only; the button beside it puts the
 quote's own words back, which sends "forget the restatement" and not the quote's words again, so a later change to the quote shows through.
 
+**Older servers.** The server names the feature `anthology-entry-display` (API revision 12); without it the quote's own-part switches and the passage's
+menu item are not offered, so no control saves and comes back off.
+
 **Offline.** The change is applied to the cached anthology at once and waits in the queue like every other (`display`), in order with the rest.
 
 **How a switch is sent.** The six with a column of their own stay at the top of the request; the rest go inside `fields`, which is also

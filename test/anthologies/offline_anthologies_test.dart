@@ -39,6 +39,9 @@ class _Server implements AnthologyService {
   @override
   bool get hasPoster => true;
 
+  @override
+  bool get hasEntryDisplay => true;
+
   /// The key each request was sent under, in order (null: none).
   final keys = <String?>[];
 

@@ -251,7 +251,11 @@ String _partTitle(BuildContext context, String part) =>
 
 /// Which parts of each passage the anthology shows. Null if the reader backs out. The answer is keyed the way the
 /// server stores it (`hide_credit`, `translation`, ...), with every switch present.
-Future<Map<String, bool>?> askSwitches(BuildContext context, Anthology a) {
+Future<Map<String, bool>?> askSwitches(
+  BuildContext context,
+  Anthology a, {
+  bool quoteParts = true,
+}) {
   // on = shown; the server stores a "hide" switch the other way up
   final shown = {
     for (final s in anthologySwitches)
@@ -288,9 +292,9 @@ Future<Map<String, bool>?> askSwitches(BuildContext context, Anthology a) {
                 child: ListView(
                   shrinkWrap: true,
                   children: [
-                    for (final part in const [
+                    for (final part in [
                       'passage',
-                      'quote',
+                      if (quoteParts) 'quote',
                       'work',
                       'person',
                     ]) ...[

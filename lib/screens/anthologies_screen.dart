@@ -565,7 +565,11 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           await _do(() => widget.service.setGrouping(widget.id, by));
         }
       case _Menu.display:
-        final s = await askSwitches(context, a);
+        final s = await askSwitches(
+          context,
+          a,
+          quoteParts: widget.service.hasEntryDisplay,
+        );
         if (s != null) await _do(() => widget.service.setSwitches(a, s));
       case _Menu.front:
         final changed = await editFrontMatter(
@@ -677,7 +681,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
             value: 'note',
             child: Text(context.tr('app.anthologies.commentary')),
           ),
-        if (slot.entry != null)
+        if (slot.entry != null && widget.service.hasEntryDisplay)
           PopupMenuItem(
             value: 'display',
             child: Text(context.tr('anthologies.entry.display.label')),

@@ -72,6 +72,9 @@ class OfflineAnthologies implements AnthologyService {
   bool get hasPoster => _inner.hasPoster;
 
   @override
+  bool get hasEntryDisplay => _inner.hasEntryDisplay;
+
+  @override
   Future<T> keyed<T>(String? key, Future<T> Function() run) =>
       _inner.keyed(key, run);
 

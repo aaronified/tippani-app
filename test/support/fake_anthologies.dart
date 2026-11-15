@@ -13,6 +13,9 @@ class FakeAnthologies implements AnthologyService {
   bool hasPoster = true;
 
   @override
+  bool hasEntryDisplay = true;
+
+  @override
   Future<T> keyed<T>(String? key, Future<T> Function() run) => run();
 
   /// When set, every call throws it.
