@@ -1480,3 +1480,5 @@ app.tour.sync_title = তাল মিলিয়ে রাখা
 app.tour.sync_body = এই ট্যাবের সার্ভারের সঙ্গে সিঙ্ক আপনার বদল পাঠায় আর ওয়েবের বদল আনে। অ্যাপ খোলা থাকলে নিজে থেকেও চলে।
 app.tour.settings_title = সেটিংস
 app.tour.settings_body = চেহারা, টেক্সচার, জোরে পড়া, ব্যাকআপ আর আপডেট। পরিচিতি দেখুন চাপলে এই ঘুরে দেখা যখন খুশি আবার চলে।
+app.cast.tvdb_id_title = TheTVDB আইডি
+app.cast.tvdb_id_label = thetvdb.com-এ এই শিরোনামের ঠিকানার সংখ্যাটি

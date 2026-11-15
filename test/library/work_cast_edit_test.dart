@@ -185,13 +185,38 @@ void main() {
     expect(find.text('Humphrey Bogart as Rick'), findsOneWidget);
   });
 
-  testWidgets('a film with no TheTVDB id is told so in the server\'s words', (
+  testWidgets('a film with no TheTVDB id is asked for one, then fetched', (
+    tester,
+  ) async {
+    await open(tester);
+    server.tvdbPinned = false;
+    server.tvdbCast = [
+      {'character': 'Rick', 'actor': 'Humphrey Bogart'},
+    ];
+    await pressMenu(tester, 'Cast actions', 'Fetch cast from TheTVDB');
+    await fill(
+      tester,
+      "The number in the title's address on thetvdb.com",
+      '78901',
+    );
+    await press(tester, 'Fetch');
+    expect(server.castWrites.map((w) => w.call), [
+      'POST /movies/4/cast/tvdb',
+      'POST /movies/4/cast/tvdb',
+    ]);
+    expect(server.castWrites.last.body, {'tvdb_id': 78901});
+    expect(find.text('Humphrey Bogart as Rick'), findsOneWidget);
+  });
+
+  testWidgets('backing out of the TheTVDB id sends nothing more', (
     tester,
   ) async {
     await open(tester);
     server.tvdbPinned = false;
     await pressMenu(tester, 'Cast actions', 'Fetch cast from TheTVDB');
-    expect(find.textContaining('has no TheTVDB id'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(server.castWrites, hasLength(1));
   });
 
   testWidgets('Fetch cast from IMDb asks for the link and sends it', (

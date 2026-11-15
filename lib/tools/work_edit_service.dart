@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../api/server_call.dart';
+import '../api/api_client.dart' show ApiException;
 import '../app_controller.dart';
 import '../library/models.dart';
 import '../sync/fingerprint.dart';
@@ -9,6 +10,11 @@ import '../sync/fingerprint.dart';
 /// gains them) its details and its cover. Every write goes THROUGH to the server, which owns these, so the web and
 /// the phone agree; a refusal throws a [ServerException] carrying the server's own words. An interface so a test
 /// can stand in for the server.
+/// The server cannot pull a cast from TheTVDB because the title has no TheTVDB id: a retry with one can.
+class NeedsTvdbId extends ServerException {
+  const NeedsTvdbId(super.message);
+}
+
 abstract class WorkEditService {
   /// Whether the server can be asked right now (the phone is paired).
   bool get available;
@@ -156,12 +162,18 @@ class PairedWorkEdit implements WorkEditService {
   int _id(Work w) => w.serverId ?? (throw const ServerException('not synced'));
 
   @override
-  Future<void> fetchCastFromTvdb(Work work, {int? tvdbId}) => serverCall<void>(
-    _controller,
-    (c) async {
-      await c.postJson('/movies/${_id(work)}/cast/tvdb', {'tvdb_id': ?tvdbId});
-    },
-  );
+  Future<void> fetchCastFromTvdb(Work work, {int? tvdbId}) =>
+      serverCall<void>(_controller, (c) async {
+        try {
+          await c.postJson('/movies/${_id(work)}/cast/tvdb', {
+            'tvdb_id': ?tvdbId,
+          });
+        } on ApiException catch (e) {
+          // 409: the title has no TheTVDB id of its own, so the reader is asked for one
+          if (e.status == 409 && tvdbId == null) throw NeedsTvdbId(e.detail);
+          rethrow;
+        }
+      });
 
   @override
   Future<void> fetchCastFromImdb(Work work, String imdb) =>
