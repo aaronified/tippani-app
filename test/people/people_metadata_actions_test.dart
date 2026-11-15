@@ -9,9 +9,11 @@ import 'package:tippani/library/cover_cache.dart';
 import 'package:tippani/people/people_console.dart';
 import 'package:tippani/people/people_directory.dart';
 import 'package:tippani/people/people_service.dart';
+import 'package:tippani/screens/people_console_screen.dart';
 import 'package:tippani/screens/person_screen.dart';
 import 'package:tippani/settings/settings_store.dart';
 
+import '../support/fake_console.dart';
 import '../support/fake_server.dart';
 
 final _png = base64Decode(
@@ -114,7 +116,7 @@ Widget _app(_Rig r, Widget home) => MaterialApp(
 );
 
 Future<void> _settle(WidgetTester tester) async {
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < 14; i++) {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 30)),
     );
@@ -440,6 +442,51 @@ void main() {
       await tester.tap(find.text('Save'));
       await _settle(tester);
       expect((r.server.personWrites.last.$2 as Map)['sort_name'], '');
+    });
+  });
+
+  group('what is written here reaches the faces elsewhere', () {
+    testWidgets('saving a person\'s details reads the people again', (
+      tester,
+    ) async {
+      final r = await _openPerson(tester);
+      final before = r.server.peopleReads;
+      await _openMenu(tester, 'Edit details');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Herman Melville'),
+        'H. Melville',
+      );
+      await tester.tap(find.text('Save'));
+      await _settle(tester);
+      expect(r.server.peopleReads, greaterThan(before));
+    });
+
+    testWidgets('a change made in the console reads the people again', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(800, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final r = (await tester.runAsync(_rig))!;
+      final console = FakeConsole();
+      await tester.pumpWidget(
+        _app(r, PeopleConsoleScreen(console: console, onFilter: (_) {})),
+      );
+      await _settle(tester);
+      final before = r.server.peopleReads;
+      // the rows' menus come first, the bar's last: this is the third row's
+      await tester.tap(find.byTooltip('More').at(2));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove').last);
+      await _settle(tester);
+      expect(console.calls, ['deletePerson 3']);
+      expect(
+        r.server.peopleReads,
+        greaterThan(before),
+        reason: 'the faces and chips elsewhere drop the removed person',
+      );
     });
   });
 }
