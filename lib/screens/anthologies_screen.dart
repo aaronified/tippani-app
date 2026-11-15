@@ -754,7 +754,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     String line(String part, Map<String, String> values) => [
       for (final sw in anthologySwitches.where((x) => x.part == part))
         if (eff(sw.name) && (values[sw.name] ?? '').trim().isNotEmpty)
-          values[sw.name]!.trim(),
+          '${sw.label}: ${values[sw.name]!.trim()}',
     ].join(' · ');
     final workLine = line('work', e.work);
     final personLine = line('person', e.person);

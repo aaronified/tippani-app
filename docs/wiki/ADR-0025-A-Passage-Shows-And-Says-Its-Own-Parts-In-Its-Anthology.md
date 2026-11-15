@@ -3,7 +3,7 @@
 - **Status:** Accepted and built; follows the server's ADR-0934 and widens [ADR-0023](ADR-0023-Which-Server-Settings-The-Phone-Offers.md).
   The owner, 15 November 2026: "there is no option to show the notes/translations of the quote. Everything that a quote has (even context) must be available to show in the anthology on a global basis with per quote override. And these shall be editable within the anthology."
 
-**Decided.** What it shows lists every switch the server keeps, in four groups: what the document prints about a passage, what the quote
+**Decided.** What it shows lists every switch the server keeps except the three picture switches, in four groups: what the document prints about a passage, what the quote
 carries (its note, translation, language, tags, context), what its book or film knows, and who is answerable for it. A passage's menu has
 What it shows and says: for each switch, As the anthology / Show / Hide, and text boxes for the quote, its note, its translation and the context
 before and after it. A text box that differs from the quote's own is a restatement for this anthology only; the button beside it puts the

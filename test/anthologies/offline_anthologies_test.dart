@@ -151,6 +151,8 @@ class _Server implements AnthologyService {
       'color': 'yellow',
       'language': '',
       'locator': '',
+      'translation': 'What the quote says.',
+      'quote_note': 'The quote\'s own note.',
     });
     return true;
   }
@@ -423,29 +425,34 @@ void main() {
       'book',
       1,
       fields: {'translation': true},
-      edits: {'translation': 'A fearless mind.'},
+      edits: {'translation': 'A fearless mind.', 'note': 'My own words.'},
     );
     var e = (await r.service.get(made.id)).entries.single;
     expect(e.translation, 'A fearless mind.');
+    expect(e.quoteNote, 'My own words.');
     expect(e.fields, {'translation': true});
-    expect(e.originals, {'translation': ''});
+    expect(e.originals, {
+      'translation': 'What the quote says.',
+      'note': 'The quote\'s own note.',
+    });
 
     // put back: the quote's own words return and the restatement is forgotten
     await r.service.setEntryDisplay(
       made.id,
       'book',
       1,
-      edits: {'translation': null},
+      edits: {'translation': null, 'note': null},
     );
     e = (await r.service.get(made.id)).entries.single;
-    expect(e.translation, '');
+    expect(e.translation, 'What the quote says.');
+    expect(e.quoteNote, 'The quote\'s own note.');
     expect(e.edits, isEmpty);
 
     r.server.up = true;
     await r.service.flush();
     expect(r.server.sent.where((s) => s.startsWith('display')), [
-      'display ${made.id} book/1 {translation: true} {translation: A fearless mind.}',
-      'display ${made.id} book/1 {} {translation: null}',
+      'display ${made.id} book/1 {translation: true} {translation: A fearless mind., note: My own words.}',
+      'display ${made.id} book/1 {} {translation: null, note: null}',
     ]);
   });
 

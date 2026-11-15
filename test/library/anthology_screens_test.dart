@@ -24,6 +24,7 @@ AnthologyEntry entry(
   String quoteNote = '',
   List<String> tags = const [],
   String contextAfter = '',
+  Map<String, String> work = const {},
 }) => AnthologyEntry(
   kind: 'book',
   itemId: id,
@@ -40,6 +41,7 @@ AnthologyEntry entry(
   quoteNote: quoteNote,
   tags: tags,
   contextAfter: contextAfter,
+  work: work,
 );
 
 class _Picker implements BackupPicker {
@@ -552,6 +554,48 @@ void main() {
         expect(find.text('And the head is held high.'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'what the book knows is drawn only for the switches that are on, with its name',
+      (tester) async {
+        service.put(
+          a.id,
+          entry(2, 'Second.', work: {'year': '1913', 'publisher': 'Parnassus'}),
+        );
+        await open(tester);
+        expect(find.textContaining('1913'), findsNothing);
+        await choose(tester, 'What it shows…');
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('switch-year')),
+          300,
+          scrollable: sheetScroll(),
+        );
+        await tester.tap(find.byKey(const ValueKey('switch-year')));
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(find.text('Year: 1913'), findsOneWidget);
+        expect(find.textContaining('Parnassus'), findsNothing);
+      },
+    );
+
+    testWidgets('a passage is offered only the switches that can apply to it', (
+      tester,
+    ) async {
+      await open(tester);
+      await tester.tap(find.byTooltip('More for this one').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('What it shows and says'));
+      await tester.pumpAndSettle();
+      // a standalone-style book passage has a translator and no director or ISBN-less film field
+      expect(find.byKey(const ValueKey('display-translation')), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('display-translator')),
+        300,
+        scrollable: sheetScroll(),
+      );
+      expect(find.byKey(const ValueKey('display-director')), findsNothing);
+      expect(find.byKey(const ValueKey('display-media_type')), findsNothing);
+    });
 
     testWidgets('one passage can hide what its anthology shows', (
       tester,

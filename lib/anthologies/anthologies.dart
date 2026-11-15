@@ -115,6 +115,33 @@ class AnthologySwitch {
   final bool byDefault;
   final String part;
 
+  /// Whether this switch can ever have a value for a passage of [kind] ('book', 'screen' or 'utterance'): a book has
+  /// no director and a film no ISBN, and a standalone quote has no work at all.
+  bool appliesTo(String kind) {
+    if (part != 'work') return true;
+    return switch (kind) {
+      'book' => const {
+        'author',
+        'translator',
+        'editor',
+        'publisher',
+        'year',
+        'series',
+        'subtitle',
+        'isbn',
+        'pages',
+      }.contains(key),
+      'screen' => const {
+        'director',
+        'publisher',
+        'year',
+        'series',
+        'media_type',
+      }.contains(key),
+      _ => false,
+    };
+  }
+
   /// The registry's own name for it, which is also what an entry's override is keyed by.
   String get name =>
       stored ? key : key.replaceFirst(RegExp(r'^(hide|show)_'), '');

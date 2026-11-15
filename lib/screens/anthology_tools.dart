@@ -438,7 +438,9 @@ askEntryDisplay(BuildContext context, Anthology a, AnthologyEntry e) {
                         context.tr('anthologies.display.shows.label'),
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
-                      for (final s in anthologySwitches)
+                      for (final s in anthologySwitches.where(
+                        (x) => x.appliesTo(e.kind),
+                      ))
                         ChoiceTile<int>(
                           key: ValueKey('display-${s.name}'),
                           title: s.label,

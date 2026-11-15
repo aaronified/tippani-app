@@ -66,6 +66,8 @@ class _Server extends FakeServer {
             'rule': 'scope=all&tag=x',
             'rule_auto': true,
             'show_locator': true,
+            // a switch this app draws no control for, which an edit has to carry through
+            'fields': {'portrait': true, 'signature': true},
           },
           'entries': [
             {
@@ -255,7 +257,12 @@ void main() {
       isFalse,
       reason: 'it is not a top-level field',
     );
-    expect(sent['fields'], {'translation': true, 'note': false});
+    expect(sent['fields'], {
+      'portrait': true,
+      'signature': true,
+      'translation': true,
+      'note': false,
+    }, reason: 'what the server held and this app does not draw stays');
   });
 
   test(
