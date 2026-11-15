@@ -534,6 +534,7 @@ class _PersonScreenState extends State<PersonScreen> {
     final p = _p;
     if (p == null) return;
     final name = TextEditingController(text: p.name);
+    final sortName = TextEditingController(text: p.sortName);
     final born = TextEditingController(text: p.born);
     final died = TextEditingController(text: p.died);
     final bio = TextEditingController(text: p.bio);
@@ -552,6 +553,14 @@ class _PersonScreenState extends State<PersonScreen> {
                 controller: name,
                 decoration: InputDecoration(
                   labelText: context.tr('common.field.name.label'),
+                ),
+              ),
+              TextField(
+                textCapitalization: TextCapitalization.words,
+                controller: sortName,
+                decoration: InputDecoration(
+                  labelText: context.tr('identity.field.sort'),
+                  helperText: context.tr('identity.row.sort.sub.person'),
                 ),
               ),
               Row(
@@ -629,6 +638,7 @@ class _PersonScreenState extends State<PersonScreen> {
         widget.id,
         PersonEdit(
           name: name.text.trim(),
+          sortName: sortName.text.trim(),
           born: born.text.trim(),
           died: died.text.trim(),
           bio: bio.text.trim(),

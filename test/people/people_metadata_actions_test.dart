@@ -402,4 +402,44 @@ void main() {
       expect(_onWorks(r), 2);
     });
   });
+
+  group('editing a person', () {
+    testWidgets('the name it sorts under is shown, changed and saved', (
+      tester,
+    ) async {
+      final r = await _openPerson(tester);
+      await _openMenu(tester, 'Edit details');
+      expect(
+        find.widgetWithText(TextField, 'Melville, Herman'),
+        findsOneWidget,
+        reason: 'the stored sort name is in the box',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Melville, Herman'),
+        'Melville, H.',
+      );
+      await tester.tap(find.text('Save'));
+      await _settle(tester);
+      expect(r.server.personWrites.last.$1, 'PUT /people/id/3');
+      expect(
+        (r.server.personWrites.last.$2 as Map)['sort_name'],
+        'Melville, H.',
+      );
+      expect(r.server.personDetails[3]!['sort_name'], 'Melville, H.');
+    });
+
+    testWidgets('emptying it asks for the name to sort as itself', (
+      tester,
+    ) async {
+      final r = await _openPerson(tester);
+      await _openMenu(tester, 'Edit details');
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Melville, Herman'),
+        '',
+      );
+      await tester.tap(find.text('Save'));
+      await _settle(tester);
+      expect((r.server.personWrites.last.$2 as Map)['sort_name'], '');
+    });
+  });
 }

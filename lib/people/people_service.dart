@@ -192,6 +192,7 @@ class PersonDetail {
     required this.id,
     required this.name,
     this.kinds = const [],
+    this.sortName = '',
     this.bio = '',
     this.born = '',
     this.died = '',
@@ -213,7 +214,7 @@ class PersonDetail {
   final int id;
   final String name;
   final List<String> kinds;
-  final String bio, born, died, links, note;
+  final String sortName, bio, born, died, links, note;
   final String image, imageSource, signature, signatureSource;
   final List<String> aliases;
   final List<PersonCredit> credits;
@@ -227,6 +228,7 @@ class PersonDetail {
       id: _int(j['id']),
       name: '${j['name'] ?? ''}',
       kinds: _strings(j['kinds']),
+      sortName: '${j['sort_name'] ?? ''}',
       bio: '${j['bio'] ?? ''}',
       born: '${j['born'] ?? ''}',
       died: '${j['died'] ?? ''}',
@@ -313,6 +315,7 @@ List<T> _list<T>(Object? v, T? Function(Object?) from) => v is List
 class PersonEdit {
   const PersonEdit({
     this.name,
+    this.sortName,
     this.bio,
     this.born,
     this.died,
@@ -320,10 +323,11 @@ class PersonEdit {
     this.note,
   });
 
-  final String? name, bio, born, died, links, note;
+  final String? name, sortName, bio, born, died, links, note;
 
   Map<String, Object?> toJson() => {
     'name': ?name,
+    'sort_name': ?sortName,
     'bio': ?bio,
     'born': ?born,
     'died': ?died,
