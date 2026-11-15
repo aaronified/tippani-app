@@ -163,7 +163,10 @@ Future<void> _pasteLink(WidgetTester tester, String url) async {
   await _settle(tester);
 }
 
-Finder inSheet(String text) =>
+int _onWorks(_Rig r) =>
+    (r.server.characterDetails[7]!['appearances'] as List).length;
+
+Finder _inSheet(String text) =>
     find.descendant(of: find.byType(BottomSheet), matching: find.text(text));
 
 void main() {
@@ -235,13 +238,13 @@ void main() {
       (tester) async {
         final r = await _openCharacter(tester);
         await _openMenu(tester, 'Choose a picture');
-        expect(inSheet('Moby Dick (1956)'), findsOneWidget);
+        expect(_inSheet('Moby Dick (1956)'), findsOneWidget);
         expect(
-          inSheet('Moby-Dick'),
+          _inSheet('Moby-Dick'),
           findsNothing,
           reason: 'the book has no picture to promote',
         );
-        await tester.tap(inSheet('Moby Dick (1956)'));
+        await tester.tap(_inSheet('Moby Dick (1956)'));
         await _settle(tester);
         expect(r.server.characterWrites.single.$2, {'cast_id': 21});
         expect(r.directory.characterImage('Ishmael'), FakeServer.linkedPicture);
@@ -289,6 +292,114 @@ void main() {
       );
       expect(find.byType(Image), findsNothing);
       expect(r.server.signatureUploads, isEmpty);
+    });
+  });
+
+  group('a character and the works it is on', () {
+    testWidgets(
+      'a work from the library is chosen, and the character is on it',
+      (tester) async {
+        final r = await _openCharacter(tester);
+        r.server.seed('/books', {'title': 'Moby-Dick'}, id: 1);
+        r.server.seed('/movies', {'title': 'Moby Dick (1956)'}, id: 2);
+        final casablanca = r.server.seed('/movies', {'title': 'Casablanca'});
+        await _openMenu(tester, 'Add to a work');
+        expect(
+          _inSheet('Moby-Dick'),
+          findsNothing,
+          reason: 'they are already in the book, so it is not offered',
+        );
+        expect(_inSheet('Moby Dick (1956)'), findsNothing);
+        expect(_inSheet('Casablanca'), findsOneWidget);
+        expect(r.server.characterWrites, isEmpty);
+        await tester.tap(_inSheet('Casablanca'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'Humphrey Bogart');
+        await tester.tap(find.text('Add'));
+        await _settle(tester);
+        expect(r.server.characterWrites.single.$1, 'POST /characters/7/works');
+        expect(r.server.characterWrites.single.$2, {
+          'kind': 'movie',
+          'work_id': casablanca,
+          'actor': 'Humphrey Bogart',
+        });
+        expect(
+          find.text('Played by Humphrey Bogart'),
+          findsOneWidget,
+          reason: 'listed under Appears in',
+        );
+      },
+    );
+
+    testWidgets('a book needs no actor', (tester) async {
+      final r = await _openCharacter(tester);
+      final book = r.server.seed('/books', {'title': 'Typee'});
+      await _openMenu(tester, 'Add to a work');
+      await tester.tap(_inSheet('Typee'));
+      await _settle(tester);
+      expect(r.server.characterWrites.single.$2, {
+        'kind': 'book',
+        'work_id': book,
+      });
+    });
+
+    testWidgets(
+      'leaving a work asks what to do about the quotes that name them',
+      (tester) async {
+        final r = await _openCharacter(tester);
+        r.server.quotesNamingCharacter[22] = 3;
+        await tester.tap(find.byTooltip('Remove from this work').last);
+        await _settle(tester);
+        expect(
+          find.text('3 quotes on Moby-Dick still name Ishmael'),
+          findsOneWidget,
+        );
+        expect(
+          r.server.characterWrites.single.$1,
+          'DELETE /characters/7/works/22',
+          reason: 'the first press goes without a choice and is refused',
+        );
+        await tester.enterText(find.byType(TextField), 'The narrator');
+        await tester.tap(find.text('Rename them and remove'));
+        await _settle(tester);
+        expect(
+          r.server.characterWrites.last.$2,
+          'quotes=replace&to=The+narrator',
+        );
+        expect(find.text('Taken off Moby-Dick'), findsOneWidget);
+        expect(_onWorks(r), 1, reason: 'they are off the work');
+      },
+    );
+
+    testWidgets('the speaker can be cleared instead', (tester) async {
+      final r = await _openCharacter(tester);
+      r.server.quotesNamingCharacter[22] = 1;
+      await tester.tap(find.byTooltip('Remove from this work').last);
+      await _settle(tester);
+      await tester.tap(find.text('or leave the quote with no speaker'));
+      await _settle(tester);
+      expect(r.server.characterWrites.last.$2, 'quotes=clear');
+    });
+
+    testWidgets('a work with no quotes on it is left at once', (tester) async {
+      final r = await _openCharacter(tester);
+      await tester.tap(find.byTooltip('Remove from this work').last);
+      await _settle(tester);
+      expect(r.server.characterWrites.single.$2, '');
+      expect(find.text('Taken off Moby-Dick'), findsOneWidget);
+    });
+
+    testWidgets('backing out of the choice leaves them on the work', (
+      tester,
+    ) async {
+      final r = await _openCharacter(tester);
+      r.server.quotesNamingCharacter[22] = 2;
+      await tester.tap(find.byTooltip('Remove from this work').last);
+      await _settle(tester);
+      await tester.tap(find.text('Cancel'));
+      await _settle(tester);
+      expect(r.server.characterWrites.length, 1);
+      expect(_onWorks(r), 2);
     });
   });
 }

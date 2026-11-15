@@ -1197,6 +1197,107 @@ class _CharacterScreenState extends State<CharacterScreen> {
     }
   }
 
+  Future<void> _addToWork() async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    final List<LibraryWork> all;
+    try {
+      all = await c.libraryWorks();
+    } on ServerException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(e.message)));
+      }
+      return;
+    }
+    if (!mounted) return;
+    final on = {for (final a in ch.appearances) '${a.kind}:${a.workId}'};
+    final open = [
+      for (final w in all)
+        if (!on.contains('${w.kind}:${w.id}')) w,
+    ];
+    if (open.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(context.tr('identity.character.works.add.none')),
+          ),
+        );
+      return;
+    }
+    final pick = await pickWorkForCharacter(context, open);
+    if (pick == null || !mounted) return;
+    final (work, actor) = pick;
+    if (await consoleCall(
+      context,
+      () => c.addToWork(ch.id, work, actor: actor),
+    )) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                context.tr('identity.character.works.add.done', {
+                  'title': work.title,
+                }),
+              ),
+            ),
+          );
+      }
+      await _afterChange();
+    }
+  }
+
+  /// Takes the character off one work. While quotes there still name them the server refuses and says how many, so
+  /// the reader chooses between clearing the speaker and another name, and the same press is made again.
+  Future<void> _leaveWork(CastAppearance a) async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    String? quotes;
+    var to = '';
+    while (true) {
+      try {
+        await c.removeFromWork(ch.id, a.castId, quotes: quotes, to: to);
+        break;
+      } on QuotesStillNameThem catch (e) {
+        if (!mounted) return;
+        final fate = await askQuotesFate(
+          context,
+          count: e.count,
+          work: a.workTitle,
+          name: ch.name,
+        );
+        if (fate == null || !mounted) return;
+        quotes = fate.mode;
+        to = fate.to;
+      } on ServerException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text(e.message)));
+        }
+        return;
+      }
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              context.tr('identity.character.works.remove.done', {
+                'title': a.workTitle,
+              }),
+            ),
+          ),
+        );
+    }
+    await _afterChange();
+  }
+
   Future<void> _noPicture() async {
     final c = _console, ch = _c;
     if (c == null || ch == null) return;
@@ -1310,6 +1411,8 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     _picture();
                   case 'nopicture':
                     _noPicture();
+                  case 'addwork':
+                    _addToWork();
                   case 'merge':
                     _mergeInto();
                   case 'remove':
@@ -1338,6 +1441,10 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     value: 'nopicture',
                     child: Text(context.tr('anthologies.front.cover.remove')),
                   ),
+                PopupMenuItem(
+                  value: 'addwork',
+                  child: Text(context.tr('identity.character.works.add.label')),
+                ),
                 const PopupMenuDivider(),
                 PopupMenuItem(
                   value: 'merge',
@@ -1519,6 +1626,15 @@ class _CharacterScreenState extends State<CharacterScreen> {
                                 'actor': a.actor,
                               }),
                             ),
+                      trailing: _console != null && a.castId > 0
+                          ? IconButton(
+                              tooltip: context.tr(
+                                'app.person.remove_from_this_work',
+                              ),
+                              icon: Icon(Ti.unlink),
+                              onPressed: () => _leaveWork(a),
+                            )
+                          : null,
                       onTap: () {
                         widget.onFilter(ChipFilter(a.workTitle));
                         Navigator.of(context).pop();

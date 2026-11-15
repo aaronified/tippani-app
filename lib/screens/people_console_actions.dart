@@ -541,3 +541,111 @@ Future<PictureChoice?> choosePicture(
   if (go != true || url.isEmpty) return null;
   return FromLink(url);
 }
+
+/// Asks which work to put a character on, from [works] (the ones they are not on). A film or show then asks who
+/// played them, which may stay empty. Null when the reader backs out.
+Future<(LibraryWork, String)?> pickWorkForCharacter(
+  BuildContext context,
+  List<LibraryWork> works,
+) async {
+  final row = await pickRecord(
+    context,
+    title: context.tr('identity.character.works.add.label'),
+    rows: [
+      for (var i = 0; i < works.length; i++)
+        PickRow(
+          id: i,
+          name: works[i].title,
+          hint: [
+            works[i].kind == 'movie'
+                ? context.tr('vocab.kind.movie.label')
+                : context.tr('app.person.kind_book'),
+            if (works[i].year > 0) '${works[i].year}',
+            if (works[i].creator.isNotEmpty) works[i].creator,
+          ].join(' · '),
+        ),
+    ],
+  );
+  if (row == null || !context.mounted) return null;
+  final work = works[row.id];
+  if (work.kind != 'movie') return (work, '');
+  final field = TextEditingController();
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(work.title),
+      content: TextField(
+        controller: field,
+        autofocus: true,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(
+          labelText: context.tr('identity.character.works.add.actor.label'),
+          helperText: context.tr(
+            'identity.character.works.add.actor.placeholder',
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.tr('common.action.cancel.label')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(context.tr('common.action.add.label')),
+        ),
+      ],
+    ),
+  );
+  if (go != true) return null;
+  return (work, field.text.trim());
+}
+
+/// What to do with the [count] quotes on [work] that still name [name], before they leave it: clear the speaker
+/// on each, or write another name. Null when the reader backs out.
+Future<({String mode, String to})?> askQuotesFate(
+  BuildContext context, {
+  required int count,
+  required String work,
+  required String name,
+}) async {
+  final to = TextEditingController();
+  final r = await showDialog<({String mode, String to})>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(
+        trn('identity.character.drop.title', count, {
+          'title': work,
+          'name': name,
+        }),
+      ),
+      content: TextField(
+        controller: to,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(
+          labelText: context.tr('identity.character.drop.replace.label'),
+          hintText: context.tr('identity.character.drop.replace.placeholder'),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(context.tr('common.action.cancel.label')),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, (mode: 'clear', to: '')),
+          child: Text(trn('identity.character.drop.clear.action', count)),
+        ),
+        FilledButton(
+          onPressed: () {
+            final said = to.text.trim();
+            if (said.isEmpty) return;
+            Navigator.pop(context, (mode: 'replace', to: said));
+          },
+          child: Text(context.tr('identity.character.drop.replace.action')),
+        ),
+      ],
+    ),
+  );
+  return r;
+}

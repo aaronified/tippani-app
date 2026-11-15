@@ -185,6 +185,10 @@ class FakeServer {
   /// Every signature upload accepted: the multipart form as text, so a test can read the fields beside the file.
   final signatureUploads = <String>[];
 
+  /// How many quotes on a work still name a character, by cast row id: leaving that work is refused (409) with the
+  /// count until the request says what to do about them (`quotes=clear` or `quotes=replace&to=`).
+  final quotesNamingCharacter = <int, int>{};
+
   /// Every write to a character: the route (`PUT /characters/7/image`) and what was sent.
   final characterWrites = <(String, Object?)>[];
 
@@ -738,6 +742,67 @@ class FakeServer {
         if (c['id'] == id) c['image_path'] = path0;
       }
       return _json({'image_path': path0});
+    }
+    final characterWork = RegExp(r'^/characters/(\d+)/works(?:/(\d+))?$')
+        .firstMatch(path);
+    if (characterWork != null) {
+      final id = int.parse(characterWork[1]!);
+      final row = characterDetails[id];
+      if (row == null) return _json({'error': 'not found'}, 404);
+      final appearances = (row['appearances'] as List).cast<Map>();
+      if (r.method == 'POST') {
+        final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+        characterWrites.add(('POST $path', body));
+        final kind = body['kind'];
+        final workId = body['work_id'];
+        if (appearances.any(
+          (a) => a['kind'] == kind && a['work_id'] == workId,
+        )) {
+          return _json({
+            'error': 'this character is already on that work',
+          }, 409);
+        }
+        final title = (created[kind == 'book' ? '/books' : '/movies'] ?? [])
+            .firstWhere((w) => w['id'] == workId)['title'];
+        row['appearances'] = <Map<String, Object?>>[
+          ...appearances.cast<Map<String, Object?>>(),
+          {
+            'cast_id': 100 + appearances.length,
+            'kind': kind,
+            'work_id': workId,
+            'work_title': title,
+            'character': row['name'],
+            'actor': body['actor'] ?? '',
+            'image': '',
+          },
+        ];
+        return _json({'ok': true}, 201);
+      }
+      if (r.method == 'DELETE' && characterWork[2] != null) {
+        final cast = int.parse(characterWork[2]!);
+        characterWrites.add((
+          'DELETE $path',
+          r.url.hasQuery ? r.url.query : '',
+        ));
+        final mode = r.url.queryParameters['quotes'];
+        final named = quotesNamingCharacter[cast] ?? 0;
+        if (named > 0 && mode == null) {
+          return _json({
+            'error': 'quotes on this work still name this character',
+            'quotes': named,
+          }, 409);
+        }
+        if (mode == 'replace' && (r.url.queryParameters['to'] ?? '').isEmpty) {
+          return _json({
+            'error': 'replacing needs a name to replace with',
+          }, 400);
+        }
+        row['appearances'] = <Map<String, Object?>>[
+          for (final a in appearances.cast<Map<String, Object?>>())
+            if (a['cast_id'] != cast) a,
+        ];
+        return _json({'quotes': named});
+      }
     }
     final character = RegExp(r'^/characters/(\d+)$').firstMatch(path);
     if (r.method == 'GET' && character != null) {
