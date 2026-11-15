@@ -1484,4 +1484,5 @@ app.tour.sync_body = Sync with server, on this tab, sends your changes and bring
 app.tour.settings_title = Settings
 app.tour.settings_body = Look, textures, reading aloud, backups and updates. Take the tour replays this walk any time.
 app.cast.tvdb_id_title = TheTVDB id
-app.cast.tvdb_id_label = The number in the title's address on thetvdb.com
+app.cast.tvdb_id_label = TheTVDB id (the number on the title's page)
+app.cast.tvdb_id_not_a_number = That is not a TheTVDB id. It is the number shown on the title's page on thetvdb.com.

@@ -9,11 +9,11 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Added
 
-- A short tour of the app: the first time you open it, a few quick stops point at the Add button, Home, your shelves, the Server tab, sync and Settings, one sentence each. Skip it whenever you like and it does not come back; Settings has Take the tour to play it again. It is kept on this phone only, and a stop is left out when you do not have that control.
+- A short tour of the app: the first time you open it on a new phone, a few quick stops point at the Add button, Home, your shelves, the Server tab, sync and Settings, one sentence each. Skip it whenever you like and it does not come back; Settings has Take the tour to play it again, and it is how you reach it if you already have the app. It is kept on this phone only, and a stop is left out when you do not have that control.
 
 ### Fixed
 
-- TheTVDB cast asks for the id it needs: Fetch cast from TheTVDB on a title with no TheTVDB id now asks for the number in the title's address on thetvdb.com and fetches with it, instead of only showing the server's refusal.
+- TheTVDB cast asks for the id it needs: Fetch cast from TheTVDB on a title with no TheTVDB id now asks for its TheTVDB id (the number on the title's page) and fetches with it, instead of only showing the server's refusal.
 
 ## [0.10.1] - 2026-11-15
 

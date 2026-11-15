@@ -102,8 +102,16 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
           action: tr('app.cast.fetch'),
           keyboard: TextInputType.number,
         );
-        final id = int.tryParse(raw ?? '');
-        if (id == null || id <= 0) return;
+        if (raw == null) return;
+        final id = int.tryParse(raw);
+        if (id == null || id <= 0) {
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(
+              SnackBar(content: Text(tr('app.cast.tvdb_id_not_a_number'))),
+            );
+          return;
+        }
         await service.fetchCastFromTvdb(widget.work, tvdbId: id);
       }
     } on ServerException catch (e) {

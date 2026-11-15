@@ -13,8 +13,10 @@ import '../support/fake_server.dart';
 import '../support/memory_library.dart';
 
 // A reader's view of the first-run tour: what the phone shows, what a person presses, what is shown on the next start.
-// The only thing these know of the code is the harness's `tour:` argument, the way the app is wired to be offered one;
-// there is no other way to ask the app to offer a tour without a first run.
+// What these know of the code is the harness's `tour:` and `freshInstall:` arguments, the way the app is wired to be
+// offered one without a first run on a real phone, and two keys on the tour's own parts — `tour-card` (the card) and
+// `tour-spotlight` (an invisible box where the ring is drawn) — because where the ring sits is geometry and nothing on
+// the screen says it in words; each is checked against a control found by its words or its type.
 
 /// Opens the app on a phone that has never opened it. Call again, without [fresh], to start the app again on the same
 /// phone.
@@ -24,6 +26,7 @@ Future<AppController> open(
   bool quiz = true,
   bool anthologies = true,
   bool pair = false,
+  bool freshInstall = true,
 }) async {
   tester.view.physicalSize = const Size(800, 2400);
   tester.view.devicePixelRatio = 1;
@@ -52,6 +55,7 @@ Future<AppController> open(
         quiz: quiz ? FakeQuiz() : null,
         anthologies: anthologies ? FakeAnthologies() : null,
         tour: const TourStore(),
+        freshInstall: freshInstall,
       ),
     ),
   );
@@ -267,4 +271,80 @@ void main() {
       );
     },
   );
+
+  testWidgets('someone upgrading is not walked through it again', (
+    tester,
+  ) async {
+    await open(tester, freshInstall: false);
+    expect(welcome, findsNothing);
+  });
+
+  /// Where the ring is drawn, and where the control it should be on is.
+  Rect ring(WidgetTester tester) =>
+      tester.getRect(find.byKey(const ValueKey('tour-spotlight')));
+
+  Rect controlWithWords(WidgetTester tester, String words) => tester.getRect(
+    find.descendant(of: find.byType(NavigationBar), matching: find.text(words)),
+  );
+
+  Future<void> toTheLastStop(WidgetTester tester) async {
+    for (var i = 0; i < 12 && find.text('Done').evaluate().isEmpty; i++) {
+      await press(tester, 'Next');
+    }
+  }
+
+  testWidgets('the ring sits on the control the stop names', (tester) async {
+    await open(tester);
+    await press(tester, 'Next');
+    expect(
+      ring(tester)
+          .contains(tester.getCenter(find.byType(FloatingActionButton))),
+      isTrue,
+      reason: 'the Add stop rings the Add button',
+    );
+    await toTheLastStop(tester);
+    expect(
+      ring(tester).contains(controlWithWords(tester, 'Settings').center),
+      isTrue,
+      reason: 'the last stop rings the Settings tab',
+    );
+  });
+
+  testWidgets('the ring follows the control when the screen changes shape', (
+    tester,
+  ) async {
+    await open(tester);
+    await toTheLastStop(tester);
+    tester.view.physicalSize = const Size(1200, 700);
+    await tester.pumpAndSettle();
+    expect(
+      ring(tester).contains(controlWithWords(tester, 'Settings').center),
+      isTrue,
+    );
+  });
+
+  testWidgets('the system Back is a Skip, and is remembered', (tester) async {
+    await open(tester);
+    expect(welcome, findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(welcome, findsNothing);
+    await open(tester, fresh: false);
+    expect(welcome, findsNothing);
+  });
+
+  testWidgets('the reader is put back on the tab they started on', (
+    tester,
+  ) async {
+    await open(tester);
+    final started = tab(tester);
+    await toTheLastStop(tester);
+    expect(
+      tab(tester),
+      isNot(started),
+      reason: 'the last stop is on another tab',
+    );
+    await press(tester, 'Done');
+    expect(tab(tester), started);
+  });
 }

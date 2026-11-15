@@ -194,11 +194,7 @@ void main() {
       {'character': 'Rick', 'actor': 'Humphrey Bogart'},
     ];
     await pressMenu(tester, 'Cast actions', 'Fetch cast from TheTVDB');
-    await fill(
-      tester,
-      "The number in the title's address on thetvdb.com",
-      '78901',
-    );
+    await fill(tester, "TheTVDB id (the number on the title's page)", '78901');
     await press(tester, 'Fetch');
     expect(server.castWrites.map((w) => w.call), [
       'POST /movies/4/cast/tvdb',
@@ -206,6 +202,22 @@ void main() {
     ]);
     expect(server.castWrites.last.body, {'tvdb_id': 78901});
     expect(find.text('Humphrey Bogart as Rick'), findsOneWidget);
+  });
+
+  testWidgets('something that is not a number is answered, not dropped', (
+    tester,
+  ) async {
+    await open(tester);
+    server.tvdbPinned = false;
+    await pressMenu(tester, 'Cast actions', 'Fetch cast from TheTVDB');
+    await fill(
+      tester,
+      "TheTVDB id (the number on the title's page)",
+      'thetvdb.com/series/casablanca',
+    );
+    await press(tester, 'Fetch');
+    expect(find.textContaining('That is not a TheTVDB id'), findsOneWidget);
+    expect(server.castWrites, hasLength(1));
   });
 
   testWidgets('backing out of the TheTVDB id sends nothing more', (

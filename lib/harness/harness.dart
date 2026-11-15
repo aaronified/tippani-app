@@ -149,6 +149,7 @@ class Harness {
     this.tour,
     Future<List<ChangelogEntry>> Function()? changelogLoader,
     this.showWhatsNew = true,
+    this.freshInstall = false,
   }) : _changelogLoader = changelogLoader ?? loadChangelog;
 
   final AppFiles files;
@@ -281,6 +282,11 @@ class Harness {
   /// turn it off so a dialog does not cover the screen under test.
   final bool showWhatsNew;
 
+  /// True when this is the first time the app has run on the phone (no version was ever recorded), read before the
+  /// what's-new pass records one. Only then is the tour offered of itself: someone upgrading has the app already and
+  /// the What's new dialog to read, and the tour stays in Settings for them.
+  final bool freshInstall;
+
   final Future<List<ChangelogEntry>> Function() _changelogLoader;
   List<ChangelogEntry>? _changelog;
 
@@ -395,6 +401,7 @@ class Harness {
       auto: auto,
       runAutoSync: true,
       tour: TourStore(),
+      freshInstall: (settings.lastSeenVersion ?? '').isEmpty,
       covers: covers,
       people: PairedSharePeople(controller, directory),
       directory: directory,
@@ -467,6 +474,7 @@ class Harness {
     TourStore? tour,
     List<ChangelogEntry>? changelog,
     bool showWhatsNew = false,
+    bool freshInstall = false,
   }) {
     final f = files ?? MemoryAppFiles();
     final l = log ?? AppLog();
@@ -534,6 +542,7 @@ class Harness {
       tour: tour,
       changelogLoader: () async => changelog ?? const [],
       showWhatsNew: showWhatsNew,
+      freshInstall: freshInstall,
     );
   }
 

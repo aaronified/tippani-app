@@ -82,7 +82,8 @@ class _TourOverlay extends StatefulWidget {
   State<_TourOverlay> createState() => _TourOverlayState();
 }
 
-class _TourOverlayState extends State<_TourOverlay> {
+class _TourOverlayState extends State<_TourOverlay>
+    with WidgetsBindingObserver {
   int _at = -1;
   Rect? _hole;
   bool _shown = false;
@@ -90,7 +91,45 @@ class _TourOverlayState extends State<_TourOverlay> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _show(0, 1);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // The system Back is a Skip: it must not put the app away with the tour still drawn over it. The overlay is not a
+  // route, so a PopScope cannot hear it; the binding offers the press to every observer, and this one answers.
+  @override
+  Future<bool> didPopRoute() async {
+    widget.onEnd(TourOutcome.dismissed);
+    return true;
+  }
+
+  // The phone turned, or the text size changed: the control is somewhere else, so it is measured again.
+  @override
+  void didChangeMetrics() => _remeasure();
+
+  @override
+  void didChangeTextScaleFactor() => _remeasure();
+
+  void _remeasure() {
+    if (!_shown) return;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_shown || _at < 0) return;
+      final s = widget.steps[_at];
+      final rect = _measure(s);
+      if (s.target != null && rect == null) {
+        // the control is gone (a tab hidden under the tour): move on rather than point at nothing
+        _show(_at + 1, 1);
+        return;
+      }
+      if (rect != _hole) setState(() => _hole = rect);
+    });
+    SchedulerBinding.instance.scheduleFrame();
   }
 
   /// The control is built at all (a hidden section or a missing feature leaves it unbuilt).
@@ -199,17 +238,29 @@ class _TourOverlayState extends State<_TourOverlay> {
                   ),
                 ),
               ),
+              if (hole != null)
+                // draws nothing: it marks where the ring is, for whoever has to check it is on the right control
+                Positioned.fromRect(
+                  rect: hole,
+                  child: const IgnorePointer(
+                    child: SizedBox.expand(key: ValueKey('tour-spotlight')),
+                  ),
+                ),
               Positioned.fill(
                 child: Padding(
+                  // clamped: for the frame after the screen changes shape the ring is still where it was, which
+                  // can be off the new screen, and a negative inset would throw instead of waiting a frame
                   padding: EdgeInsets.fromLTRB(
                     16,
-                    lower || hole == null ? pad.top + 12 : hole.bottom + 12,
+                    (lower || hole == null ? pad.top + 12 : hole.bottom + 12)
+                        .clamp(0.0, size.height / 2),
                     16,
-                    hole == null
-                        ? pad.bottom + 12
-                        : lower
-                        ? size.height - hole.top + 12
-                        : pad.bottom + 12,
+                    (hole == null
+                            ? pad.bottom + 12
+                            : lower
+                            ? size.height - hole.top + 12
+                            : pad.bottom + 12)
+                        .clamp(0.0, size.height / 2),
                   ),
                   child: Align(
                     alignment: hole == null

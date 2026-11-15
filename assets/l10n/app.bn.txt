@@ -1481,4 +1481,5 @@ app.tour.sync_body = এই ট্যাবের সার্ভারের �
 app.tour.settings_title = সেটিংস
 app.tour.settings_body = চেহারা, টেক্সচার, জোরে পড়া, ব্যাকআপ আর আপডেট। পরিচিতি দেখুন চাপলে এই ঘুরে দেখা যখন খুশি আবার চলে।
 app.cast.tvdb_id_title = TheTVDB আইডি
-app.cast.tvdb_id_label = thetvdb.com-এ এই শিরোনামের ঠিকানার সংখ্যাটি
+app.cast.tvdb_id_label = TheTVDB আইডি (শিরোনামের পাতায় দেওয়া সংখ্যা)
+app.cast.tvdb_id_not_a_number = এটি TheTVDB আইডি নয়। thetvdb.com-এ শিরোনামের পাতায় যে সংখ্যাটি দেওয়া আছে, সেটিই আইডি।

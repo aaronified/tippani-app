@@ -185,6 +185,7 @@ class _ShellState extends State<Shell> {
 
   void _startTour() {
     if (_tour != null || !mounted) return;
+    final startedOn = _index;
     final run = startTour(
       context,
       store: widget.harness.tour,
@@ -197,14 +198,20 @@ class _ShellState extends State<Shell> {
       ),
     );
     _tour = run;
-    run.done.then((_) => _tour = null);
+    run.done.then((_) {
+      _tour = null;
+      // the stops open the tabs they point at; the reader goes back to where they were
+      if (mounted && _index != startedOn && startedOn < _tabsNow.length) {
+        setState(() => _index = startedOn);
+      }
+    });
   }
 
-  /// Offered once, the first time the app opens with a library, never over the what's-new dialog.
+  /// Offered once, on the first run on a phone with a library; someone upgrading finds it in Settings.
   Future<void> _offerTour() async {
     final tour = widget.harness.tour;
     if (tour == null || widget.harness.library == null) return;
-    if (widget.harness.showWhatsNew || await tour.outcome() != null) return;
+    if (!widget.harness.freshInstall || await tour.outcome() != null) return;
     _startTour();
   }
 
