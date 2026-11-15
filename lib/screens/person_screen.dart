@@ -1096,8 +1096,21 @@ class _CharacterScreenState extends State<CharacterScreen> {
     final pick = await choosePicture(
       context,
       title: context.tr('anthologies.front.cover.choose'),
+      stills: [
+        for (final a in ch.appearances)
+          if (a.castId > 0 && a.characterImage.isNotEmpty) a,
+      ],
     );
     if (pick == null || !mounted) return;
+    if (pick is FromStill) {
+      if (await consoleCall(
+        context,
+        () => c.promoteAppearance(ch.id, pick.castId),
+      )) {
+        await _afterChange();
+      }
+      return;
+    }
     if (pick is FromLink) {
       if (await consoleCall(
         context,

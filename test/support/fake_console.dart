@@ -142,6 +142,12 @@ class FakeConsole implements PeopleConsole {
   }
 
   @override
+  Future<void> promoteAppearance(int id, int castId) async {
+    calls.add('promote $id $castId');
+    _maybe();
+  }
+
+  @override
   Future<void> setNames({
     required bool character,
     required int id,

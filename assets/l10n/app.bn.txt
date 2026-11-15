@@ -802,6 +802,7 @@ app.person.show_the_picture_of_name = {name}-এর ছবি দেখান
 app.person.show_their_quotes = তাঁর উক্তি দেখান
 app.person.showing_n_of_total_show_their = {total}-এর মধ্যে {n}টি দেখানো হচ্ছে। “তাঁর উক্তি দেখান” সবগুলো তালিকাভুক্ত করে।
 app.person.the_server_could_not_be_reached = সার্ভারে পৌঁছানো যায়নি, তাই শুধু ফোনে যা আছে তা দেখানো হচ্ছে।
+app.person.use_a_picture_from_a_work = কোনও কাজের ছবি ব্যবহার করুন
 app.person.your_server_has_no_page_for = আপনার সার্ভারে {name}-এর জন্য এখনও কোনো পাতা নেই, বা এই ফোন তার সঙ্গে যুক্ত নয়।
 
 # --- prefs ---

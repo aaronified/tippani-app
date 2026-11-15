@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/server_call.dart';
 import '../people/people_console.dart';
+import '../people/people_service.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 
@@ -442,11 +443,18 @@ class FromLink extends PictureChoice {
   final String url;
 }
 
-/// Asks where the picture comes from: this phone, or an address (which it then asks for). Null when the reader
-/// backs out of either step.
+/// One of the character's appearances, whose picture becomes theirs.
+class FromStill extends PictureChoice {
+  const FromStill(this.castId);
+  final int castId;
+}
+
+/// Asks where the picture comes from: this phone, an address (which it then asks for), or one of [stills], the
+/// appearances that already hold a picture. Null when the reader backs out of either step.
 Future<PictureChoice?> choosePicture(
   BuildContext context, {
   required String title,
+  List<CastAppearance> stills = const [],
 }) async {
   final from = await showModalBottomSheet<String>(
     context: context,
@@ -469,10 +477,38 @@ Future<PictureChoice?> choosePicture(
             title: Text(context.tr('app.person.from_a_link')),
             onTap: () => Navigator.pop(context, 'link'),
           ),
+          if (stills.isNotEmpty) ...[
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+              child: Text(
+                context.tr('app.person.use_a_picture_from_a_work'),
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (final a in stills)
+                      ListTile(
+                        leading: Icon(Ti.photo),
+                        title: Text(a.workTitle),
+                        onTap: () =>
+                            Navigator.pop(context, 'still:${a.castId}'),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     ),
   );
+  if (from != null && from.startsWith('still:')) {
+    return FromStill(int.parse(from.substring(6)));
+  }
   if (from == 'phone') return const FromPhone();
   if (from != 'link' || !context.mounted) return null;
   final field = TextEditingController();

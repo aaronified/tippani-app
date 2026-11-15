@@ -707,7 +707,14 @@ class FakeServer {
       }
       final row = characterDetails[id];
       if (row == null) return _json({'error': 'not found'}, 404);
-      final path0 = body['image_url'] != null ? linkedPicture : '';
+      var path0 = body['image_url'] != null ? linkedPicture : '';
+      if (body['cast_id'] != null) {
+        final from = (row['appearances'] as List).cast<Map>().where(
+          (a) => a['cast_id'] == body['cast_id'],
+        );
+        if (from.isEmpty) return _json({'error': 'cast row not found'}, 404);
+        path0 = '${from.first['image']}';
+      }
       row['image_path'] = path0;
       for (final c in characterRows) {
         if (c['id'] == id) c['image_path'] = path0;

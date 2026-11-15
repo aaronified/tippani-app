@@ -174,6 +174,9 @@ abstract class PeopleConsole {
   /// when the address cannot be fetched.
   Future<void> setCharacterImageFromLink(int id, String url);
 
+  /// Makes the picture one of the character's appearances already holds (the cast row [castId]).
+  Future<void> promoteAppearance(int id, int castId);
+
   /// Replaces every spelling of a record: the first line is the name it prints under, the rest are what else it is
   /// called. [character] says which table.
   Future<void> setNames({
@@ -293,6 +296,12 @@ class PairedPeopleConsole implements PeopleConsole {
   Future<void> setCharacterImageFromLink(int id, String url) =>
       serverCall<void>(_controller, (c) async {
         await c.putJson('/characters/$id/image', {'image_url': url});
+      });
+
+  @override
+  Future<void> promoteAppearance(int id, int castId) =>
+      serverCall<void>(_controller, (c) async {
+        await c.putJson('/characters/$id/image', {'cast_id': castId});
       });
 
   @override

@@ -68,7 +68,24 @@ Future<_Rig> _rig() async {
     'name': 'Ishmael',
     'image_path': '',
     'aliases': <String>[],
-    'appearances': [],
+    'appearances': [
+      {
+        'cast_id': 21,
+        'kind': 'movie',
+        'work_id': 2,
+        'work_title': 'Moby Dick (1956)',
+        'character': 'Ishmael',
+        'image': FakeServer.linkedPicture,
+      },
+      {
+        'cast_id': 22,
+        'kind': 'book',
+        'work_id': 1,
+        'work_title': 'Moby-Dick',
+        'character': 'Ishmael',
+        'image': '',
+      },
+    ],
     'lines': [],
   };
   final directory = PairedPeopleDirectory(
@@ -146,6 +163,9 @@ Future<void> _pasteLink(WidgetTester tester, String url) async {
   await _settle(tester);
 }
 
+Finder inSheet(String text) =>
+    find.descendant(of: find.byType(BottomSheet), matching: find.text(text));
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -207,5 +227,25 @@ void main() {
       await _pasteLink(tester, 'https://example.org/nope.jpg');
       expect(find.text('that picture could not be fetched'), findsOneWidget);
     });
+  });
+
+  group('a picture from one of the character\'s appearances', () {
+    testWidgets(
+      'only the appearances with a picture are offered, and one is chosen',
+      (tester) async {
+        final r = await _openCharacter(tester);
+        await _openMenu(tester, 'Choose a picture');
+        expect(inSheet('Moby Dick (1956)'), findsOneWidget);
+        expect(
+          inSheet('Moby-Dick'),
+          findsNothing,
+          reason: 'the book has no picture to promote',
+        );
+        await tester.tap(inSheet('Moby Dick (1956)'));
+        await _settle(tester);
+        expect(r.server.characterWrites.single.$2, {'cast_id': 21});
+        expect(r.directory.characterImage('Ishmael'), FakeServer.linkedPicture);
+      },
+    );
   });
 }

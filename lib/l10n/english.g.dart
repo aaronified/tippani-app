@@ -1116,6 +1116,7 @@ const Map<String, String> englishTokens = {
   'app.person.show_their_quotes': 'Show their quotes',
   'app.person.showing_n_of_total_show_their': 'Showing {n} of {total}. "Show their quotes" lists them all.',
   'app.person.the_server_could_not_be_reached': 'The server could not be reached, so only what the phone holds is shown.',
+  'app.person.use_a_picture_from_a_work': 'Use a picture from a work',
   'app.person.your_server_has_no_page_for': 'Your server has no page for {name} yet, or this phone is not paired with it.',
   'app.prefs.a_credit_such_as_pratchett_gaiman': 'A credit such as "Pratchett & Gaiman" becomes two people where it is split on a separator you turn on.',
   'app.prefs.a_shade_for_name': 'A shade for {name}',

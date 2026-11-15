@@ -46,6 +46,7 @@ class PersonCredit {
 /// One cast row: a character in a work and who played them.
 class CastAppearance {
   const CastAppearance({
+    this.castId = 0,
     required this.kind,
     required this.workId,
     required this.workTitle,
@@ -55,6 +56,8 @@ class CastAppearance {
     this.characterImage = '',
   });
 
+  /// The cast row's id on the server; what a character's picture is promoted from and what leaving the work names.
+  final int castId;
   final String kind;
   final int workId;
   final String workTitle;
@@ -66,6 +69,7 @@ class CastAppearance {
   static CastAppearance? fromJson(Object? j) {
     if (j is! Map) return null;
     return CastAppearance(
+      castId: _int(j['cast_id']),
       kind: '${j['kind'] ?? ''}',
       workId: _int(j['work_id']),
       workTitle: '${j['work_title'] ?? ''}',
