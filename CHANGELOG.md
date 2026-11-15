@@ -7,6 +7,18 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Fetch metadata for one work: a work's menu has Fetch metadata, which asks the server's sources what they now say and lets you take each field you like, the same review Metadata tools has. Find it online links a work that has no source yet.
+- Edit a work's details: description, genres, series, publisher, pages, ISBN and links, saved to the server so the web shows them too. Cover from a link and Remove cover are in the cover menu.
+- Edit a work's cast: add, change or remove a row, remove only the performer, or fetch the cast from TheTVDB or IMDb.
+- A name with no page can be added: a person or character the server has no record of gets Add to your library, and then the same menu as every other page.
+- More for people and characters: a portrait or picture from a link, a character's picture from one of its appearances, a signature lookup you keep only if you accept it, the name a person sorts under, and putting a character on a work or taking them off one.
+
+### Fixed
+
+- Changes in the people list show elsewhere: merging, renaming spellings, removing and adding a character there now reach the faces on cards and pills at once.
+
 ## [0.10.0] - 2026-11-15
 
 ### Added

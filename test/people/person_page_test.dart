@@ -9,6 +9,7 @@ import 'package:tippani/library/cover_cache.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/library/quote_chips.dart';
 import 'package:tippani/people/face_stack.dart';
+import 'package:tippani/people/people_console.dart';
 import 'package:tippani/people/people_directory.dart';
 import 'package:tippani/people/people_service.dart';
 import 'package:tippani/screens/library_widgets.dart';
@@ -144,7 +145,13 @@ Future<_Rig> _rig() async {
 Widget _scoped(_Rig r, Widget child) => MaterialApp(
   builder: (context, page) => PeopleDirectoryScope(
     directory: r.directory,
-    child: PeopleServiceScope(service: r.service, child: page!),
+    child: PeopleServiceScope(
+      service: r.service,
+      child: PeopleConsoleScope(
+        console: PairedPeopleConsole(r.controller),
+        child: page!,
+      ),
+    ),
   ),
   home: Scaffold(body: child),
 );
@@ -193,6 +200,14 @@ Future<void> _settle(WidgetTester tester) async {
       () => Future<void>.delayed(const Duration(milliseconds: 30)),
     );
     await tester.pump();
+  }
+}
+
+/// Settles until [what] is on screen: the server calls and the directory's disk copy run outside the test clock, and a
+/// loaded machine takes longer than a fixed few turns.
+Future<void> _until(WidgetTester tester, Finder what) async {
+  for (var i = 0; i < 40 && what.evaluate().isEmpty; i++) {
+    await _settle(tester);
   }
 }
 
@@ -289,6 +304,191 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Show their quotes'), findsOneWidget);
+    });
+
+    testWidgets('a name with no record can be added, and then has a menu', (
+      tester,
+    ) async {
+      final r = (await tester.runAsync(_rig))!;
+      await tester.pumpWidget(
+        _scoped(
+          r,
+          QuoteChipsRow(
+            quote: _quote(speaker: 'Nobody Known'),
+            work: null,
+            onTap: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('Nobody Known'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PopupMenuButton<String>), findsNothing);
+      await tester.tap(find.text('Add Nobody Known to your library'));
+      await _until(tester, find.byType(PopupMenuButton<String>));
+      expect(find.textContaining('has no page for Nobody Known'), findsNothing);
+      expect(find.byType(PopupMenuButton<String>), findsOneWidget);
+      final sent = r.server.personWrites.map((w) => w.$1).toList();
+      expect(sent, contains('POST /people/ensure'));
+      expect(
+        r.server.personWrites
+            .firstWhere((w) => w.$1 == 'POST /people/ensure')
+            .$2,
+        {'kind': 'speaker', 'name': 'Nobody Known'},
+      );
+      expect(
+        sent.any(
+          (w) => w.startsWith('POST /people/id/') && w.endsWith('/fetch'),
+        ),
+        isTrue,
+        reason: 'the new record asks its sources for a portrait and details',
+      );
+    });
+
+    testWidgets('an author with no record is filed as an author', (
+      tester,
+    ) async {
+      final r = (await tester.runAsync(_rig))!;
+      await tester.pumpWidget(
+        _scoped(
+          r,
+          QuoteChipsRow(
+            quote: _quote(),
+            work: _work(WorkKind.book, creator: 'Unknown Author'),
+            onTap: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('Unknown Author'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add Unknown Author to your library'));
+      await _until(tester, find.byType(PopupMenuButton<String>));
+      expect(
+        r.server.personWrites
+            .firstWhere((w) => w.$1 == 'POST /people/ensure')
+            .$2,
+        {'kind': 'author', 'name': 'Unknown Author'},
+      );
+    });
+
+    testWidgets('a server that refuses the add is heard, and the page stays', (
+      tester,
+    ) async {
+      final r = (await tester.runAsync(_rig))!;
+      r.server.refuseEnsure = 'That name cannot be filed.';
+      await tester.pumpWidget(
+        _scoped(
+          r,
+          QuoteChipsRow(
+            quote: _quote(speaker: 'Nobody Known'),
+            work: null,
+            onTap: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('Nobody Known'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add Nobody Known to your library'));
+      await _until(tester, find.text('That name cannot be filed.'));
+      expect(find.text('That name cannot be filed.'), findsOneWidget);
+      expect(find.text('Add Nobody Known to your library'), findsOneWidget);
+    });
+
+    testWidgets(
+      'a character the server already has is used, not made a second time',
+      (tester) async {
+        _tall(tester);
+        final r = (await tester.runAsync(_rig))!;
+        // the server has Queequeg; the phone's directory was read before and does not
+        r.server.characterRows.add({
+          'id': 300,
+          'name': 'Queequeg',
+          'image_path': '',
+        });
+        r.server.characterDetails[300] = {
+          'id': 300,
+          'name': 'Queequeg',
+          'description': 'A harpooner.',
+          'image_path': '',
+          'aliases': [],
+          'appearances': [],
+          'lines': [],
+        };
+        await tester.pumpWidget(
+          _scoped(
+            r,
+            QuoteChipsRow(
+              quote: _quote(speaker: 'Queequeg'),
+              work: Work(
+                id: 2,
+                kind: WorkKind.film,
+                title: 'Moby Dick (1956)',
+                creator: '',
+                year: 1956,
+                language: '',
+                createdAt: DateTime.utc(2026),
+                updatedAt: DateTime.utc(2026),
+                details: const WorkDetails(
+                  cast: [CastMember(character: 'Queequeg', actor: 'Someone')],
+                ),
+              ),
+              onTap: (_) {},
+            ),
+          ),
+        );
+        await tester.tap(find.text('Queequeg'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Add Queequeg to your library'));
+        await _until(tester, find.text('A harpooner.'));
+        expect(find.text('A harpooner.'), findsOneWidget);
+        expect(
+          r.server.personWrites.map((w) => w.$1),
+          isNot(contains('POST /characters')),
+        );
+      },
+    );
+
+    testWidgets('a character with no record can be made from its page', (
+      tester,
+    ) async {
+      _tall(tester);
+      final r = (await tester.runAsync(_rig))!;
+      await tester.pumpWidget(
+        _scoped(
+          r,
+          QuoteChipsRow(
+            quote: _quote(speaker: 'Queequeg'),
+            work: Work(
+              id: 2,
+              kind: WorkKind.film,
+              title: 'Moby Dick (1956)',
+              creator: '',
+              year: 1956,
+              language: '',
+              createdAt: DateTime.utc(2026),
+              updatedAt: DateTime.utc(2026),
+              details: const WorkDetails(
+                cast: [
+                  CastMember(
+                    character: 'Queequeg',
+                    actor: 'Friedrich von Ledebur',
+                  ),
+                ],
+              ),
+            ),
+            onTap: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('Queequeg'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PopupMenuButton<String>), findsNothing);
+      await tester.tap(find.text('Add Queequeg to your library'));
+      await _until(tester, find.byType(PopupMenuButton<String>));
+      expect(find.byType(PopupMenuButton<String>), findsOneWidget);
+      expect(
+        r.server.personWrites.map((w) => w.$1),
+        contains('POST /characters'),
+      );
     });
 
     testWidgets(

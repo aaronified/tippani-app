@@ -59,7 +59,10 @@ class FakeMetadata implements MetadataService {
   }
 
   @override
-  Future<List<ReverifyItem>> check(List<GapWork> works) async {
+  Future<List<ReverifyItem>> check(
+    List<GapWork> works, {
+    bool offers = false,
+  }) async {
     calls.add('check ${works.map((w) => '${w.kind}${w.id}').join(',')}');
     if (refuse != null) throw ServerException(refuse!);
     return checkResult;

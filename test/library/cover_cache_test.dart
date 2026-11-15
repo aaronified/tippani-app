@@ -48,7 +48,9 @@ Future<Rig> rig({bool paired = true}) async {
   await controller.load();
   if (paired) await controller.pair('ABCD2345', 'My phone');
   final dir = await Directory.systemTemp.createTemp('tippani_covers');
-  addTearDown(() => dir.delete(recursive: true));
+  addTearDown(
+    () => dir.delete(recursive: true).catchError((Object _) => dir),
+  ); // a file still being written must not fail a finished test
   final clock = Clock();
   return Rig(
     server,

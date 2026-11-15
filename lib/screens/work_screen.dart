@@ -7,8 +7,16 @@ import 'package:flutter/material.dart';
 import '../account/account_service.dart';
 import '../capture/photo_source.dart';
 import '../l10n/l10n.dart';
+import '../api/server_call.dart';
+import '../metadata/metadata_service.dart';
+import '../sync/auto_sync.dart';
+import '../sync/fingerprint.dart' show Realm, realmOfKind;
 import '../library/cover_cache.dart';
 import '../tools/work_details_source.dart';
+import '../tools/work_edit_service.dart';
+import 'work_details_form_screen.dart';
+import 'work_source_screen.dart';
+import '../widgets/text_prompt.dart';
 import 'work_details_section.dart';
 
 import '../harness/harness.dart' show BackupPicker;
@@ -26,6 +34,7 @@ import 'quote_form_screen.dart';
 import 'prefs_screens.dart' show showWorkContextRule;
 import 'cover_search_screen.dart';
 import 'quote_screen.dart';
+import 'metadata_tools_screen.dart' show ReverifyReviewScreen;
 import '../tools/cover_search.dart';
 import 'shelf_card.dart';
 import 'work_form_screen.dart';
@@ -125,6 +134,116 @@ class _WorkScreenState extends State<WorkScreen> {
     if (mounted) await _load();
   }
 
+  /// Asks the server's sources what they now say about this work and lets the reader take what they like, field by
+  /// field: the same review the Metadata tools open for many works, started from the one in hand. What is taken is
+  /// written on the server and pulled back at once, so the web and the phone agree.
+  Future<void> _fetchMetadata() async {
+    final w = _work;
+    final service = MetadataScope.of(context);
+    if (w == null || service == null || w.serverId == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+    final tr = context.tr;
+    void say(String m) => messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(m)));
+    List<ReverifyItem> items;
+    try {
+      items = await service.check([
+        GapWork(
+          kind: realmOfKind(w.kind) == Realm.screen ? 'movie' : 'book',
+          id: w.serverId!,
+          title: w.title,
+        ),
+      ], offers: true);
+    } on ServerException catch (e) {
+      say(e.message);
+      return;
+    }
+    if (!mounted) return;
+    final it = items.isEmpty ? null : items.first;
+    if (it == null || it.status == 'unpinned') {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(tr('app.work.no_source_linked')),
+            action: WorkEditScope.of(context)?.available != true
+                ? null
+                : SnackBarAction(
+                    label: tr('app.work.find_it_online'),
+                    onPressed: _findOnline,
+                  ),
+          ),
+        );
+      return;
+    }
+    if (!it.checked) {
+      say(it.error.isEmpty ? tr('app.work.sources_unreachable') : it.error);
+      return;
+    }
+    if (it.diffs.isEmpty) {
+      say(tr('app.metadata_tools.the_web_had_nothing_new'));
+      return;
+    }
+    final applied = await nav.push<int>(
+      MaterialPageRoute(
+        builder: (_) => ReverifyReviewScreen(service: service, items: [it]),
+      ),
+    );
+    if (applied == null || applied < 1 || !mounted) return;
+    await AutoSyncScope.of(context)?.syncNow();
+    _askedDetails = false;
+    await _load();
+  }
+
+  /// Fetches the work's record and cast again after something was written on the server, and redraws.
+  Future<void> _refetchDetails() async {
+    final w = _work;
+    final source = DetailsScope.of(context);
+    if (w == null || source == null) return;
+    final d = await source.fetch(w);
+    if (d == null || !mounted) return;
+    await widget.store.setWorkDetails(w.id, d);
+    if (mounted) await _load();
+  }
+
+  /// Lists what the server's catalogues say this work might be and links the one the reader picks, so the work has a
+  /// source to fetch metadata from. What linking changes on the server is pulled in at once.
+  Future<void> _findOnline() async {
+    final w = _work;
+    final service = WorkEditScope.of(context);
+    if (w == null || service == null) return;
+    final linked = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => WorkSourceScreen(work: w, service: service),
+      ),
+    );
+    if (linked != true || !mounted) return;
+    await _refetchDetails();
+    if (!mounted) return;
+    await AutoSyncScope.of(context)?.syncNow();
+    if (mounted) await _load();
+  }
+
+  /// The details form: what the server holds beyond the title (description, genres, series, publisher, pages,
+  /// ISBN, links), written back to the server and then pulled into this phone.
+  Future<void> _editDetails() async {
+    final w = _work;
+    final service = WorkEditScope.of(context);
+    if (w == null || service == null) return;
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => WorkDetailsFormScreen(work: w, service: service),
+      ),
+    );
+    if (saved != true || !mounted) return;
+    await _refetchDetails();
+    if (!mounted) return;
+    await AutoSyncScope.of(context)?.syncNow();
+    if (mounted) await _load();
+  }
+
   Future<void> _edit() async {
     final saved = await Navigator.of(context).push<Work>(
       MaterialPageRoute(
@@ -152,13 +271,16 @@ class _WorkScreenState extends State<WorkScreen> {
     final source = CoverScope.of(context);
     final tr = context.tr;
     final w = _work;
-    if (source == null || w == null || w.serverId == null) return;
+    if (w == null || w.serverId == null) return;
     final messenger = ScaffoldMessenger.of(context);
     final search = CoverSearchScope.of(context);
+    final edit = WorkEditScope.of(context);
+    final canSearch = search != null && search.available;
+    if (source == null && edit == null) return;
     Uint8List bytes;
     String fileName;
     var online = false;
-    if (search != null && search.available) {
+    if (canSearch || edit != null) {
       final from = await showModalBottomSheet<String>(
         context: context,
         showDragHandle: true,
@@ -166,24 +288,67 @@ class _WorkScreenState extends State<WorkScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: const Icon(Ti.photo),
-                title: Text(context.tr('app.work.from_my_photos')),
-                onTap: () => Navigator.pop(context, 'photos'),
-              ),
-              ListTile(
-                leading: const Icon(Ti.worldSearch),
-                title: Text(context.tr('app.work.find_one_online')),
-                subtitle: Text(
-                  context.tr('app.work.search_by_title_author_or_isbn'),
+              if (source != null)
+                ListTile(
+                  leading: const Icon(Ti.photo),
+                  title: Text(context.tr('app.work.from_my_photos')),
+                  onTap: () => Navigator.pop(context, 'photos'),
                 ),
-                onTap: () => Navigator.pop(context, 'online'),
-              ),
+              if (canSearch)
+                ListTile(
+                  leading: const Icon(Ti.worldSearch),
+                  title: Text(context.tr('app.work.find_one_online')),
+                  subtitle: Text(
+                    context.tr('app.work.search_by_title_author_or_isbn'),
+                  ),
+                  onTap: () => Navigator.pop(context, 'online'),
+                ),
+              if (edit != null)
+                ListTile(
+                  leading: const Icon(Ti.externalLink),
+                  title: Text(context.tr('app.work.cover_from_a_link')),
+                  onTap: () => Navigator.pop(context, 'link'),
+                ),
+              if (edit != null && w.cover.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Ti.trash),
+                  title: Text(context.tr('app.work.remove_cover')),
+                  onTap: () => Navigator.pop(context, 'remove'),
+                ),
             ],
           ),
         ),
       );
       if (from == null || !mounted) return;
+      if (from == 'link' || from == 'remove') {
+        String? url;
+        if (from == 'link') {
+          url = await askText(
+            context,
+            title: tr('app.work.cover_from_a_link'),
+            label: tr('app.work.cover_link_label'),
+            action: tr('common.action.save.label'),
+            keyboard: TextInputType.url,
+          );
+          if (url == null || !mounted) return;
+        }
+        var name = '';
+        try {
+          if (url == null) {
+            await edit!.clearCover(w);
+          } else {
+            name = await edit!.setCoverFromLink(w, url);
+          }
+        } on ServerException catch (e) {
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text(e.message)));
+          return;
+        }
+        await widget.store.setWorkCover(w.id, name);
+        if (mounted) await _load();
+        return;
+      }
       online = from == 'online';
     }
     if (online) {
@@ -212,7 +377,7 @@ class _WorkScreenState extends State<WorkScreen> {
       bytes = await (widget.readBytes ?? (p) => File(p).readAsBytes())(path);
       fileName = path.split(RegExp(r'[\\/]')).last;
     }
-    final name = await source.upload(w, bytes, fileName);
+    final name = await source!.upload(w, bytes, fileName);
     messenger.clearSnackBars();
     if (name == null) {
       messenger.showSnackBar(
@@ -430,6 +595,12 @@ class _WorkScreenState extends State<WorkScreen> {
                                 : ExportKind.save,
                             work: w,
                           );
+                        case 'fetch':
+                          _fetchMetadata();
+                        case 'details':
+                          _editDetails();
+                        case 'online':
+                          _findOnline();
                         case 'cover':
                           _chooseCover();
                         case 'context':
@@ -454,7 +625,27 @@ class _WorkScreenState extends State<WorkScreen> {
                           context.tr('app.library.save_as_markdown_file'),
                         ),
                       ),
-                      if (w.serverId != null && CoverScope.of(context) != null)
+                      if (w.serverId != null &&
+                          WorkEditScope.of(context)?.available == true)
+                        PopupMenuItem(
+                          value: 'details',
+                          child: Text(context.tr('app.work.edit_details')),
+                        ),
+                      if (w.serverId != null &&
+                          WorkEditScope.of(context)?.available == true)
+                        PopupMenuItem(
+                          value: 'online',
+                          child: Text(context.tr('app.work.find_it_online')),
+                        ),
+                      if (w.serverId != null &&
+                          MetadataScope.of(context)?.available == true)
+                        PopupMenuItem(
+                          value: 'fetch',
+                          child: Text(context.tr('app.work.fetch_metadata')),
+                        ),
+                      if (w.serverId != null &&
+                          (CoverScope.of(context) != null ||
+                              WorkEditScope.of(context)?.available == true))
                         PopupMenuItem(
                           value: 'cover',
                           child: Text(context.tr('app.work.choose_a_cover')),
@@ -579,6 +770,7 @@ class _WorkScreenState extends State<WorkScreen> {
                 WorkDetailsSection(
                   work: w,
                   onFilter: (f) => Navigator.of(context).pop(f),
+                  onChanged: _refetchDetails,
                 ),
                 if (_quotes.isEmpty)
                   Padding(

@@ -172,8 +172,31 @@ class FakeServer {
   /// Every write to a person: the route (`PUT /people/id/3`) and what was sent.
   final personWrites = <(String, Object?)>[];
 
+  /// A picture fetched from an address (`image_url` on a person or a character) answers 502 with these words when set,
+  /// as the server does when it cannot reach the address.
+  String? refuseImageLink;
+
+  /// The file name a picture fetched from an address is kept under; it is served from `/covers`.
+  static const linkedPicture = 'linked0000000000.png';
+
+  /// What the server's signature lookup finds: a data address of a picture, or null for none (`found: false`).
+  String? signatureLookup;
+
+  /// Every signature upload accepted: the multipart form as text, so a test can read the fields beside the file.
+  final signatureUploads = <String>[];
+
+  /// How many quotes on a work still name a character, by cast row id: leaving that work is refused (409) with the
+  /// count until the request says what to do about them (`quotes=clear` or `quotes=replace&to=`).
+  final quotesNamingCharacter = <int, int>{};
+
+  /// Every write to a character: the route (`PUT /characters/7/image`) and what was sent.
+  final characterWrites = <(String, Object?)>[];
+
   /// Every shelf change accepted (`PUT /books|movies/{id}/status`): the route, the id and the body.
   final statusWrites = <Map<String, Object?>>[];
+
+  /// Set to make `POST /people/ensure` answer 400 with these words.
+  String? refuseEnsure;
 
   /// How many times `GET /people` was asked.
   int peopleReads = 0;
@@ -216,6 +239,114 @@ class FakeServer {
 
   /// A cast read answers with this status instead, when set.
   int? failCastWith;
+
+  /// Every cast write the fake accepted, in order: the method and route (`POST /movies/4/cast`) and the body.
+  final castWrites = <({String call, Map<String, Object?> body})>[];
+
+  /// Whether a film already has a TheTVDB id (otherwise `POST /movies/{id}/cast/tvdb` needs one in its body, and
+  /// answers 409 without), and the rows a TheTVDB / IMDb pull brings.
+  bool tvdbPinned = true;
+  List<Map<String, Object?>> tvdbCast = [];
+  List<Map<String, Object?>> imdbCast = [];
+
+  /// The candidates `POST /books/lookup` and `POST /movies/lookup` answer with, and every lookup asked, as
+  /// `route body` (`/books/lookup {"title":...}`).
+  List<Map<String, Object?>> bookCandidates = [];
+  List<Map<String, Object?>> movieCandidates = [];
+  final lookups = <String>[];
+
+  /// A lookup answers 503 with this sentence instead, when set (no catalogue key configured on the server).
+  String? lookupRefusal;
+
+  http.Response? _lookup(http.Request r, String path) {
+    if (r.method != 'POST' ||
+        (path != '/books/lookup' && path != '/movies/lookup')) {
+      return null;
+    }
+    lookups.add('$path ${r.body}');
+    if (lookupRefusal != null) return _json({'error': lookupRefusal!}, 503);
+    return _json({
+      'candidates': path == '/books/lookup' ? bookCandidates : movieCandidates,
+    });
+  }
+
+  http.Response? _castWrite(http.Request r, String path) {
+    final add = RegExp(r'^(/books|/movies)/(\d+)/cast(/tvdb|/imdb)?$');
+    final m = add.firstMatch(path);
+    final one = RegExp(r'^/cast/(\d+)(/actor)?$').firstMatch(path);
+    if (m == null && one == null) return null;
+    final body = r.body.isEmpty
+        ? <String, Object?>{}
+        : Map<String, Object?>.from(jsonDecode(r.body) as Map);
+    if (r.method == 'POST' && m != null) {
+      final key = '${m[1]}/${m[2]}';
+      final rows = casts.putIfAbsent(key, () => []);
+      castWrites.add((call: 'POST $path', body: body));
+      switch (m[3]) {
+        case '/tvdb':
+          if (!tvdbPinned && body['tvdb_id'] == null) {
+            return _json({
+              'error': 'this title has no TheTVDB id — set one, or use Look up to match it first',
+            }, 409);
+          }
+          for (final x in tvdbCast) {
+            rows.add({...x, 'id': _nextId++});
+          }
+          return _json({'added': tvdbCast.length, 'cast': rows});
+        case '/imdb':
+          if (!'${body['imdb']}'.contains('tt')) {
+            return _json({
+              'error': 'paste an IMDb title link or id (tt…)',
+            }, 400);
+          }
+          for (final x in imdbCast) {
+            rows.add({...x, 'id': _nextId++});
+          }
+          return _json({'added': imdbCast.length, 'cast': rows});
+      }
+      if ('${body['character'] ?? ''}'.trim().isEmpty) {
+        return _json({'error': 'a cast row needs a character'}, 400);
+      }
+      if (m[1] == '/books' && '${body['actor'] ?? ''}'.isNotEmpty) {
+        return _json({
+          'error': 'a book has characters, not a cast — a novel has speakers',
+        }, 400);
+      }
+      final row = {
+        'id': _nextId++,
+        'character': body['character'],
+        'actor': body['actor'] ?? '',
+      };
+      rows.add(row);
+      return _json(row, 201);
+    }
+    if (one != null) {
+      final id = int.parse(one[1]!);
+      for (final rows in casts.values) {
+        final i = rows.indexWhere((x) => x['id'] == id);
+        if (i < 0) continue;
+        castWrites.add((call: '${r.method} $path', body: body));
+        if (r.method == 'PUT') {
+          rows[i] = {
+            ...rows[i],
+            'character': body['character'],
+            'actor': body['actor'],
+          };
+          return _json(rows[i]);
+        }
+        if (r.method == 'DELETE' && one[2] != null) {
+          rows[i] = {...rows[i], 'actor': ''};
+          return http.Response('', 204);
+        }
+        if (r.method == 'DELETE') {
+          rows.removeAt(i);
+          return http.Response('', 204);
+        }
+      }
+      return _json({'error': 'cast row not found'}, 404);
+    }
+    return null;
+  }
 
   /// Puts a row on the server as if it had been made on the web, and returns its id. [path] is a create
   /// route (`/books`, `/annotations`...). The row is what the server's list would give back.
@@ -271,6 +402,15 @@ class FakeServer {
     final rows = created[route] ?? [];
     final i = rows.indexWhere((r) => r['id'] == id);
     if (i < 0) return _json({'error': 'not found'}, 404);
+    if (route == '/movies' && '${body['source'] ?? ''}'.isNotEmpty) {
+      // a source and its id re-sync the film from that supplier, as the server's PUT does
+      updated.add((path: '$route/$id', body: Map<String, Object?>.from(body)));
+      rows[i] = {
+        ...rows[i],
+        'linked': '${body['source']}:${body['source_id']}',
+      };
+      return _json(rows[i]);
+    }
     final isWork = route == '/books' || route == '/movies';
     if (isWork && (body['title'] as String? ?? '').trim().isEmpty) {
       return _json({'error': 'title is required'}, 400);
@@ -279,7 +419,24 @@ class FakeServer {
       return _json({'error': 'quote or note is required'}, 400);
     }
     updated.add((path: '$route/$id', body: Map<String, Object?>.from(body)));
-    rows[i] = {...Map<String, Object?>.from(body), 'id': id};
+    final next = {...Map<String, Object?>.from(body), 'id': id};
+    if (isWork) {
+      // a cover change rides on the save, as on the server: clear_cover drops it, a link is fetched and kept
+      final coverKey = route == '/books' ? 'cover_path' : 'poster_path';
+      final url =
+          '${next.remove(route == '/books' ? 'cover_url' : 'poster_url') ?? ''}';
+      if (next.remove('clear_cover') == true) {
+        next[coverKey] = '';
+      } else if (url.isNotEmpty) {
+        if (!RegExp(r'\.(png|jpe?g|webp|gif)$').hasMatch(url)) {
+          return _json({
+            'error': "couldn't fetch that cover image — check the URL points directly at a JPG/PNG/WebP/GIF under 10 MB",
+          }, 502);
+        }
+        next[coverKey] = 'linked.png';
+      }
+    }
+    rows[i] = next;
     return _json(rows[i]);
   }
 
@@ -571,6 +728,10 @@ class FakeServer {
           ? _json({'error': 'this quote has no context'}, 404)
           : _json(c);
     }
+    final lookup = _lookup(r, path);
+    if (lookup != null) return lookup;
+    final castWrite = _castWrite(r, path);
+    if (castWrite != null) return castWrite;
     final castRoute = RegExp(r'^(/books|/movies)/(\d+)/cast$').firstMatch(path);
     if (r.method == 'GET' && castRoute != null) {
       castReads.add('${castRoute[1]}/${castRoute[2]}');
@@ -646,6 +807,59 @@ class FakeServer {
         });
       }
     }
+    if (r.method == 'GET' && path == '/characters/search') {
+      final q = (r.url.queryParameters['q'] ?? '').toLowerCase();
+      return _json({
+        'characters': [
+          for (final c in characterRows)
+            if ('${c['name']}'.toLowerCase().contains(q))
+              {'id': c['id'], 'name': c['name'], 'works': 0},
+        ],
+      });
+    }
+    if (r.method == 'POST' &&
+        path == '/people/ensure' &&
+        refuseEnsure != null) {
+      return _json({'error': refuseEnsure}, 400);
+    }
+    if (r.method == 'POST' && path == '/people/ensure') {
+      final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+      personWrites.add(('POST /people/ensure', body));
+      final id = 100 + personDetails.length;
+      final kind = '${body['kind']}';
+      personDetails[id] = {
+        'id': id,
+        'name': body['name'],
+        'kinds': [kind],
+        'aliases': [],
+        'credits': [],
+        'roles': [],
+        'lines': [],
+      };
+      (people[kind] ??= []).add({
+        'id': id,
+        'name': body['name'],
+        'image_path': '',
+        'signature_path': '',
+      });
+      return _json(personDetails[id]!);
+    }
+    if (r.method == 'POST' && path == '/characters') {
+      final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+      personWrites.add(('POST /characters', body));
+      final id = 200 + characterDetails.length;
+      characterDetails[id] = {
+        'id': id,
+        'name': body['name'],
+        'description': '',
+        'image_path': '',
+        'aliases': [],
+        'appearances': [],
+        'lines': [],
+      };
+      characterRows.add({'id': id, 'name': body['name'], 'image_path': ''});
+      return _json(characterDetails[id]!, 201);
+    }
     if (r.method == 'GET' && path == '/people') {
       peopleReads++;
       return _json({'people': people[r.url.queryParameters['kind']] ?? []});
@@ -659,20 +873,130 @@ class FakeServer {
       if (r.method == 'PUT' && person[2] == null) {
         final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
         personWrites.add(('PUT $path', body));
+        if (body['image_url'] != null && refuseImageLink != null) {
+          return _json({'error': refuseImageLink}, 502);
+        }
         personDetails[id] = {
           ...row,
           for (final e in body.entries)
-            if (e.key == 'clear_image')
+            if (e.key == 'image_url')
+              'image_path': linkedPicture
+            else if (e.key == 'clear_image')
               'image_path': ''
             else if (e.key == 'clear_signature')
               'signature_path': ''
             else
               e.key: e.value,
         };
+        for (final rows in people.values) {
+          for (final r in rows) {
+            if (r['id'] == id) {
+              r['image_path'] = personDetails[id]!['image_path'];
+            }
+          }
+        }
         return _json(personDetails[id]!);
+      }
+      if (r.method == 'POST' && person[2] == '/signature/fetch') {
+        personWrites.add(('POST $path', 0));
+        return _json(
+          signatureLookup == null
+              ? {'found': false}
+              : {'found': true, 'image': signatureLookup},
+        );
+      }
+      if (r.method == 'POST' && person[2] == '/signature') {
+        signatureUploads.add(utf8.decode(r.bodyBytes, allowMalformed: true));
+        personDetails[id] = {...row, 'signature_path': 'sig0000000000.png'};
       }
       personWrites.add(('${r.method} $path', r.bodyBytes.length));
       return _json(row);
+    }
+    final characterImage = RegExp(r'^/characters/(\d+)/image$')
+        .firstMatch(path);
+    if (r.method == 'PUT' && characterImage != null) {
+      final id = int.parse(characterImage[1]!);
+      final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+      characterWrites.add(('PUT $path', body));
+      if (body['image_url'] != null && refuseImageLink != null) {
+        return _json({'error': refuseImageLink}, 502);
+      }
+      final row = characterDetails[id];
+      if (row == null) return _json({'error': 'not found'}, 404);
+      var path0 = body['image_url'] != null ? linkedPicture : '';
+      if (body['cast_id'] != null) {
+        final from = (row['appearances'] as List).cast<Map>().where(
+          (a) => a['cast_id'] == body['cast_id'],
+        );
+        if (from.isEmpty) return _json({'error': 'cast row not found'}, 404);
+        path0 = '${from.first['image']}';
+      }
+      row['image_path'] = path0;
+      for (final c in characterRows) {
+        if (c['id'] == id) c['image_path'] = path0;
+      }
+      return _json({'image_path': path0});
+    }
+    final characterWork = RegExp(r'^/characters/(\d+)/works(?:/(\d+))?$')
+        .firstMatch(path);
+    if (characterWork != null) {
+      final id = int.parse(characterWork[1]!);
+      final row = characterDetails[id];
+      if (row == null) return _json({'error': 'not found'}, 404);
+      final appearances = (row['appearances'] as List).cast<Map>();
+      if (r.method == 'POST') {
+        final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+        characterWrites.add(('POST $path', body));
+        final kind = body['kind'];
+        final workId = body['work_id'];
+        if (appearances.any(
+          (a) => a['kind'] == kind && a['work_id'] == workId,
+        )) {
+          return _json({
+            'error': 'this character is already on that work',
+          }, 409);
+        }
+        final title = (created[kind == 'book' ? '/books' : '/movies'] ?? [])
+            .firstWhere((w) => w['id'] == workId)['title'];
+        row['appearances'] = <Map<String, Object?>>[
+          ...appearances.cast<Map<String, Object?>>(),
+          {
+            'cast_id': 100 + appearances.length,
+            'kind': kind,
+            'work_id': workId,
+            'work_title': title,
+            'character': row['name'],
+            'actor': body['actor'] ?? '',
+            'image': '',
+          },
+        ];
+        return _json({'ok': true}, 201);
+      }
+      if (r.method == 'DELETE' && characterWork[2] != null) {
+        final cast = int.parse(characterWork[2]!);
+        characterWrites.add((
+          'DELETE $path',
+          r.url.hasQuery ? r.url.query : '',
+        ));
+        final mode = r.url.queryParameters['quotes'];
+        final named = quotesNamingCharacter[cast] ?? 0;
+        if (named > 0 && mode == null) {
+          return _json({
+            'error': 'quotes on this work still name this character',
+            'quotes': named,
+          }, 409);
+        }
+        if (mode == 'replace' && (r.url.queryParameters['to'] ?? '').isEmpty) {
+          return _json({
+            'error': 'replacing needs a name to replace with',
+          }, 400);
+        }
+        row['appearances'] = <Map<String, Object?>>[
+          for (final a in appearances.cast<Map<String, Object?>>())
+            if (a['cast_id'] != cast) a,
+        ];
+        return _json({'quotes': named});
+      }
     }
     final character = RegExp(r'^/characters/(\d+)$').firstMatch(path);
     if (r.method == 'GET' && character != null) {

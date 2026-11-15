@@ -588,7 +588,9 @@ void main() {
       'a library made before this existed is upgraded and keeps everything',
       () async {
         final dir = await Directory.systemTemp.createTemp('tippani_upgrade');
-        addTearDown(() => dir.delete(recursive: true));
+        addTearDown(
+          () => dir.delete(recursive: true).catchError((Object _) => dir),
+        ); // a file still being written must not fail a finished test
         final path = '${dir.path}/library.db';
         final old = await openDatabase(
           path,
@@ -741,7 +743,9 @@ void main() {
       'a library from before this is upgraded and can note deletes',
       () async {
         final dir = await Directory.systemTemp.createTemp('tippani_upgrade3');
-        addTearDown(() => dir.delete(recursive: true));
+        addTearDown(
+          () => dir.delete(recursive: true).catchError((Object _) => dir),
+        ); // a file still being written must not fail a finished test
         final path = '${dir.path}/lib.db';
         final old = await openDatabase(
           path,

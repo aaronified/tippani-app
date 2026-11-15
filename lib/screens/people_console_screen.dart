@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/server_call.dart';
 import '../library/quote_chips.dart';
 import '../people/people_console.dart';
+import '../people/people_directory.dart';
 import '../people/picture.dart';
 import 'people_console_actions.dart';
 import 'person_screen.dart';
@@ -72,6 +73,12 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
   }
 
   bool get _onCharacters => _tabs.index == 1;
+
+  /// After a write here: the faces and chips elsewhere in the app read the same people, so they are told too.
+  Future<void> _changed() async {
+    await PeopleDirectoryScope.of(context)?.refresh();
+    if (mounted) await _read();
+  }
 
   Future<void> _read() async {
     try {
@@ -151,7 +158,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
       a: rows[0],
       b: rows[1],
     )) {
-      await _read();
+      await _changed();
     }
   }
 
@@ -197,7 +204,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
       ),
     );
     if (ok != true || !mounted) return;
-    if (await consoleCall(context, widget.console.prune)) await _read();
+    if (await consoleCall(context, widget.console.prune)) await _changed();
   }
 
   Future<void> _addCharacter() async {
@@ -220,7 +227,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
         await widget.console.saveCharacter(id, e);
       }
     });
-    if (ok) await _read();
+    if (ok) await _changed();
   }
 
   Future<void> _rowMenu(
@@ -239,7 +246,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
           id: id,
           names: [name, ...spellings],
         )) {
-          await _read();
+          await _changed();
         }
       case 'delete':
         if (await removeRecord(
@@ -249,7 +256,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
           id: id,
           name: name,
         )) {
-          await _read();
+          await _changed();
         }
     }
   }
