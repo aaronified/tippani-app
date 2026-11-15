@@ -1423,3 +1423,6 @@ app.materials.slot.cover = Covers
 app.materials.dials_hint = How each material in use catches the light. Stone gives a small bright highlight; wool a wide, dim one.
 app.materials.not_yet = Materials come from your Tippani account. Pair this phone with your server and they appear here.
 app.person.add_to_library = Add {name} to your library
+app.work.fetch_metadata = Fetch metadata
+app.work.no_source_linked = No source is linked to this work yet, so there is nothing to check against. Look it up from Edit first.
+app.work.sources_unreachable = The metadata sources could not be reached. Try again later.

@@ -195,7 +195,7 @@ abstract class MetadataService {
   });
 
   /// Looks the works up again on the web and says what is different from what is stored. Nothing is written.
-  Future<List<ReverifyItem>> check(List<GapWork> works);
+  Future<List<ReverifyItem>> check(List<GapWork> works, {bool offers = false});
 
   /// Writes what the reader accepted (at most [reverifyBatch] works).
   Future<List<ApplyResult>> apply(List<ApplyItem> items);
@@ -306,31 +306,34 @@ class PairedMetadataService implements MetadataService {
   });
 
   @override
-  Future<List<ReverifyItem>> check(List<GapWork> works) =>
-      serverCall(_controller, (c) async {
-        final out = <ReverifyItem>[];
-        for (var i = 0; i < works.length; i += reverifyBatch) {
-          final part = works.skip(i).take(reverifyBatch).toList();
-          final r = await c.postJson('/metadata/reverify', {
-            'book_ids': [
-              for (final w in part)
-                if (w.isBook) w.id,
-            ],
-            'movie_ids': [
-              for (final w in part)
-                if (!w.isBook) w.id,
-            ],
-          });
-          final items = r is Map ? r['items'] : null;
-          if (items is List) {
-            for (final x in items) {
-              final it = ReverifyItem.fromJson(x);
-              if (it != null) out.add(it);
-            }
-          }
-        }
-        return out;
+  Future<List<ReverifyItem>> check(
+    List<GapWork> works, {
+    bool offers = false,
+  }) => serverCall(_controller, (c) async {
+    final out = <ReverifyItem>[];
+    for (var i = 0; i < works.length; i += reverifyBatch) {
+      final part = works.skip(i).take(reverifyBatch).toList();
+      final r = await c.postJson('/metadata/reverify', {
+        'book_ids': [
+          for (final w in part)
+            if (w.isBook) w.id,
+        ],
+        'movie_ids': [
+          for (final w in part)
+            if (!w.isBook) w.id,
+        ],
+        if (offers) 'offers': true,
       });
+      final items = r is Map ? r['items'] : null;
+      if (items is List) {
+        for (final x in items) {
+          final it = ReverifyItem.fromJson(x);
+          if (it != null) out.add(it);
+        }
+      }
+    }
+    return out;
+  });
 
   @override
   Future<List<ApplyResult>> apply(List<ApplyItem> items) =>

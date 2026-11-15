@@ -309,3 +309,17 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     super.dispose();
   }
 }
+
+/// Gives a screen below it the [AutoSync], so a change made on the server from that screen (a fetch, an applied
+/// field) can be pulled back at once instead of at the next scheduled pass.
+class AutoSyncScope extends InheritedWidget {
+  const AutoSyncScope({super.key, required this.auto, required super.child});
+
+  final AutoSync? auto;
+
+  static AutoSync? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AutoSyncScope>()?.auto;
+
+  @override
+  bool updateShouldNotify(AutoSyncScope old) => old.auto != auto;
+}

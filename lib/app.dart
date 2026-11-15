@@ -18,8 +18,10 @@ import 'screens/checks_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/settings_screen.dart';
 import 'boards/board_service.dart';
+import 'metadata/metadata_service.dart';
 import 'people/people_console.dart';
 import 'people/people_directory.dart';
+import 'sync/auto_sync.dart';
 import 'tools/cover_search.dart';
 import 'people/people_service.dart';
 import 'search/search_service.dart';
@@ -110,7 +112,13 @@ class TippaniApp extends StatelessWidget {
                                             service: harness.search,
                                             child: CoverSearchScope(
                                               search: harness.coverSearch,
-                                              child: child!,
+                                              child: MetadataScope(
+                                                service: harness.metadata,
+                                                child: AutoSyncScope(
+                                                  auto: harness.auto,
+                                                  child: child!,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ),

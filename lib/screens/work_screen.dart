@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import '../account/account_service.dart';
 import '../capture/photo_source.dart';
 import '../l10n/l10n.dart';
+import '../api/server_call.dart';
+import '../metadata/metadata_service.dart';
+import '../sync/auto_sync.dart';
 import '../library/cover_cache.dart';
 import '../tools/work_details_source.dart';
 import 'work_details_section.dart';
@@ -26,6 +29,7 @@ import 'quote_form_screen.dart';
 import 'prefs_screens.dart' show showWorkContextRule;
 import 'cover_search_screen.dart';
 import 'quote_screen.dart';
+import 'metadata_tools_screen.dart' show ReverifyReviewScreen;
 import '../tools/cover_search.dart';
 import 'shelf_card.dart';
 import 'work_form_screen.dart';
@@ -123,6 +127,57 @@ class _WorkScreenState extends State<WorkScreen> {
     if (d == null || !mounted) return;
     await widget.store.setWorkDetails(w.id, d);
     if (mounted) await _load();
+  }
+
+  /// Asks the server's sources what they now say about this work and lets the reader take what they like, field by
+  /// field: the same review the Metadata tools open for many works, started from the one in hand. What is taken is
+  /// written on the server and pulled back at once, so the web and the phone agree.
+  Future<void> _fetchMetadata() async {
+    final w = _work;
+    final service = MetadataScope.of(context);
+    if (w == null || service == null || w.serverId == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = Navigator.of(context);
+    final tr = context.tr;
+    void say(String m) => messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(content: Text(m)));
+    List<ReverifyItem> items;
+    try {
+      items = await service.check([
+        GapWork(
+          kind: w.kind == WorkKind.book ? 'book' : 'movie',
+          id: w.serverId!,
+          title: w.title,
+        ),
+      ], offers: true);
+    } on ServerException catch (e) {
+      say(e.message);
+      return;
+    }
+    if (!mounted) return;
+    final it = items.isEmpty ? null : items.first;
+    if (it == null || it.status == 'unpinned') {
+      say(tr('app.work.no_source_linked'));
+      return;
+    }
+    if (!it.checked) {
+      say(it.error.isEmpty ? tr('app.work.sources_unreachable') : it.error);
+      return;
+    }
+    if (it.diffs.isEmpty) {
+      say(tr('app.metadata_tools.the_web_had_nothing_new'));
+      return;
+    }
+    final applied = await nav.push<int>(
+      MaterialPageRoute(
+        builder: (_) => ReverifyReviewScreen(service: service, items: [it]),
+      ),
+    );
+    if (applied == null || applied < 1 || !mounted) return;
+    await AutoSyncScope.of(context)?.syncNow();
+    _askedDetails = false;
+    await _load();
   }
 
   Future<void> _edit() async {
@@ -430,6 +485,8 @@ class _WorkScreenState extends State<WorkScreen> {
                                 : ExportKind.save,
                             work: w,
                           );
+                        case 'fetch':
+                          _fetchMetadata();
                         case 'cover':
                           _chooseCover();
                         case 'context':
@@ -454,6 +511,12 @@ class _WorkScreenState extends State<WorkScreen> {
                           context.tr('app.library.save_as_markdown_file'),
                         ),
                       ),
+                      if (w.serverId != null &&
+                          MetadataScope.of(context)?.available == true)
+                        PopupMenuItem(
+                          value: 'fetch',
+                          child: Text(context.tr('app.work.fetch_metadata')),
+                        ),
                       if (w.serverId != null && CoverScope.of(context) != null)
                         PopupMenuItem(
                           value: 'cover',
