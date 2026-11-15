@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-15
+
 ### Added
 
 - A passage shows and says its own parts: What it shows now lists everything a quote has (its note, translation, language, tags, the text around it, and what its book or film and its person know), and a passage's menu has What it shows and says, where the passage can show or hide any of them for itself and say the quote, its note, its translation and the context in its own words. It changes that anthology only: the quote and any other anthology holding it stay as they were, and Put back returns the quote's own words. It works with no server and goes up later. It needs a server at 3.10.0 or newer; with an older one the controls for it are not offered.
