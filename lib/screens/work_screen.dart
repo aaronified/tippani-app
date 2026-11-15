@@ -14,6 +14,7 @@ import '../library/cover_cache.dart';
 import '../tools/work_details_source.dart';
 import '../tools/work_edit_service.dart';
 import 'work_details_form_screen.dart';
+import '../widgets/text_prompt.dart';
 import 'work_details_section.dart';
 
 import '../harness/harness.dart' show BackupPicker;
@@ -238,13 +239,16 @@ class _WorkScreenState extends State<WorkScreen> {
     final source = CoverScope.of(context);
     final tr = context.tr;
     final w = _work;
-    if (source == null || w == null || w.serverId == null) return;
+    if (w == null || w.serverId == null) return;
     final messenger = ScaffoldMessenger.of(context);
     final search = CoverSearchScope.of(context);
+    final edit = WorkEditScope.of(context);
+    final canSearch = search != null && search.available;
+    if (source == null && edit == null) return;
     Uint8List bytes;
     String fileName;
     var online = false;
-    if (search != null && search.available) {
+    if (canSearch || edit != null) {
       final from = await showModalBottomSheet<String>(
         context: context,
         showDragHandle: true,
@@ -252,24 +256,67 @@ class _WorkScreenState extends State<WorkScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: const Icon(Ti.photo),
-                title: Text(context.tr('app.work.from_my_photos')),
-                onTap: () => Navigator.pop(context, 'photos'),
-              ),
-              ListTile(
-                leading: const Icon(Ti.worldSearch),
-                title: Text(context.tr('app.work.find_one_online')),
-                subtitle: Text(
-                  context.tr('app.work.search_by_title_author_or_isbn'),
+              if (source != null)
+                ListTile(
+                  leading: const Icon(Ti.photo),
+                  title: Text(context.tr('app.work.from_my_photos')),
+                  onTap: () => Navigator.pop(context, 'photos'),
                 ),
-                onTap: () => Navigator.pop(context, 'online'),
-              ),
+              if (canSearch)
+                ListTile(
+                  leading: const Icon(Ti.worldSearch),
+                  title: Text(context.tr('app.work.find_one_online')),
+                  subtitle: Text(
+                    context.tr('app.work.search_by_title_author_or_isbn'),
+                  ),
+                  onTap: () => Navigator.pop(context, 'online'),
+                ),
+              if (edit != null)
+                ListTile(
+                  leading: const Icon(Ti.externalLink),
+                  title: Text(context.tr('app.work.cover_from_a_link')),
+                  onTap: () => Navigator.pop(context, 'link'),
+                ),
+              if (edit != null && w.cover.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Ti.trash),
+                  title: Text(context.tr('app.work.remove_cover')),
+                  onTap: () => Navigator.pop(context, 'remove'),
+                ),
             ],
           ),
         ),
       );
       if (from == null || !mounted) return;
+      if (from == 'link' || from == 'remove') {
+        String? url;
+        if (from == 'link') {
+          url = await askText(
+            context,
+            title: tr('app.work.cover_from_a_link'),
+            label: tr('app.work.cover_link_label'),
+            action: tr('common.action.save.label'),
+            keyboard: TextInputType.url,
+          );
+          if (url == null || !mounted) return;
+        }
+        var name = '';
+        try {
+          if (url == null) {
+            await edit!.clearCover(w);
+          } else {
+            name = await edit!.setCoverFromLink(w, url);
+          }
+        } on ServerException catch (e) {
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text(e.message)));
+          return;
+        }
+        await widget.store.setWorkCover(w.id, name);
+        if (mounted) await _load();
+        return;
+      }
       online = from == 'online';
     }
     if (online) {
@@ -298,7 +345,7 @@ class _WorkScreenState extends State<WorkScreen> {
       bytes = await (widget.readBytes ?? (p) => File(p).readAsBytes())(path);
       fileName = path.split(RegExp(r'[\\/]')).last;
     }
-    final name = await source.upload(w, bytes, fileName);
+    final name = await source!.upload(w, bytes, fileName);
     messenger.clearSnackBars();
     if (name == null) {
       messenger.showSnackBar(
@@ -556,7 +603,9 @@ class _WorkScreenState extends State<WorkScreen> {
                           value: 'fetch',
                           child: Text(context.tr('app.work.fetch_metadata')),
                         ),
-                      if (w.serverId != null && CoverScope.of(context) != null)
+                      if (w.serverId != null &&
+                          (CoverScope.of(context) != null ||
+                              WorkEditScope.of(context) != null))
                         PopupMenuItem(
                           value: 'cover',
                           child: Text(context.tr('app.work.choose_a_cover')),

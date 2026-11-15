@@ -33,6 +33,13 @@ abstract class WorkEditService {
   /// links and series number).
   Future<Map<String, Object?>> record(Work work);
 
+  /// Has the server fetch [url] as the work's cover (its poster, for a film) and returns the name of the file it
+  /// now holds. A link that is not a picture is refused in the server's words.
+  Future<String> setCoverFromLink(Work work, String url);
+
+  /// Takes the work's cover off on the server.
+  Future<void> clearCover(Work work);
+
   /// Saves the details the form edits. The server REPLACES the whole record on a save, so this reads it fresh,
   /// puts the edited fields over it and sends it all back: nothing the phone does not show is lost.
   Future<void> saveDetails(Work work, WorkDetailsEdit edit);
@@ -121,24 +128,44 @@ class PairedWorkEdit implements WorkEditService {
         return asMap(await c.getJsonLive('${_route(work)}/${_id(work)}'));
       });
 
-  @override
-  Future<void> saveDetails(Work work, WorkDetailsEdit edit) =>
-      serverCall<void>(_controller, (c) async {
+  /// The whole record with [over] written on it, sent back (the server replaces the record on a save), and the
+  /// record the server answers with.
+  Future<Map<String, Object?>> _overlay(Work work, Map<String, Object?> over) =>
+      serverCall<Map<String, Object?>>(_controller, (c) async {
         final path = '${_route(work)}/${_id(work)}';
         final cur = asMap(await c.getJsonLive(path));
-        await c.putJson(path, {
-          ...cur,
-          'description': edit.description,
-          'genres': edit.genres,
-          'series': edit.series,
-          'series_index': edit.seriesIndex,
-          'links': edit.links,
-          'publisher': ?edit.publisher,
-          'subtitle': ?edit.subtitle,
-          'pages': ?edit.pages,
-          'isbn': ?edit.isbn,
-        });
+        final answer = await c.putJson(path, {...cur, ...over});
+        return answer is Map ? Map<String, Object?>.from(answer) : {};
       });
+
+  @override
+  Future<void> saveDetails(Work work, WorkDetailsEdit edit) => _overlay(work, {
+    'description': edit.description,
+    'genres': edit.genres,
+    'series': edit.series,
+    'series_index': edit.seriesIndex,
+    'links': edit.links,
+    'publisher': ?edit.publisher,
+    'subtitle': ?edit.subtitle,
+    'pages': ?edit.pages,
+    'isbn': ?edit.isbn,
+  });
+
+  String _coverName(Work work, Map<String, Object?> record) {
+    final v = record[_route(work) == '/books' ? 'cover_path' : 'poster_path'];
+    return v is String ? v : '';
+  }
+
+  @override
+  Future<String> setCoverFromLink(Work work, String url) async => _coverName(
+    work,
+    await _overlay(work, {
+      _route(work) == '/books' ? 'cover_url' : 'poster_url': url,
+    }),
+  );
+
+  @override
+  Future<void> clearCover(Work work) => _overlay(work, {'clear_cover': true});
 
   @override
   Future<void> removeCastActor(int castId) =>

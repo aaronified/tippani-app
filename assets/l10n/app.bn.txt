@@ -1438,3 +1438,6 @@ app.work.edit_details = বিবরণ সম্পাদনা
 app.work.details_genres_hint = ধরনগুলো কমা দিয়ে আলাদা করুন
 app.work.details_links_hint = প্রতি লাইনে একটি লিংক
 app.work.details_number_needed = পৃষ্ঠা আর সিরিজের নম্বর সংখ্যা হতে হবে।
+app.work.cover_from_a_link = লিংক থেকে মলাট
+app.work.cover_link_label = ছবির ঠিকানা
+app.work.remove_cover = মলাট সরান

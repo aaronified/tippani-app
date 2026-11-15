@@ -37,6 +37,7 @@ class WorkPageRig {
     WorkKind kind = WorkKind.book,
     Map<String, Object?> record = const {},
     bool synced = true,
+    String cover = '',
     Widget Function(Widget page)? around,
   }) async {
     tester.view.physicalSize = const Size(800, 2400);
@@ -64,6 +65,7 @@ class WorkPageRig {
     final lib = MemoryLibrary();
     final w = await lib.addWork(WorkDraft(title: 'Walden', kind: kind));
     if (synced) await lib.setWorkServerId(w.id, serverId);
+    if (cover.isNotEmpty) await lib.setWorkCover(w.id, cover);
     Widget page = MaterialApp(
       home: WorkScreen(store: lib, workId: w.id, picker: NoPicker()),
     );

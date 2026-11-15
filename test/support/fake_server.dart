@@ -366,7 +366,24 @@ class FakeServer {
       return _json({'error': 'quote or note is required'}, 400);
     }
     updated.add((path: '$route/$id', body: Map<String, Object?>.from(body)));
-    rows[i] = {...Map<String, Object?>.from(body), 'id': id};
+    final next = {...Map<String, Object?>.from(body), 'id': id};
+    if (isWork) {
+      // a cover change rides on the save, as on the server: clear_cover drops it, a link is fetched and kept
+      final coverKey = route == '/books' ? 'cover_path' : 'poster_path';
+      final url =
+          '${next.remove(route == '/books' ? 'cover_url' : 'poster_url') ?? ''}';
+      if (next.remove('clear_cover') == true) {
+        next[coverKey] = '';
+      } else if (url.isNotEmpty) {
+        if (!RegExp(r'\.(png|jpe?g|webp|gif)$').hasMatch(url)) {
+          return _json({
+            'error': "couldn't fetch that cover image — check the URL points directly at a JPG/PNG/WebP/GIF under 10 MB",
+          }, 502);
+        }
+        next[coverKey] = 'linked.png';
+      }
+    }
+    rows[i] = next;
     return _json(rows[i]);
   }
 

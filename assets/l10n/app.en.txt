@@ -1441,3 +1441,6 @@ app.work.edit_details = Edit details
 app.work.details_genres_hint = Separate genres with commas
 app.work.details_links_hint = One link per line
 app.work.details_number_needed = Pages and the series number must be numbers.
+app.work.cover_from_a_link = Cover from a link
+app.work.cover_link_label = Address of the picture
+app.work.remove_cover = Remove cover
