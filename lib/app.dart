@@ -185,7 +185,10 @@ class _ShellState extends State<Shell> {
 
   void _startTour() {
     if (_tour != null || !mounted) return;
-    final startedOn = _index;
+    // which tab it was, not its place: the list can change under the tour (pairing finishing, a section hidden)
+    final startedOn = _index < _tabsNow.length
+        ? _tabsNow[_index].screen.runtimeType
+        : null;
     final run = startTour(
       context,
       store: widget.harness.tour,
@@ -201,9 +204,10 @@ class _ShellState extends State<Shell> {
     run.done.then((_) {
       _tour = null;
       // the stops open the tabs they point at; the reader goes back to where they were
-      if (mounted && _index != startedOn && startedOn < _tabsNow.length) {
-        setState(() => _index = startedOn);
-      }
+      final back = _tabsNow.indexWhere(
+        (t) => t.screen.runtimeType == startedOn,
+      );
+      if (mounted && back >= 0 && back != _index) setState(() => _index = back);
     });
   }
 
