@@ -1458,3 +1458,5 @@ app.work.source_nothing = Nothing matched this work. Check its title and creator
 app.work.source_link = Link
 app.work.source_confirm = Link this work to {source}? Its details can then be fetched from there.
 app.work.source_confirm_screen = Link this work to {source}? Its details, poster and cast are pulled again from there, replacing what it has now.
+app.cast.tvdb_id_title = TheTVDB id
+app.cast.tvdb_id_label = The number in the title's address on thetvdb.com

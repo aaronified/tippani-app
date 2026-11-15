@@ -747,6 +747,8 @@ const Map<String, String> englishTokens = {
   'app.cast.menu': 'Cast actions',
   'app.cast.remove_performer': 'Remove the performer only',
   'app.cast.row_menu': 'Row actions',
+  'app.cast.tvdb_id_label': 'The number in the title\'s address on thetvdb.com',
+  'app.cast.tvdb_id_title': 'TheTVDB id',
   'app.changelog.every_change_in_full': 'Every change in full',
   'app.changelog.full_changelog_on_github': 'Full changelog on GitHub',
   'app.changelog.no_changelog_is_bundled_with_this': 'No changelog is bundled with this build.',

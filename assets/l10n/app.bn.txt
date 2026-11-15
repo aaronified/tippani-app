@@ -1455,3 +1455,5 @@ app.work.source_nothing = এই রচনার সঙ্গে কিছু �
 app.work.source_link = যুক্ত করুন
 app.work.source_confirm = এই রচনাটি {source}-এর সঙ্গে যুক্ত করবেন? তখন সেখান থেকে এর বিবরণ আনা যাবে।
 app.work.source_confirm_screen = এই রচনাটি {source}-এর সঙ্গে যুক্ত করবেন? এর বিবরণ, পোস্টার ও কাস্ট সেখান থেকে আবার এনে এখনকার তথ্যের জায়গায় বসবে।
+app.cast.tvdb_id_title = TheTVDB আইডি
+app.cast.tvdb_id_label = thetvdb.com-এ এই শিরোনামের ঠিকানার সংখ্যাটি
