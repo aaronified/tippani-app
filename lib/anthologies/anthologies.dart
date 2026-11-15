@@ -59,34 +59,170 @@ class Anthology {
   /// A display switch the server keeps (`hide_credit`, `hide_source`, `hide_commentary`, `hide_colour`,
   /// `show_locator`, `show_date`).
   bool flag(String key) => raw[key] == true;
+
+  /// The stored switches beyond those six, key to on/off, as the server sends them (`fields`).
+  Map<String, bool> get extra {
+    final f = raw['fields'];
+    return f is Map
+        ? {
+            for (final e in f.entries)
+              if (e.value is bool) '${e.key}': e.value as bool,
+          }
+        : const {};
+  }
+
+  /// Whether this anthology shows [key] (the registry's own key: `credit`, `translation`, `isbn`, ...), before any
+  /// passage's own choice. The six that have a column of their own are spelled `hide_` or `show_` there; the rest are
+  /// off until switched on, except the quote's own note, which has always shown.
+  bool shows(String key) {
+    switch (key) {
+      case 'credit':
+        return !flag('hide_credit');
+      case 'source':
+        return !flag('hide_source');
+      case 'commentary':
+        return !flag('hide_commentary');
+      case 'colour':
+        return !flag('hide_colour');
+      case 'locator':
+        return flag('show_locator');
+      case 'date':
+        return flag('show_date');
+    }
+    final on = extra[key];
+    return key == 'note' ? on != false : on == true;
+  }
 }
 
-/// The display switches of an anthology, in the order the page offers them: the key the server stores, the
-/// words for the reader, and whether the key is a "hide" switch (on means shown unless set) or a "show" one.
-final anthologySwitches = <({String key, String label, bool hide})>[
-  (key: 'hide_credit', label: tx('app.anthologies.who_it_is_by'), hide: true),
-  (
-    key: 'hide_source',
-    label: tx('app.anthologies.the_book_or_film'),
+/// One display switch: the key the server stores it under, the words for the reader, and how it is stored. The six
+/// from the first version keep their `hide_`/`show_` column (a "hide" switch is on unless set); every later one is a key of
+/// the stored `fields` object. [part] says which group of the dialog it sits in, and [byDefault] marks the one that
+/// shows until it is switched off (the quote's own note).
+class AnthologySwitch {
+  const AnthologySwitch(
+    this.key,
+    this.label, {
+    this.hide = false,
+    this.stored = false,
+    this.byDefault = false,
+    this.part = 'passage',
+  });
+
+  final String key;
+  final String label;
+  final bool hide;
+  final bool stored;
+  final bool byDefault;
+  final String part;
+
+  /// Whether this switch can ever have a value for a passage of [kind] ('book', 'screen' or 'utterance'): a book has
+  /// no director and a film no ISBN, and a standalone quote has no work at all.
+  bool appliesTo(String kind) {
+    if (part != 'work') return true;
+    return switch (kind) {
+      'book' => const {
+        'author',
+        'translator',
+        'editor',
+        'publisher',
+        'year',
+        'series',
+        'subtitle',
+        'isbn',
+        'pages',
+      }.contains(key),
+      'screen' => const {
+        'director',
+        'publisher',
+        'year',
+        'series',
+        'media_type',
+      }.contains(key),
+      _ => false,
+    };
+  }
+
+  /// The registry's own name for it, which is also what an entry's override is keyed by.
+  String get name =>
+      stored ? key : key.replaceFirst(RegExp(r'^(hide|show)_'), '');
+}
+
+/// The display switches of an anthology, in the order the page offers them: what the document prints about a
+/// passage, what the quote itself carries, what its book or film knows, and who is answerable for it.
+final anthologySwitches = <AnthologySwitch>[
+  AnthologySwitch(
+    'hide_credit',
+    tx('app.anthologies.who_it_is_by'),
     hide: true,
   ),
-  (
-    key: 'hide_commentary',
-    label: tx('app.anthologies.my_commentary'),
+  AnthologySwitch(
+    'hide_source',
+    tx('app.anthologies.the_book_or_film'),
     hide: true,
   ),
-  (
-    key: 'hide_colour',
-    label: tx('app.anthologies.the_colour_edge'),
+  AnthologySwitch(
+    'hide_commentary',
+    tx('app.anthologies.my_commentary'),
     hide: true,
   ),
-  (
-    key: 'show_locator',
-    label: tx('app.anthologies.where_in_the_work'),
-    hide: false,
+  AnthologySwitch(
+    'hide_colour',
+    tx('app.anthologies.the_colour_edge'),
+    hide: true,
   ),
-  (key: 'show_date', label: tx('app.anthologies.the_date'), hide: false),
+  AnthologySwitch('show_locator', tx('app.anthologies.where_in_the_work')),
+  AnthologySwitch('show_date', tx('app.anthologies.the_date')),
+  for (final (key, label, byDefault) in const [
+    ('note', 'anthologies.form.fields.note.label', true),
+    ('translation', 'anthologies.form.fields.translation.label', false),
+    ('language', 'anthologies.form.fields.language.label', false),
+    ('tags', 'anthologies.form.fields.tags.label', false),
+    ('context', 'anthologies.form.fields.context.label', false),
+  ])
+    AnthologySwitch(
+      key,
+      tx(label),
+      stored: true,
+      byDefault: byDefault,
+      part: 'quote',
+    ),
+  for (final key in const [
+    'author',
+    'director',
+    'translator',
+    'editor',
+    'publisher',
+    'year',
+    'series',
+    'subtitle',
+    'isbn',
+    'pages',
+    'media-type',
+  ])
+    AnthologySwitch(
+      key.replaceAll('-', '_'),
+      tx('common.field.$key.label'),
+      stored: true,
+      part: 'work',
+    ),
+  for (final key in const ['bio', 'born', 'died', 'links'])
+    AnthologySwitch(
+      key,
+      tx('common.field.$key.label'),
+      stored: true,
+      part: 'person',
+    ),
 ];
+
+/// The parts of a quote a passage may restate for itself, by the key the server takes, with the name of the field
+/// that carries it in a passage as the server sends it.
+const anthologyEditable = <String, String>{
+  'quote': 'quote',
+  'note': 'quote_note',
+  'translation': 'translation',
+  'context_before': 'context_before',
+  'context_after': 'context_after',
+};
 
 /// One passage in an anthology, as the server draws it.
 class AnthologyEntry {
@@ -106,6 +242,16 @@ class AnthologyEntry {
     this.personName = '',
     this.characterName = '',
     this.date = '',
+    this.quoteNote = '',
+    this.translation = '',
+    this.tags = const [],
+    this.contextBefore = '',
+    this.contextAfter = '',
+    this.work = const {},
+    this.person = const {},
+    this.fields = const {},
+    this.edits = const {},
+    this.originals = const {},
   });
 
   /// "book", "screen" or "utterance": which of the server's tables [itemId] is in.
@@ -131,6 +277,69 @@ class AnthologyEntry {
   final String characterName;
   final String date;
 
+  /// What the quote itself carries: its own note (not the commentary above, which belongs to this anthology), what it
+  /// says in another language, its tags, and the source text before and after it. Already the anthology's version
+  /// where this passage restates one of them ([edits]); [originals] holds the library's own words for those.
+  final String quoteNote;
+  final String translation;
+  final List<String> tags;
+  final String contextBefore;
+  final String contextAfter;
+
+  /// What its book or film, and its person, know, by the registry's keys (only the ones that have a value).
+  final Map<String, String> work;
+  final Map<String, String> person;
+
+  /// THIS passage's own choice of what it shows, key to shown or hidden, over the anthology's switches.
+  final Map<String, bool> fields;
+
+  /// The parts of the quote this anthology restates for this passage, and what the library says in their place.
+  final Map<String, String> edits;
+  final Map<String, String> originals;
+
+  /// A copy with some things changed, for the code that has to keep a passage and change one part of it.
+  AnthologyEntry copyWith({
+    double? position,
+    String? note,
+    Map<String, bool>? fields,
+    Map<String, String>? edits,
+    Map<String, String>? originals,
+    String? quote,
+    String? quoteNote,
+    String? translation,
+    String? contextBefore,
+    String? contextAfter,
+  }) => AnthologyEntry(
+    kind: kind,
+    itemId: itemId,
+    quote: quote ?? this.quote,
+    note: note ?? this.note,
+    source: source,
+    credit: credit,
+    color: color,
+    language: language,
+    locator: locator,
+    position: position ?? this.position,
+    favorite: favorite,
+    workId: workId,
+    personName: personName,
+    characterName: characterName,
+    date: date,
+    quoteNote: quoteNote ?? this.quoteNote,
+    translation: translation ?? this.translation,
+    tags: tags,
+    contextBefore: contextBefore ?? this.contextBefore,
+    contextAfter: contextAfter ?? this.contextAfter,
+    work: work,
+    person: person,
+    fields: fields ?? this.fields,
+    edits: edits ?? this.edits,
+    originals: originals ?? this.originals,
+  );
+
+  /// Whether this passage shows [key]: its own choice if it has one, else what [a] says.
+  bool shownIn(Anthology a, String key) => fields[key] ?? a.shows(key);
+
   factory AnthologyEntry.fromJson(Map<String, Object?> j) => AnthologyEntry(
     kind: (j['kind'] as String?) ?? '',
     itemId: (j['item_id'] as num?)?.toInt() ?? 0,
@@ -147,7 +356,30 @@ class AnthologyEntry {
     personName: (j['person_name'] as String?) ?? '',
     characterName: (j['character_name'] as String?) ?? '',
     date: (j['date'] as String?) ?? '',
+    quoteNote: (j['quote_note'] as String?) ?? '',
+    translation: (j['translation'] as String?) ?? '',
+    tags: [
+      for (final t in (j['tags'] as List?) ?? const [])
+        if (t is String) t,
+    ],
+    contextBefore: (j['context_before'] as String?) ?? '',
+    contextAfter: (j['context_after'] as String?) ?? '',
+    work: _strings(j['work']),
+    person: _strings(j['person']),
+    fields: {
+      for (final e in ((j['fields'] as Map?) ?? const {}).entries)
+        if (e.value is bool) '${e.key}': e.value as bool,
+    },
+    edits: _strings(j['edits']),
+    originals: _strings(j['originals']),
   );
+
+  static Map<String, String> _strings(Object? v) => v is Map
+      ? {
+          for (final e in v.entries)
+            if (e.value is String) '${e.key}': e.value as String,
+        }
+      : const {};
 
   /// Who and where it is from, on one line.
   String get from => [
@@ -424,6 +656,10 @@ abstract class AnthologyService {
   /// been asked: a change made then waits, and the server's refusal is shown.
   bool get hasPoster;
 
+  /// Whether the server can keep what one passage shows and says, and the quote's own parts as switches (API revision
+  /// 12). True while the server has not been asked, like [hasPoster].
+  bool get hasEntryDisplay;
+
   /// Runs [run], which makes a request that may be sent twice, under [key]: the server answers a repeated key
   /// with the first answer, so a request whose reply was lost makes nothing twice. A null key is no key.
   Future<T> keyed<T>(String? key, Future<T> Function() run);
@@ -450,6 +686,17 @@ abstract class AnthologyService {
 
   /// The reader's commentary on one passage.
   Future<void> setNote(int id, String kind, int itemId, String note);
+
+  /// What one passage shows and says in this anthology only: [fields] is its own show/hide choice per key (null puts
+  /// a key back to the anthology's), [edits] the words it restates (null puts the quote's own back). The quote in the
+  /// library is never written.
+  Future<void> setEntryDisplay(
+    int id,
+    String kind,
+    int itemId, {
+    Map<String, bool?> fields = const {},
+    Map<String, String?> edits = const {},
+  });
 
   /// Moves the passage or heading [kind]/[itemId] to follow [after] (null: to the top). A heading ('section')
   /// takes the passages under it along.
@@ -532,6 +779,12 @@ class ServerAnthologies implements AnthologyService {
   bool get hasPoster {
     final caps = _controller.check?.capabilities;
     return caps == null || caps.has('anthology-poster');
+  }
+
+  @override
+  bool get hasEntryDisplay {
+    final caps = _controller.check?.capabilities;
+    return caps == null || caps.has('anthology-entry-display');
   }
 
   Future<T> _call<T>(Future<T> Function(ApiClient c) run) async {
@@ -635,7 +888,20 @@ class ServerAnthologies implements AnthologyService {
   @override
   Future<void> setSwitches(Anthology a, Map<String, bool> switches) =>
       _call((c) async {
-        final body = Map<String, Object?>.from(a.raw)..addAll(switches);
+        final body = Map<String, Object?>.from(a.raw);
+        final stored = {
+          for (final s in anthologySwitches)
+            if (s.stored) s.key,
+        };
+        final fields = {...a.extra};
+        for (final e in switches.entries) {
+          if (stored.contains(e.key)) {
+            fields[e.key] = e.value;
+          } else {
+            body[e.key] = e.value;
+          }
+        }
+        body['fields'] = fields;
         await c.putJson('/anthologies/${a.id}', body);
       });
 
@@ -668,6 +934,20 @@ class ServerAnthologies implements AnthologyService {
           'note': note,
         });
       });
+
+  @override
+  Future<void> setEntryDisplay(
+    int id,
+    String kind,
+    int itemId, {
+    Map<String, bool?> fields = const {},
+    Map<String, String?> edits = const {},
+  }) => _call((c) async {
+    await c.putJson('/anthologies/$id/entries/$kind/$itemId/display', {
+      'fields': fields,
+      'edits': edits,
+    });
+  });
 
   Map<String, Object?> _ref(({String kind, int itemId}) r) => {
     'kind': r.kind,

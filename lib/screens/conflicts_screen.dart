@@ -5,6 +5,7 @@ import 'library_widgets.dart' show EmptyState;
 import '../sync/pull_sync.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// What changed on both the phone and the server, waiting for the reader. Nothing here is urgent and nothing has
 /// been overwritten: they settle one, several or none, whenever they like, and the next sync keeps the rest here.
@@ -81,7 +82,9 @@ class _ConflictsScreenState extends State<ConflictsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.conflicts.sync_conflicts'))),
+      appBar: ShellAppBar(
+        title: Text(context.tr('app.conflicts.sync_conflicts')),
+      ),
       body: ListenableBuilder(
         listenable: widget.auto,
         builder: (context, _) {
@@ -155,7 +158,7 @@ class ConflictCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return SurfaceCard(
       margin: const EdgeInsets.only(top: 12),
       child: Padding(
         padding: const EdgeInsets.all(12),

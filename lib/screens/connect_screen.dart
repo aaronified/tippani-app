@@ -5,6 +5,7 @@ import '../api/capabilities.dart';
 import '../app_controller.dart';
 import '../settings/server_url.dart';
 import '../l10n/l10n.dart';
+import '../theme/material_surface.dart';
 
 /// Where the reader says which Tippani server is theirs. It asks the server what it is before it keeps
 /// anything, so a typo, a sleeping NAS, a web page that is not Tippani and a server too old or too new
@@ -75,7 +76,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('app.connect.your_tippani_server')),
       ),
       body: ListView(

@@ -181,9 +181,10 @@ have); phase 3 and 4 screens are built natively. Say if a web-view bridge is acc
 
 First version: Material 3 with **Android's dynamic colour** (the `dynamic_color` package, `DynamicColorBuilder`),
 falling back to a seed palette from Tippani's accent on older phones, with the system light and dark setting. Neither
-Lexodle nor Fluenough has dynamic colour yet. **Material You only (the owner, 6 November 2026): the web app's themes, material
-sets and textures are not carried over, and are not a later phase.** The app is never asked to reproduce the server's look, and a
-synced account's theme preferences are ignored here.
+Lexodle nor Fluenough has dynamic colour yet. **Material You chooses the colours (the owner, 6 November 2026).** The web's
+palettes and saved looks are not carried over. Its materials are, since 14 November 2026 ([ADR-0024](ADR-0024-The-App-Wears-The-Accounts-Materials-Over-Material-You.md)):
+the account's material set, a material for each surface and the light dials are read from the server, drawn over the Material You colours, and
+changed from Settings, Materials.
 
 ## Release and signing
 
@@ -363,6 +364,6 @@ synced account's theme preferences are ignored here.
 
 ## Out of scope
 
-iOS; the Play Store; textures and material sets in the first version; server-side OCR.
+iOS; the Play Store; true glass and saved looks; server-side OCR.
 
 See also: [Plans index](https://github.com/aaronified/tippani/blob/main/docs/wiki/Plans-Index.md) · [Roadmap](https://github.com/aaronified/tippani/blob/main/docs/wiki/Roadmap.md) · [Developing](https://github.com/aaronified/tippani/blob/main/docs/wiki/Developing.md) · [Home](https://github.com/aaronified/tippani/blob/main/docs/wiki/Home.md)

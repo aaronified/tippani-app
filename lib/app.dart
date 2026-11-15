@@ -26,13 +26,16 @@ import 'search/search_service.dart';
 import 'tags/tag_service.dart';
 import 'share/share_people.dart';
 import 'theme/app_theme.dart';
+import 'theme/material_surface.dart';
+import 'theme/materials.dart';
 import 'theme/tabler.dart';
 
 /// Tippani's own red, used as the seed where the phone gives no wallpaper colours (before Android 12,
 /// and on devices that opt out). The web app's accent is the same colour.
 export 'theme/theme_choice.dart' show tippaniSeed;
 
-ThemeData _theme(ColorScheme scheme) => buildTheme(scheme);
+ThemeData _theme(ColorScheme scheme, MaterialLook look) =>
+    buildTheme(scheme, look: look);
 
 class TippaniApp extends StatelessWidget {
   const TippaniApp({
@@ -50,16 +53,24 @@ class TippaniApp extends StatelessWidget {
     // The light and dark schemes come as a pair so the app follows the system setting.
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) => ListenableBuilder(
-        listenable: harness.themeChoice,
+        // the look follows the account's materials too, so choosing one on the web shows here after the next sync
+        listenable: Listenable.merge([
+          harness.themeChoice,
+          if (harness.prefs != null) harness.prefs!,
+        ]),
         builder: (context, _) {
           final (light, dark) = harness.themeChoice.schemes(
             lightDynamic,
             darkDynamic,
           );
+          final prefsNow = harness.prefs?.prefs;
+          final look = prefsNow == null
+              ? MaterialLook.none
+              : MaterialLook.fromPrefs(prefsNow);
           return MaterialApp(
             title: 'Tippani',
-            theme: _theme(light),
-            darkTheme: _theme(dark),
+            theme: _theme(light, look),
+            darkTheme: _theme(dark, look),
             builder: (context, child) => PrefsScope(
               source: harness.prefs,
               child: L10nScope(
@@ -318,16 +329,20 @@ class _ShellState extends State<Shell> {
             children: [for (final t in tabs) t.screen],
           ),
         ),
-        bottomNavigationBar: NavigationBar(
-          // A word like "Anthologies" is cut off when the bar is crowded (many tabs, a narrow phone, large text):
-          // then only the open tab keeps its label, and the others are the icon alone.
-          labelBehavior:
-              _labelsFit(context, [for (final t in tabs) t.destination.label])
-              ? NavigationDestinationLabelBehavior.alwaysShow
-              : NavigationDestinationLabelBehavior.onlyShowSelected,
-          selectedIndex: _index.clamp(0, tabs.length - 1),
-          onDestinationSelected: (i) => setState(() => _index = i),
-          destinations: [for (final t in tabs) t.destination],
+        bottomNavigationBar: MaterialSurface(
+          slot: 'shell',
+          color: Theme.of(context).colorScheme.surfaceContainer,
+          child: NavigationBar(
+            // A word like "Anthologies" is cut off when the bar is crowded (many tabs, a narrow phone, large text):
+            // then only the open tab keeps its label, and the others are the icon alone.
+            labelBehavior:
+                _labelsFit(context, [for (final t in tabs) t.destination.label])
+                ? NavigationDestinationLabelBehavior.alwaysShow
+                : NavigationDestinationLabelBehavior.onlyShowSelected,
+            selectedIndex: _index.clamp(0, tabs.length - 1),
+            onDestinationSelected: (i) => setState(() => _index = i),
+            destinations: [for (final t in tabs) t.destination],
+          ),
         ),
       ),
     );

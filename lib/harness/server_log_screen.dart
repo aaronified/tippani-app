@@ -7,6 +7,7 @@ import 'log_screen.dart' show ShareText, shareThroughSheet;
 import 'server_log.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 final _windows = <(String, Duration)>[
   (tx('settings.logs.range.hour.label'), Duration(hours: 1)),
@@ -122,7 +123,7 @@ class _ServerLogScreenState extends State<ServerLogScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('app.server_log.server_log')),
         actions: [
           IconButton(

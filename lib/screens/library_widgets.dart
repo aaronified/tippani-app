@@ -23,6 +23,7 @@ import 'shelf_card.dart' show shelfStatusLabel;
 import 'work_form_screen.dart' show workKindLabel;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// One quote in a list, as a card: the work it is from in a header (cover, title, who made it and where in it), the
 /// words in the serif beside a bar in the quote's colour, the people on it as chips, and a footer with its tags and
@@ -169,7 +170,7 @@ class QuoteTile extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      child: Card(
+      child: SurfaceCard(
         color: selected ? scheme.secondaryContainer : null,
         shape: selected
             ? RoundedRectangleBorder(
@@ -423,7 +424,7 @@ class WorkTile extends StatelessWidget {
     ].join(' \u00b7 ');
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-      child: Card(
+      child: SurfaceCard(
         color: selected ? scheme.secondaryContainer : null,
         shape: selected
             ? RoundedRectangleBorder(
@@ -556,6 +557,31 @@ class MonogramCover extends StatelessWidget {
     final letter = work.title.trim().isEmpty
         ? '?'
         : String.fromCharCode(work.title.trim().runes.first).toUpperCase();
+    final look = materialLookOf(context);
+    if (look.drawn('cover')) {
+      // the cover slot: what the book is bound in
+      return SizedBox(
+        width: width,
+        height: height,
+        child: MaterialSurface(
+          slot: 'cover',
+          color: bg,
+          look: look,
+          borderRadius: BorderRadius.circular(10),
+          child: Center(
+            child: Text(
+              letter,
+              style: TextStyle(
+                fontFamily: quoteFont,
+                fontSize: width * 0.52,
+                fontWeight: FontWeight.w700,
+                color: fg,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return Container(
       width: width,
       height: height,

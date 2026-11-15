@@ -16,6 +16,7 @@ import 'voice_screen.dart';
 import 'work_form_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The colour a quote's name stands for, drawn in the theme's own tone so it works in light and dark.
 Color quoteColour(String name) {
@@ -372,7 +373,7 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
   Widget build(BuildContext context) {
     final editing = widget.quote != null;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(
           editing
               ? context.tr('common.quote.edit.title')

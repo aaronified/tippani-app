@@ -5,6 +5,7 @@ import '../app_controller.dart';
 import '../pairing/devices.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The devices paired with this account, so a lost phone can be unpaired from another. This phone is
 /// marked and cannot be revoked from here (that is Unpair, in Settings), so a stray tap cannot cut off
@@ -120,7 +121,9 @@ class _DevicesScreenState extends State<DevicesScreen> {
     final scheme = Theme.of(context).colorScheme;
     final anyCurrent = devices?.any((d) => d.current) ?? false;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.devices.paired_devices'))),
+      appBar: ShellAppBar(
+        title: Text(context.tr('app.devices.paired_devices')),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
@@ -157,7 +160,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
             for (final d in devices ?? const <DeviceInfo>[])
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Card(
+                child: SurfaceCard(
                   child: ListTile(
                     title: Text(
                       d.name.isEmpty

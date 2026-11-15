@@ -1,0 +1,533 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:tippani/account/preferences.dart';
+import 'package:tippani/screens/materials_screen.dart';
+import 'package:tippani/theme/app_theme.dart';
+import 'package:tippani/theme/material_surface.dart';
+import 'package:tippani/theme/materials.dart';
+
+import '../account/account_test.dart' show Rig, rig;
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('the materials', () {
+    test('every material a set or a pick can name has its tile, its dials and a name', () {
+      for (final e in textiles.entries) {
+        expect(factoryPhys.containsKey(e.key), isTrue, reason: e.key);
+        if (e.value.isFlat) continue;
+        expect(
+          File('assets/textures/${e.value.file}').existsSync(),
+          isTrue,
+          reason: '${e.key} needs ${e.value.file} in the app',
+        );
+      }
+      for (final set in materialSets.entries) {
+        expect(set.value, hasLength(slots.length), reason: set.key);
+        for (final n in set.value) {
+          expect(textiles.containsKey(n), isTrue, reason: '${set.key}: $n');
+        }
+      }
+    });
+
+    test('a phone that has not heard from the server has no material', () {
+      expect(MaterialLook.fromPrefs(ServerPrefs.empty).hasMaterial, isFalse);
+      // it has only its own settings, a language or a type size, and that is not the server's word
+      final own = MaterialLook.fromPrefs(
+        ServerPrefs({'locale': 'bn', 'sizeUi': 125}),
+      );
+      expect(own.hasMaterial, isFalse);
+    });
+
+    test('the account\'s set is worn, and a slot the reader changed wins', () {
+      final look = MaterialLook.fromPrefs(
+        ServerPrefs({'materialSet': 'quarry', 'tileCard': 'walnut'}),
+      );
+      expect(look.tileFor('ground'), 'sandstone');
+      expect(look.tileFor('card'), 'walnut');
+    });
+
+    test('an account with no set wears Manuscript, and an unknown tile is the set\'s own', () {
+      final look = MaterialLook.fromPrefs(
+        ServerPrefs({'materialSet': '', 'tileCover': 'unobtainium'}),
+      );
+      expect(look.set, 'manuscript');
+      expect(look.tileFor('cover'), 'wood');
+    });
+
+    test(
+      'the reader\'s dial edits sit over the factory\'s, material by material',
+      () {
+        final look = MaterialLook.fromPrefs(
+          ServerPrefs({
+            'materialSet': 'manuscript',
+            'texTweak': '{"paper":{"hard":90}}',
+          }),
+        );
+        expect(look.physFor('paper').hard, 90);
+        expect(look.physFor('paper').sss, factoryPhys['paper']!.sss);
+        expect(look.physFor('wood'), factoryPhys['wood']);
+      },
+    );
+
+    test('a malformed edit is the factory\'s, not an error', () {
+      expect(parseTweaks('not json'), isEmpty);
+      expect(parseTweaks('{"paper":{"hard":900}}'), isEmpty);
+    });
+
+    test('saving an edit keeps the web\'s glass dials and writes only what differs', () {
+      const raw = '{"glass":{"clarity":250},"paper":{"hard":90}}';
+      final next = editedTweaks(raw, 'wood', {'hard': 10, 'sss': 22});
+      expect(next, contains('"clarity":250'));
+      expect(next, contains('"paper":{"hard":90}'));
+      // sss 22 is wood's own, so only hard is stored
+      expect(next, contains('"wood":{"hard":10}'));
+    });
+
+    test('editing the glass material keeps the lens dials the web stores under the same name', () {
+      const raw = '{"glass":{"clarity":60,"fringe":30,"hard":90}}';
+      final next = editedTweaks(raw, 'glass', {
+        'hard': 50,
+        'sss': 0,
+        'diff': 54,
+        'refl': 66,
+      });
+      expect(next, contains('"clarity":60'));
+      expect(next, contains('"fringe":30'));
+      expect(next, contains('"hard":50'));
+      expect(next, isNot(contains('"sss"')));
+      // putting the glass material back leaves the lens alone
+      final back = editedTweaks(next, 'glass', null);
+      expect(back, '{"glass":{"clarity":60,"fringe":30}}');
+    });
+
+    test('putting a material back removes its edits and nothing else', () {
+      const raw = '{"glass":{"clarity":250},"paper":{"hard":90}}';
+      expect(editedTweaks(raw, 'paper', null), '{"glass":{"clarity":250}}');
+      expect(editedTweaks('{"paper":{"hard":90}}', 'paper', null), '');
+    });
+  });
+
+  group('a surface', () {
+    Future<List<int>> sample(
+      WidgetTester tester,
+      MaterialLook look, {
+      Brightness brightness = Brightness.light,
+    }) async {
+      final key = GlobalKey();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: brightness),
+          home: Center(
+            child: RepaintBoundary(
+              key: key,
+              child: SizedBox(
+                width: 300,
+                height: 300,
+                child: MaterialSurface(
+                  slot: 'card',
+                  color: const Color(0xFF808080),
+                  look: look,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.runAsync(() async {
+        for (final t in textiles.values) {
+          await TileCache.load(t.file, _FileBundle());
+        }
+      });
+      await tester.pump();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(brightness: brightness),
+          home: Center(
+            child: RepaintBoundary(
+              key: key,
+              child: SizedBox(
+                width: 300,
+                height: 300,
+                child: MaterialSurface(
+                  slot: 'card',
+                  color: const Color(0xFF808080),
+                  look: look,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final bytes = await tester.runAsync(() async {
+        final boundary =
+            key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+        final img = await boundary.toImage();
+        final data = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+        return data!.buffer.asUint8List();
+      });
+      return [for (var i = 0; i < bytes!.length; i += 4) bytes[i]];
+    }
+
+    int spread(List<int> reds) {
+      var lo = 255, hi = 0;
+      for (final r in reds) {
+        if (r < lo) lo = r;
+        if (r > hi) hi = r;
+      }
+      return hi - lo;
+    }
+
+    testWidgets('with no material is one flat colour', (tester) async {
+      final reds = await sample(
+        tester,
+        const MaterialLook(set: 'atrium', overrides: {}, tweaks: {}),
+      );
+      expect(spread(reds), 0);
+    });
+
+    // A highlight is a smooth ramp and never differs by more than a level between neighbours; grain does.
+    int jumps(List<int> reds) {
+      var n = 0;
+      for (var i = 1; i < reds.length; i++) {
+        if ((reds[i] - reds[i - 1]).abs() >= 2) n++;
+      }
+      return n;
+    }
+
+    testWidgets('on a material shows its grain', (tester) async {
+      final reds = await sample(
+        tester,
+        const MaterialLook(
+          set: 'quarry',
+          overrides: {'card': 'granite'},
+          tweaks: {},
+        ),
+      );
+      expect(jumps(reds), greaterThan(500));
+    });
+
+    double mean(List<int> reds) => reds.reduce((a, b) => a + b) / reds.length;
+
+    testWidgets(
+      'keeps its grain under the veil, so it is a texture and not a photograph',
+      (tester) async {
+        final reds = await sample(
+          tester,
+          const MaterialLook(
+            set: 'atrium',
+            overrides: {'card': 'granite'},
+            tweaks: {},
+          ),
+        );
+        var biggest = 0;
+        for (var i = 1; i < reds.length; i++) {
+          final d = (reds[i] - reds[i - 1]).abs();
+          if (d > biggest) biggest = d;
+        }
+        // granite at strength .08 moves neighbouring pixels by up to about 15 levels; the bare tile, with no veil, by close to 200
+        expect(biggest, lessThan(40));
+        expect(biggest, greaterThan(1));
+      },
+    );
+
+    testWidgets('is plain when the account asked for more contrast', (
+      tester,
+    ) async {
+      final reds = await sample(
+        tester,
+        MaterialLook.fromPrefs(
+          ServerPrefs({
+            'materialSet': 'quarry',
+            'tileCard': 'granite',
+            'contrast': 'more',
+          }),
+        ),
+      );
+      expect(jumps(reds), 0);
+    });
+
+    testWidgets('lights differently when its dials are turned', (tester) async {
+      MaterialLook dialled(int v) => MaterialLook(
+        set: 'atrium',
+        overrides: const {'card': 'granite'},
+        tweaks: {
+          'granite': {'hard': v, 'sss': v, 'diff': v, 'refl': v},
+        },
+      );
+      final low = mean(await sample(tester, dialled(0)));
+      final high = mean(await sample(tester, dialled(100)));
+      expect((high - low).abs(), greaterThan(0.5));
+    });
+
+    testWidgets('draws every material, in light and dark, without error', (
+      tester,
+    ) async {
+      for (final name in pickableTextiles) {
+        for (final b in Brightness.values) {
+          await sample(
+            tester,
+            MaterialLook(
+              set: 'atrium',
+              overrides: {'card': name},
+              tweaks: const {},
+            ),
+            brightness: b,
+          );
+        }
+      }
+    });
+  });
+
+  group('the ground', () {
+    Future<List<int>> page(WidgetTester tester, MaterialLook look) async {
+      final key = GlobalKey();
+      await tester.runAsync(() async {
+        for (final t in textiles.values) {
+          await TileCache.load(t.file, _FileBundle());
+        }
+      });
+      final scheme = ColorScheme.fromSeed(
+        seedColor: Colors.teal,
+        surface: const Color(0xFF808080),
+      );
+      Widget app() => MaterialApp(
+        theme: buildTheme(scheme, look: look),
+        builder: (context, child) => Center(
+          child: RepaintBoundary(
+            key: key,
+            child: SizedBox(width: 300, height: 300, child: child),
+          ),
+        ),
+        home: const Scaffold(body: SizedBox.expand()),
+      );
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      final bytes = await tester.runAsync(() async {
+        final boundary =
+            key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+        final img = await boundary.toImage();
+        final data = await img.toByteData(format: ui.ImageByteFormat.rawRgba);
+        return data!.buffer.asUint8List();
+      });
+      return [for (var i = 0; i < bytes!.length; i += 4) bytes[i]];
+    }
+
+    int jumps(List<int> reds) {
+      var n = 0;
+      for (var i = 1; i < reds.length; i++) {
+        if ((reds[i] - reds[i - 1]).abs() >= 2) n++;
+      }
+      return n;
+    }
+
+    testWidgets('of a page is textured when the set says so', (tester) async {
+      final reds = await page(
+        tester,
+        const MaterialLook(set: 'quarry', overrides: {}, tweaks: {}),
+      );
+      expect(jumps(reds), greaterThan(500));
+    });
+
+    testWidgets('of a page is plain when the set has no material', (
+      tester,
+    ) async {
+      final reds = await page(
+        tester,
+        const MaterialLook(set: 'atrium', overrides: {}, tweaks: {}),
+      );
+      expect(jumps(reds), 0);
+    });
+  });
+
+  test(
+    'the theme is the same theme when only an unrelated preference changed',
+    () {
+      final scheme = ColorScheme.fromSeed(seedColor: Colors.teal);
+      const look = MaterialLook(set: 'quarry', overrides: {}, tweaks: {});
+      final a = buildTheme(scheme, look: look).pageTransitionsTheme;
+      final b = buildTheme(scheme, look: look).pageTransitionsTheme;
+      expect(a, b);
+      final c = buildTheme(
+        scheme,
+        look: const MaterialLook(set: 'atelier', overrides: {}, tweaks: {}),
+      ).pageTransitionsTheme;
+      expect(a == c, isFalse);
+    },
+  );
+
+  group('the materials screen', () {
+    Future<(Rig, Widget)> app(
+      WidgetTester tester, [
+      Map<String, Object?>? prefs,
+    ]) async {
+      final r = (await tester.runAsync(rig))!;
+      r.server.prefs.addAll(prefs ?? {'materialSet': 'manuscript'});
+      await tester.runAsync(r.prefs.refresh);
+      return (
+        r,
+        PrefsScope(
+          source: r.prefs,
+          child: const MaterialApp(home: MaterialsScreen()),
+        ),
+      );
+    }
+
+    Future<void> settle(WidgetTester tester) async {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+      'a phone that has not heard from the account offers nothing to choose',
+      (tester) async {
+        final r = (await tester.runAsync(rig))!;
+        await tester.pumpWidget(
+          PrefsScope(
+            source: r.prefs,
+            child: const MaterialApp(home: MaterialsScreen()),
+          ),
+        );
+        expect(find.byKey(const ValueKey('materials-not-yet')), findsOneWidget);
+        expect(find.byKey(const ValueKey('slot-card')), findsNothing);
+        expect(find.byType(Slider), findsNothing);
+      },
+    );
+
+    testWidgets('choosing a set saves it to the account', (tester) async {
+      final (r, widget) = await app(tester);
+      await tester.pumpWidget(widget);
+      await tester.tap(find.byKey(const ValueKey('material-set')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bindery'));
+      await settle(tester);
+      expect(r.server.prefWrites.last, {'materialSet': 'bindery'});
+    });
+
+    testWidgets('changing one surface saves only that slot', (tester) async {
+      final (r, widget) = await app(tester);
+      await tester.pumpWidget(widget);
+      await tester.ensureVisible(find.byKey(const ValueKey('slot-card')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('slot-card')));
+      await tester.pumpAndSettle();
+      await tester.dragUntilVisible(
+        find.text('Marble'),
+        find.byType(SingleChildScrollView).last,
+        const Offset(0, -200),
+      );
+      await tester.tap(find.text('Marble'));
+      await settle(tester);
+      expect(r.server.prefWrites.last, {'tileCard': 'marble'});
+    });
+
+    testWidgets('taking the set\'s own back saves an empty slot', (
+      tester,
+    ) async {
+      final (r, widget) = await app(tester, {
+        'materialSet': 'manuscript',
+        'tileCard': 'marble',
+      });
+      await tester.pumpWidget(widget);
+      await tester.ensureVisible(find.byKey(const ValueKey('slot-card')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('slot-card')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(RadioListTile<String>),
+          matching: find.textContaining('The set\'s own'),
+        ),
+      );
+      await settle(tester);
+      expect(r.server.prefWrites.last, {'tileCard': ''});
+    });
+
+    testWidgets('moving a dial saves it, and the glass dials survive', (
+      tester,
+    ) async {
+      final (r, widget) = await app(tester, {
+        'materialSet': 'manuscript',
+        'texTweak': '{"glass":{"clarity":250}}',
+      });
+      await tester.pumpWidget(widget);
+      final slider = find.byKey(const ValueKey('dial-paper-hard'));
+      await tester.scrollUntilVisible(slider, 200);
+      await tester.ensureVisible(slider);
+      await tester.pumpAndSettle();
+      await tester.drag(slider, const Offset(60, 0));
+      await settle(tester);
+      final saved = r.server.prefWrites.last['texTweak']! as String;
+      expect(saved, contains('"clarity":250'));
+      expect(saved, contains('"paper":{"hard":'));
+    });
+
+    testWidgets('moving a glass dial keeps the lens dials stored beside it', (
+      tester,
+    ) async {
+      final (r, widget) = await app(tester, {
+        'materialSet': 'office',
+        'texTweak': '{"glass":{"clarity":60}}',
+      });
+      await tester.pumpWidget(widget);
+      final slider = find.byKey(const ValueKey('dial-glass-sss'));
+      await tester.scrollUntilVisible(slider, 200);
+      await tester.ensureVisible(slider);
+      await tester.pumpAndSettle();
+      await tester.drag(slider, const Offset(80, 0));
+      await settle(tester);
+      final saved = r.server.prefWrites.last['texTweak']! as String;
+      expect(saved, contains('"clarity":60'));
+      expect(saved, contains('"sss":'));
+    });
+
+    testWidgets('a material offers its reset only after it was edited', (
+      tester,
+    ) async {
+      final (r, widget) = await app(tester, {
+        'materialSet': 'manuscript',
+        'texTweak': '{"paper":{"hard":90}}',
+      });
+      await tester.pumpWidget(widget);
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('reset-paper')),
+        200,
+      );
+      await tester.ensureVisible(find.byKey(const ValueKey('reset-paper')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('reset-wood')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('reset-paper')));
+      await settle(tester);
+      expect(r.server.prefWrites.last, {'texTweak': ''});
+    });
+
+    testWidgets('Atrium has no dials to offer', (tester) async {
+      final (_, widget) = await app(tester, {'materialSet': 'atrium'});
+      await tester.pumpWidget(widget);
+      await tester.scrollUntilVisible(
+        find.textContaining('nothing here to change'),
+        200,
+      );
+      expect(find.byType(Slider), findsNothing);
+    });
+  });
+}
+
+/// Reads the real tiles from the project folder, since a test has no asset bundle of its own.
+class _FileBundle extends CachingAssetBundle {
+  @override
+  Future<ByteData> load(String key) async {
+    final f = File(key);
+    if (!f.existsSync()) throw FlutterError('no $key');
+    return ByteData.sublistView(Uint8List.fromList(f.readAsBytesSync()));
+  }
+}

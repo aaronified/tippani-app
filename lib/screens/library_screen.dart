@@ -28,6 +28,7 @@ import 'work_screen.dart';
 import 'works_view.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 enum _Mode { quotes, works }
 
@@ -489,8 +490,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  AppBar _normalBar(BuildContext context) {
-    return AppBar(
+  PreferredSizeWidget _normalBar(BuildContext context) {
+    return ShellAppBar(
       title: Text(switch (widget.section) {
         LibrarySection.catalogue => context.tr('nav.tab.movies.label'),
         LibrarySection.quotes => context.tr('nav.tab.quotes.label'),

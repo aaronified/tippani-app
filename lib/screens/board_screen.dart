@@ -13,6 +13,7 @@ import 'quote_form_screen.dart' show quoteColour;
 import 'quote_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// How the quotes of a board are put in order.
 enum BoardSort {
@@ -228,7 +229,7 @@ class _BoardScreenState extends State<BoardScreen> {
     final b = _board;
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(b?.name ?? context.tr('common.field.board.label')),
         actions: [
           PopupMenuButton<BoardSort>(

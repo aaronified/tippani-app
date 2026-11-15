@@ -4,6 +4,7 @@ import '../api/server_call.dart';
 import '../tools/server_tools.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 export 'stats_screen.dart';
 
@@ -90,7 +91,7 @@ class _BinScreenState extends State<BinScreen> {
   Widget build(BuildContext context) {
     final bin = _bin;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('bin.title')),
         actions: [
           if (bin != null && bin.entries.isNotEmpty)
@@ -147,7 +148,7 @@ class _BinScreenState extends State<BinScreen> {
                       horizontal: 16,
                       vertical: 5,
                     ),
-                    child: Card(
+                    child: SurfaceCard(
                       child: ListTile(
                         title: Text(
                           e.label.isEmpty ? _kindWords(e.kind) : e.label,

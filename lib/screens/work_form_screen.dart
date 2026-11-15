@@ -9,6 +9,7 @@ import '../widgets/combo_field.dart';
 import '../tools/work_lookup.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 String workKindLabel(WorkKind k) => switch (k) {
   WorkKind.book => 'Book',
@@ -171,7 +172,7 @@ class _WorkFormScreenState extends State<WorkFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(
           context.tr(
             widget.work == null

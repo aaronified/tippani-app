@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import 'prefs_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour, quoteColourName;
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 const _sizes = [75, 100, 125, 150, 175, 200];
 
@@ -28,7 +29,7 @@ class ReadingScreen extends StatelessWidget {
         // what the choices below do, as they are chosen
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Card(
+          child: SurfaceCard(
             color: theme.colorScheme.surfaceContainerHigh,
             child: Padding(
               padding: const EdgeInsets.all(18),

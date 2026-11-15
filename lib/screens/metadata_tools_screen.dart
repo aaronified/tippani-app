@@ -5,6 +5,7 @@ import '../metadata/metadata_service.dart';
 import '../people/picture.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 void _say(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
@@ -334,7 +335,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
                             horizontal: 16,
                             vertical: 4,
                           ),
-                          child: Card(
+                          child: SurfaceCard(
                             color: _picked.contains(_key(w))
                                 ? scheme.secondaryContainer
                                 : null,
@@ -421,7 +422,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
           for (final g in groups)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Card(
+              child: SurfaceCard(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
                   child: Column(
@@ -465,7 +466,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
     final works = _works;
     final selecting = _picked.isNotEmpty;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         leading: selecting
             ? IconButton(
                 tooltip: context.tr('app.metadata_tools.clear_the_choice'),
@@ -696,7 +697,7 @@ class _ReverifyReviewScreenState extends State<ReverifyReviewScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('app.metadata_tools.what_the_web_says')),
       ),
       body: ListView(
@@ -721,7 +722,7 @@ class _ReverifyReviewScreenState extends State<ReverifyReviewScreen> {
                   horizontal: 16,
                   vertical: 4,
                 ),
-                child: Card(
+                child: SurfaceCard(
                   child: CheckboxListTile(
                     value: _on[_k(i, d)] ?? false,
                     onChanged: (v) =>

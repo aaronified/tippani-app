@@ -8,6 +8,7 @@ import '../api/server_call.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The server's own version: what it runs, what is newest on the release line it follows (stable or pre-release),
 /// and, where the server can update itself, a button that does it. Where it cannot, the command to run on the
@@ -143,7 +144,7 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
     final text = Theme.of(context).textTheme;
     final i = _info;
     return Scaffold(
-      appBar: AppBar(
+      appBar: ShellAppBar(
         title: Text(context.tr('app.admin_update.server_updates')),
         actions: [
           IconButton(
@@ -163,7 +164,7 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
               child: Text(_problem!, style: TextStyle(color: scheme.error)),
             ),
           if (_applying != null)
-            Card(
+            SurfaceCard(
               color: scheme.primaryContainer,
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -171,7 +172,7 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
               ),
             ),
           if (i != null) ...[
-            Card(
+            SurfaceCard(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -263,7 +264,7 @@ class _AdminUpdateScreenState extends State<AdminUpdateScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Card(
+            SurfaceCard(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(

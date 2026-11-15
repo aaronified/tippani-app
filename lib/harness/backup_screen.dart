@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'backup.dart';
 import 'harness.dart';
 import '../l10n/l10n.dart';
+import '../theme/material_surface.dart';
 
 /// One plain sentence for each reason a file could not be restored. Pure, so the words are tested.
 String backupProblemText(BackupProblem p) => switch (p) {
@@ -174,7 +175,9 @@ class _BackupScreenState extends State<BackupScreen> {
   Widget build(BuildContext context) {
     final copies = _copies;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.backup.backup_and_restore'))),
+      appBar: ShellAppBar(
+        title: Text(context.tr('app.backup.backup_and_restore')),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

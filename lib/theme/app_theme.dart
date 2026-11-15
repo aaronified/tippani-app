@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'tabler.dart';
 
 import '../account/preferences.dart';
+import 'material_surface.dart';
+import 'materials.dart';
 
 /// The face for the words of a quote, and for the large display lines: Source Serif 4 (SIL OFL, bundled).
 const String quoteFont = 'SourceSerif4';
@@ -14,7 +16,12 @@ const String uiFont = 'Inter';
 /// Tippani's look over whichever Material You colours the phone gave: shape, type, spacing and the way bars,
 /// cards, inputs and dialogs sit. Colours are never chosen here, only taken from [scheme] (the owner's rule: the
 /// phone's own colours, nothing else).
-ThemeData buildTheme(ColorScheme scheme) {
+ThemeData buildTheme(
+  ColorScheme scheme, {
+  MaterialLook look = MaterialLook.none,
+}) {
+  // A textured ground is painted by the page transition under every page, so the page's own scaffold lets it show.
+  final ground = look.drawn('ground');
   final base = ThemeData(
     colorScheme: scheme,
     useMaterial3: true,
@@ -27,14 +34,20 @@ ThemeData buildTheme(ColorScheme scheme) {
   );
   return base.copyWith(
     textTheme: text,
-    scaffoldBackgroundColor: scheme.surface,
+    scaffoldBackgroundColor: ground ? Colors.transparent : scheme.surface,
     splashFactory: InkSparkle.splashFactory,
     visualDensity: VisualDensity.standard,
-    pageTransitionsTheme: const PageTransitionsTheme(
+    pageTransitionsTheme: PageTransitionsTheme(
       builders: {
-        TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.android: ground
+            ? GroundTransitions(
+                const PredictiveBackPageTransitionsBuilder(),
+                look,
+                scheme.surface,
+              )
+            : const PredictiveBackPageTransitionsBuilder(),
+        TargetPlatform.iOS: const CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: const CupertinoPageTransitionsBuilder(),
       },
     ),
     appBarTheme: AppBarTheme(
@@ -75,7 +88,10 @@ ThemeData buildTheme(ColorScheme scheme) {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: scheme.surfaceContainerHigh,
+      // A WELL, not a patch of the page: the fill is the container above the dialog's own (a dialog is
+      // surfaceContainerHigh, and a field filled with that vanished into it), with a hairline so it reads in light
+      // and dark on any card.
+      fillColor: scheme.surfaceContainerHighest,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -83,7 +99,7 @@ ThemeData buildTheme(ColorScheme scheme) {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
+        borderSide: BorderSide(color: scheme.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -113,7 +129,8 @@ ThemeData buildTheme(ColorScheme scheme) {
     navigationBarTheme: NavigationBarThemeData(
       height: 72,
       elevation: 0,
-      backgroundColor: scheme.surfaceContainer,
+      // Drawn by the shell surface the bar sits in (a plain one when the look has no material).
+      backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       indicatorColor: scheme.secondaryContainer,
       indicatorShape: const StadiumBorder(),
@@ -267,6 +284,56 @@ Widget quoteMeasure(BuildContext context, double size, Widget child) {
     child: ConstrainedBox(
       constraints: BoxConstraints(maxWidth: m * size * 0.52),
       child: child,
+    ),
+  );
+}
+
+/// Paints the ground material under every page, then lets the page's transition run over it. Each page brings its own
+/// opaque ground, so the page underneath never shows through while one is pushed.
+class GroundTransitions extends PageTransitionsBuilder {
+  const GroundTransitions(this.inner, this.look, this.colour);
+
+  final PageTransitionsBuilder inner;
+  final MaterialLook look;
+  final Color colour;
+
+  // Equal when it would draw the same, so a rebuild of the theme for an unrelated reason is not a new theme (an unequal
+  // one animates the whole app's theme for 200 ms).
+  @override
+  bool operator ==(Object other) =>
+      other is GroundTransitions &&
+      other.inner == inner &&
+      other.look == look &&
+      other.colour == colour;
+
+  @override
+  int get hashCode => Object.hash(inner, look, colour);
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => inner.buildTransitions<T>(
+    route,
+    context,
+    animation,
+    secondaryAnimation,
+    Stack(
+      fit: StackFit.expand,
+      children: [
+        RepaintBoundary(
+          child: MaterialSurface(
+            slot: 'ground',
+            color: colour,
+            look: look,
+            child: const SizedBox.expand(),
+          ),
+        ),
+        child,
+      ],
     ),
   );
 }

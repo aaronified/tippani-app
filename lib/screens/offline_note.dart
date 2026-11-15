@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/offline_cache.dart';
 import '../l10n/l10n.dart';
+import '../theme/material_surface.dart';
 
 /// Says when what a screen shows is the phone's copy of what the server last said, because the server could not
 /// be reached (ADR-0022). Draws nothing while the server is answering.
@@ -21,7 +22,7 @@ class OfflineNote extends StatelessWidget {
         if (from == null) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-          child: Card(
+          child: SurfaceCard(
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Text(

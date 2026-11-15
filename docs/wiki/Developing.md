@@ -251,7 +251,7 @@ Nothing a reader sees is written in the code. Every string is a **token**, and t
 
 `lib/theme/app_theme.dart` (`buildTheme`) is the one place that sets shape, type and spacing over the phone's Material You colours: Inter for the
 interface and Source Serif 4 for the words of a quote (`quoteStyle`), both bundled as variable fonts in `assets/fonts` with their SIL OFL licences.
-Colours are never picked there, only taken from the scheme. `QuoteTile`, `WorkTile`, `MonogramCover` and `EmptyState` are in `library_widgets.dart`.
+Colours are never picked there, only taken from the scheme. `materials.dart` is the web's material table (sets, tiles, dials) and `material_surface.dart` paints a surface from it (`MaterialSurface`, `ShellAppBar`, `SurfaceCard`); the 27 tiles are in `assets/textures`. `QuoteTile`, `WorkTile`, `MonogramCover` and `EmptyState` are in `library_widgets.dart`.
 
 To see every screen without a phone, build the browser preview and open it in a phone-sized window (an iPhone user agent shows how the page
 transitions and scrolling feel on iOS):

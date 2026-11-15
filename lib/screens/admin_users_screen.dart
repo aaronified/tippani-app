@@ -4,6 +4,7 @@ import '../admin/admin_service.dart';
 import 'admin_widgets.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// The accounts on the server: add one, make one an admin or step them down, remove one. The server refuses to
 /// remove yourself or another admin, and says why; its words are shown as they come.
@@ -18,7 +19,7 @@ class AdminUsersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.admin_users.users'))),
+      appBar: ShellAppBar(title: Text(context.tr('app.admin_users.users'))),
       body: Loader<List<AdminUser>>(
         load: service.users,
         builder: (context, users, reload) => _Users(
@@ -126,7 +127,7 @@ class _Users extends StatelessWidget {
               for (final u in users)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: Card(
+                  child: SurfaceCard(
                     child: ListTile(
                       leading: CircleAvatar(
                         backgroundColor: u.isAdmin

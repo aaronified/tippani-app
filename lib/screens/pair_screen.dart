@@ -4,6 +4,7 @@ import '../app_controller.dart';
 import '../pairing/pairing_code.dart';
 import '../pairing/pairing_service.dart';
 import '../l10n/l10n.dart';
+import '../theme/material_surface.dart';
 
 /// One plain sentence for each way a pairing can fail. Pure, so the words are tested.
 String pairFailureText(PairFailure f) => switch (f) {
@@ -71,7 +72,7 @@ class _PairScreenState extends State<PairScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.home.pair_this_phone'))),
+      appBar: ShellAppBar(title: Text(context.tr('app.home.pair_this_phone'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

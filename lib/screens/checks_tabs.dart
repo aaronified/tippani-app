@@ -5,6 +5,7 @@ import '../checks/checks_service.dart';
 import 'library_widgets.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Reads something from the server and draws it, with the same loading, failure and retry for every tab.
 class _Loader<T> extends StatefulWidget {
@@ -470,7 +471,7 @@ class _StrayMarksTabState extends State<StrayMarksTab> {
                 ),
               ),
               for (final it in g)
-                Card(
+                SurfaceCard(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -791,7 +792,7 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                   ),
                 ),
                 for (final w in scan.wrongFile)
-                  Card(
+                  SurfaceCard(
                     color: scheme.errorContainer,
                     margin: const EdgeInsets.only(top: 12),
                     child: ListTile(
@@ -906,7 +907,7 @@ class _CorrectionsTabState extends State<CorrectionsTab> {
                     ),
                   ),
                   for (final p in byBucket[b]!)
-                    Card(
+                    SurfaceCard(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
@@ -1140,7 +1141,7 @@ class _LocatorsTabState extends State<LocatorsTab> {
                 ),
               ),
               for (final p in rows)
-                Card(
+                SurfaceCard(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: Padding(
                     padding: const EdgeInsets.all(12),

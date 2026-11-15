@@ -31,6 +31,7 @@ import '../harness/version.dart';
 import 'connect_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Which half of what used to be one screen is drawn: the server's tab, or the app's own settings.
 enum SettingsPart { server, app }
@@ -628,7 +629,7 @@ class _Group extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Card(
+      child: SurfaceCard(
         child: Column(mainAxisSize: MainAxisSize.min, children: [...children]),
       ),
     );

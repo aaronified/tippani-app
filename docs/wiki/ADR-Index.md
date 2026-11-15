@@ -52,5 +52,7 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0021](ADR-0021-Four-Tabs-And-The-Boards-Tab.md): Four tabs, and the Boards tab
 - [ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md): Everything reads offline, and a change made offline waits for the server
 - [ADR-0023](ADR-0023-Which-Server-Settings-The-Phone-Offers.md): Which server settings the phone offers
+- [ADR-0024](ADR-0024-The-App-Wears-The-Accounts-Materials-Over-Material-You.md): The app wears the account's materials over Material You
+- [ADR-0025](ADR-0025-A-Passage-Shows-And-Says-Its-Own-Parts-In-Its-Anthology.md): A passage shows and says its own parts in its anthology
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)

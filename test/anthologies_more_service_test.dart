@@ -66,6 +66,8 @@ class _Server extends FakeServer {
             'rule': 'scope=all&tag=x',
             'rule_auto': true,
             'show_locator': true,
+            // a switch this app draws no control for, which an edit has to carry through
+            'fields': {'portrait': true, 'signature': true},
           },
           'entries': [
             {
@@ -236,6 +238,62 @@ void main() {
     expect(sent['title'], 'Openings');
   });
 
+  test('the switches beyond the first six travel inside `fields`, keeping what the server held', () async {
+    final (svc, s) = await rig();
+    final a = (await svc.get(3)).anthology;
+    await svc.setSwitches(a, {
+      'translation': true,
+      'show_date': true,
+      'note': false,
+    });
+    final sent = bodyOf(s.seen.last)! as Map;
+    expect(
+      sent['show_date'],
+      true,
+      reason: 'a column of its own stays at the top',
+    );
+    expect(
+      sent.containsKey('translation'),
+      isFalse,
+      reason: 'it is not a top-level field',
+    );
+    expect(sent['fields'], {
+      'portrait': true,
+      'signature': true,
+      'translation': true,
+      'note': false,
+    }, reason: 'what the server held and this app does not draw stays');
+  });
+
+  test(
+    'what one passage shows and says goes to that passage and to no quote',
+    () async {
+      final (svc, s) = await rig();
+      await svc.setEntryDisplay(
+        3,
+        'book',
+        9,
+        fields: {'translation': true, 'tags': null},
+        edits: {'context_after': 'And after.', 'quote': null},
+      );
+      expect(
+        s.seen.last,
+        startsWith('PUT /anthologies/3/entries/book/9/display '),
+      );
+      expect(bodyOf(s.seen.last), {
+        'fields': {'translation': true, 'tags': null},
+        'edits': {'context_after': 'And after.', 'quote': null},
+      });
+      expect(
+        s.seen.where(
+          (x) =>
+              x.startsWith('PUT /quotes') || x.startsWith('PUT /annotations'),
+        ),
+        isEmpty,
+      );
+    },
+  );
+
   test(
     'the description goes only when it is given, and the poster is a file',
     () async {
@@ -282,6 +340,35 @@ void main() {
       ServerCheck.answered(caps({'anthology-poster'})),
     );
     expect(svc.hasPoster, isTrue);
+  });
+
+  test('the passage controls are offered only when the server names them, and while it is unknown', () async {
+    SharedPreferences.setMockInitialValues({
+      'server_url': 'https://q.example.org',
+    });
+    final controller = AppController(
+      SettingsStore(await SharedPreferences.getInstance(), MemoryTokenVault()),
+      clientFactory: _Server().factory,
+    );
+    await controller.load();
+    final svc = ServerAnthologies(controller);
+    expect(svc.hasEntryDisplay, isTrue, reason: 'not asked yet');
+    Capabilities caps(Set<String> features) => Capabilities(
+      version: '3.9.1',
+      apiRevision: 11,
+      minClientRevision: 1,
+      features: features,
+    );
+    await controller.connect(
+      'https://q.example.org',
+      ServerCheck.answered(caps({'anthology-poster'})),
+    );
+    expect(svc.hasEntryDisplay, isFalse);
+    await controller.connect(
+      'https://q.example.org',
+      ServerCheck.answered(caps({'anthology-entry-display'})),
+    );
+    expect(svc.hasEntryDisplay, isTrue);
   });
 
   test('a keyed create, heading and entry go out under their key, and nothing else does', () async {

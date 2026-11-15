@@ -80,6 +80,7 @@ flutter:
     - assets/tessdata/
     - assets/share/
     - assets/l10n/
+    - assets/textures/
     - assets/fonts/tabler/LICENSE
 
   # Inter for the interface and Source Serif 4 for the words of a quote, both SIL OFL (licences beside them).

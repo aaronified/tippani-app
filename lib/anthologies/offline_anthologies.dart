@@ -72,6 +72,9 @@ class OfflineAnthologies implements AnthologyService {
   bool get hasPoster => _inner.hasPoster;
 
   @override
+  bool get hasEntryDisplay => _inner.hasEntryDisplay;
+
+  @override
   Future<T> keyed<T>(String? key, Future<T> Function() run) =>
       _inner.keyed(key, run);
 
@@ -234,6 +237,20 @@ class OfflineAnthologies implements AnthologyService {
         await _inner.removeEntry(id, kind, item);
       case 'note':
         await _inner.setNote(id, kind, item, op['note'] as String? ?? '');
+      case 'display':
+        await _inner.setEntryDisplay(
+          id,
+          kind,
+          item,
+          fields: {
+            for (final e in ((op['fields'] as Map?) ?? const {}).entries)
+              e.key as String: e.value as bool?,
+          },
+          edits: {
+            for (final e in ((op['edits'] as Map?) ?? const {}).entries)
+              e.key as String: e.value as String?,
+          },
+        );
       case 'move':
         final after = op['after'];
         await _inner.move(
@@ -694,6 +711,67 @@ class OfflineAnthologies implements AnthologyService {
           (e) => e['kind'] == kind && e['item_id'] == itemId,
         ),
       ),
+    );
+  }
+
+  @override
+  Future<void> setEntryDisplay(
+    int id,
+    String kind,
+    int itemId, {
+    Map<String, bool?> fields = const {},
+    Map<String, String?> edits = const {},
+  }) {
+    id = _id(id);
+    return _change(
+      {
+        'op': 'display',
+        'id': id,
+        'kind': kind,
+        'item': itemId,
+        'fields': fields,
+        'edits': edits,
+      },
+      anthologyId: id,
+      online: () => _inner.setEntryDisplay(
+        id,
+        kind,
+        itemId,
+        fields: fields,
+        edits: edits,
+      ),
+      local: () => _editDetail(id, (entries, _) {
+        for (final e in entries) {
+          if (e['kind'] != kind || e['item_id'] != itemId) continue;
+          final own = <String, Object?>{
+            ...((e['fields'] as Map?)?.cast<String, Object?>() ?? const {}),
+          };
+          for (final f in fields.entries) {
+            f.value == null ? own.remove(f.key) : own[f.key] = f.value;
+          }
+          e['fields'] = own;
+          final said = <String, Object?>{
+            ...((e['edits'] as Map?)?.cast<String, Object?>() ?? const {}),
+          };
+          final kept = <String, Object?>{
+            ...((e['originals'] as Map?)?.cast<String, Object?>() ?? const {}),
+          };
+          for (final x in edits.entries) {
+            final field = anthologyEditable[x.key];
+            if (field == null) continue;
+            if (x.value == null) {
+              e[field] = kept.remove(x.key) ?? '';
+              said.remove(x.key);
+            } else {
+              kept.putIfAbsent(x.key, () => e[field] ?? '');
+              e[field] = x.value;
+              said[x.key] = x.value;
+            }
+          }
+          e['edits'] = said;
+          e['originals'] = kept;
+        }
+      }),
     );
   }
 

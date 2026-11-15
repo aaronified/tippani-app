@@ -10,6 +10,7 @@ import 'adjust_screen.dart';
 import 'page_selector.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
+import '../theme/material_surface.dart';
 
 /// Text read from a page, handed back to the quote form: [text] as the reader corrected it, and how it was
 /// captured ([source]: "ocr").
@@ -142,7 +143,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('app.capture.scan_a_page'))),
+      appBar: ShellAppBar(title: Text(context.tr('app.capture.scan_a_page'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
