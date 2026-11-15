@@ -10,6 +10,9 @@ import '../sync/fingerprint.dart';
 /// the phone agree; a refusal throws a [ServerException] carrying the server's own words. An interface so a test
 /// can stand in for the server.
 abstract class WorkEditService {
+  /// Whether the server can be asked right now (the phone is paired).
+  bool get available;
+
   /// Pulls the cast from TheTVDB for a film or show. [tvdbId] names the record when the work has none yet.
   Future<void> fetchCastFromTvdb(Work work, {int? tvdbId});
 
@@ -144,6 +147,9 @@ class PairedWorkEdit implements WorkEditService {
   PairedWorkEdit(this._controller);
 
   final AppController _controller;
+
+  @override
+  bool get available => _controller.paired;
 
   String _route(Work w) => workRoute(realmOfKind(w.kind));
 

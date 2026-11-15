@@ -330,6 +330,12 @@ void main() {
       final sent = r.server.personWrites.map((w) => w.$1).toList();
       expect(sent, contains('POST /people/ensure'));
       expect(
+        r.server.personWrites
+            .firstWhere((w) => w.$1 == 'POST /people/ensure')
+            .$2,
+        {'kind': 'speaker', 'name': 'Nobody Known'},
+      );
+      expect(
         sent.any(
           (w) => w.startsWith('POST /people/id/') && w.endsWith('/fetch'),
         ),
@@ -337,6 +343,109 @@ void main() {
         reason: 'the new record asks its sources for a portrait and details',
       );
     });
+
+    testWidgets('an author with no record is filed as an author', (
+      tester,
+    ) async {
+      final r = (await tester.runAsync(_rig))!;
+      await tester.pumpWidget(
+        _scoped(
+          r,
+          QuoteChipsRow(
+            quote: _quote(),
+            work: _work(WorkKind.book, creator: 'Unknown Author'),
+            onTap: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('Unknown Author'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add Unknown Author to your library'));
+      await _until(tester, find.byType(PopupMenuButton<String>));
+      expect(
+        r.server.personWrites
+            .firstWhere((w) => w.$1 == 'POST /people/ensure')
+            .$2,
+        {'kind': 'author', 'name': 'Unknown Author'},
+      );
+    });
+
+    testWidgets('a server that refuses the add is heard, and the page stays', (
+      tester,
+    ) async {
+      final r = (await tester.runAsync(_rig))!;
+      r.server.refuseEnsure = 'That name cannot be filed.';
+      await tester.pumpWidget(
+        _scoped(
+          r,
+          QuoteChipsRow(
+            quote: _quote(speaker: 'Nobody Known'),
+            work: null,
+            onTap: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('Nobody Known'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add Nobody Known to your library'));
+      await _until(tester, find.text('That name cannot be filed.'));
+      expect(find.text('That name cannot be filed.'), findsOneWidget);
+      expect(find.text('Add Nobody Known to your library'), findsOneWidget);
+    });
+
+    testWidgets(
+      'a character the server already has is used, not made a second time',
+      (tester) async {
+        _tall(tester);
+        final r = (await tester.runAsync(_rig))!;
+        // the server has Queequeg; the phone's directory was read before and does not
+        r.server.characterRows.add({
+          'id': 300,
+          'name': 'Queequeg',
+          'image_path': '',
+        });
+        r.server.characterDetails[300] = {
+          'id': 300,
+          'name': 'Queequeg',
+          'description': 'A harpooner.',
+          'image_path': '',
+          'aliases': [],
+          'appearances': [],
+          'lines': [],
+        };
+        await tester.pumpWidget(
+          _scoped(
+            r,
+            QuoteChipsRow(
+              quote: _quote(speaker: 'Queequeg'),
+              work: Work(
+                id: 2,
+                kind: WorkKind.film,
+                title: 'Moby Dick (1956)',
+                creator: '',
+                year: 1956,
+                language: '',
+                createdAt: DateTime.utc(2026),
+                updatedAt: DateTime.utc(2026),
+                details: const WorkDetails(
+                  cast: [CastMember(character: 'Queequeg', actor: 'Someone')],
+                ),
+              ),
+              onTap: (_) {},
+            ),
+          ),
+        );
+        await tester.tap(find.text('Queequeg'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Add Queequeg to your library'));
+        await _until(tester, find.text('A harpooner.'));
+        expect(find.text('A harpooner.'), findsOneWidget);
+        expect(
+          r.server.personWrites.map((w) => w.$1),
+          isNot(contains('POST /characters')),
+        );
+      },
+    );
 
     testWidgets('a character with no record can be made from its page', (
       tester,

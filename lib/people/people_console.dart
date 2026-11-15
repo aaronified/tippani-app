@@ -189,6 +189,11 @@ abstract class PeopleConsole {
 
   /// Makes a character and returns its id.
   Future<int> createCharacter(String name, {String description = ''});
+
+  /// The id of the character already called [name], or a new one: the server's create never looks first, and the
+  /// directory a page asked can be stale or not yet loaded, so a second record of the same character is made here
+  /// unless the server is asked.
+  Future<int> ensureCharacter(String name);
   Future<void> saveCharacter(int id, CharacterEdit edit);
   Future<void> uploadCharacterImage(int id, Uint8List bytes, String fileName);
   Future<void> clearCharacterImage(int id);
@@ -309,6 +314,26 @@ class PairedPeopleConsole implements PeopleConsole {
       });
 
   @override
+  Future<int> ensureCharacter(String name) async {
+    final found = await serverCall<int>(_controller, (c) async {
+      final r = await c.getJson(
+        '/characters/search?q=${Uri.encodeQueryComponent(name)}',
+      );
+      final hits = r is Map ? r['characters'] ?? r['results'] : r;
+      if (hits is List) {
+        for (final h in hits) {
+          if (h is Map &&
+              _s(h['name']).trim().toLowerCase() == name.trim().toLowerCase()) {
+            return _int(h['id']);
+          }
+        }
+      }
+      return 0;
+    });
+    return found > 0 ? found : createCharacter(name);
+  }
+
+  @override
   Future<void> saveCharacter(int id, CharacterEdit edit) =>
       serverCall<void>(_controller, (c) async {
         await c.putJson('/characters/$id', edit.toJson());
@@ -361,8 +386,10 @@ class PairedPeopleConsole implements PeopleConsole {
                     kind: kind,
                     id: _int(x['id']),
                     title: _s(x['title']),
-                    creator: _s(x['creator']),
-                    year: _int(x['year']),
+                    creator: _s(x[kind == 'book' ? 'author' : 'director']),
+                    year: _int(
+                      x[kind == 'book' ? 'published_year' : 'release_year'],
+                    ),
                   ),
           ];
         }

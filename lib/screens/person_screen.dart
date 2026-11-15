@@ -1162,7 +1162,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
     if (c == null) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final id = await c.createCharacter(widget.name);
+      final id = await c.ensureCharacter(widget.name);
       await _dir?.refresh();
       if (!mounted) return;
       setState(() => _id = id);
@@ -1445,6 +1445,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
         builder: (_) => PersonScreen(
           id: info?.id ?? 0,
           name: actor,
+          kind: 'actor',
           onFilter: (f) {
             widget.onFilter(f);
             Navigator.of(context).pop();

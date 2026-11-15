@@ -102,6 +102,14 @@ class FakeConsole implements PeopleConsole {
   }
 
   @override
+  Future<int> ensureCharacter(String name) async {
+    for (final c in characterRows) {
+      if (c.name.toLowerCase() == name.toLowerCase()) return c.id;
+    }
+    return createCharacter(name);
+  }
+
+  @override
   Future<int> createCharacter(String name, {String description = ''}) async {
     calls.add('createCharacter $name');
     _maybe();

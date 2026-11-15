@@ -112,4 +112,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Edit details'), findsNothing);
   });
+
+  testWidgets('a phone that is no longer paired is not offered the edits', (
+    tester,
+  ) async {
+    await WorkPageRig.open(tester, paired: false);
+    await tester.tap(find.byTooltip('Show menu'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit details'), findsNothing);
+    expect(find.text('Find it online'), findsNothing);
+  });
 }

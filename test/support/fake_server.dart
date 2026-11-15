@@ -195,6 +195,9 @@ class FakeServer {
   /// Every shelf change accepted (`PUT /books|movies/{id}/status`): the route, the id and the body.
   final statusWrites = <Map<String, Object?>>[];
 
+  /// Set to make `POST /people/ensure` answer 400 with these words.
+  String? refuseEnsure;
+
   /// How many times `GET /people` was asked.
   int peopleReads = 0;
 
@@ -803,6 +806,21 @@ class FakeServer {
           if (body['mode'] == 'daily') 'remaining': 0,
         });
       }
+    }
+    if (r.method == 'GET' && path == '/characters/search') {
+      final q = (r.url.queryParameters['q'] ?? '').toLowerCase();
+      return _json({
+        'characters': [
+          for (final c in characterRows)
+            if ('${c['name']}'.toLowerCase().contains(q))
+              {'id': c['id'], 'name': c['name'], 'works': 0},
+        ],
+      });
+    }
+    if (r.method == 'POST' &&
+        path == '/people/ensure' &&
+        refuseEnsure != null) {
+      return _json({'error': refuseEnsure}, 400);
     }
     if (r.method == 'POST' && path == '/people/ensure') {
       final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);

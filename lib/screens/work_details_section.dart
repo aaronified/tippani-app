@@ -42,7 +42,7 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
   bool get _editable =>
       widget.onChanged != null &&
       widget.work.serverId != null &&
-      WorkEditScope.of(context) != null;
+      WorkEditScope.of(context)?.available == true;
 
   bool get _isBook =>
       widget.work.kind == WorkKind.book || widget.work.kind == WorkKind.other;

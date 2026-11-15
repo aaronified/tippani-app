@@ -37,6 +37,7 @@ class WorkPageRig {
     WorkKind kind = WorkKind.book,
     Map<String, Object?> record = const {},
     bool synced = true,
+    bool paired = true,
     String cover = '',
     Widget Function(Widget page)? around,
   }) async {
@@ -58,7 +59,7 @@ class WorkPageRig {
         clientFactory: server.factory,
       );
       await c.load();
-      await c.pair('ABCD2345', 'My phone');
+      if (paired) await c.pair('ABCD2345', 'My phone');
       return c;
     }))!;
     server.seed(route, {'title': 'Walden', ...record}, id: serverId);

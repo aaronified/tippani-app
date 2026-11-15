@@ -10,6 +10,7 @@ import '../l10n/l10n.dart';
 import '../api/server_call.dart';
 import '../metadata/metadata_service.dart';
 import '../sync/auto_sync.dart';
+import '../sync/fingerprint.dart' show Realm, realmOfKind;
 import '../library/cover_cache.dart';
 import '../tools/work_details_source.dart';
 import '../tools/work_edit_service.dart';
@@ -150,7 +151,7 @@ class _WorkScreenState extends State<WorkScreen> {
     try {
       items = await service.check([
         GapWork(
-          kind: w.kind == WorkKind.book ? 'book' : 'movie',
+          kind: realmOfKind(w.kind) == Realm.screen ? 'movie' : 'book',
           id: w.serverId!,
           title: w.title,
         ),
@@ -167,7 +168,7 @@ class _WorkScreenState extends State<WorkScreen> {
         ..showSnackBar(
           SnackBar(
             content: Text(tr('app.work.no_source_linked')),
-            action: WorkEditScope.of(context) == null
+            action: WorkEditScope.of(context)?.available != true
                 ? null
                 : SnackBarAction(
                     label: tr('app.work.find_it_online'),
@@ -625,13 +626,13 @@ class _WorkScreenState extends State<WorkScreen> {
                         ),
                       ),
                       if (w.serverId != null &&
-                          WorkEditScope.of(context) != null)
+                          WorkEditScope.of(context)?.available == true)
                         PopupMenuItem(
                           value: 'details',
                           child: Text(context.tr('app.work.edit_details')),
                         ),
                       if (w.serverId != null &&
-                          WorkEditScope.of(context) != null)
+                          WorkEditScope.of(context)?.available == true)
                         PopupMenuItem(
                           value: 'online',
                           child: Text(context.tr('app.work.find_it_online')),
@@ -644,7 +645,7 @@ class _WorkScreenState extends State<WorkScreen> {
                         ),
                       if (w.serverId != null &&
                           (CoverScope.of(context) != null ||
-                              WorkEditScope.of(context) != null))
+                              WorkEditScope.of(context)?.available == true))
                         PopupMenuItem(
                           value: 'cover',
                           child: Text(context.tr('app.work.choose_a_cover')),

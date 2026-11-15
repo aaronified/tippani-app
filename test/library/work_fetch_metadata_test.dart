@@ -22,13 +22,17 @@ void main() {
   late FakeMetadata meta;
   late MemoryLibrary lib;
 
-  Future<void> open(WidgetTester tester, {bool synced = true}) async {
+  Future<void> open(
+    WidgetTester tester, {
+    bool synced = true,
+    WorkKind kind = WorkKind.book,
+  }) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     meta = FakeMetadata();
     lib = MemoryLibrary();
-    final w = await lib.addWork(const WorkDraft(title: 'Walden'));
+    final w = await lib.addWork(WorkDraft(title: 'Walden', kind: kind));
     if (synced) await lib.setWorkServerId(w.id, 3);
     await tester.pumpWidget(
       MetadataScope(
@@ -110,5 +114,25 @@ void main() {
     meta.refuse = 'The server is busy.';
     await choose(tester);
     expect(find.text('The server is busy.'), findsOneWidget);
+  });
+
+  testWidgets('a work of the Other kind is checked among the books', (
+    tester,
+  ) async {
+    await open(tester, kind: WorkKind.other);
+    meta.checkResult = const [
+      ReverifyItem(type: 'book', id: 3, title: 'Walden', status: 'ok'),
+    ];
+    await choose(tester);
+    expect(meta.calls, contains('check book3'));
+  });
+
+  testWidgets('a film is checked among the films', (tester) async {
+    await open(tester, kind: WorkKind.film);
+    meta.checkResult = const [
+      ReverifyItem(type: 'movie', id: 3, title: 'Walden', status: 'ok'),
+    ];
+    await choose(tester);
+    expect(meta.calls, contains('check movie3'));
   });
 }

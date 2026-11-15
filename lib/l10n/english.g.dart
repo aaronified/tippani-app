@@ -1607,7 +1607,7 @@ const Map<String, String> englishTokens = {
   'app.work.in_reading_order': 'In reading order',
   'app.work.it_is_removed_from_this_phone': 'It is removed from this phone.',
   'app.work.no_favourites_in_this_work_yet': 'No favourites in this work yet.',
-  'app.work.no_source_linked': 'No source is linked to this work yet, so there is nothing to check against. Look it up from Edit first.',
+  'app.work.no_source_linked': 'No source is linked to this work yet, so there is nothing to check against. Use Find it online to link one.',
   'app.work.no_tag': 'No tag',
   'app.work.order': 'Order',
   'app.work.quotes_deleted_with_it.one': 'Its 1 quote is deleted with it. This cannot be undone.',
