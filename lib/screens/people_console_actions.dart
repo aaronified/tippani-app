@@ -425,3 +425,83 @@ Future<CharacterEdit?> characterForm(
     ),
   );
 }
+
+/// Where a picture for a person or character comes from.
+sealed class PictureChoice {
+  const PictureChoice();
+}
+
+/// A file on the phone.
+class FromPhone extends PictureChoice {
+  const FromPhone();
+}
+
+/// A picture at an address, which the server fetches.
+class FromLink extends PictureChoice {
+  const FromLink(this.url);
+  final String url;
+}
+
+/// Asks where the picture comes from: this phone, or an address (which it then asks for). Null when the reader
+/// backs out of either step.
+Future<PictureChoice?> choosePicture(
+  BuildContext context, {
+  required String title,
+}) async {
+  final from = await showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+          ),
+          ListTile(
+            leading: Icon(Ti.fileUpload),
+            title: Text(context.tr('app.person.from_this_phone')),
+            onTap: () => Navigator.pop(context, 'phone'),
+          ),
+          ListTile(
+            leading: Icon(Ti.externalLink),
+            title: Text(context.tr('app.person.from_a_link')),
+            onTap: () => Navigator.pop(context, 'link'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (from == 'phone') return const FromPhone();
+  if (from != 'link' || !context.mounted) return null;
+  final field = TextEditingController();
+  final go = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(context.tr('app.person.from_a_link')),
+      content: TextField(
+        controller: field,
+        autofocus: true,
+        keyboardType: TextInputType.url,
+        textCapitalization: TextCapitalization.none,
+        decoration: InputDecoration(
+          labelText: context.tr('app.person.link_to_a_picture'),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(context.tr('common.action.cancel.label')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: Text(context.tr('common.action.save.label')),
+        ),
+      ],
+    ),
+  );
+  final url = field.text.trim();
+  if (go != true || url.isEmpty) return null;
+  return FromLink(url);
+}

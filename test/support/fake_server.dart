@@ -172,6 +172,16 @@ class FakeServer {
   /// Every write to a person: the route (`PUT /people/id/3`) and what was sent.
   final personWrites = <(String, Object?)>[];
 
+  /// A picture fetched from an address (`image_url` on a person or a character) answers 502 with these words when set,
+  /// as the server does when it cannot reach the address.
+  String? refuseImageLink;
+
+  /// The file name a picture fetched from an address is kept under; it is served from `/covers`.
+  static const linkedPicture = 'linked0000000000.png';
+
+  /// Every write to a character: the route (`PUT /characters/7/image`) and what was sent.
+  final characterWrites = <(String, Object?)>[];
+
   /// Every shelf change accepted (`PUT /books|movies/{id}/status`): the route, the id and the body.
   final statusWrites = <Map<String, Object?>>[];
 
@@ -659,20 +669,50 @@ class FakeServer {
       if (r.method == 'PUT' && person[2] == null) {
         final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
         personWrites.add(('PUT $path', body));
+        if (body['image_url'] != null && refuseImageLink != null) {
+          return _json({'error': refuseImageLink}, 502);
+        }
         personDetails[id] = {
           ...row,
           for (final e in body.entries)
-            if (e.key == 'clear_image')
+            if (e.key == 'image_url')
+              'image_path': linkedPicture
+            else if (e.key == 'clear_image')
               'image_path': ''
             else if (e.key == 'clear_signature')
               'signature_path': ''
             else
               e.key: e.value,
         };
+        for (final rows in people.values) {
+          for (final r in rows) {
+            if (r['id'] == id) {
+              r['image_path'] = personDetails[id]!['image_path'];
+            }
+          }
+        }
         return _json(personDetails[id]!);
       }
       personWrites.add(('${r.method} $path', r.bodyBytes.length));
       return _json(row);
+    }
+    final characterImage = RegExp(r'^/characters/(\d+)/image$')
+        .firstMatch(path);
+    if (r.method == 'PUT' && characterImage != null) {
+      final id = int.parse(characterImage[1]!);
+      final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+      characterWrites.add(('PUT $path', body));
+      if (body['image_url'] != null && refuseImageLink != null) {
+        return _json({'error': refuseImageLink}, 502);
+      }
+      final row = characterDetails[id];
+      if (row == null) return _json({'error': 'not found'}, 404);
+      final path0 = body['image_url'] != null ? linkedPicture : '';
+      row['image_path'] = path0;
+      for (final c in characterRows) {
+        if (c['id'] == id) c['image_path'] = path0;
+      }
+      return _json({'image_path': path0});
     }
     final character = RegExp(r'^/characters/(\d+)$').firstMatch(path);
     if (r.method == 'GET' && character != null) {

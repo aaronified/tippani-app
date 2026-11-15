@@ -170,6 +170,10 @@ abstract class PeopleConsole {
   Future<void> uploadCharacterImage(int id, Uint8List bytes, String fileName);
   Future<void> clearCharacterImage(int id);
 
+  /// Sets the picture from an address: the server fetches it and keeps its own copy. Throws with the server's words
+  /// when the address cannot be fetched.
+  Future<void> setCharacterImageFromLink(int id, String url);
+
   /// Replaces every spelling of a record: the first line is the name it prints under, the rest are what else it is
   /// called. [character] says which table.
   Future<void> setNames({
@@ -283,6 +287,12 @@ class PairedPeopleConsole implements PeopleConsole {
   Future<void> clearCharacterImage(int id) =>
       serverCall<void>(_controller, (c) async {
         await c.putJson('/characters/$id/image', {'path': ''});
+      });
+
+  @override
+  Future<void> setCharacterImageFromLink(int id, String url) =>
+      serverCall<void>(_controller, (c) async {
+        await c.putJson('/characters/$id/image', {'image_url': url});
       });
 
   @override

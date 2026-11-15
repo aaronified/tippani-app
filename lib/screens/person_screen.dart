@@ -360,6 +360,17 @@ class _PersonScreenState extends State<PersonScreen> {
   }
 
   Future<void> _choose({required bool signature}) async {
+    if (!signature) {
+      final pick = await choosePicture(
+        context,
+        title: context.tr('app.person.choose_a_portrait'),
+      );
+      if (pick == null || !mounted) return;
+      if (pick is FromLink) {
+        await _run((s) => s.setPortraitFromLink(widget.id, pick.url));
+        return;
+      }
+    }
     final path = await (widget.photos ?? DevicePhotos()).choose();
     if (path == null || !mounted) return;
     final bytes = await (widget.readBytes ?? (p) => File(p).readAsBytes())(
@@ -1082,6 +1093,20 @@ class _CharacterScreenState extends State<CharacterScreen> {
   Future<void> _picture() async {
     final c = _console, ch = _c;
     if (c == null || ch == null) return;
+    final pick = await choosePicture(
+      context,
+      title: context.tr('anthologies.front.cover.choose'),
+    );
+    if (pick == null || !mounted) return;
+    if (pick is FromLink) {
+      if (await consoleCall(
+        context,
+        () => c.setCharacterImageFromLink(ch.id, pick.url),
+      )) {
+        await _afterChange();
+      }
+      return;
+    }
     final path = await (widget.photos ?? DevicePhotos()).choose();
     if (path == null || !mounted) return;
     final bytes = await File(path).readAsBytes();

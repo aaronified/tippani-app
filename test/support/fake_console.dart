@@ -136,6 +136,12 @@ class FakeConsole implements PeopleConsole {
   }
 
   @override
+  Future<void> setCharacterImageFromLink(int id, String url) async {
+    calls.add('characterImageLink $id $url');
+    _maybe();
+  }
+
+  @override
   Future<void> setNames({
     required bool character,
     required int id,

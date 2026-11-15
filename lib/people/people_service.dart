@@ -342,6 +342,10 @@ abstract class PeopleService {
   /// Sets the portrait from a picture the reader chose.
   Future<void> uploadPortrait(int id, Uint8List bytes, String fileName);
 
+  /// Sets the portrait from a picture at an address: the server fetches it and keeps its own copy. Throws with the
+  /// server's words when the address cannot be fetched.
+  Future<void> setPortraitFromLink(int id, String url);
+
   /// Takes the portrait away.
   Future<void> clearPortrait(int id);
 
@@ -387,6 +391,12 @@ class PairedPeopleService implements PeopleService {
   Future<void> uploadPortrait(int id, Uint8List bytes, String fileName) =>
       serverCall<void>(_controller, (c) async {
         await c.postFile('/people/id/$id/portrait', 'file', bytes, fileName);
+      });
+
+  @override
+  Future<void> setPortraitFromLink(int id, String url) =>
+      serverCall<void>(_controller, (c) async {
+        await c.putJson('/people/id/$id', {'image_url': url});
       });
 
   @override
