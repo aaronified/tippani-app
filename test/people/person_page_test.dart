@@ -9,6 +9,7 @@ import 'package:tippani/library/cover_cache.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/library/quote_chips.dart';
 import 'package:tippani/people/face_stack.dart';
+import 'package:tippani/people/people_console.dart';
 import 'package:tippani/people/people_directory.dart';
 import 'package:tippani/people/people_service.dart';
 import 'package:tippani/screens/library_widgets.dart';
@@ -144,7 +145,13 @@ Future<_Rig> _rig() async {
 Widget _scoped(_Rig r, Widget child) => MaterialApp(
   builder: (context, page) => PeopleDirectoryScope(
     directory: r.directory,
-    child: PeopleServiceScope(service: r.service, child: page!),
+    child: PeopleServiceScope(
+      service: r.service,
+      child: PeopleConsoleScope(
+        console: PairedPeopleConsole(r.controller),
+        child: page!,
+      ),
+    ),
   ),
   home: Scaffold(body: child),
 );
@@ -289,6 +296,82 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Show their quotes'), findsOneWidget);
+    });
+
+    testWidgets('a name with no record can be added, and then has a menu', (
+      tester,
+    ) async {
+      final r = (await tester.runAsync(_rig))!;
+      await tester.pumpWidget(
+        _scoped(
+          r,
+          QuoteChipsRow(
+            quote: _quote(speaker: 'Nobody Known'),
+            work: null,
+            onTap: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('Nobody Known'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PopupMenuButton<String>), findsNothing);
+      await tester.tap(find.text('Add Nobody Known to your library'));
+      await _settle(tester);
+      expect(find.textContaining('has no page for Nobody Known'), findsNothing);
+      expect(find.byType(PopupMenuButton<String>), findsOneWidget);
+      final sent = r.server.personWrites.map((w) => w.$1).toList();
+      expect(sent, contains('POST /people/ensure'));
+      expect(
+        sent.any(
+          (w) => w.startsWith('POST /people/id/') && w.endsWith('/fetch'),
+        ),
+        isTrue,
+        reason: 'the new record asks its sources for a portrait and details',
+      );
+    });
+
+    testWidgets('a character with no record can be made from its page', (
+      tester,
+    ) async {
+      _tall(tester);
+      final r = (await tester.runAsync(_rig))!;
+      await tester.pumpWidget(
+        _scoped(
+          r,
+          QuoteChipsRow(
+            quote: _quote(speaker: 'Queequeg'),
+            work: Work(
+              id: 2,
+              kind: WorkKind.film,
+              title: 'Moby Dick (1956)',
+              creator: '',
+              year: 1956,
+              language: '',
+              createdAt: DateTime.utc(2026),
+              updatedAt: DateTime.utc(2026),
+              details: const WorkDetails(
+                cast: [
+                  CastMember(
+                    character: 'Queequeg',
+                    actor: 'Friedrich von Ledebur',
+                  ),
+                ],
+              ),
+            ),
+            onTap: (_) {},
+          ),
+        ),
+      );
+      await tester.tap(find.text('Queequeg'));
+      await tester.pumpAndSettle();
+      expect(find.byType(PopupMenuButton<String>), findsNothing);
+      await tester.tap(find.text('Add Queequeg to your library'));
+      await _settle(tester);
+      expect(find.byType(PopupMenuButton<String>), findsOneWidget);
+      expect(
+        r.server.personWrites.map((w) => w.$1),
+        contains('POST /characters'),
+      );
     });
 
     testWidgets(

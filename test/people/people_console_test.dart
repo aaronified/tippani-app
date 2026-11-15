@@ -56,6 +56,9 @@ class _Service implements PeopleService {
 
   @override
   Future<void> clearSignature(int id) async {}
+
+  @override
+  Future<int> ensure(String kind, String name) async => 1;
 }
 
 class _Photos implements PhotoSource {

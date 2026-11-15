@@ -646,6 +646,44 @@ class FakeServer {
         });
       }
     }
+    if (r.method == 'POST' && path == '/people/ensure') {
+      final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+      personWrites.add(('POST /people/ensure', body));
+      final id = 100 + personDetails.length;
+      final kind = '${body['kind']}';
+      personDetails[id] = {
+        'id': id,
+        'name': body['name'],
+        'kinds': [kind],
+        'aliases': [],
+        'credits': [],
+        'roles': [],
+        'lines': [],
+      };
+      (people[kind] ??= []).add({
+        'id': id,
+        'name': body['name'],
+        'image_path': '',
+        'signature_path': '',
+      });
+      return _json(personDetails[id]!);
+    }
+    if (r.method == 'POST' && path == '/characters') {
+      final body = Map<String, Object?>.from(jsonDecode(r.body) as Map);
+      personWrites.add(('POST /characters', body));
+      final id = 200 + characterDetails.length;
+      characterDetails[id] = {
+        'id': id,
+        'name': body['name'],
+        'description': '',
+        'image_path': '',
+        'aliases': [],
+        'appearances': [],
+        'lines': [],
+      };
+      characterRows.add({'id': id, 'name': body['name'], 'image_path': ''});
+      return _json(characterDetails[id]!, 201);
+    }
     if (r.method == 'GET' && path == '/people') {
       peopleReads++;
       return _json({'people': people[r.url.queryParameters['kind']] ?? []});

@@ -53,6 +53,7 @@ Future<void> openPersonPage(
         builder: (_) => PersonScreen(
           id: (p ?? dir?.anyPerson(chip.name))?.id ?? 0,
           name: chip.name,
+          kind: chip.kind == ChipKind.author ? 'author' : 'speaker',
           onFilter: pick,
           photos: photos,
         ),
@@ -283,6 +284,7 @@ class PersonScreen extends StatefulWidget {
     required this.id,
     required this.name,
     required this.onFilter,
+    this.kind = 'author',
     this.photos,
     this.readBytes,
   });
@@ -290,6 +292,9 @@ class PersonScreen extends StatefulWidget {
   /// The person's id on the server, or 0 when the server has no record of them.
   final int id;
   final String name;
+
+  /// The role a record made from this page is filed under (author, speaker ...).
+  final String kind;
 
   /// Pressing "Show their quotes": the page closes and the caller filters.
   final ValueChanged<ChipFilter> onFilter;
@@ -304,6 +309,8 @@ class PersonScreen extends StatefulWidget {
 }
 
 class _PersonScreenState extends State<PersonScreen> {
+  /// The record's id: the page's own, until the reader makes a record for a name the server did not hold.
+  late int _id = widget.id;
   PersonDetail? _p;
   bool _loaded = false;
   String? _error;
@@ -323,12 +330,12 @@ class _PersonScreenState extends State<PersonScreen> {
 
   Future<void> _load() async {
     final s = _service;
-    if (s == null || !s.available || widget.id == 0) {
+    if (s == null || !s.available || _id == 0) {
       setState(() => _loaded = true);
       return;
     }
     try {
-      final p = await s.person(widget.id);
+      final p = await s.person(_id);
       if (!mounted) return;
       setState(() {
         _p = p;
@@ -368,8 +375,8 @@ class _PersonScreenState extends State<PersonScreen> {
     final fileName = path.split(RegExp(r'[\\/]')).last;
     await _run(
       (s) => signature
-          ? s.uploadSignature(widget.id, bytes, fileName)
-          : s.uploadPortrait(widget.id, bytes, fileName),
+          ? s.uploadSignature(_id, bytes, fileName)
+          : s.uploadPortrait(_id, bytes, fileName),
     );
   }
 
@@ -560,7 +567,7 @@ class _PersonScreenState extends State<PersonScreen> {
     if (go != true || name.text.trim().isEmpty) return;
     await _run(
       (s) => s.save(
-        widget.id,
+        _id,
         PersonEdit(
           name: name.text.trim(),
           born: born.text.trim(),
@@ -571,6 +578,30 @@ class _PersonScreenState extends State<PersonScreen> {
         ),
       ),
     );
+  }
+
+  /// Makes the record the server did not hold, then asks its sources for a portrait and details: a name that is
+  /// only printed on a quote gets the same page as one the server already knew.
+  Future<void> _addToLibrary() async {
+    final s = _service;
+    if (s == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final id = await s.ensure(widget.kind, widget.name);
+      try {
+        await s.fetch(id);
+      } on ServerException {
+        // the record is made; a source that has nothing, or is down, leaves it plain for now
+      }
+      await _dir?.refresh();
+      if (!mounted) return;
+      setState(() => _id = id);
+      await _load();
+    } on ServerException catch (e) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 
   @override
@@ -600,17 +631,17 @@ class _PersonScreenState extends State<PersonScreen> {
                   case 'fetch':
                     final messenger = ScaffoldMessenger.of(context);
                     _run((s) async {
-                      final said = await s.fetch(widget.id);
+                      final said = await s.fetch(_id);
                       messenger.showSnackBar(SnackBar(content: Text(said)));
                     });
                   case 'portrait':
                     _choose(signature: false);
                   case 'noportrait':
-                    _run((s) => s.clearPortrait(widget.id));
+                    _run((s) => s.clearPortrait(_id));
                   case 'signature':
                     _choose(signature: true);
                   case 'nosignature':
-                    _run((s) => s.clearSignature(widget.id));
+                    _run((s) => s.clearSignature(_id));
                   case 'names':
                     _names();
                   case 'merge':
@@ -749,7 +780,7 @@ class _PersonScreenState extends State<PersonScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: Text(
                       _error ??
-                          (widget.id == 0
+                          (_id == 0
                               ? context.tr(
                                   'app.person.your_server_has_no_page_for',
                                   {'name': name},
@@ -759,6 +790,23 @@ class _PersonScreenState extends State<PersonScreen> {
                                 )),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                if (p == null && _id == 0 && (_service?.available ?? false))
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        key: const ValueKey('add-to-library'),
+                        onPressed: _addToLibrary,
+                        icon: const Icon(Ti.plus),
+                        label: Text(
+                          context.tr('app.person.add_to_library', {
+                            'name': name,
+                          }),
+                        ),
                       ),
                     ),
                   ),
@@ -985,6 +1033,7 @@ class CharacterScreen extends StatefulWidget {
 }
 
 class _CharacterScreenState extends State<CharacterScreen> {
+  late int _id = widget.id;
   CharacterDetail? _c;
   bool _loaded = false;
   String? _error;
@@ -1004,12 +1053,12 @@ class _CharacterScreenState extends State<CharacterScreen> {
 
   Future<void> _load() async {
     final s = _service;
-    if (s == null || !s.available || widget.id == 0) {
+    if (s == null || !s.available || _id == 0) {
       setState(() => _loaded = true);
       return;
     }
     try {
-      final c = await s.character(widget.id);
+      final c = await s.character(_id);
       if (!mounted) return;
       setState(() {
         _c = c;
@@ -1027,6 +1076,24 @@ class _CharacterScreenState extends State<CharacterScreen> {
   PeopleConsole? get _console {
     final c = PeopleConsoleScope.of(context);
     return c != null && c.available ? c : null;
+  }
+
+  /// Makes the character the server did not hold, so the page gets the menu every other character has.
+  Future<void> _create() async {
+    final c = _console;
+    if (c == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final id = await c.createCharacter(widget.name);
+      await _dir?.refresh();
+      if (!mounted) return;
+      setState(() => _id = id);
+      await _load();
+    } on ServerException catch (e) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 
   Future<void> _afterChange() async {
@@ -1324,7 +1391,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: Text(
                       _error ??
-                          (widget.id == 0
+                          (_id == 0
                               ? context.tr(
                                   'app.person.your_server_has_no_page_for',
                                   {'name': name},
@@ -1334,6 +1401,23 @@ class _CharacterScreenState extends State<CharacterScreen> {
                                 )),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                if (c == null && _id == 0 && _console != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        key: const ValueKey('add-to-library'),
+                        onPressed: _create,
+                        icon: const Icon(Ti.plus),
+                        label: Text(
+                          context.tr('app.person.add_to_library', {
+                            'name': name,
+                          }),
+                        ),
                       ),
                     ),
                   ),

@@ -1422,3 +1422,4 @@ app.materials.slot.card = Cards
 app.materials.slot.cover = Covers
 app.materials.dials_hint = How each material in use catches the light. Stone gives a small bright highlight; wool a wide, dim one.
 app.materials.not_yet = Materials come from your Tippani account. Pair this phone with your server and they appear here.
+app.person.add_to_library = Add {name} to your library

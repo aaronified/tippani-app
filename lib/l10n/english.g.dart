@@ -1089,6 +1089,7 @@ const Map<String, String> englishTokens = {
   'app.people_console_actions.who_they_are': 'Who they are',
   'app.people_service.fetched_what_the_server_could_find': 'Fetched what the server could find.',
   'app.person.about': 'About',
+  'app.person.add_to_library': 'Add {name} to your library',
   'app.person.also_written_as': 'Also written as',
   'app.person.appears_in': 'Appears in',
   'app.person.born_born': 'Born {born}',

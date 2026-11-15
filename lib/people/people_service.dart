@@ -353,6 +353,9 @@ abstract class PeopleService {
 
   /// Takes the signature away.
   Future<void> clearSignature(int id);
+
+  /// Finds or makes the record for [name] under [kind] (author, speaker ...) and returns its id.
+  Future<int> ensure(String kind, String name);
 }
 
 /// The paired server's people.
@@ -415,6 +418,14 @@ class PairedPeopleService implements PeopleService {
       serverCall<void>(_controller, (c) async {
         await c.putJson('/people/id/$id', {'clear_signature': true});
       });
+
+  @override
+  Future<int> ensure(String kind, String name) => serverCall<int>(_controller, (
+    c,
+  ) async {
+    final r = await c.postJson('/people/ensure', {'kind': kind, 'name': name});
+    return r is Map ? _int(r['id']) : 0;
+  });
 }
 
 /// Gives the screens below it the [PeopleService].
