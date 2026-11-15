@@ -179,6 +179,12 @@ class FakeServer {
   /// The file name a picture fetched from an address is kept under; it is served from `/covers`.
   static const linkedPicture = 'linked0000000000.png';
 
+  /// What the server's signature lookup finds: a data address of a picture, or null for none (`found: false`).
+  String? signatureLookup;
+
+  /// Every signature upload accepted: the multipart form as text, so a test can read the fields beside the file.
+  final signatureUploads = <String>[];
+
   /// Every write to a character: the route (`PUT /characters/7/image`) and what was sent.
   final characterWrites = <(String, Object?)>[];
 
@@ -692,6 +698,18 @@ class FakeServer {
           }
         }
         return _json(personDetails[id]!);
+      }
+      if (r.method == 'POST' && person[2] == '/signature/fetch') {
+        personWrites.add(('POST $path', 0));
+        return _json(
+          signatureLookup == null
+              ? {'found': false}
+              : {'found': true, 'image': signatureLookup},
+        );
+      }
+      if (r.method == 'POST' && person[2] == '/signature') {
+        signatureUploads.add(utf8.decode(r.bodyBytes, allowMalformed: true));
+        personDetails[id] = {...row, 'signature_path': 'sig0000000000.png'};
       }
       personWrites.add(('${r.method} $path', r.bodyBytes.length));
       return _json(row);

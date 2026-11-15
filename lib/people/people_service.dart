@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
@@ -356,8 +357,18 @@ abstract class PeopleService {
   /// Asks the server's sources for a portrait, bio and dates; returns what it says it found.
   Future<String> fetch(int id);
 
-  /// Sets the signature from a picture the reader chose.
-  Future<void> uploadSignature(int id, Uint8List bytes, String fileName);
+  /// Sets the signature from a picture the reader chose. [source] credits where it came from ('wikidata' for one
+  /// the server looked up; empty for the reader's own).
+  Future<void> uploadSignature(
+    int id,
+    Uint8List bytes,
+    String fileName, {
+    String source = '',
+  });
+
+  /// Asks the server to look for the person's signature. Null when it found none; otherwise the picture, which is
+  /// not stored until the reader accepts it (then it goes through [uploadSignature]).
+  Future<Uint8List?> lookUpSignature(int id);
 
   /// Takes the signature away.
   Future<void> clearSignature(int id);
@@ -419,9 +430,34 @@ class PairedPeopleService implements PeopleService {
   });
 
   @override
-  Future<void> uploadSignature(int id, Uint8List bytes, String fileName) =>
-      serverCall<void>(_controller, (c) async {
-        await c.postFile('/people/id/$id/signature', 'file', bytes, fileName);
+  Future<void> uploadSignature(
+    int id,
+    Uint8List bytes,
+    String fileName, {
+    String source = '',
+  }) => serverCall<void>(_controller, (c) async {
+    await c.postFile(
+      '/people/id/$id/signature',
+      'file',
+      bytes,
+      fileName,
+      fields: {if (source.isNotEmpty) 'source': source},
+    );
+  });
+
+  @override
+  Future<Uint8List?> lookUpSignature(int id) =>
+      serverCall<Uint8List?>(_controller, (c) async {
+        final r = await c.postJson('/people/id/$id/signature/fetch', const {});
+        if (r is! Map || r['found'] != true) return null;
+        final image = '${r['image'] ?? ''}';
+        final at = image.indexOf(',');
+        if (at < 0) return null;
+        try {
+          return base64Decode(image.substring(at + 1));
+        } on FormatException {
+          return null;
+        }
       });
 
   @override

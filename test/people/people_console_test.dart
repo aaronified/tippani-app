@@ -54,8 +54,12 @@ class _Service implements PeopleService {
   Future<void> uploadSignature(
     int id,
     Uint8List bytes,
-    String fileName,
-  ) async {}
+    String fileName, {
+    String source = '',
+  }) async {}
+
+  @override
+  Future<Uint8List?> lookUpSignature(int id) async => null;
 
   @override
   Future<void> clearSignature(int id) async {}

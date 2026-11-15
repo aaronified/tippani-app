@@ -248,4 +248,47 @@ void main() {
       },
     );
   });
+
+  group('looking up a signature', () {
+    String pngAddress() => 'data:image/png;base64,${base64Encode(_png)}';
+
+    testWidgets('what is found is shown, and kept only when accepted', (
+      tester,
+    ) async {
+      final r = await _openPerson(tester);
+      r.server.signatureLookup = pngAddress();
+      await _openMenu(tester, 'Look up a signature');
+      expect(find.byType(Image), findsOneWidget);
+      expect(r.server.signatureUploads, isEmpty, reason: 'not kept yet');
+      await tester.tap(find.text('Keep this signature'));
+      await _settle(tester);
+      expect(r.server.signatureUploads.single, contains('wikidata'));
+      expect(r.server.personDetails[3]!['signature_path'], isNotEmpty);
+      await tester.tap(find.byTooltip('More').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Remove the signature'), findsOneWidget);
+    });
+
+    testWidgets('a found signature can be discarded', (tester) async {
+      final r = await _openPerson(tester);
+      r.server.signatureLookup = pngAddress();
+      await _openMenu(tester, 'Look up a signature');
+      await tester.tap(find.text('Discard'));
+      await _settle(tester);
+      expect(r.server.signatureUploads, isEmpty);
+      expect(r.server.personDetails[3]!['signature_path'], '');
+    });
+
+    testWidgets('no signature found is said plainly', (tester) async {
+      final r = await _openPerson(tester);
+      await _openMenu(tester, 'Look up a signature');
+      await tester.pump();
+      expect(
+        find.text('Wikidata has no signature for this person'),
+        findsOneWidget,
+      );
+      expect(find.byType(Image), findsNothing);
+      expect(r.server.signatureUploads, isEmpty);
+    });
+  });
 }

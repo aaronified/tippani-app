@@ -384,6 +384,61 @@ class _PersonScreenState extends State<PersonScreen> {
     );
   }
 
+  /// Looks for a signature, shows what was found and keeps it only when the reader accepts it.
+  Future<void> _lookUpSignature() async {
+    final s = _service;
+    if (s == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final Uint8List? found;
+    try {
+      found = await s.lookUpSignature(widget.id);
+    } on ServerException catch (e) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (!mounted) return;
+    if (found == null) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(content: Text(context.tr('identity.signature.fetch.none'))),
+        );
+      return;
+    }
+    final keep = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          context.tr('identity.signature.dialog.title', {
+            'name': _p?.name ?? widget.name,
+          }),
+        ),
+        content: Image.memory(found!, fit: BoxFit.contain),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.tr('app.person.discard')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(context.tr('identity.signature.save.tip')),
+          ),
+        ],
+      ),
+    );
+    if (keep != true || !mounted) return;
+    await _run(
+      (s) => s.uploadSignature(
+        widget.id,
+        found!,
+        'signature.png',
+        source: 'wikidata',
+      ),
+    );
+  }
+
   PeopleConsole? get _console {
     final c = PeopleConsoleScope.of(context);
     return c != null && c.available ? c : null;
@@ -618,6 +673,8 @@ class _PersonScreenState extends State<PersonScreen> {
                     _choose(signature: false);
                   case 'noportrait':
                     _run((s) => s.clearPortrait(widget.id));
+                  case 'lookupsignature':
+                    _lookUpSignature();
                   case 'signature':
                     _choose(signature: true);
                   case 'nosignature':
@@ -653,6 +710,10 @@ class _PersonScreenState extends State<PersonScreen> {
                 PopupMenuItem(
                   value: 'signature',
                   child: Text(context.tr('app.person.choose_a_signature')),
+                ),
+                PopupMenuItem(
+                  value: 'lookupsignature',
+                  child: Text(context.tr('app.person.look_up_a_signature')),
                 ),
                 if (p.signature.isNotEmpty)
                   PopupMenuItem(
