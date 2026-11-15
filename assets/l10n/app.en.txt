@@ -1437,3 +1437,7 @@ app.cast.fetch_imdb = Fetch cast from IMDb
 app.cast.imdb_link = IMDb title link or id (tt...)
 app.cast.fetch = Fetch
 app.cast.remove_performer = Remove the performer only
+app.work.edit_details = Edit details
+app.work.details_genres_hint = Separate genres with commas
+app.work.details_links_hint = One link per line
+app.work.details_number_needed = Pages and the series number must be numbers.

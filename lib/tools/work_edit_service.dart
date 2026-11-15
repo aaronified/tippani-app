@@ -29,8 +29,40 @@ abstract class WorkEditService {
   /// Takes the row off the list.
   Future<void> removeCast(int castId);
 
+  /// The server's whole record for [work], as the edit form shows it (including what the page does not: its
+  /// links and series number).
+  Future<Map<String, Object?>> record(Work work);
+
+  /// Saves the details the form edits. The server REPLACES the whole record on a save, so this reads it fresh,
+  /// puts the edited fields over it and sends it all back: nothing the phone does not show is lost.
+  Future<void> saveDetails(Work work, WorkDetailsEdit edit);
+
   /// Keeps the character and takes the performer off it.
   Future<void> removeCastActor(int castId);
+}
+
+/// The details of a work a reader edits from the phone. A null field is one this kind of work does not have
+/// (pages and ISBN on a film), and is left out of what is sent.
+class WorkDetailsEdit {
+  const WorkDetailsEdit({
+    required this.description,
+    required this.genres,
+    required this.series,
+    required this.seriesIndex,
+    required this.links,
+    this.publisher,
+    this.subtitle,
+    this.pages,
+    this.isbn,
+  });
+
+  final String description;
+  final List<String> genres;
+  final String series;
+  final double seriesIndex;
+  final String links;
+  final String? publisher, subtitle, isbn;
+  final int? pages;
 }
 
 class PairedWorkEdit implements WorkEditService {
@@ -81,6 +113,31 @@ class PairedWorkEdit implements WorkEditService {
   Future<void> removeCast(int castId) =>
       serverCall<void>(_controller, (c) async {
         await c.delete('/cast/$castId');
+      });
+
+  @override
+  Future<Map<String, Object?>> record(Work work) =>
+      serverCall<Map<String, Object?>>(_controller, (c) async {
+        return asMap(await c.getJsonLive('${_route(work)}/${_id(work)}'));
+      });
+
+  @override
+  Future<void> saveDetails(Work work, WorkDetailsEdit edit) =>
+      serverCall<void>(_controller, (c) async {
+        final path = '${_route(work)}/${_id(work)}';
+        final cur = asMap(await c.getJsonLive(path));
+        await c.putJson(path, {
+          ...cur,
+          'description': edit.description,
+          'genres': edit.genres,
+          'series': edit.series,
+          'series_index': edit.seriesIndex,
+          'links': edit.links,
+          'publisher': ?edit.publisher,
+          'subtitle': ?edit.subtitle,
+          'pages': ?edit.pages,
+          'isbn': ?edit.isbn,
+        });
       });
 
   @override

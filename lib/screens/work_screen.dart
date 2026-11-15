@@ -12,6 +12,8 @@ import '../metadata/metadata_service.dart';
 import '../sync/auto_sync.dart';
 import '../library/cover_cache.dart';
 import '../tools/work_details_source.dart';
+import '../tools/work_edit_service.dart';
+import 'work_details_form_screen.dart';
 import 'work_details_section.dart';
 
 import '../harness/harness.dart' show BackupPicker;
@@ -188,6 +190,24 @@ class _WorkScreenState extends State<WorkScreen> {
     final d = await source.fetch(w);
     if (d == null || !mounted) return;
     await widget.store.setWorkDetails(w.id, d);
+    if (mounted) await _load();
+  }
+
+  /// The details form: what the server holds beyond the title (description, genres, series, publisher, pages,
+  /// ISBN, links), written back to the server and then pulled into this phone.
+  Future<void> _editDetails() async {
+    final w = _work;
+    final service = WorkEditScope.of(context);
+    if (w == null || service == null) return;
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => WorkDetailsFormScreen(work: w, service: service),
+      ),
+    );
+    if (saved != true || !mounted) return;
+    await _refetchDetails();
+    if (!mounted) return;
+    await AutoSyncScope.of(context)?.syncNow();
     if (mounted) await _load();
   }
 
@@ -498,6 +518,8 @@ class _WorkScreenState extends State<WorkScreen> {
                           );
                         case 'fetch':
                           _fetchMetadata();
+                        case 'details':
+                          _editDetails();
                         case 'cover':
                           _chooseCover();
                         case 'context':
@@ -522,6 +544,12 @@ class _WorkScreenState extends State<WorkScreen> {
                           context.tr('app.library.save_as_markdown_file'),
                         ),
                       ),
+                      if (w.serverId != null &&
+                          WorkEditScope.of(context) != null)
+                        PopupMenuItem(
+                          value: 'details',
+                          child: Text(context.tr('app.work.edit_details')),
+                        ),
                       if (w.serverId != null &&
                           MetadataScope.of(context)?.available == true)
                         PopupMenuItem(
