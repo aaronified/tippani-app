@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-11-15
+
 ### Added
 
 - Fetch metadata for one work: a work's menu has Fetch metadata, which asks the server's sources what they now say and lets you take each field you like, the same review Metadata tools has. Find it online links a work that has no source yet.
