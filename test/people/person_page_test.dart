@@ -203,6 +203,14 @@ Future<void> _settle(WidgetTester tester) async {
   }
 }
 
+/// Settles until [what] is on screen: the server calls and the directory's disk copy run outside the test clock, and a
+/// loaded machine takes longer than a fixed few turns.
+Future<void> _until(WidgetTester tester, Finder what) async {
+  for (var i = 0; i < 40 && what.evaluate().isEmpty; i++) {
+    await _settle(tester);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -316,7 +324,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(PopupMenuButton<String>), findsNothing);
       await tester.tap(find.text('Add Nobody Known to your library'));
-      await _settle(tester);
+      await _until(tester, find.byType(PopupMenuButton<String>));
       expect(find.textContaining('has no page for Nobody Known'), findsNothing);
       expect(find.byType(PopupMenuButton<String>), findsOneWidget);
       final sent = r.server.personWrites.map((w) => w.$1).toList();
@@ -366,7 +374,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(PopupMenuButton<String>), findsNothing);
       await tester.tap(find.text('Add Queequeg to your library'));
-      await _settle(tester);
+      await _until(tester, find.byType(PopupMenuButton<String>));
       expect(find.byType(PopupMenuButton<String>), findsOneWidget);
       expect(
         r.server.personWrites.map((w) => w.$1),
