@@ -136,6 +136,49 @@ class FakeConsole implements PeopleConsole {
   }
 
   @override
+  Future<void> setCharacterImageFromLink(int id, String url) async {
+    calls.add('characterImageLink $id $url');
+    _maybe();
+  }
+
+  @override
+  Future<void> promoteAppearance(int id, int castId) async {
+    calls.add('promote $id $castId');
+    _maybe();
+  }
+
+  List<LibraryWork> works = const [
+    LibraryWork(kind: 'book', id: 1, title: 'Moby-Dick', year: 1851),
+    LibraryWork(kind: 'movie', id: 2, title: 'Casablanca', year: 1942),
+  ];
+
+  /// How many quotes still name the character on the work being left; the server refuses until told what to do.
+  int quotesNamingThem = 0;
+
+  @override
+  Future<List<LibraryWork>> libraryWorks() async => works;
+
+  @override
+  Future<void> addToWork(int id, LibraryWork work, {String actor = ''}) async {
+    calls.add('addToWork $id ${work.kind} ${work.id} $actor');
+    _maybe();
+  }
+
+  @override
+  Future<void> removeFromWork(
+    int id,
+    int castId, {
+    String? quotes,
+    String to = '',
+  }) async {
+    calls.add('removeFromWork $id $castId ${quotes ?? '-'} $to');
+    _maybe();
+    if (quotes == null && quotesNamingThem > 0) {
+      throw QuotesStillNameThem(quotesNamingThem);
+    }
+  }
+
+  @override
   Future<void> setNames({
     required bool character,
     required int id,

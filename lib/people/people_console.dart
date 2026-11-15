@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 
+import '../api/api_client.dart';
 import '../api/server_call.dart';
 import '../app_controller.dart';
 
@@ -21,6 +22,28 @@ List<WorkRef> _works(Object? v) => [
       if (x is Map && _s(x['title']).isNotEmpty)
         WorkRef(kind: _s(x['kind']), title: _s(x['title']), id: _int(x['id'])),
 ];
+
+/// A work in the library a character can be put on: a 'book', or a 'movie' (films, shows and games alike).
+class LibraryWork {
+  const LibraryWork({
+    required this.kind,
+    required this.id,
+    required this.title,
+    this.creator = '',
+    this.year = 0,
+  });
+  final String kind, title, creator;
+  final int id, year;
+}
+
+/// Leaving a work while quotes on it still name the character: the server refuses (409) and says how many, and
+/// the reader chooses whether those quotes lose the name or take another.
+class QuotesStillNameThem implements Exception {
+  const QuotesStillNameThem(this.count);
+  final int count;
+  @override
+  String toString() => '$count quotes still name them';
+}
 
 /// One person in the metadata console: the record the server keeps, with how much of the library points at it.
 class PersonRecord {
@@ -170,6 +193,29 @@ abstract class PeopleConsole {
   Future<void> uploadCharacterImage(int id, Uint8List bytes, String fileName);
   Future<void> clearCharacterImage(int id);
 
+  /// Sets the picture from an address: the server fetches it and keeps its own copy. Throws with the server's words
+  /// when the address cannot be fetched.
+  Future<void> setCharacterImageFromLink(int id, String url);
+
+  /// Makes the picture one of the character's appearances already holds (the cast row [castId]).
+  Future<void> promoteAppearance(int id, int castId);
+
+  /// The works in the library, books then films, for choosing where a character is added.
+  Future<List<LibraryWork>> libraryWorks();
+
+  /// Puts a character on a work, optionally naming who played them. Throws a [ServerException] with the server's
+  /// words when they are already on it (409) or the work's cast list is full (400).
+  Future<void> addToWork(int id, LibraryWork work, {String actor = ''});
+
+  /// Takes a character off the work the cast row [castId] belongs to. Throws [QuotesStillNameThem] while quotes on
+  /// that work still name them and [quotes] is null; 'clear' empties their speaker, 'replace' writes [to] instead.
+  Future<void> removeFromWork(
+    int id,
+    int castId, {
+    String? quotes,
+    String to = '',
+  });
+
   /// Replaces every spelling of a record: the first line is the name it prints under, the rest are what else it is
   /// called. [character] says which table.
   Future<void> setNames({
@@ -284,6 +330,82 @@ class PairedPeopleConsole implements PeopleConsole {
       serverCall<void>(_controller, (c) async {
         await c.putJson('/characters/$id/image', {'path': ''});
       });
+
+  @override
+  Future<void> setCharacterImageFromLink(int id, String url) =>
+      serverCall<void>(_controller, (c) async {
+        await c.putJson('/characters/$id/image', {'image_url': url});
+      });
+
+  @override
+  Future<void> promoteAppearance(int id, int castId) =>
+      serverCall<void>(_controller, (c) async {
+        await c.putJson('/characters/$id/image', {'cast_id': castId});
+      });
+
+  @override
+  Future<List<LibraryWork>> libraryWorks() =>
+      serverCall(_controller, (c) async {
+        Future<List<LibraryWork>> list(
+          String route,
+          String key,
+          String kind,
+        ) async {
+          final r = await c.getJson(route);
+          final rows = r is Map ? r[key] : null;
+          return [
+            if (rows is List)
+              for (final x in rows)
+                if (x is Map && _s(x['title']).isNotEmpty && _int(x['id']) > 0)
+                  LibraryWork(
+                    kind: kind,
+                    id: _int(x['id']),
+                    title: _s(x['title']),
+                    creator: _s(x['creator']),
+                    year: _int(x['year']),
+                  ),
+          ];
+        }
+
+        return [
+          ...await list('/books', 'books', 'book'),
+          ...await list('/movies', 'movies', 'movie'),
+        ];
+      });
+
+  @override
+  Future<void> addToWork(int id, LibraryWork work, {String actor = ''}) =>
+      serverCall<void>(_controller, (c) async {
+        await c.postJson('/characters/$id/works', {
+          'kind': work.kind,
+          'work_id': work.id,
+          if (actor.isNotEmpty) 'actor': actor,
+        });
+      });
+
+  @override
+  Future<void> removeFromWork(
+    int id,
+    int castId, {
+    String? quotes,
+    String to = '',
+  }) => serverCall<void>(_controller, (c) async {
+    final query = [
+      if (quotes != null) 'quotes=$quotes',
+      if (quotes == 'replace') 'to=${Uri.encodeQueryComponent(to)}',
+    ].join('&');
+    try {
+      await c.delete(
+        '/characters/$id/works/$castId${query.isEmpty ? '' : '?$query'}',
+      );
+    } on ApiException catch (e) {
+      final body = e.body;
+      if (e.status == 409 && body is Map && body['quotes'] is num) {
+        throw QuotesStillNameThem(_int(body['quotes']));
+      }
+      rethrow;
+    }
+  });
 
   @override
   Future<void> setNames({

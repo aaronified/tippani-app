@@ -42,6 +42,9 @@ class _Service implements PeopleService {
   Future<void> uploadPortrait(int id, Uint8List bytes, String fileName) async {}
 
   @override
+  Future<void> setPortraitFromLink(int id, String url) async {}
+
+  @override
   Future<void> clearPortrait(int id) async {}
 
   @override
@@ -51,8 +54,12 @@ class _Service implements PeopleService {
   Future<void> uploadSignature(
     int id,
     Uint8List bytes,
-    String fileName,
-  ) async {}
+    String fileName, {
+    String source = '',
+  }) async {}
+
+  @override
+  Future<Uint8List?> lookUpSignature(int id) async => null;
 
   @override
   Future<void> clearSignature(int id) async {}
@@ -367,6 +374,7 @@ void main() {
       await tester.runAsync(() => file.writeAsBytes([1, 2, 3]));
       final console = await open(tester, photos: _Photos(file.path));
       await _menu(tester, 'Choose a picture');
+      await _tapText(tester, 'From this phone');
       // the file is read outside the test's clock
       for (var i = 0; i < 40 && console.calls.isEmpty; i++) {
         await tester.runAsync(

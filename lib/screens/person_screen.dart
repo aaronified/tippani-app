@@ -367,6 +367,17 @@ class _PersonScreenState extends State<PersonScreen> {
   }
 
   Future<void> _choose({required bool signature}) async {
+    if (!signature) {
+      final pick = await choosePicture(
+        context,
+        title: context.tr('app.person.choose_a_portrait'),
+      );
+      if (pick == null || !mounted) return;
+      if (pick is FromLink) {
+        await _run((s) => s.setPortraitFromLink(_id, pick.url));
+        return;
+      }
+    }
     final path = await (widget.photos ?? DevicePhotos()).choose();
     if (path == null || !mounted) return;
     final bytes = await (widget.readBytes ?? (p) => File(p).readAsBytes())(
@@ -377,6 +388,57 @@ class _PersonScreenState extends State<PersonScreen> {
       (s) => signature
           ? s.uploadSignature(_id, bytes, fileName)
           : s.uploadPortrait(_id, bytes, fileName),
+    );
+  }
+
+  /// Looks for a signature, shows what was found and keeps it only when the reader accepts it.
+  Future<void> _lookUpSignature() async {
+    final s = _service;
+    if (s == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final Uint8List? found;
+    try {
+      found = await s.lookUpSignature(_id);
+    } on ServerException catch (e) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (!mounted) return;
+    if (found == null) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(content: Text(context.tr('identity.signature.fetch.none'))),
+        );
+      return;
+    }
+    final keep = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          context.tr('identity.signature.dialog.title', {
+            'name': _p?.name ?? widget.name,
+          }),
+        ),
+        content: Image.memory(found!, fit: BoxFit.contain),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.tr('app.person.discard')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(context.tr('identity.signature.save.tip')),
+          ),
+        ],
+      ),
+    );
+    if (keep != true || !mounted) return;
+    await _run(
+      (s) =>
+          s.uploadSignature(_id, found!, 'signature.png', source: 'wikidata'),
     );
   }
 
@@ -475,6 +537,7 @@ class _PersonScreenState extends State<PersonScreen> {
     final p = _p;
     if (p == null) return;
     final name = TextEditingController(text: p.name);
+    final sortName = TextEditingController(text: p.sortName);
     final born = TextEditingController(text: p.born);
     final died = TextEditingController(text: p.died);
     final bio = TextEditingController(text: p.bio);
@@ -493,6 +556,14 @@ class _PersonScreenState extends State<PersonScreen> {
                 controller: name,
                 decoration: InputDecoration(
                   labelText: context.tr('common.field.name.label'),
+                ),
+              ),
+              TextField(
+                textCapitalization: TextCapitalization.words,
+                controller: sortName,
+                decoration: InputDecoration(
+                  labelText: context.tr('identity.field.sort'),
+                  helperText: context.tr('identity.row.sort.sub.person'),
                 ),
               ),
               Row(
@@ -570,6 +641,7 @@ class _PersonScreenState extends State<PersonScreen> {
         _id,
         PersonEdit(
           name: name.text.trim(),
+          sortName: sortName.text.trim(),
           born: born.text.trim(),
           died: died.text.trim(),
           bio: bio.text.trim(),
@@ -638,6 +710,8 @@ class _PersonScreenState extends State<PersonScreen> {
                     _choose(signature: false);
                   case 'noportrait':
                     _run((s) => s.clearPortrait(_id));
+                  case 'lookupsignature':
+                    _lookUpSignature();
                   case 'signature':
                     _choose(signature: true);
                   case 'nosignature':
@@ -673,6 +747,10 @@ class _PersonScreenState extends State<PersonScreen> {
                 PopupMenuItem(
                   value: 'signature',
                   child: Text(context.tr('app.person.choose_a_signature')),
+                ),
+                PopupMenuItem(
+                  value: 'lookupsignature',
+                  child: Text(context.tr('app.person.look_up_a_signature')),
                 ),
                 if (p.signature.isNotEmpty)
                   PopupMenuItem(
@@ -1149,6 +1227,33 @@ class _CharacterScreenState extends State<CharacterScreen> {
   Future<void> _picture() async {
     final c = _console, ch = _c;
     if (c == null || ch == null) return;
+    final pick = await choosePicture(
+      context,
+      title: context.tr('anthologies.front.cover.choose'),
+      stills: [
+        for (final a in ch.appearances)
+          if (a.castId > 0 && a.characterImage.isNotEmpty) a,
+      ],
+    );
+    if (pick == null || !mounted) return;
+    if (pick is FromStill) {
+      if (await consoleCall(
+        context,
+        () => c.promoteAppearance(ch.id, pick.castId),
+      )) {
+        await _afterChange();
+      }
+      return;
+    }
+    if (pick is FromLink) {
+      if (await consoleCall(
+        context,
+        () => c.setCharacterImageFromLink(ch.id, pick.url),
+      )) {
+        await _afterChange();
+      }
+      return;
+    }
     final path = await (widget.photos ?? DevicePhotos()).choose();
     if (path == null || !mounted) return;
     final bytes = await File(path).readAsBytes();
@@ -1163,6 +1268,107 @@ class _CharacterScreenState extends State<CharacterScreen> {
     )) {
       await _afterChange();
     }
+  }
+
+  Future<void> _addToWork() async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    final List<LibraryWork> all;
+    try {
+      all = await c.libraryWorks();
+    } on ServerException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(e.message)));
+      }
+      return;
+    }
+    if (!mounted) return;
+    final on = {for (final a in ch.appearances) '${a.kind}:${a.workId}'};
+    final open = [
+      for (final w in all)
+        if (!on.contains('${w.kind}:${w.id}')) w,
+    ];
+    if (open.isEmpty) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(context.tr('identity.character.works.add.none')),
+          ),
+        );
+      return;
+    }
+    final pick = await pickWorkForCharacter(context, open);
+    if (pick == null || !mounted) return;
+    final (work, actor) = pick;
+    if (await consoleCall(
+      context,
+      () => c.addToWork(ch.id, work, actor: actor),
+    )) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                context.tr('identity.character.works.add.done', {
+                  'title': work.title,
+                }),
+              ),
+            ),
+          );
+      }
+      await _afterChange();
+    }
+  }
+
+  /// Takes the character off one work. While quotes there still name them the server refuses and says how many, so
+  /// the reader chooses between clearing the speaker and another name, and the same press is made again.
+  Future<void> _leaveWork(CastAppearance a) async {
+    final c = _console, ch = _c;
+    if (c == null || ch == null) return;
+    String? quotes;
+    var to = '';
+    while (true) {
+      try {
+        await c.removeFromWork(ch.id, a.castId, quotes: quotes, to: to);
+        break;
+      } on QuotesStillNameThem catch (e) {
+        if (!mounted) return;
+        final fate = await askQuotesFate(
+          context,
+          count: e.count,
+          work: a.workTitle,
+          name: ch.name,
+        );
+        if (fate == null || !mounted) return;
+        quotes = fate.mode;
+        to = fate.to;
+      } on ServerException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(SnackBar(content: Text(e.message)));
+        }
+        return;
+      }
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              context.tr('identity.character.works.remove.done', {
+                'title': a.workTitle,
+              }),
+            ),
+          ),
+        );
+    }
+    await _afterChange();
   }
 
   Future<void> _noPicture() async {
@@ -1278,6 +1484,8 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     _picture();
                   case 'nopicture':
                     _noPicture();
+                  case 'addwork':
+                    _addToWork();
                   case 'merge':
                     _mergeInto();
                   case 'remove':
@@ -1306,6 +1514,10 @@ class _CharacterScreenState extends State<CharacterScreen> {
                     value: 'nopicture',
                     child: Text(context.tr('anthologies.front.cover.remove')),
                   ),
+                PopupMenuItem(
+                  value: 'addwork',
+                  child: Text(context.tr('identity.character.works.add.label')),
+                ),
                 const PopupMenuDivider(),
                 PopupMenuItem(
                   value: 'merge',
@@ -1504,6 +1716,15 @@ class _CharacterScreenState extends State<CharacterScreen> {
                                 'actor': a.actor,
                               }),
                             ),
+                      trailing: _console != null && a.castId > 0
+                          ? IconButton(
+                              tooltip: context.tr(
+                                'app.person.remove_from_this_work',
+                              ),
+                              icon: Icon(Ti.unlink),
+                              onPressed: () => _leaveWork(a),
+                            )
+                          : null,
                       onTap: () {
                         widget.onFilter(ChipFilter(a.workTitle));
                         Navigator.of(context).pop();

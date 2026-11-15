@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
@@ -46,6 +47,7 @@ class PersonCredit {
 /// One cast row: a character in a work and who played them.
 class CastAppearance {
   const CastAppearance({
+    this.castId = 0,
     required this.kind,
     required this.workId,
     required this.workTitle,
@@ -55,6 +57,8 @@ class CastAppearance {
     this.characterImage = '',
   });
 
+  /// The cast row's id on the server; what a character's picture is promoted from and what leaving the work names.
+  final int castId;
   final String kind;
   final int workId;
   final String workTitle;
@@ -66,6 +70,7 @@ class CastAppearance {
   static CastAppearance? fromJson(Object? j) {
     if (j is! Map) return null;
     return CastAppearance(
+      castId: _int(j['cast_id']),
       kind: '${j['kind'] ?? ''}',
       workId: _int(j['work_id']),
       workTitle: '${j['work_title'] ?? ''}',
@@ -187,6 +192,7 @@ class PersonDetail {
     required this.id,
     required this.name,
     this.kinds = const [],
+    this.sortName = '',
     this.bio = '',
     this.born = '',
     this.died = '',
@@ -208,7 +214,7 @@ class PersonDetail {
   final int id;
   final String name;
   final List<String> kinds;
-  final String bio, born, died, links, note;
+  final String sortName, bio, born, died, links, note;
   final String image, imageSource, signature, signatureSource;
   final List<String> aliases;
   final List<PersonCredit> credits;
@@ -222,6 +228,7 @@ class PersonDetail {
       id: _int(j['id']),
       name: '${j['name'] ?? ''}',
       kinds: _strings(j['kinds']),
+      sortName: '${j['sort_name'] ?? ''}',
       bio: '${j['bio'] ?? ''}',
       born: '${j['born'] ?? ''}',
       died: '${j['died'] ?? ''}',
@@ -308,6 +315,7 @@ List<T> _list<T>(Object? v, T? Function(Object?) from) => v is List
 class PersonEdit {
   const PersonEdit({
     this.name,
+    this.sortName,
     this.bio,
     this.born,
     this.died,
@@ -315,10 +323,11 @@ class PersonEdit {
     this.note,
   });
 
-  final String? name, bio, born, died, links, note;
+  final String? name, sortName, bio, born, died, links, note;
 
   Map<String, Object?> toJson() => {
     'name': ?name,
+    'sort_name': ?sortName,
     'bio': ?bio,
     'born': ?born,
     'died': ?died,
@@ -342,14 +351,28 @@ abstract class PeopleService {
   /// Sets the portrait from a picture the reader chose.
   Future<void> uploadPortrait(int id, Uint8List bytes, String fileName);
 
+  /// Sets the portrait from a picture at an address: the server fetches it and keeps its own copy. Throws with the
+  /// server's words when the address cannot be fetched.
+  Future<void> setPortraitFromLink(int id, String url);
+
   /// Takes the portrait away.
   Future<void> clearPortrait(int id);
 
   /// Asks the server's sources for a portrait, bio and dates; returns what it says it found.
   Future<String> fetch(int id);
 
-  /// Sets the signature from a picture the reader chose.
-  Future<void> uploadSignature(int id, Uint8List bytes, String fileName);
+  /// Sets the signature from a picture the reader chose. [source] credits where it came from ('wikidata' for one
+  /// the server looked up; empty for the reader's own).
+  Future<void> uploadSignature(
+    int id,
+    Uint8List bytes,
+    String fileName, {
+    String source = '',
+  });
+
+  /// Asks the server to look for the person's signature. Null when it found none; otherwise the picture, which is
+  /// not stored until the reader accepts it (then it goes through [uploadSignature]).
+  Future<Uint8List?> lookUpSignature(int id);
 
   /// Takes the signature away.
   Future<void> clearSignature(int id);
@@ -393,6 +416,12 @@ class PairedPeopleService implements PeopleService {
       });
 
   @override
+  Future<void> setPortraitFromLink(int id, String url) =>
+      serverCall<void>(_controller, (c) async {
+        await c.putJson('/people/id/$id', {'image_url': url});
+      });
+
+  @override
   Future<void> clearPortrait(int id) =>
       serverCall<void>(_controller, (c) async {
         await c.putJson('/people/id/$id', {'clear_image': true});
@@ -408,9 +437,34 @@ class PairedPeopleService implements PeopleService {
   });
 
   @override
-  Future<void> uploadSignature(int id, Uint8List bytes, String fileName) =>
-      serverCall<void>(_controller, (c) async {
-        await c.postFile('/people/id/$id/signature', 'file', bytes, fileName);
+  Future<void> uploadSignature(
+    int id,
+    Uint8List bytes,
+    String fileName, {
+    String source = '',
+  }) => serverCall<void>(_controller, (c) async {
+    await c.postFile(
+      '/people/id/$id/signature',
+      'file',
+      bytes,
+      fileName,
+      fields: {if (source.isNotEmpty) 'source': source},
+    );
+  });
+
+  @override
+  Future<Uint8List?> lookUpSignature(int id) =>
+      serverCall<Uint8List?>(_controller, (c) async {
+        final r = await c.postJson('/people/id/$id/signature/fetch', const {});
+        if (r is! Map || r['found'] != true) return null;
+        final image = '${r['image'] ?? ''}';
+        final at = image.indexOf(',');
+        if (at < 0) return null;
+        try {
+          return base64Decode(image.substring(at + 1));
+        } on FormatException {
+          return null;
+        }
       });
 
   @override
