@@ -44,11 +44,15 @@ class SettingsScreen extends StatelessWidget {
     required this.controller,
     required this.harness,
     this.part = SettingsPart.app,
+    this.onTakeTour,
   });
 
   final AppController controller;
   final Harness harness;
   final SettingsPart part;
+
+  /// Plays the first-run tour again; null where the app has no tour (a test about something else).
+  final VoidCallback? onTakeTour;
 
   Future<void> _forget(BuildContext context) async {
     final yes = await showDialog<bool>(
@@ -553,6 +557,13 @@ class SettingsScreen extends StatelessWidget {
                       );
                     },
                   ),
+                  if (onTakeTour != null)
+                    ListTile(
+                      leading: const Icon(Ti.mapPin),
+                      title: Text(context.tr('app.tour.take')),
+                      subtitle: Text(context.tr('app.tour.take_note')),
+                      onTap: onTakeTour,
+                    ),
                   ListTile(
                     leading: const Icon(Ti.sparkles),
                     title: Text(context.tr('app.changelog.what_s_new')),

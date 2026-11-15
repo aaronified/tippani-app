@@ -34,6 +34,7 @@ import '../tools/work_details_source.dart';
 import '../tools/work_edit_service.dart';
 import '../search/search_service.dart';
 import '../tags/tag_service.dart';
+import '../tour/tour_store.dart';
 import '../tools/server_tools.dart';
 import '../tools/work_lookup.dart';
 import '../app_controller.dart';
@@ -145,6 +146,7 @@ class Harness {
     this.search,
     this.lookup,
     this.boards,
+    this.tour,
     Future<List<ChangelogEntry>> Function()? changelogLoader,
     this.showWhatsNew = true,
   }) : _changelogLoader = changelogLoader ?? loadChangelog;
@@ -271,6 +273,10 @@ class Harness {
   /// about something else.
   final BoardService? boards;
 
+  /// Whether the first-run tour was seen, kept on this phone. Null in a test about something else, so no tour
+  /// is offered over the screen under test.
+  final TourStore? tour;
+
   /// Whether the first start of a new version shows what changed. Tests that are about something else
   /// turn it off so a dialog does not cover the screen under test.
   final bool showWhatsNew;
@@ -388,6 +394,7 @@ class Harness {
       pull: pull,
       auto: auto,
       runAutoSync: true,
+      tour: TourStore(),
       covers: covers,
       people: PairedSharePeople(controller, directory),
       directory: directory,
@@ -457,6 +464,7 @@ class Harness {
     ServerSearch? search,
     WorkLookup? lookup,
     BoardService? boards,
+    TourStore? tour,
     List<ChangelogEntry>? changelog,
     bool showWhatsNew = false,
   }) {
@@ -523,6 +531,7 @@ class Harness {
       search: search,
       lookup: lookup,
       boards: boards,
+      tour: tour,
       changelogLoader: () async => changelog ?? const [],
       showWhatsNew: showWhatsNew,
     );
