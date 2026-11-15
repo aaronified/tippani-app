@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-11-15
+
 ### Added
 
 - A short tour of the app: the first time you open it on a new phone, a few quick stops point at the Add button, Home, your shelves, the Server tab, sync and Settings, one sentence each. Skip it whenever you like and it does not come back; Settings has Take the tour to play it again, and it is how you reach it if you already have the app. It is kept on this phone only, and a stop is left out when you do not have that control.
