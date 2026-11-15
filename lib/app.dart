@@ -32,6 +32,8 @@ import 'theme/app_theme.dart';
 import 'theme/material_surface.dart';
 import 'theme/materials.dart';
 import 'theme/tabler.dart';
+import 'tour/tour.dart';
+import 'tour/tour_steps.dart';
 
 /// Tippani's own red, used as the seed where the phone gives no wallpaper colours (before Android 12,
 /// and on devices that opt out). The web app's accent is the same colour.
@@ -171,6 +173,58 @@ class _ShellState extends State<Shell> {
   /// Brings a board of the Boards tab into view, from outside it (a button on Home).
   final _boardsGoTo = ValueNotifier<BoardKind?>(null);
 
+  /// The first-run tour: the controls it points at, the run in progress, and whether the boards had Anthologies.
+  final _tourKeys = TourKeys();
+  TourRun? _tour;
+  bool _hasAnthologies = false;
+
+  void _openTabOf(GlobalKey tab) {
+    final i = _tabsNow.indexWhere((t) => t.destination.key == tab);
+    if (i >= 0 && i != _index) setState(() => _index = i);
+  }
+
+  void _startTour() {
+    if (_tour != null || !mounted) return;
+    // which tab it was, not its place: the list can change under the tour (pairing finishing, a section hidden)
+    final startedOn = _index < _tabsNow.length
+        ? _tabsNow[_index].screen.runtimeType
+        : null;
+    final run = startTour(
+      context,
+      store: widget.harness.tour,
+      steps: tourSteps(
+        context,
+        keys: _tourKeys,
+        openTabOf: _openTabOf,
+        hasAnthologies: _hasAnthologies,
+        canSync: widget.controller.paired && widget.harness.auto != null,
+      ),
+    );
+    _tour = run;
+    run.done.then((_) {
+      _tour = null;
+      // the stops open the tabs they point at; the reader goes back to where they were
+      final back = _tabsNow.indexWhere(
+        (t) => t.screen.runtimeType == startedOn,
+      );
+      if (mounted && back >= 0 && back != _index) setState(() => _index = back);
+    });
+  }
+
+  /// Offered once, on the first run on a phone with a library; someone upgrading finds it in Settings.
+  Future<void> _offerTour() async {
+    final tour = widget.harness.tour;
+    if (tour == null || widget.harness.library == null) return;
+    if (!widget.harness.freshInstall || await tour.outcome() != null) return;
+    _startTour();
+  }
+
+  @override
+  void dispose() {
+    _tour?.cancel();
+    super.dispose();
+  }
+
   void _goTo(LibrarySection part) {
     final i = _tabsNow.indexWhere((t) => t.screen is BoardsTab);
     if (i < 0) return;
@@ -209,6 +263,7 @@ class _ShellState extends State<Shell> {
     if (widget.harness.runAutoSync) {
       widget.harness.auto?.start(widget.harness.library?.changes);
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _offerTour());
   }
 
   @override
@@ -249,6 +304,7 @@ class _ShellState extends State<Shell> {
           screen: Scaffold(
             backgroundColor: Colors.transparent,
             floatingActionButton: FloatingActionButton.extended(
+              key: _tourKeys.add,
               heroTag: 'add-anything',
               onPressed: () => showAddQuoteSheet(
                 context,
@@ -272,6 +328,7 @@ class _ShellState extends State<Shell> {
             ),
           ),
           destination: NavigationDestination(
+            key: _tourKeys.home,
             icon: const Icon(Ti.home),
             selectedIcon: const Icon(Ti.homeFilled),
             label: context.tr('nav.tab.home.label'),
@@ -291,6 +348,7 @@ class _ShellState extends State<Shell> {
             controller: widget.controller,
           ),
           destination: NavigationDestination(
+            key: _tourKeys.boards,
             icon: const Icon(Ti.layoutBoard),
             label: context.tr('tour.step.boards.name'),
           ),
@@ -314,6 +372,7 @@ class _ShellState extends State<Shell> {
           part: SettingsPart.server,
         ),
         destination: NavigationDestination(
+          key: _tourKeys.server,
           icon: const Icon(Ti.server),
           label: context.tr('settings.section.server.label'),
         ),
@@ -323,8 +382,10 @@ class _ShellState extends State<Shell> {
         screen: SettingsScreen(
           controller: widget.controller,
           harness: widget.harness,
+          onTakeTour: widget.harness.tour == null ? null : _startTour,
         ),
         destination: NavigationDestination(
+          key: _tourKeys.settings,
           icon: const Icon(Ti.settings),
           selectedIcon: const Icon(Ti.settingsFilled),
           label: context.tr('nav.tab.settings.label'),
@@ -332,6 +393,7 @@ class _ShellState extends State<Shell> {
       ),
     ];
     _tabsNow = tabs;
+    _hasAnthologies = boardKinds.contains(BoardKind.anthologies);
     return UpdateHost(
       harness: widget.harness,
       child: Scaffold(

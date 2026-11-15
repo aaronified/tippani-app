@@ -6,6 +6,7 @@ import '../library/quote_chips.dart';
 import '../people/people_directory.dart';
 import '../people/people_service.dart';
 import '../tools/work_edit_service.dart';
+import '../widgets/text_prompt.dart';
 import 'person_screen.dart';
 import '../l10n/l10n.dart';
 
@@ -82,6 +83,46 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
     }
   }
 
+  /// Asks TheTVDB for the cast. A title with no TheTVDB id of its own is asked for one (its number in the address on
+  /// thetvdb.com), and the same call is made again with it.
+  Future<void> _fromTvdb() async {
+    final service = WorkEditScope.of(context);
+    if (service == null) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final tr = context.tr;
+    try {
+      try {
+        await service.fetchCastFromTvdb(widget.work);
+      } on NeedsTvdbId {
+        if (!mounted) return;
+        final raw = await askText(
+          context,
+          title: tr('app.cast.tvdb_id_title'),
+          label: tr('app.cast.tvdb_id_label'),
+          action: tr('app.cast.fetch'),
+          keyboard: TextInputType.number,
+        );
+        if (raw == null) return;
+        final id = int.tryParse(raw);
+        if (id == null || id <= 0) {
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(
+              SnackBar(content: Text(tr('app.cast.tvdb_id_not_a_number'))),
+            );
+          return;
+        }
+        await service.fetchCastFromTvdb(widget.work, tvdbId: id);
+      }
+    } on ServerException catch (e) {
+      messenger
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (mounted) await widget.onChanged!();
+  }
+
   Future<void> _fromImdb() async {
     final link = await showDialog<String>(
       context: context,
@@ -98,7 +139,7 @@ class _WorkDetailsSectionState extends State<WorkDetailsSection> {
         case 'add':
           _editRow();
         case 'tvdb':
-          _write((s) => s.fetchCastFromTvdb(widget.work));
+          _fromTvdb();
         case 'imdb':
           _fromImdb();
       }

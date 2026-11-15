@@ -30,6 +30,7 @@ flutter build apk --debug
 | `lib/checks/`, `lib/imports/`, `lib/metadata/`, `lib/sources/`, `lib/admin/`, `lib/account/` | What needs a server to change anything: Checks, imports, metadata, source files, administration, the account and its preferences. |
 | `lib/pairing/` | The pairing code, the claim, and the device list. |
 | `lib/screens/` | Every screen. |
+| `lib/tour/` | The first-run tour: a hand-built overlay, its stops, and the phone's note of whether it was seen. See [ADR-0027](ADR-0027-The-App-Offers-Its-Own-Tour-And-Keeps-Whether-It-Was-Seen-On-The-Phone.md). |
 | `lib/harness/` | The base every feature stands on: version, update check and installer, the log, backup and restore, the changelog. See [The harness](#the-harness). |
 | `lib/l10n/`, `lib/theme/`, `lib/widgets/`, `lib/tools/` | The words (generated from `assets/l10n`), the theme, shared widgets, and the server tools (contexts, details, lookups). |
 | `test/` | Tests by area, `test/support/` for the fakes (a server, a library, files), and `test/live/` against a real server. |
