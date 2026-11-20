@@ -56,5 +56,10 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0025](ADR-0025-A-Passage-Shows-And-Says-Its-Own-Parts-In-Its-Anthology.md): A passage shows and says its own parts in its anthology
 - [ADR-0026](ADR-0026-The-App-Fetches-And-Edits-Metadata-Where-The-Web-Does.md): The app fetches and edits metadata where the web does
 - [ADR-0027](ADR-0027-The-App-Offers-Its-Own-Tour-And-Keeps-Whether-It-Was-Seen-On-The-Phone.md): The app offers its own tour, and keeps whether it was seen on the phone
+- [ADR-0028](ADR-0028-A-Material-Is-Composed-Once-And-Drawn-As-One-Image.md): A material is composed once and drawn as one image
+- [ADR-0030](ADR-0030-Anthologies-Draw-From-The-Phone-First-And-Ask-The-Server-Behind-It.md): Anthologies draw from the phone first and ask the server behind it
+- [ADR-0029](ADR-0029-A-Quotes-Menu-Holds-Every-Action-Its-Card-Does-Not-Show.md): A quote's menu holds every action its card does not show, and one function builds it
+- [ADR-0031](ADR-0031-Every-Share-Is-One-Screen-With-A-Subject.md): Every share is one screen, with a subject
+- [ADR-0032](ADR-0032-Every-Server-Screen-Draws-The-Phones-Copy-First.md): Every screen that shows what the server holds draws the phone's copy first
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)

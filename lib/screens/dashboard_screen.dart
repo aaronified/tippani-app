@@ -13,6 +13,7 @@ import '../quiz/quiz.dart';
 import '../sync/auto_sync.dart';
 import '../library/quote_chips.dart' show creditNames;
 import '../widgets/token_search.dart';
+import 'quote_menu.dart';
 import 'library_widgets.dart' show QuoteTile;
 import 'quiz_screen.dart';
 import 'quote_screen.dart';
@@ -326,6 +327,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       await widget.store.setFavorite(q.id, !q.favorite);
       await _loadLibrary();
     },
+    menu: QuoteMenu(
+      store: widget.store,
+      quote: q,
+      work: _byId[q.workId],
+      picker: widget.picker,
+      anthologies: widget.anthologies,
+      onChanged: _loadLibrary,
+    ),
   );
 
   @override

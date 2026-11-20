@@ -266,10 +266,16 @@ class PairedPreferences extends ChangeNotifier implements PreferencesSource {
   ServerPrefs get prefs => _prefs;
 
   Future<void> _keep(Map<String, Object?> raw) async {
-    _prefs = ServerPrefs(raw);
-    PrefsEffects.apply(_prefs);
-    await _store.write(_key, jsonEncode(raw));
-    notifyListeners();
+    final text = jsonEncode(raw);
+    // A sync that brings back what the phone already holds changes nothing, and is not announced: every screen that
+    // reads a preference would be rebuilt for it (ADR-0028).
+    final same = jsonEncode(_prefs.raw) == text;
+    if (!same) {
+      _prefs = ServerPrefs(raw);
+      PrefsEffects.apply(_prefs);
+    }
+    await _store.write(_key, text);
+    if (!same) notifyListeners();
   }
 
   static const _pendingKey = 'outbox.preferences';

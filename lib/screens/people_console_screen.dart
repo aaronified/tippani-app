@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../api/cached_read.dart';
 import '../api/server_call.dart';
 import '../library/quote_chips.dart';
 import '../people/people_console.dart';
 import '../people/people_directory.dart';
 import '../people/picture.dart';
 import 'people_console_actions.dart';
+import 'offline_note.dart';
 import 'person_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
@@ -77,32 +79,42 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
   /// After a write here: the faces and chips elsewhere in the app read the same people, so they are told too.
   Future<void> _changed() async {
     await PeopleDirectoryScope.of(context)?.refresh();
-    if (mounted) await _read();
+    if (!mounted) return;
+    setState(_picked.clear);
+    await _read(live: true);
   }
 
-  Future<void> _read() async {
-    try {
-      final p = await widget.console.people();
-      final c = await widget.console.characters();
-      Orphans o = const Orphans();
-      try {
-        o = await widget.console.orphans();
-      } on ServerException {
-        // the tidy-up count is a nicety
-      }
-      if (mounted) {
-        setState(() {
-          _people = p;
-          _characters = c;
-          _orphans = o;
+  final _reads = CachedRead();
+
+  /// The phone's copy at once, the server's answer in place of it when it lands (ADR-0032). [live] is the read
+  /// that follows a change here, which never answers from the phone, so the old name cannot come back.
+  Future<void> _read({bool live = false}) =>
+      _reads.run<({List<PersonRecord> p, List<CharacterRecord> c, Orphans o})>(
+        load: () async {
+          final p = await widget.console.people();
+          final c = await widget.console.characters();
+          var o = const Orphans();
+          try {
+            o = await widget.console.orphans();
+          } on ServerException {
+            // the tidy-up count is a nicety
+          }
+          return (p: p, c: c, o: o);
+        },
+        alive: () => mounted,
+        haveCopy: _people != null,
+        live: live,
+        draw: (v) => setState(() {
+          _people = v.p;
+          _characters = v.c;
+          _orphans = v.o;
           _problem = null;
-          _picked.clear();
-        });
-      }
-    } on ServerException catch (e) {
-      if (mounted) setState(() => _problem = e.message);
-    }
-  }
+          _picked.removeWhere(
+            (id) => !v.p.any((x) => x.id == id) && !v.c.any((x) => x.id == id),
+          );
+        }),
+        fail: (e) => setState(() => _problem = problemText(e)),
+      );
 
   void _open(String name, int id, {required bool character}) {
     Navigator.of(context)
@@ -127,7 +139,7 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
                   ),
           ),
         )
-        .then((_) => _read());
+        .then((_) => _read(live: true));
   }
 
   Future<void> _merge() async {
@@ -631,29 +643,36 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
               label: Text(context.tr('cast.add.aria')),
             )
           : null,
-      body: _problem != null && people == null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_problem!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _read,
-                      child: Text(context.tr('common.source.retry')),
+      body: Column(
+        children: [
+          const OfflineNote(),
+          Expanded(
+            child: _problem != null && people == null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_problem!, textAlign: TextAlign.center),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _read,
+                            child: Text(context.tr('common.source.retry')),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            )
-          : people == null || characters == null
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabs,
-              children: [_peopleList(), _charactersList()],
-            ),
+                  )
+                : people == null || characters == null
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    controller: _tabs,
+                    children: [_peopleList(), _charactersList()],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

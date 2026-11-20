@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../admin/admin_service.dart';
 import '../admin/server_files.dart';
+import '../api/cached_read.dart';
 import '../api/server_call.dart';
 import 'admin_widgets.dart';
+import 'offline_note.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
@@ -118,20 +120,22 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
     _read();
   }
 
-  Future<void> _read() async {
-    try {
-      final b = await widget.service.backup();
-      if (mounted) {
-        setState(() {
-          _info = b;
-          _loaded = true;
-          _problem = null;
-        });
-      }
-    } on ServerException catch (e) {
-      if (mounted) setState(() => _problem = e.message);
-    }
-  }
+  final _reads = CachedRead();
+
+  /// The phone's copy at once, the server's answer in place of it when it lands (ADR-0032). [live] is the read
+  /// after a backup, a restore or a change to what is backed up, which never answers from the phone.
+  Future<void> _read({bool live = false}) => _reads.run<BackupInfo?>(
+    load: widget.service.backup,
+    alive: () => mounted,
+    haveCopy: _loaded,
+    live: live,
+    draw: (b) => setState(() {
+      _info = b;
+      _loaded = true;
+      _problem = null;
+    }),
+    fail: (e) => setState(() => _problem = problemText(e)),
+  );
 
   Future<JobInfo?> _wait(JobInfo job, String what) async {
     var j = job;
@@ -182,7 +186,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       if (mounted) say(context, e.message);
     }
     if (mounted) setState(() => _working = null);
-    await _read();
+    await _read(live: true);
   }
 
   Future<void> _download() async {
@@ -347,7 +351,7 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       if (mounted) say(context, e.message);
     }
     if (mounted) setState(() => _working = null);
-    await _read();
+    await _read(live: true);
   }
 
   @override
@@ -359,145 +363,160 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       appBar: ShellAppBar(
         title: Text(context.tr('app.admin_backup.server_backup')),
       ),
-      body: _problem != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_problem!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _read,
-                      child: Text(context.tr('common.source.retry')),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : !_loaded
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (_working != null)
-                  SurfaceCard(
-                    color: scheme.primaryContainer,
+      body: Column(
+        children: [
+          const OfflineNote(),
+          Expanded(
+            child: _problem != null
+                ? Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(32),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(_working!, style: text.titleSmall),
-                          const SizedBox(height: 10),
-                          const LinearProgressIndicator(),
+                          Text(_problem!, textAlign: TextAlign.center),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _read,
+                            child: Text(context.tr('common.source.retry')),
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                SurfaceCard(
-                  child: Padding(
+                  )
+                : !_loaded
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
                     padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.tr('app.admin_backup.the_kept_backup'),
-                          style: text.titleSmall,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          info == null
-                              ? context.tr(
-                                  'app.admin_backup.the_server_has_no_backup_yet',
-                                )
-                              : '${info.created.isEmpty ? info.name : info.created} · ${_size(info.size)} · ${switch (info.key) {
-                                  'password' => info.account.isEmpty ? context.tr('app.admin_backup.kind_password_unknown') : context.tr('app.admin_backup.kind_password', {'account': info.account}),
-                                  'passphrase' => context.tr('app.admin_backup.kind_passphrase'),
-                                  'none' => context.tr('app.admin_backup.kind_none'),
-                                  _ => context.tr('app.admin_backup.kind_unknown'),
-                                }}',
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            FilledButton.icon(
-                              onPressed: _working == null ? _make : null,
-                              icon: const Icon(Ti.databaseExport),
-                              label: Text(
-                                info == null ? 'Back up now' : 'Back up again',
-                              ),
+                    children: [
+                      if (_working != null)
+                        SurfaceCard(
+                          color: scheme.primaryContainer,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(_working!, style: text.titleSmall),
+                                const SizedBox(height: 10),
+                                const LinearProgressIndicator(),
+                              ],
                             ),
-                            if (info != null)
-                              OutlinedButton.icon(
-                                onPressed: _working == null ? _download : null,
-                                icon: const Icon(Ti.download),
-                                label: Text(
-                                  context.tr(
-                                    'app.admin_backup.save_on_this_phone',
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SurfaceCard(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          context.tr('app.admin_backup.put_a_backup_back'),
-                          style: text.titleSmall?.copyWith(color: scheme.error),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          context.tr(
-                            'app.admin_backup.this_replaces_every_reader_s_library',
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            if (info != null)
-                              OutlinedButton(
-                                onPressed: _working == null
-                                    ? () => _restore(fromPhone: false)
-                                    : null,
-                                child: Text(
-                                  context.tr(
-                                    'app.admin_backup.restore_the_kept_backup',
+                      SurfaceCard(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.tr('app.admin_backup.the_kept_backup'),
+                                style: text.titleSmall,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                info == null
+                                    ? context.tr(
+                                        'app.admin_backup.the_server_has_no_backup_yet',
+                                      )
+                                    : '${info.created.isEmpty ? info.name : info.created} · ${_size(info.size)} · ${switch (info.key) {
+                                        'password' => info.account.isEmpty ? context.tr('app.admin_backup.kind_password_unknown') : context.tr('app.admin_backup.kind_password', {'account': info.account}),
+                                        'passphrase' => context.tr('app.admin_backup.kind_passphrase'),
+                                        'none' => context.tr('app.admin_backup.kind_none'),
+                                        _ => context.tr('app.admin_backup.kind_unknown'),
+                                      }}',
+                              ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  FilledButton.icon(
+                                    onPressed: _working == null ? _make : null,
+                                    icon: const Icon(Ti.databaseExport),
+                                    label: Text(
+                                      info == null
+                                          ? 'Back up now'
+                                          : 'Back up again',
+                                    ),
                                   ),
-                                ),
+                                  if (info != null)
+                                    OutlinedButton.icon(
+                                      onPressed: _working == null
+                                          ? _download
+                                          : null,
+                                      icon: const Icon(Ti.download),
+                                      label: Text(
+                                        context.tr(
+                                          'app.admin_backup.save_on_this_phone',
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
-                            OutlinedButton(
-                              onPressed: _working == null
-                                  ? () => _restore(fromPhone: true)
-                                  : null,
-                              child: Text(
-                                context.tr(
-                                  'app.admin_backup.restore_from_a_file',
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 8),
+                      SurfaceCard(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.tr(
+                                  'app.admin_backup.put_a_backup_back',
+                                ),
+                                style: text.titleSmall?.copyWith(
+                                  color: scheme.error,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                context.tr(
+                                  'app.admin_backup.this_replaces_every_reader_s_library',
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  if (info != null)
+                                    OutlinedButton(
+                                      onPressed: _working == null
+                                          ? () => _restore(fromPhone: false)
+                                          : null,
+                                      child: Text(
+                                        context.tr(
+                                          'app.admin_backup.restore_the_kept_backup',
+                                        ),
+                                      ),
+                                    ),
+                                  OutlinedButton(
+                                    onPressed: _working == null
+                                        ? () => _restore(fromPhone: true)
+                                        : null,
+                                    child: Text(
+                                      context.tr(
+                                        'app.admin_backup.restore_from_a_file',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
+          ),
+        ],
+      ),
     );
   }
 

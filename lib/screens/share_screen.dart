@@ -1,16 +1,20 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../harness/files.dart' show ChannelAppFiles;
-import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText;
+import '../anthologies/anthologies.dart';
+import '../harness/harness.dart' show BackupPicker, SystemBackupPicker;
 import '../library/models.dart';
+import '../library/quote_text.dart' show workShareText;
 import '../library/share_format.dart';
 import '../share/share_people.dart';
 import '../share/share_picture.dart';
+import '../share/share_subject.dart';
+import '../share/sharer.dart';
 import 'quote_card.dart' show captureCard;
-import 'quote_screen.dart' show ShareImage;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
@@ -40,25 +44,32 @@ Future<bool> copyImageToClipboard(Uint8List png, String fileName) async {
   }
 }
 
-/// One place to send a quote from, in any form: a picture, plain text, Markdown, WhatsApp or Reddit. The
-/// reader switches parts on and off (the same parts, with the same defaults, as the web app's share dialog),
-/// sees what will be sent, and shares, copies or saves it. Nothing here reaches a server.
+/// Opens the share screen for [subject]. Every share in the app goes through here.
+Future<void> openShare(
+  BuildContext context,
+  ShareSubject subject, {
+  BackupPicker picker = const SystemBackupPicker(),
+}) => Navigator.of(context).push<void>(
+  MaterialPageRoute(
+    builder: (_) => ShareScreen(subject: subject, picker: picker),
+  ),
+);
+
+/// The one place anything is sent from, whatever it is: a quote (as a picture, plain text, Markdown, WhatsApp or
+/// Reddit), several quotes (the same, without the picture), or an anthology (plain text, its Markdown file or its
+/// EPUB book). The reader sees what will be sent, switches parts on and off where there are parts (the same parts,
+/// with the same defaults, as the web app's share dialog), and shares, copies or saves it. Only an anthology's
+/// Markdown and EPUB reach the server (the file is made there); everything else is made on the phone.
 class ShareScreen extends StatefulWidget {
   const ShareScreen({
     super.key,
-    required this.quote,
-    required this.work,
-    required this.share,
-    required this.shareImage,
-    required this.picker,
+    required this.subject,
+    this.picker = const SystemBackupPicker(),
     this.copy = copyToClipboard,
     this.copyImage = copyImageToClipboard,
   });
 
-  final Quote quote;
-  final Work? work;
-  final ShareText share;
-  final ShareImage shareImage;
+  final ShareSubject subject;
   final BackupPicker picker;
   final CopyText copy;
   final CopyImage copyImage;
@@ -69,12 +80,36 @@ class ShareScreen extends StatefulWidget {
 
 class _ShareScreenState extends State<ShareScreen> {
   final _cardKey = GlobalKey();
-  late final List<ShareField> _fields = shareFieldsOf(
-    widget.quote,
-    widget.work,
-  );
-  late Set<String> _on = shareDefaults(_fields);
-  ShareFormat _format = ShareFormat.picture;
+  ShareSubject get _subject => widget.subject;
+
+  // the picture, and the faces on it, belong to one quote
+  Quote? get _quote => switch (_subject) {
+    QuoteShare(:final quote) => quote,
+    _ => null,
+  };
+  Work? get _work => switch (_subject) {
+    QuoteShare(:final work) => work,
+    _ => null,
+  };
+
+  late final List<ShareField> _fields = switch (_subject) {
+    QuoteShare(:final quote, :final work) => shareFieldsOf(quote, work),
+    final QuotesShare many => shareFieldsOfMany(many.quotes, many.workOf),
+    AnthologyShare() => const [],
+  };
+  late Set<String> _on = switch (_subject) {
+    final QuotesShare many => many.defaultOn(_fields),
+    _ => shareDefaults(_fields),
+  };
+  late ShareFormat _format = _subject.firstFormat;
+
+  // an anthology's Markdown and EPUB are made by the server, once each
+  // Each format is fetched and fails on its own: choosing EPUB while Markdown is still on its way must fetch
+  // the EPUB too, and one format's refusal is not the plain text's to show.
+  final _docs = <ShareFormat, ExportedFile>{};
+  final _fetching = <ShareFormat>{};
+  final _problems = <ShareFormat, String>{};
+  String? get _problem => _problems[_format];
   Brightness? _look;
   ShareMaterial _material = ShareMaterial.manuscript;
   bool _tint = false;
@@ -103,7 +138,9 @@ class _ShareScreenState extends State<ShareScreen> {
     _asked = true;
     final source = PeopleScope.of(context);
     if (source == null || !source.available) return;
-    source.forQuote(widget.quote, widget.work).then((p) {
+    final quote = _quote;
+    if (quote == null) return;
+    source.forQuote(quote, _work).then((p) {
       if (mounted) setState(() => _people = p);
     });
   }
@@ -150,12 +187,103 @@ class _ShareScreenState extends State<ShareScreen> {
     }
   }
 
-  String _build() => buildShareText(
-    widget.quote,
-    widget.work,
-    _on,
-    _format == ShareFormat.picture ? ShareFormat.plain : _format,
-  );
+  /// The parts offered for the chosen format. A whole work's plain text is laid out by chapter and honours only
+  /// these four; a switch that changed nothing would be a lie.
+  List<ShareField> get _shownFields {
+    final s = _subject;
+    if (s is QuotesShare && s.work != null && _format == ShareFormat.plain) {
+      return [
+        for (final f in _fields)
+          if (const {
+            'translation',
+            'chapter',
+            'location',
+            'note',
+          }.contains(f.id))
+            f,
+      ];
+    }
+    return _fields;
+  }
+
+  /// What the text box holds for the chosen format: what will be sent.
+  String _build() {
+    final f = _format == ShareFormat.picture ? ShareFormat.plain : _format;
+    return switch (_subject) {
+      QuoteShare(:final quote, :final work) => buildShareText(
+        quote,
+        work,
+        _on,
+        f,
+      ),
+      final QuotesShare many =>
+        f == ShareFormat.markdown
+            ? many.markdown
+            : many.work != null && f == ShareFormat.plain
+            // a whole work reads as the reading page lays it out: each chapter named once, then its quotes
+            ? workShareText(
+                many.work!,
+                many.quotes,
+                translations: _on.contains('translation'),
+                notes: _on.contains('note'),
+                chapters: _on.contains('chapter'),
+                locations: _on.contains('location'),
+              )
+            : buildQuotesText(
+                many.quotes,
+                many.workOf,
+                _on,
+                f,
+                heading: _heading(many.work),
+              ),
+      final AnthologyShare a =>
+        f == ShareFormat.plain
+            ? anthologyShareText(a.detail)
+            : _docs[f] == null
+            ? ''
+            : utf8.decode(_docs[f]!.bytes, allowMalformed: true),
+    };
+  }
+
+  /// A whole work is headed by its name and maker, once.
+  static String _heading(Work? w) {
+    if (w == null) return '';
+    return w.creator.trim().isEmpty ? w.title : '${w.title} — ${w.creator}';
+  }
+
+  void _choose(ShareFormat f) {
+    _rebuild(() => _format = f);
+    final s = _subject;
+    if (s is AnthologyShare &&
+        (f == ShareFormat.markdown || f == ShareFormat.epub)) {
+      _fetch(s, f);
+    }
+  }
+
+  /// Asks the server for the anthology's file in [f]. The text box shows the Markdown; the EPUB is a file.
+  Future<void> _fetch(AnthologyShare a, ShareFormat f) async {
+    if (_docs.containsKey(f) || _fetching.contains(f)) return;
+    setState(() {
+      _fetching.add(f);
+      _problems.remove(f);
+    });
+    try {
+      final file = await a.service.export(
+        a.detail.anthology.id,
+        epub: f == ShareFormat.epub,
+      );
+      _docs[f] = file;
+    } on AnthologyException catch (e) {
+      _problems[f] = e.message;
+    } on Object {
+      _problems[f] = tx('app.share.the_file_could_not_be_made');
+    }
+    if (!mounted) return;
+    setState(() {
+      _fetching.remove(f);
+      if (_format == f) _text.text = _build();
+    });
+  }
 
   @override
   void dispose() {
@@ -176,11 +304,12 @@ class _ShareScreenState extends State<ShareScreen> {
     m.showSnackBar(SnackBar(content: Text(message)));
   }
 
-  String get _fileName => 'tippani-quote-${widget.quote.id}.png';
+  String get _fileName => '${_subject.fileStem}.png';
 
   Future<void> _shareText() async {
+    final sender = ShareScope.of(context);
     try {
-      await widget.share(_text.text, context.tr('add.mode.quote.label'));
+      await sender.text(_text.text, _subject.title);
     } on Object {
       if (mounted) _say(context.tr('app.share.the_quote_could_not_be_shared'));
     }
@@ -189,28 +318,84 @@ class _ShareScreenState extends State<ShareScreen> {
   Future<void> _copy() async {
     try {
       await widget.copy(_text.text);
-      if (mounted) _say('Copied.');
+      if (mounted) _say(context.tr('app.share.copied'));
     } on Object {
       if (mounted) _say(context.tr('app.share.the_quote_could_not_be_copied'));
     }
   }
 
+  /// The words as a file: Markdown ones are `.md`, the rest `.txt`.
+  Future<void> _saveText() async {
+    final md = _format == ShareFormat.markdown || _format == ShareFormat.reddit;
+    final name = '${_subject.fileStem}.${md ? 'md' : 'txt'}';
+    try {
+      final saved = await widget.picker.save(
+        name,
+        Uint8List.fromList(utf8.encode(_text.text)),
+      );
+      if (mounted) {
+        _say(
+          saved
+              ? context.tr('app.share.saved')
+              : context.tr('app.library.nothing_was_saved'),
+        );
+      }
+    } on Object {
+      if (mounted) _say(context.tr('app.share.the_file_could_not_be_saved'));
+    }
+  }
+
+  ExportedFile? get _book => _docs[ShareFormat.epub];
+
+  Future<void> _shareBook() async {
+    final book = _book;
+    if (book == null) return;
+    final sender = ShareScope.of(context);
+    try {
+      await sender.file(book.bytes, book.name);
+    } on Object {
+      if (mounted) _say(context.tr('app.share.the_file_could_not_be_shared'));
+    }
+  }
+
+  Future<void> _saveBook() async {
+    final book = _book;
+    if (book == null) return;
+    try {
+      final saved = await widget.picker.save(book.name, book.bytes);
+      if (mounted) {
+        _say(
+          saved
+              ? context.tr('app.admin_backup.saved_name', {'name': book.name})
+              : context.tr('app.library.nothing_was_saved'),
+        );
+      }
+    } on Object {
+      if (mounted) _say(context.tr('app.share.the_file_could_not_be_saved'));
+    }
+  }
+
   Future<Uint8List?> _picture() async {
     final png = await captureCard(_cardKey, width: shareWidth * shareScale);
-    if (png == null && mounted) _say('The picture could not be made.');
+    if (png == null && mounted) {
+      _say(context.tr('app.share.the_picture_could_not_be_made'));
+    }
     return png;
   }
 
   Future<void> _sharePicture() async {
     if (_busy) return;
+    final sender = ShareScope.of(context);
+    final quote = _quote;
+    if (quote == null) return;
     setState(() => _busy = true);
     try {
       final png = await _picture();
       if (png == null) return;
-      await widget.shareImage(
+      await sender.image(
         png,
         _fileName,
-        buildShareText(widget.quote, widget.work, _on, ShareFormat.plain),
+        buildShareText(quote, _work, _on, ShareFormat.plain),
       );
     } on Object {
       if (mounted) {
@@ -252,7 +437,11 @@ class _ShareScreenState extends State<ShareScreen> {
       if (png == null) return;
       final saved = await widget.picker.save(_fileName, png);
       if (mounted) {
-        _say(saved ? 'Saved.' : context.tr('app.library.nothing_was_saved'));
+        _say(
+          saved
+              ? context.tr('app.share.saved')
+              : context.tr('app.library.nothing_was_saved'),
+        );
       }
     } on Object {
       if (mounted) _say(context.tr('app.share.the_picture_could_not_be_saved'));
@@ -262,7 +451,7 @@ class _ShareScreenState extends State<ShareScreen> {
   }
 
   bool get _screenWork {
-    final w = widget.work;
+    final w = _work;
     return w != null &&
         (w.kind == WorkKind.film ||
             w.kind == WorkKind.show ||
@@ -272,7 +461,7 @@ class _ShareScreenState extends State<ShareScreen> {
   /// Faces and the signature ride with the credit they belong to: switch the author (or the speaker, or the
   /// character) off and they go.
   bool get _creditOn =>
-      _on.contains(widget.work == null || _screenWork ? 'speaker' : 'author');
+      _on.contains(_work == null || _screenWork ? 'speaker' : 'author');
 
   bool get _useCharacters =>
       _people.characterFaces.isNotEmpty &&
@@ -292,12 +481,23 @@ class _ShareScreenState extends State<ShareScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final picture = _format == ShareFormat.picture;
+    final book = _format == ShareFormat.epub;
     final look = _look ?? theme.brightness;
+    // Markdown of several quotes is Tippani's import file: it keeps everything, so there is nothing to switch
+    final keepsAll = _subject is QuotesShare && _format == ShareFormat.markdown;
+    final fetching = _fetching.contains(_format);
     return Scaffold(
       appBar: ShellAppBar(title: Text(context.tr('common.action.share.label'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (_subject.summary.isNotEmpty) ...[
+            Text(
+              '${_subject.title} · ${_subject.summary}',
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(height: 16),
+          ],
           Text(
             context.tr('app.share.format'),
             style: theme.textTheme.labelLarge,
@@ -307,36 +507,41 @@ class _ShareScreenState extends State<ShareScreen> {
             spacing: 8,
             runSpacing: 4,
             children: [
-              for (final f in ShareFormat.values)
+              for (final f in _subject.formats)
                 ChoiceChip(
                   label: Text(context.tr(f.label)),
                   selected: _format == f,
-                  onSelected: (_) => _rebuild(() => _format = f),
+                  onSelected: (_) => _choose(f),
                 ),
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            context.tr('app.share.include'),
-            style: theme.textTheme.labelLarge,
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            children: [
-              for (final f in _fields)
-                FilterChip(
-                  label: Text(context.tr(f.label)),
-                  selected: _on.contains(f.id),
-                  onSelected: (v) => _rebuild(() {
-                    _on = {..._on};
-                    v ? _on.add(f.id) : _on.remove(f.id);
-                  }),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
+          if (keepsAll) ...[
+            Text(context.tr('app.share.the_file_keeps_everything')),
+            const SizedBox(height: 16),
+          ] else if (_shownFields.isNotEmpty) ...[
+            Text(
+              context.tr('app.share.include'),
+              style: theme.textTheme.labelLarge,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final f in _shownFields)
+                  FilterChip(
+                    label: Text(context.tr(f.label)),
+                    selected: _on.contains(f.id),
+                    onSelected: (v) => _rebuild(() {
+                      _on = {..._on};
+                      v ? _on.add(f.id) : _on.remove(f.id);
+                    }),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
           if (picture) ...[
             Row(
               children: [
@@ -483,8 +688,8 @@ class _ShareScreenState extends State<ShareScreen> {
                   child: RepaintBoundary(
                     key: _cardKey,
                     child: SharePicture(
-                      quote: widget.quote,
-                      work: widget.work,
+                      quote: _quote!,
+                      work: _work,
                       on: _on,
                       dark: look == Brightness.dark,
                       material: _material,
@@ -522,7 +727,50 @@ class _ShareScreenState extends State<ShareScreen> {
                 ),
               ],
             ),
+          ] else if (book) ...[
+            if (fetching)
+              const Center(child: CircularProgressIndicator())
+            else if (_problem != null)
+              Text(context.tr(_problem!))
+            else if (_book != null)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Ti.fileText),
+                title: Text(_book!.name),
+                subtitle: Text(
+                  context.tr('app.share.n_kb', {
+                    'n': (_book!.bytes.length / 1024).ceil(),
+                  }),
+                ),
+              ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                FilledButton.icon(
+                  onPressed: _book == null ? null : _shareBook,
+                  icon: const Icon(Ti.share2),
+                  label: Text(context.tr('common.action.share.label')),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: _book == null ? null : _saveBook,
+                  icon: const Icon(Ti.deviceFloppy),
+                  label: Text(context.tr('common.action.save.label')),
+                ),
+              ],
+            ),
           ] else ...[
+            if (fetching)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: LinearProgressIndicator(),
+              ),
+            if (_problem != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(context.tr(_problem!)),
+              ),
             TextField(
               textCapitalization: TextCapitalization.sentences,
               controller: _text,
@@ -537,21 +785,34 @@ class _ShareScreenState extends State<ShareScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  onPressed: _shareText,
-                  icon: const Icon(Ti.share2),
-                  label: Text(context.tr('common.action.share.label')),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: _copy,
-                  icon: const Icon(Ti.copy),
-                  label: Text(context.tr('common.action.copy.label')),
-                ),
-              ],
+            // Nothing to send while the server's file is on its way, after it refused, or with the box emptied:
+            // an empty Share would send nothing and an empty Save would write an empty file and say it saved.
+            ListenableBuilder(
+              listenable: _text,
+              builder: (context, _) {
+                final ready = !fetching && _text.text.trim().isNotEmpty;
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: ready ? _shareText : null,
+                      icon: const Icon(Ti.share2),
+                      label: Text(context.tr('common.action.share.label')),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: ready ? _copy : null,
+                      icon: const Icon(Ti.copy),
+                      label: Text(context.tr('common.action.copy.label')),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: ready ? _saveText : null,
+                      icon: const Icon(Ti.deviceFloppy),
+                      label: Text(context.tr('common.action.save.label')),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ],

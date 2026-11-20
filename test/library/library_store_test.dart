@@ -658,6 +658,46 @@ void main() {
       },
     );
 
+    test(
+      'undoing a delete before the server heard of it is the same quote',
+      () async {
+        final w = await walden();
+        final q = await store.addQuote(
+          QuoteDraft(text: 'One.', workId: w.id, tags: const ['life']),
+        );
+        await store.setQuoteServerId(q.id, 9);
+        await store.markQuoteSynced(q.id, 'h1');
+        final gone = (await store.quote(q.id))!;
+        await store.deleteQuote(q.id);
+        expect(await store.undeleteQuote(gone), isTrue);
+        expect(await store.pendingDeletions(), isEmpty);
+        final back = (await store.quote(q.id))!;
+        expect(back.serverId, 9);
+        expect(back.syncedHash, 'h1');
+        expect(back.tags, ['life']);
+      },
+    );
+
+    test(
+      'undoing a delete the server already has is a new quote, said so',
+      () async {
+        final w = await walden();
+        final q = await store.addQuote(
+          QuoteDraft(text: 'One.', workId: w.id, tags: const ['life']),
+        );
+        await store.setQuoteServerId(q.id, 9);
+        final gone = (await store.quote(q.id))!;
+        await store.deleteQuote(q.id);
+        for (final d in await store.pendingDeletions()) {
+          await store.clearDeletion(d.id);
+        }
+        expect(await store.undeleteQuote(gone), isFalse);
+        final back = (await store.quotes()).single;
+        expect(back.serverId, isNull);
+        expect(back.tags, ['life']);
+      },
+    );
+
     test('a film quote and a loose quote use their own tables', () async {
       final f = await store.addWork(
         const WorkDraft(title: 'Casablanca', kind: WorkKind.film),

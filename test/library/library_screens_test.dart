@@ -12,6 +12,7 @@ import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/library_screen.dart';
 import 'package:tippani/settings/settings_store.dart';
 
+import '../support/fake_sharer.dart';
 import '../support/memory_library.dart';
 
 /// A library whose search for `alpha` does not answer until [gate] is completed, so a test can make an old
@@ -59,14 +60,9 @@ class FakePicker implements BackupPicker {
   Future<PickedFile?> pick() async => null;
 }
 
-class FakeShares {
-  final texts = <String>[];
-  Future<void> call(String text, String subject) async => texts.add(text);
-}
-
 late MemoryLibrary lib;
 late FakePicker picker;
-late FakeShares shares;
+late FakeSharer sharer;
 
 /// Opens the library screen. [seed] fills the library first: the screen reads it once when it opens, so a
 /// test that wants quotes already there must put them there before this.
@@ -80,11 +76,13 @@ Future<void> open(
   addTearDown(tester.view.reset);
   lib = MemoryLibrary();
   picker = FakePicker();
-  shares = FakeShares();
+  sharer = FakeSharer();
   if (seed != null) await seed(lib);
   await tester.pumpWidget(
-    MaterialApp(
-      home: LibraryScreen(store: lib, picker: picker, share: shares.call),
+    sharer.around(
+      MaterialApp(
+        home: LibraryScreen(store: lib, picker: picker),
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -248,11 +246,7 @@ void main() {
         await slow.addQuote(const QuoteDraft(text: 'beta one'));
         await tester.pumpWidget(
           MaterialApp(
-            home: LibraryScreen(
-              store: slow,
-              picker: FakePicker(),
-              share: FakeShares().call,
-            ),
+            home: LibraryScreen(store: slow, picker: FakePicker()),
           ),
         );
         await tester.pumpAndSettle();
@@ -422,19 +416,29 @@ void main() {
     );
   });
 
-  group('export', () {
+  group('share', () {
+    Future<void> openShare(WidgetTester tester) async {
+      // the bar's own button, not the Share on each card
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.byTooltip('Share'),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
     testWidgets('an empty library has nothing to share, and says so', (
       tester,
     ) async {
       await open(tester);
-      await tester.tap(find.byTooltip('Export'));
-      await tester.pumpAndSettle();
-      await tapText(tester, 'Share as Markdown');
+      await openShare(tester);
       expect(find.text('There are no quotes to export yet.'), findsOneWidget);
-      expect(shares.texts, isEmpty);
+      expect(find.text('Format'), findsNothing);
     });
 
-    testWidgets('Share hands the Markdown to the share sheet', (tester) async {
+    testWidgets('Share opens the share screen on every quote, and Markdown is '
+        'the file the server imports', (tester) async {
       await open(
         tester,
         seed: (lib) async {
@@ -442,11 +446,21 @@ void main() {
           await lib.addQuote(QuoteDraft(text: 'Simplify.', workId: w.id));
         },
       );
-      await tester.tap(find.byTooltip('Export'));
+      await openShare(tester);
+      expect(find.text('Format'), findsOneWidget);
+      expect(
+        find.text('Tippani quotes · 1 quote'),
+        findsOneWidget,
+        reason: 'what is sent',
+      );
+      // there is no picture of a library
+      expect(find.text('Picture'), findsNothing);
+      await tapText(tester, 'Markdown');
+      expect(find.textContaining('title: Walden'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Share'));
       await tester.pumpAndSettle();
-      await tapText(tester, 'Share as Markdown');
-      expect(shares.texts.single, contains('title: Walden\ntype: book'));
-      expect(shares.texts.single, contains('> Simplify.'));
+      expect(sharer.texts.single, contains('title: Walden\ntype: book'));
+      expect(sharer.texts.single, contains('> Simplify.'));
     });
 
     testWidgets('Save writes tippani-library.md through the file picker', (
@@ -456,16 +470,43 @@ void main() {
         tester,
         seed: (lib) => lib.addQuote(const QuoteDraft(text: 'A proverb.')),
       );
-      await tester.tap(find.byTooltip('Export'));
-      await tester.pumpAndSettle();
-      await tapText(tester, 'Save as Markdown file');
+      await openShare(tester);
+      await tapText(tester, 'Markdown');
+      await tapText(tester, 'Save');
       expect(picker.saved.keys, ['tippani-library.md']);
       expect(picker.saved.values.single, contains('type: quotes'));
       expect(find.text('Saved.'), findsOneWidget);
     });
 
+    testWidgets('the parts can be switched for several quotes, and the text '
+        'follows', (tester) async {
+      await open(
+        tester,
+        seed: (lib) async {
+          await lib.addQuote(
+            const QuoteDraft(text: 'One.', speaker: 'Ann', tags: ['a']),
+          );
+          await lib.addQuote(const QuoteDraft(text: 'Two.', speaker: 'Bob'));
+        },
+      );
+      await openShare(tester);
+      expect(find.text('Tippani quotes · 2 quotes'), findsOneWidget);
+      // it opens on the importable Markdown, which keeps everything and has no parts to switch
+      await tapText(tester, 'Plain text');
+      String shown() =>
+          tester.widget<TextField>(find.byType(TextField)).controller!.text;
+      expect(shown(), contains('“One.”'));
+      expect(shown(), contains('— Ann'));
+      expect(shown(), contains('— Bob'));
+      await tester.tap(find.widgetWithText(FilterChip, 'Speaker'));
+      await tester.pumpAndSettle();
+      expect(shown(), isNot(contains('Ann')));
+      await tapText(tester, 'WhatsApp');
+      expect(shown(), contains('“One.”'));
+    });
+
     testWidgets(
-      'a work exports on its own, named for it, with only its quotes',
+      'a work shares on its own, named for it, with only its quotes',
       (tester) async {
         await open(
           tester,
@@ -480,7 +521,11 @@ void main() {
         await tapText(tester, 'A/B: C');
         await tester.tap(find.byType(PopupMenuButton<String>));
         await tester.pumpAndSettle();
-        await tapText(tester, 'Save as Markdown file');
+        await tapText(tester, 'Share');
+        expect(find.text('Format'), findsOneWidget);
+        expect(find.text('A/B: C · 1 quote'), findsOneWidget);
+        await tapText(tester, 'Markdown');
+        await tapText(tester, 'Save');
         expect(picker.saved.keys, ['tippani-A-B- C.md']);
         expect(picker.saved.values.single, contains('> mine'));
         expect(picker.saved.values.single, isNot(contains('not mine')));

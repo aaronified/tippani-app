@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../anthologies/anthologies.dart';
-import '../api/server_call.dart';
+import '../api/cached_read.dart';
 import '../harness/harness.dart' show BackupPicker;
 import '../library/cover_cache.dart';
 import '../library/library_store.dart';
@@ -12,6 +12,7 @@ import 'filtered_quotes_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/material_surface.dart';
+import 'offline_note.dart';
 
 const _green = Color(0xFF6BAA75);
 const _amber = Color(0xFFE59A4A);
@@ -51,19 +52,19 @@ class _StatsScreenState extends State<StatsScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    try {
-      final s = await widget.tools.stats();
-      if (mounted) {
-        setState(() {
-          _stats = s;
-          _problem = null;
-        });
-      }
-    } on ServerException catch (e) {
-      if (mounted) setState(() => _problem = e.message);
-    }
-  }
+  final _read = CachedRead();
+
+  /// The phone's copy at once, the server's answer in place of it when it lands (ADR-0032).
+  Future<void> _load() => _read.run<LibraryStats>(
+    load: widget.tools.stats,
+    alive: () => mounted,
+    haveCopy: _stats != null,
+    draw: (s) => setState(() {
+      _stats = s;
+      _problem = null;
+    }),
+    fail: (e) => setState(() => _problem = problemText(e)),
+  );
 
   bool get _canOpen => widget.store != null && widget.picker != null;
 
@@ -122,133 +123,160 @@ class _StatsScreenState extends State<StatsScreen> {
     );
     return Scaffold(
       appBar: ShellAppBar(title: Text(context.tr('app.settings.statistics'))),
-      body: _problem != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_problem!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _load,
-                      child: Text(context.tr('common.source.retry')),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : s == null
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                children: [
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 2.1,
-                    children: [
-                      big(context.tr('nav.tab.quotes.label'), s.quotes),
-                      big(
-                        context.tr('stats.overview.favourites.label'),
-                        s.favourites,
+      body: Column(
+        children: [
+          const OfflineNote(),
+          Expanded(
+            child: _problem != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_problem!, textAlign: TextAlign.center),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _load,
+                            child: Text(context.tr('common.source.retry')),
+                          ),
+                        ],
                       ),
-                      big(context.tr('library.group.none.label'), s.books),
-                      big(context.tr('stats.breakdown.films.label'), s.films),
-                      big(context.tr('stats.breakdown.shows.label'), s.shows),
-                      if (s.games > 0)
-                        big(
-                          context.tr('movies.filters.media.game.label'),
-                          s.games,
+                    ),
+                  )
+                : s == null
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      children: [
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 2.1,
+                          children: [
+                            big(context.tr('nav.tab.quotes.label'), s.quotes),
+                            big(
+                              context.tr('stats.overview.favourites.label'),
+                              s.favourites,
+                            ),
+                            big(
+                              context.tr('library.group.none.label'),
+                              s.books,
+                            ),
+                            big(
+                              context.tr('stats.breakdown.films.label'),
+                              s.films,
+                            ),
+                            big(
+                              context.tr('stats.breakdown.shows.label'),
+                              s.shows,
+                            ),
+                            if (s.games > 0)
+                              big(
+                                context.tr('movies.filters.media.game.label'),
+                                s.games,
+                              ),
+                            big(context.tr('common.field.tags.label'), s.tags),
+                            big(
+                              context.tr('nav.tab.anthologies.label'),
+                              s.anthologies,
+                            ),
+                          ],
                         ),
-                      big(context.tr('common.field.tags.label'), s.tags),
-                      big(
-                        context.tr('nav.tab.anthologies.label'),
-                        s.anthologies,
-                      ),
-                    ],
-                  ),
-                  if (s.saves.any((d) => d.count > 0) ||
-                      s.quiz.any((d) => d.count > 0) ||
-                      s.practice.any((d) => d.count > 0)) ...[
-                    const SizedBox(height: 16),
-                    _Activity(stats: s),
-                  ],
-                  if (s.recall.total > 0) ...[
-                    const SizedBox(height: 16),
-                    _Memory(recall: s.recall),
-                  ],
-                  const SizedBox(height: 16),
-                  _Superlatives(
-                    stats: s,
-                    onOpen: _canOpen ? (n) => _openQuery(n, query: n) : null,
-                  ),
-                  if (s.timeline.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    _Timeline(years: s.timeline),
-                  ],
-                  if (s.breakdown.values.any((b) => b.top.isNotEmpty)) ...[
-                    const SizedBox(height: 16),
-                    _BreakdownCard(
-                      breakdown: s.breakdown,
-                      onOpen: _canOpen ? (n) => _openQuery(n, query: n) : null,
-                    ),
-                  ],
-                  if (s.colours.values.any((n) => n > 0)) ...[
-                    const SizedBox(height: 16),
-                    _Colours(colours: s.colours),
-                  ],
-                  if (s.firstSaved.isNotEmpty ||
-                      s.busiestMonth.isNotEmpty ||
-                      s.mostQuoted.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    SurfaceCard(
-                      child: Column(
-                        children: [
-                          if (s.firstSaved.isNotEmpty)
-                            row(
-                              context.tr('app.stats.first_saved'),
-                              s.firstSaved,
-                            ),
-                          if (s.busiestMonth.isNotEmpty)
-                            row(
-                              context.tr('stats.super.busiest-month.label'),
-                              '${s.busiestMonth} (${s.busiestMonthCount})',
-                            ),
-                          if (s.mostQuoted.isNotEmpty)
-                            row(
-                              context.tr('app.stats.most_quoted_work'),
-                              '${s.mostQuoted} (${s.mostQuotedCount})',
-                            ),
+                        if (s.saves.any((d) => d.count > 0) ||
+                            s.quiz.any((d) => d.count > 0) ||
+                            s.practice.any((d) => d.count > 0)) ...[
+                          const SizedBox(height: 16),
+                          _Activity(stats: s),
                         ],
-                      ),
-                    ),
-                  ],
-                  if (s.topTags.isNotEmpty) ...[
-                    _Head(context.tr('stats.top-tags.title')),
-                    SurfaceCard(
-                      child: Column(
-                        children: [
-                          for (final t in s.topTags)
-                            InkWell(
-                              onTap: _canOpen
-                                  ? () => _openQuery('#${t.name}', tag: t.name)
-                                  : null,
-                              child: row('#${t.name}', t.count),
-                            ),
+                        if (s.recall.total > 0) ...[
+                          const SizedBox(height: 16),
+                          _Memory(recall: s.recall),
                         ],
-                      ),
+                        const SizedBox(height: 16),
+                        _Superlatives(
+                          stats: s,
+                          onOpen: _canOpen
+                              ? (n) => _openQuery(n, query: n)
+                              : null,
+                        ),
+                        if (s.timeline.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          _Timeline(years: s.timeline),
+                        ],
+                        if (s.breakdown.values.any(
+                          (b) => b.top.isNotEmpty,
+                        )) ...[
+                          const SizedBox(height: 16),
+                          _BreakdownCard(
+                            breakdown: s.breakdown,
+                            onOpen: _canOpen
+                                ? (n) => _openQuery(n, query: n)
+                                : null,
+                          ),
+                        ],
+                        if (s.colours.values.any((n) => n > 0)) ...[
+                          const SizedBox(height: 16),
+                          _Colours(colours: s.colours),
+                        ],
+                        if (s.firstSaved.isNotEmpty ||
+                            s.busiestMonth.isNotEmpty ||
+                            s.mostQuoted.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          SurfaceCard(
+                            child: Column(
+                              children: [
+                                if (s.firstSaved.isNotEmpty)
+                                  row(
+                                    context.tr('app.stats.first_saved'),
+                                    s.firstSaved,
+                                  ),
+                                if (s.busiestMonth.isNotEmpty)
+                                  row(
+                                    context.tr(
+                                      'stats.super.busiest-month.label',
+                                    ),
+                                    '${s.busiestMonth} (${s.busiestMonthCount})',
+                                  ),
+                                if (s.mostQuoted.isNotEmpty)
+                                  row(
+                                    context.tr('app.stats.most_quoted_work'),
+                                    '${s.mostQuoted} (${s.mostQuotedCount})',
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        if (s.topTags.isNotEmpty) ...[
+                          _Head(context.tr('stats.top-tags.title')),
+                          SurfaceCard(
+                            child: Column(
+                              children: [
+                                for (final t in s.topTags)
+                                  InkWell(
+                                    onTap: _canOpen
+                                        ? () => _openQuery(
+                                            '#${t.name}',
+                                            tag: t.name,
+                                          )
+                                        : null,
+                                    child: row('#${t.name}', t.count),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
-                ],
-              ),
-            ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

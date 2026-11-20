@@ -84,6 +84,10 @@ class FakeServer {
   /// Every list read answers with this status instead (500...), when set.
   int? failReadsWith;
 
+  /// When set, every change (POST, PUT, PATCH, DELETE) waits for it first: a server that takes the connection and
+  /// never answers a write, so the app's own timeout is what ends it and the change is queued.
+  Future<void>? writesWait;
+
   /// Every PUT answers with this status instead (400, 404...), when set.
   int? failUpdatesWith;
 
@@ -682,10 +686,36 @@ class FakeServer {
   /// What the bin holds: `GET /trash`, and `POST /trash/{id}/restore` takes one out.
   final trash = <Map<String, Object?>>[];
 
+  /// The server's anthologies, as `GET /anthologies` lists them, and what `GET /anthologies/{id}` says of each
+  /// (`entries`, `sections`).
+  final anthologies = <Map<String, Object?>>[];
+  final anthologyEntries = <int, List<Map<String, Object?>>>{};
+
+  /// When set, an anthology read waits for it before the server answers: a slow server (a Completer never
+  /// completed is one that never answers, and the client's own timeout is what ends the wait).
+  Future<void>? anthologiesWait;
+
+  /// When set, every read except the pairing's own (`/capabilities`, `/auth/me`) waits for it first: a slow server
+  /// (a Completer never completed is one that never answers, and the client's own timeout ends the wait).
+  Future<void>? readsWait;
+
+  /// When set, every read except the pairing's own is refused with this status (after [readsWait]): a server that
+  /// answers, and answers an error.
+  int? refuseReadsWith;
+
   Future<http.Response> handle(http.Request r) async {
     requests.add(r);
     if (unreachable) throw const SocketException('the network went away');
     final path = r.url.path.replaceFirst(RegExp(r'^.*?/api'), '');
+    // slow, silent or refusing, whatever answers: before a test's own routes, so they are slow too
+    if (_authed(r) && path != '/capabilities' && path != '/auth/me') {
+      if (r.method != 'GET') await writesWait;
+      if (r.method == 'GET') {
+        await readsWait;
+        final status = refuseReadsWith;
+        if (status != null) return _json({'error': 'broken'}, status);
+      }
+    }
     final hooked = await extra?.call(r, path);
     if (hooked != null) return hooked;
     if (r.method == 'GET' && path == '/capabilities') {
@@ -715,6 +745,18 @@ class FakeServer {
       return _json({'token': claimedToken, 'username': username}, 201);
     }
     if (!_authed(r)) return _json({'error': 'not logged in'}, 401);
+    if (r.method == 'GET' && path.startsWith('/anthologies')) {
+      await anthologiesWait;
+      if (path == '/anthologies') return _json({'anthologies': anthologies});
+      final id = int.tryParse(path.substring('/anthologies/'.length));
+      final row = anthologies.where((a) => a['id'] == id).firstOrNull;
+      if (row == null) return _json({'error': 'not found'}, 404);
+      return _json({
+        'anthology': row,
+        'entries': anthologyEntries[id] ?? <Object?>[],
+        'sections': <Object?>[],
+      });
+    }
     final ctx = RegExp(
       r'^/quotes/(annotation|dialogue|utterance)/(\d+)/context$',
     ).firstMatch(path);

@@ -1,8 +1,6 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../anthologies/anthologies.dart';
 import '../capture/photo_source.dart';
@@ -11,25 +9,6 @@ import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import 'prefs_widgets.dart' show Choice, ChoiceTile;
 import '../theme/material_surface.dart';
-
-/// Sends a file through Android's share sheet. A function so a test can stand in for it.
-typedef ShareFile = Future<void> Function(Uint8List bytes, String fileName);
-
-Future<void> shareFileThroughSheet(Uint8List bytes, String fileName) async {
-  final epub = fileName.toLowerCase().endsWith('.epub');
-  await SharePlus.instance.share(
-    ShareParams(
-      files: [
-        XFile.fromData(
-          bytes,
-          mimeType: epub ? 'application/epub+zip' : 'text/markdown',
-          name: fileName,
-        ),
-      ],
-      fileNameOverrides: [fileName],
-    ),
-  );
-}
 
 /// A cover picture of an anthology, or [fallback] while there is none (and while it loads).
 class AnthologyCover extends StatelessWidget {
@@ -793,47 +772,6 @@ Future<bool> editFrontMatter(
   }
   return changed;
 }
-
-/// What the reader chooses to do with an exported file.
-enum ExportAction { save, send }
-
-/// Asks what to export and what to do with it. Null if the reader backs out.
-Future<({bool epub, ExportAction action})?> askExport(
-  BuildContext context,
-) => showModalBottomSheet<({bool epub, ExportAction action})>(
-  context: context,
-  showDragHandle: true,
-  builder: (context) => SafeArea(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final (epub, label) in [
-          (false, context.tr('share.format.markdown.name')),
-          (true, context.tr('app.anthology_tools.epub_book')),
-        ]) ...[
-          ListTile(
-            leading: const Icon(Ti.deviceFloppy),
-            title: Text(
-              context.tr('app.anthology_tools.save_as_label', {'label': label}),
-            ),
-            onTap: () =>
-                Navigator.of(context)
-                    .pop((epub: epub, action: ExportAction.save)),
-          ),
-          ListTile(
-            leading: const Icon(Ti.share2),
-            title: Text(
-              context.tr('app.anthology_tools.send_as_label', {'label': label}),
-            ),
-            onTap: () =>
-                Navigator.of(context)
-                    .pop((epub: epub, action: ExportAction.send)),
-          ),
-        ],
-      ],
-    ),
-  ),
-);
 
 /// The passages the reader took out, each with a button to put it back where it was.
 class RemovedScreen extends StatefulWidget {

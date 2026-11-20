@@ -161,6 +161,8 @@ class AppController extends ChangeNotifier {
     if (result.ok) {
       _token = await _settings.token();
       _revoked = false;
+      // answers kept for another account, or on another server, are not this pairing's to show
+      await offline.ownedBy('${_trimmed(url)}|${_settings.username ?? ''}');
       notifyListeners();
       await loadAccount();
     }
@@ -248,9 +250,17 @@ class AppController extends ChangeNotifier {
     }
   }
 
+  static String _trimmed(String url) =>
+      url.trim().replaceAll(RegExp(r'/+$'), '');
+
   /// Keeps [serverUrl] as the server, after a check that said it is usable.
   Future<void> connect(String serverUrl, ServerCheck check) async {
     assert(check.usable, 'only a usable server is kept');
+    final was = this.serverUrl;
+    if (was != null && _trimmed(was) != _trimmed(serverUrl)) {
+      // another server: what the last one said must not be drawn until a refusal clears it
+      await offline.clear();
+    }
     await _settings.setServerUrl(serverUrl);
     _log?.info('server kept');
     _check = check;

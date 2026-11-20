@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:tippani/library/bulk_ops.dart' show QuoteAsDraft;
 import 'package:tippani/library/library_store.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/sync/fingerprint.dart';
@@ -207,6 +208,24 @@ class MemoryLibrary implements LibraryStore {
     }
     _quotes.remove(id);
     _notify();
+  }
+
+  @override
+  Future<bool> undeleteQuote(Quote gone) async {
+    final sid = gone.serverId;
+    final w = gone.workId == null ? null : _works[gone.workId];
+    final route = quoteRoute(realmOfQuote(w));
+    final i = sid == null
+        ? -1
+        : _deletions.indexWhere((d) => d.route == route && d.serverId == sid);
+    if (i < 0) {
+      await addQuote(gone.toDraft());
+      return sid == null;
+    }
+    _deletions.removeAt(i);
+    _quotes[gone.id] = _make(gone.id, gone.toDraft(), gone.createdAt, gone);
+    _notify();
+    return true;
   }
 
   @override

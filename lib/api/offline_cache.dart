@@ -30,6 +30,29 @@ class OfflineCache {
   /// A screen can say "from this phone, as of …" while it holds a date.
   final ValueNotifier<DateTime?> servedFrom = ValueNotifier(null);
 
+  /// What the server said when it answered a refresh with a refusal while the screen drew the phone's copy (its own
+  /// words, possibly empty), or null. The note says "did not accept" rather than "cannot be reached" while it holds
+  /// a value, because the server was reached.
+  final ValueNotifier<String?> refusal = ValueNotifier(null);
+
+  /// The last read was answered from the phone because the server could not be reached.
+  void markServed(DateTime at) {
+    refusal.value = null;
+    servedFrom.value = at;
+  }
+
+  /// The server answered a refresh with a refusal ([detail] its words) while the phone's copy is on screen.
+  void markRefused(DateTime at, String detail) {
+    refusal.value = detail;
+    servedFrom.value = at;
+  }
+
+  /// The server answered; nothing on screen is the phone's.
+  void markFresh() {
+    refusal.value = null;
+    servedFrom.value = null;
+  }
+
   /// Things to forget along with the cache (a queue of changes made under the pairing that is ending).
   final List<Future<void> Function()> whenCleared = [];
 
@@ -124,6 +147,50 @@ class OfflineCache {
     return null;
   }
 
+  /// When the last change was made through the app to each part of the server (by the first segment of the path),
+  /// so a screen does not draw a copy older than a change the reader just made (ADR-0032). Kept in memory: it
+  /// matters for the session that made the change.
+  final Map<String, DateTime> _wrote = {};
+
+  /// The parts of the server a change to the key also changes the answers of.
+  static const _alsoChanges = {
+    '/quotes': ['/stats', '/tags', '/people', '/characters', '/search'],
+    '/books': ['/stats', '/people', '/characters', '/metadata', '/search'],
+    '/movies': ['/stats', '/people', '/characters', '/metadata', '/search'],
+    '/people': ['/stats', '/characters', '/search'],
+    '/characters': ['/stats', '/people', '/search'],
+    '/tags': ['/stats', '/search'],
+    '/metadata': ['/stats', '/people', '/characters'],
+    '/cleanup': ['/stats', '/corrections', '/locators'],
+    '/corrections': ['/stats', '/cleanup', '/locators'],
+    '/locators': ['/cleanup', '/corrections'],
+  };
+
+  static String _head(String path) {
+    final p = Uri.parse(path).path;
+    final i = p.indexOf('/', 1);
+    return i < 0 ? p : p.substring(0, i);
+  }
+
+  /// Records that the app changed something on the server at [path].
+  void noteWrite(String path, {DateTime? at}) {
+    final when = at ?? DateTime.now();
+    final head = _head(path);
+    for (final h in [head, ...?_alsoChanges[head]]) {
+      _wrote[h] = when;
+    }
+  }
+
+  /// [read] for a screen that draws the copy first: null when a change made through the app since the copy was
+  /// saved means it is no longer the latest word. [read] itself still serves it when the server cannot be reached.
+  ({String body, DateTime at})? readForDraw(String key) {
+    final kept = read(key);
+    if (kept == null) return null;
+    final w = _wrote[_head(key)];
+    if (w != null && kept.at.isBefore(w)) return null;
+    return kept;
+  }
+
   /// Keeps [body] as the answer for [key], and drops the oldest entries if the cache is over its bounds. An answer
   /// larger than the whole cache is not kept (it would push out everything else and then itself).
   Future<void> write(String key, String body, {DateTime? at}) async {
@@ -172,6 +239,18 @@ class OfflineCache {
     await _store.write(_indexKey, jsonEncode(entries));
   }
 
+  static const _ownerKey = 'offline.owner';
+
+  /// Says whose answers are kept ([owner]: the server and the account on it). When they were kept for another
+  /// server or another account, they are forgotten first, so a copy is never drawn under a pairing it was not
+  /// written for (ADR-0032). Nothing recorded yet (a phone that kept answers before owners were recorded) is
+  /// adopted, not cleared: clearing would also forget the changes waiting in a queue.
+  Future<void> ownedBy(String owner) async {
+    final was = _store.read(_ownerKey);
+    if (was != null && was != owner) await clear();
+    await _store.write(_ownerKey, owner);
+  }
+
   /// Forgets everything kept (the phone was unpaired from this server: another account's answers must not
   /// show under the next one).
   Future<void> clear() async {
@@ -181,7 +260,8 @@ class OfflineCache {
       await _store.remove(k);
     }
     _index = [];
-    servedFrom.value = null;
+    _wrote.clear();
+    markFresh();
     for (final forget in List.of(whenCleared)) {
       // one that fails must not leave the rest undone: the queues that must not outlive the pairing are among them
       try {

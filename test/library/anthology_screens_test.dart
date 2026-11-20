@@ -6,11 +6,14 @@ import 'package:tippani/anthologies/anthologies.dart';
 import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/library_widgets.dart';
+import 'package:tippani/screens/quote_menu.dart';
 import 'package:tippani/screens/anthologies_screen.dart';
 import 'package:tippani/screens/anthology_tools.dart';
 import 'package:tippani/theme/app_theme.dart';
 
 import '../support/fake_anthologies.dart';
+import '../support/fake_sharer.dart';
+import '../support/memory_library.dart';
 import '../support/fake_quiz.dart';
 
 AnthologyEntry entry(
@@ -60,21 +63,18 @@ class _Picker implements BackupPicker {
 void main() {
   late FakeAnthologies service;
   late _Picker picker;
-  final sent = <String>[];
+  late FakeSharer sharer;
   late Anthology a;
 
   Future<void> open(WidgetTester tester) async {
     tester.view.physicalSize = const Size(900, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    sent.clear();
+    sharer = FakeSharer();
     await tester.pumpWidget(
-      MaterialApp(
-        home: AnthologyScreen(
-          service: service,
-          id: a.id,
-          picker: picker,
-          shareFile: (bytes, name) async => sent.add(name),
+      sharer.around(
+        MaterialApp(
+          home: AnthologyScreen(service: service, id: a.id, picker: picker),
         ),
       ),
     );
@@ -281,20 +281,54 @@ void main() {
     expect(find.text('“First one.”'), findsOneWidget);
   });
 
-  testWidgets('export saves a file or sends it, as Markdown or an EPUB', (
+  testWidgets('Share offers the text, the Markdown file and the EPUB book', (
     tester,
   ) async {
     await open(tester);
-    await choose(tester, 'Export…');
-    await tester.tap(find.text('Save as Markdown'));
+    await tester.tap(find.byTooltip('Share'));
     await tester.pumpAndSettle();
-    expect(picker.saved, ['Openings.md']);
-    expect(find.text('Saved Openings.md.'), findsOneWidget);
+    for (final f in ['Plain text', 'Markdown', 'EPUB book']) {
+      expect(find.text(f), findsOneWidget, reason: f);
+    }
+    // the Markdown is the server's file, read into the box and saved by name
+    await tester.tap(find.text('Markdown'));
+    await tester.pumpAndSettle();
+    expect(service.calls, contains('export ${a.id} md'));
+    expect(find.text('# Openings\n'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(picker.saved, ['tippani-Openings.md']);
+    expect(find.text('Saved.'), findsOneWidget);
 
-    await choose(tester, 'Export…');
-    await tester.tap(find.text('Send as EPUB book'));
+    // the EPUB is a file: it can be sent or saved, not copied
+    await tester.tap(find.text('EPUB book'));
     await tester.pumpAndSettle();
-    expect(sent, ['Openings.epub']);
+    expect(find.text('Openings.epub'), findsOneWidget);
+    expect(find.text('Copy'), findsNothing);
+    await tester.tap(find.widgetWithText(FilledButton, 'Share'));
+    await tester.pumpAndSettle();
+    expect(sharer.files.map((f) => f.name), ['Openings.epub']);
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(picker.saved.last, 'Openings.epub');
+  });
+
+  testWidgets('a server that cannot make the file says so and the text stays', (
+    tester,
+  ) async {
+    await open(tester);
+    await tester.tap(find.byTooltip('Share'));
+    await tester.pumpAndSettle();
+    service.fail = const AnthologyException('The server is not answering.');
+    await tester.tap(find.text('EPUB book'));
+    await tester.pumpAndSettle();
+    expect(find.text('The server is not answering.'), findsOneWidget);
+    expect(sharer.files, isEmpty);
+    await tester.tap(find.text('Plain text'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Share'));
+    await tester.pumpAndSettle();
+    expect(sharer.texts.single, startsWith('Openings'));
   });
 
   testWidgets('a quote in a list offers Add to anthology only where it can', (
@@ -302,6 +336,7 @@ void main() {
   ) async {
     final q = Quote(
       id: 1,
+      serverId: 5,
       workId: null,
       text: 'Simplify.',
       translation: '',
@@ -318,27 +353,48 @@ void main() {
       updatedAt: DateTime.utc(2026),
       tags: const [],
     );
-    var added = 0;
-    Widget tile({VoidCallback? add}) => MaterialApp(
-      home: Scaffold(
-        body: QuoteTile(
-          quote: q,
-          work: null,
-          onTap: () {},
-          onFavourite: () {},
-          onAddToAnthology: add,
+    Widget tile({required bool available}) {
+      final lib = MemoryLibrary();
+      return MaterialApp(
+        home: Scaffold(
+          body: QuoteTile(
+            quote: q,
+            work: null,
+            onTap: () {},
+            onFavourite: () {},
+            menu: QuoteMenu(
+              store: lib,
+              quote: q,
+              picker: picker,
+              anthologies: FakeAnthologies(available: available),
+              onChanged: () {},
+            ),
+          ),
         ),
-      ),
-    );
-    await tester.pumpWidget(tile());
-    expect(find.byTooltip('Add to anthology'), findsNothing);
-    await tester.pumpWidget(tile(add: () => added++));
+      );
+    }
+
+    await tester.pumpWidget(tile(available: false));
+    await tester.tap(find.byTooltip('More for this quote'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add to anthology'), findsNothing);
+    await tester.tapAt(const Offset(1, 1));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(tile(available: true));
     await tester.tap(find.byTooltip('More for this quote'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to anthology'));
     await tester.pumpAndSettle();
+    expect(find.text('A new anthology…'), findsOneWidget);
+    await tester.tapAt(const Offset(1, 1));
+    await tester.pumpAndSettle();
     await tester.longPress(find.text('Simplify.'));
-    expect(added, 2, reason: 'the menu and a long press both do it');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('A new anthology…'),
+      findsOneWidget,
+      reason: 'the menu and a long press both open the chooser',
+    );
   });
 
   testWidgets('Practise runs the quiz on this anthology only', (tester) async {

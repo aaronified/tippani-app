@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../api/cached_read.dart';
 import '../api/server_call.dart';
 import '../metadata/metadata_service.dart';
 import '../people/picture.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
+import 'offline_note.dart';
 
 void _say(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
@@ -106,22 +108,27 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
 
   String _key(GapWork w) => '${w.kind}:${w.id}';
 
-  Future<void> _read() async {
-    try {
-      final w = await widget.service.works();
-      final d = await widget.service.duplicates();
-      if (mounted) {
-        setState(() {
-          _works = w;
-          _dups = d;
+  final _reads = CachedRead();
+
+  /// The phone's copy at once, the server's answer in place of it when it lands (ADR-0032). [live] is the read
+  /// after a check was applied or two works were merged, which never answers from the phone.
+  Future<void> _read({bool live = false}) =>
+      _reads.run<({List<GapWork> works, List<List<DuplicateWork>> dups})>(
+        load: () async => (
+          works: await widget.service.works(),
+          dups: await widget.service.duplicates(),
+        ),
+        alive: () => mounted,
+        haveCopy: _works != null,
+        live: live,
+        draw: (v) => setState(() {
+          _works = v.works;
+          _dups = v.dups;
           _problem = null;
-          _picked.removeWhere((k) => !w.any((x) => _key(x) == k));
-        });
-      }
-    } on ServerException catch (e) {
-      if (mounted) setState(() => _problem = e.message);
-    }
-  }
+          _picked.removeWhere((k) => !v.works.any((x) => _key(x) == k));
+        }),
+        fail: (e) => setState(() => _problem = problemText(e)),
+      );
 
   Future<void> _job(Future<void> Function() start, String said) async {
     try {
@@ -185,7 +192,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
     );
     if (applied != null && applied > 0) {
       widget.onChanged?.call();
-      await _read();
+      await _read(live: true);
     }
   }
 
@@ -254,7 +261,7 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
         ],
       );
       widget.onChanged?.call();
-      await _read();
+      await _read(live: true);
     } on ServerException catch (e) {
       if (mounted) _say(context, e.message);
     }
@@ -568,26 +575,36 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
           ),
         ),
       ),
-      body: _problem != null && works == null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_problem!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _read,
-                      child: Text(context.tr('common.source.retry')),
+      body: Column(
+        children: [
+          const OfflineNote(),
+          Expanded(
+            child: _problem != null && works == null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_problem!, textAlign: TextAlign.center),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _read,
+                            child: Text(context.tr('common.source.retry')),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            )
-          : works == null || _dups == null
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(controller: _tabs, children: [_worksTab(), _dupsTab()]),
+                  )
+                : works == null || _dups == null
+                ? const Center(child: CircularProgressIndicator())
+                : TabBarView(
+                    controller: _tabs,
+                    children: [_worksTab(), _dupsTab()],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

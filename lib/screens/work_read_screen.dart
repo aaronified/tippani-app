@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
+import '../share/share_subject.dart';
+import 'share_screen.dart' show openShare;
 import '../library/models.dart';
-import '../library/quote_text.dart';
 import '../library/work_order.dart';
 import '../speech/speaker.dart';
 import '../l10n/l10n.dart';
@@ -17,7 +17,6 @@ class WorkReadScreen extends StatefulWidget {
     super.key,
     required this.work,
     required this.quotes,
-    this.share = shareThroughSheet,
     this.speaker,
   });
 
@@ -25,7 +24,6 @@ class WorkReadScreen extends StatefulWidget {
 
   /// In reading order.
   final List<Quote> quotes;
-  final ShareText share;
   final Speaker? speaker;
 
   @override
@@ -97,14 +95,21 @@ class _WorkReadScreenState extends State<WorkReadScreen> {
           IconButton(
             tooltip: context.tr('app.work_read.share_all'),
             icon: const Icon(Ti.share2),
-            onPressed: () => widget.share(
-              workShareText(
-                widget.work,
+            onPressed: () => openShare(
+              context,
+              QuotesShare(
                 widget.quotes,
-                translations: _translations,
-                notes: _notes,
+                [widget.work],
+                work: widget.work,
+                // the switches this page already has
+                on: {
+                  'quote',
+                  if (_translations) 'translation',
+                  'chapter',
+                  'location',
+                  if (_notes) 'note',
+                },
               ),
-              widget.work.title,
             ),
           ),
         ],

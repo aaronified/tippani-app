@@ -6,8 +6,11 @@ import '../library/bulk_ops.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
 import '../sync/fingerprint.dart' show realmOfQuote;
-import 'anthologies_screen.dart' show askAnthologyText;
+import 'anthologies_screen.dart' show askAnthologyText, chooseAnthology;
+import '../harness/harness.dart' show BackupPicker, SystemBackupPicker;
+import '../share/share_subject.dart';
 import 'quote_form_screen.dart' show quoteColour, quoteColourName;
+import 'share_screen.dart' show openShare;
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
 
@@ -62,10 +65,14 @@ class QuoteBulkActions {
     required this.anthologies,
     required this.quotes,
     required this.done,
+    this.picker = const SystemBackupPicker(),
   });
 
   final LibraryStore store;
   final AnthologyService? anthologies;
+
+  /// Where a share's Save puts its file.
+  final BackupPicker picker;
 
   /// The selected quotes, as they are now.
   final List<Quote> quotes;
@@ -100,23 +107,25 @@ class QuoteBulkActions {
       IconButton(
         tooltip: context.tr('common.field.colour.label'),
         icon: const Icon(Ti.palette),
-        onPressed: () => _recolour(context),
+        onPressed: () => recolour(context),
       ),
       IconButton(
         tooltip: context.tr('common.field.tag.label'),
         icon: const Icon(Ti.tag),
-        onPressed: () => _tag(context, add: true),
+        onPressed: () => tag(context, add: true),
       ),
       PopupMenuButton<String>(
         tooltip: context.tr('settings.appearance.contrast.more.label'),
         onSelected: (v) {
           switch (v) {
+            case 'share':
+              share(context);
             case 'untag':
-              _tag(context, add: false);
+              tag(context, add: false);
             case 'field':
               _field(context);
             case 'board':
-              _board(context);
+              board(context);
             case 'anthology':
               _anthology(context);
             case 'delete':
@@ -124,6 +133,10 @@ class QuoteBulkActions {
           }
         },
         itemBuilder: (context) => [
+          PopupMenuItem(
+            value: 'share',
+            child: Text(context.tr('common.action.share.label')),
+          ),
           PopupMenuItem(
             value: 'untag',
             child: Text(context.tr('app.bulk_bar.take_a_tag_off')),
@@ -150,7 +163,27 @@ class QuoteBulkActions {
     ];
   }
 
-  Future<void> _recolour(BuildContext context) async {
+  /// Opens the share screen for the selection: one quote is shared as a quote (with its picture), several as a set.
+  Future<void> share(BuildContext context) async {
+    final works = <Work>[];
+    for (final id in {
+      for (final q in quotes)
+        if (q.workId != null) q.workId!,
+    }) {
+      final w = await store.work(id);
+      if (w != null) works.add(w);
+    }
+    if (!context.mounted) return;
+    final subject = quotes.length == 1
+        ? QuoteShare(
+            quotes.single,
+            works.where((w) => w.id == quotes.single.workId).firstOrNull,
+          )
+        : QuotesShare(quotes, works);
+    await openShare(context, subject, picker: picker);
+  }
+
+  Future<void> recolour(BuildContext context) async {
     final picked = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => SafeArea(
@@ -176,7 +209,7 @@ class QuoteBulkActions {
     done();
   }
 
-  Future<void> _tag(BuildContext context, {required bool add}) async {
+  Future<void> tag(BuildContext context, {required bool add}) async {
     final known = await store.tags();
     if (!context.mounted) return;
     // taking a tag off offers the tags these quotes wear; adding offers every tag there is
@@ -237,7 +270,7 @@ class QuoteBulkActions {
     done();
   }
 
-  Future<void> _board(BuildContext context) async {
+  Future<void> board(BuildContext context) async {
     final boards = await store.boards();
     if (!context.mounted) return;
     const none = -1;
@@ -273,31 +306,7 @@ class QuoteBulkActions {
     final service = anthologies;
     if (service == null) return;
     final messenger = ScaffoldMessenger.of(context);
-    List<Anthology> all;
-    try {
-      all = await service.list();
-    } on AnthologyException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
-      return;
-    }
-    if (!context.mounted) return;
-    final chosen = await showDialog<Object>(
-      context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(context.tr('common.action.anthology.label')),
-        children: [
-          for (final a in all)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(a),
-              child: Text(a.title),
-            ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(context).pop('new'),
-            child: Text(context.tr('app.anthologies.a_new_anthology')),
-          ),
-        ],
-      ),
-    );
+    final chosen = await chooseAnthology(context, service);
     if (chosen == null) return;
     try {
       Anthology target;

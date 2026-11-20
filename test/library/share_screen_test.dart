@@ -6,6 +6,9 @@ import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/library/share_format.dart';
 import 'package:tippani/screens/share_screen.dart';
+import 'package:tippani/share/share_subject.dart';
+
+import '../support/fake_sharer.dart';
 
 class _Picker implements BackupPicker {
   final saved = <String, Uint8List>{};
@@ -181,10 +184,8 @@ void main() {
 
   group('the screen', () {
     late _Picker picker;
-    final texts = <String>[];
-    final images = <({Uint8List png, String name, String text})>[];
+    late FakeSharer sharer;
     final copied = <String>[];
-    bool failImage = false;
     final copiedImages = <({Uint8List png, String name})>[];
     bool copyImageWorks = true;
     bool failCopy = false;
@@ -194,32 +195,26 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       picker = _Picker();
-      texts.clear();
-      images.clear();
+      sharer = FakeSharer();
       copied.clear();
-      failImage = false;
       failCopy = false;
       copiedImages.clear();
       copyImageWorks = true;
       await tester.pumpWidget(
-        MaterialApp(
-          home: ShareScreen(
-            quote: q(),
-            work: walden(),
-            share: (t, s) async => texts.add(t),
-            shareImage: (png, name, text) async {
-              if (failImage) throw Exception('no share sheet');
-              images.add((png: png, name: name, text: text));
-            },
-            picker: picker,
-            copy: (t) async {
-              if (failCopy) throw Exception('no clipboard');
-              copied.add(t);
-            },
-            copyImage: (png, name) async {
-              copiedImages.add((png: png, name: name));
-              return copyImageWorks;
-            },
+        sharer.around(
+          MaterialApp(
+            home: ShareScreen(
+              subject: QuoteShare(q(), walden()),
+              picker: picker,
+              copy: (t) async {
+                if (failCopy) throw Exception('no clipboard');
+                copied.add(t);
+              },
+              copyImage: (png, name) async {
+                copiedImages.add((png: png, name: name));
+                return copyImageWorks;
+              },
+            ),
           ),
         ),
       );
@@ -274,9 +269,9 @@ void main() {
         await waitFor(
           tester,
           () => tester.tap(find.widgetWithText(FilledButton, 'Share')),
-          () => images.isNotEmpty,
+          () => sharer.images.isNotEmpty,
         );
-        final sent = images.single;
+        final sent = sharer.images.single;
         expect(isPng(sent.png), isTrue);
         expect(sent.name, 'tippani-quote-7.png');
         expect(sent.text, contains('Simplify, simplify.'));
@@ -291,9 +286,9 @@ void main() {
       await waitFor(
         tester,
         () => tester.tap(find.widgetWithText(FilledButton, 'Share')),
-        () => images.isNotEmpty,
+        () => sharer.images.isNotEmpty,
       );
-      expect(isPng(images.single.png), isTrue);
+      expect(isPng(sharer.images.single.png), isTrue);
     });
 
     testWidgets('saving the picture writes a PNG where the reader chose', (
@@ -349,7 +344,7 @@ void main() {
 
     testWidgets('a share sheet that fails is said, not thrown', (tester) async {
       await open(tester);
-      failImage = true;
+      sharer.failImage = true;
       await waitFor(
         tester,
         () => tester.tap(find.widgetWithText(FilledButton, 'Share')),
@@ -376,7 +371,7 @@ void main() {
         await tester.enterText(find.byType(TextField), 'edited by hand');
         await tester.tap(find.widgetWithText(FilledButton, 'Share'));
         await tester.pumpAndSettle();
-        expect(texts.single, 'edited by hand');
+        expect(sharer.texts.single, 'edited by hand');
       },
     );
 
