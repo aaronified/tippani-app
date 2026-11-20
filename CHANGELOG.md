@@ -9,6 +9,7 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Changed
 
+- One Share screen for everything: Share on a quote card, a quote's menu, a selection, a whole work, the library and an anthology now all open the same screen, with the same formats (plain text, Markdown, WhatsApp, Reddit, and a picture for one quote), the text you are about to send, and Share, Copy and Save. An anthology's Markdown file and EPUB book are on it too, in place of its Export menu. Several quotes have no picture.
 - A quote's menu has all of it: the three-dot menu on a quote card now also has Edit, Colour, Add a tag, Take a tag off, Move to a board, Open the work, Show where it comes from and Delete, next to Open, Select and Add to anthology. It is the same menu on Home, in the library, on a work, on a board and in a list of quotes, and a search result that is on your phone has it too. Actions that need the server appear only when there is one.
 
 ## [0.10.2] - 2026-11-15

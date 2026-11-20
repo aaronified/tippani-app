@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../anthologies/anthologies.dart';
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../l10n/l10n.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
@@ -30,8 +29,6 @@ Future<void> openSearch(
   BuildContext context, {
   required LibraryStore store,
   required BackupPicker picker,
-  ShareText share = shareThroughSheet,
-  ShareImage shareImage = shareImageThroughSheet,
   AnthologyService? anthologies,
   WorkLookup? lookup,
   String initial = '',
@@ -40,8 +37,6 @@ Future<void> openSearch(
     builder: (_) => SearchScreen(
       store: store,
       picker: picker,
-      share: share,
-      shareImage: shareImage,
       anthologies: anthologies,
       lookup: lookup,
       initial: initial,
@@ -98,8 +93,6 @@ class SearchScreen extends StatefulWidget {
     super.key,
     required this.store,
     required this.picker,
-    this.share = shareThroughSheet,
-    this.shareImage = shareImageThroughSheet,
     this.anthologies,
     this.lookup,
     this.server,
@@ -109,8 +102,6 @@ class SearchScreen extends StatefulWidget {
 
   final LibraryStore store;
   final BackupPicker picker;
-  final ShareText share;
-  final ShareImage shareImage;
   final AnthologyService? anthologies;
   final WorkLookup? lookup;
 
@@ -309,8 +300,6 @@ class _SearchScreenState extends State<SearchScreen> {
           store: widget.store,
           workId: w.id,
           picker: widget.picker,
-          share: widget.share,
-          shareImage: widget.shareImage,
           anthologies: widget.anthologies,
           lookup: widget.lookup,
         ),
@@ -361,8 +350,6 @@ class _SearchScreenState extends State<SearchScreen> {
           store: widget.store,
           quoteId: q.id,
           picker: widget.picker,
-          share: widget.share,
-          shareImage: widget.shareImage,
           anthologies: widget.anthologies,
         ),
       ),
@@ -965,8 +952,6 @@ class _SearchScreenState extends State<SearchScreen> {
                           .firstOrNull,
                       picker: widget.picker,
                       anthologies: widget.anthologies,
-                      share: widget.share,
-                      shareImage: widget.shareImage,
                       onChanged: _readPhone,
                       onFilter: (f) {
                         setState(() => _text.text = f.name);

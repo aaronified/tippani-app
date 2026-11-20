@@ -20,7 +20,6 @@ import '../widgets/text_prompt.dart';
 import 'work_details_section.dart';
 
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../anthologies/anthologies.dart';
 import '../library/models.dart';
@@ -50,8 +49,6 @@ class WorkScreen extends StatefulWidget {
     required this.store,
     required this.workId,
     required this.picker,
-    this.share = shareThroughSheet,
-    this.shareImage = shareImageThroughSheet,
     this.anthologies,
     this.lookup,
     this.photos,
@@ -67,8 +64,6 @@ class WorkScreen extends StatefulWidget {
   final LibraryStore store;
   final int workId;
   final BackupPicker picker;
-  final ShareText share;
-  final ShareImage shareImage;
   final AnthologyService? anthologies;
   final WorkLookup? lookup;
 
@@ -397,8 +392,6 @@ class _WorkScreenState extends State<WorkScreen> {
           store: widget.store,
           quoteId: q.id,
           picker: widget.picker,
-          share: widget.share,
-          shareImage: widget.shareImage,
           anthologies: widget.anthologies,
         ),
       ),
@@ -414,11 +407,8 @@ class _WorkScreenState extends State<WorkScreen> {
   void _read() {
     Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (_) => WorkReadScreen(
-          work: _work!,
-          quotes: readingOrder(_quotes),
-          share: widget.share,
-        ),
+        builder: (_) =>
+            WorkReadScreen(work: _work!, quotes: readingOrder(_quotes)),
       ),
     );
   }
@@ -444,8 +434,6 @@ class _WorkScreenState extends State<WorkScreen> {
       chipWork: _work,
       picker: widget.picker,
       anthologies: widget.anthologies,
-      share: widget.share,
-      shareImage: widget.shareImage,
       onChanged: _load,
       // the library opens on this name
       onFilter: (f) => Navigator.of(context).pop(f),
@@ -582,6 +570,7 @@ class _WorkScreenState extends State<WorkScreen> {
                 store: widget.store,
                 anthologies: widget.anthologies,
                 quotes: chosen,
+                picker: widget.picker,
                 done: _bulkDone,
               ).bar(context),
             )
@@ -598,15 +587,10 @@ class _WorkScreenState extends State<WorkScreen> {
                     onSelected: (v) {
                       switch (v) {
                         case 'share':
-                        case 'save':
-                          runExport(
+                          shareLibrary(
                             context,
                             store: widget.store,
-                            share: widget.share,
                             picker: widget.picker,
-                            kind: v == 'share'
-                                ? ExportKind.share
-                                : ExportKind.save,
                             work: w,
                           );
                         case 'fetch':
@@ -629,15 +613,7 @@ class _WorkScreenState extends State<WorkScreen> {
                     itemBuilder: (_) => [
                       PopupMenuItem(
                         value: 'share',
-                        child: Text(
-                          context.tr('app.library.share_as_markdown'),
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'save',
-                        child: Text(
-                          context.tr('app.library.save_as_markdown_file'),
-                        ),
+                        child: Text(context.tr('common.action.share.label')),
                       ),
                       if (w.serverId != null &&
                           WorkEditScope.of(context)?.available == true)

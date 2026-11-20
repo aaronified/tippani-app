@@ -9,6 +9,7 @@ import 'package:tippani/screens/work_screen.dart';
 
 import 'dart:typed_data';
 
+import '../support/fake_sharer.dart';
 import '../support/memory_library.dart';
 
 class _Picker implements BackupPicker {
@@ -127,13 +128,13 @@ void main() {
   group('the screens', () {
     late MemoryLibrary lib;
     late Work work;
-    final shared = <String>[];
+    late FakeSharer sharer;
 
     Future<void> open(WidgetTester tester) async {
       tester.view.physicalSize = const Size(800, 2400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      shared.clear();
+      sharer = FakeSharer();
       lib = MemoryLibrary();
       work = await lib.addWork(
         const WorkDraft(title: 'Walden', creator: 'Thoreau'),
@@ -152,12 +153,9 @@ void main() {
         ),
       );
       await tester.pumpWidget(
-        MaterialApp(
-          home: WorkScreen(
-            store: lib,
-            workId: work.id,
-            picker: _Picker(),
-            share: (t, s) async => shared.add(t),
+        sharer.around(
+          MaterialApp(
+            home: WorkScreen(store: lib, workId: work.id, picker: _Picker()),
           ),
         ),
       );
@@ -220,9 +218,14 @@ void main() {
         expect(find.text('pehla'), findsNothing);
         await tester.tap(find.byTooltip('Share all'));
         await tester.pumpAndSettle();
-        expect(shared.single, startsWith('Walden — Thoreau'));
-        expect(shared.single, contains('Note: my note'));
-        expect(shared.single, isNot(contains('pehla')));
+        // the one share screen, with the switches this page had
+        expect(find.text('Format'), findsOneWidget);
+        await tester.tap(find.widgetWithText(FilledButton, 'Share'));
+        await tester.pumpAndSettle();
+        expect(sharer.texts.single, startsWith('Walden — Thoreau'));
+        expect(sharer.texts.single, contains('Note: my note'));
+        expect(sharer.texts.single, isNot(contains('pehla')));
+        expect(sharer.subjects.single, 'Walden');
       },
     );
 

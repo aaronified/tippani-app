@@ -100,7 +100,7 @@ reads and writes; `SqliteLibraryStore` is SQLite through `sqflite`, with the dat
 
 `lib/screens/library_screen.dart` is the first tab (the app opens on it; the server screens are the second tab, called Server). It
 reads only a `LibraryStore`, so it works with no server. `quote_form_screen.dart` and `work_form_screen.dart` add and change a quote
-or a work; `work_screen.dart` is one work with its quotes; `library_widgets.dart` holds the quote tile and the export plumbing.
+or a work; `work_screen.dart` is one work with its quotes; `library_widgets.dart` holds the quote tile; `quote_menu.dart` holds the one menu every quote card has ([ADR-0029](ADR-0029-A-Quotes-Menu-Holds-Every-Action-Its-Card-Does-Not-Show.md)), and `shareLibrary` opens the share screen for the library or a work.
 
 - **A search that finishes late must not win.** `_load` numbers its requests and only the newest fills the list; a test makes an old
   search finish after a newer one.
@@ -108,8 +108,8 @@ or a work; `work_screen.dart` is one work with its quotes; `library_widgets.dart
 - **Export is Tippani's own Markdown** (`markdown_export.dart`, modelled on the server's `export_handlers.go` and `export_quotes.go`):
   a book is `type: book` with quotes under `## chapter` headings, a film, show or game says `type: movie|show|game`, quotes with no
   work are one `type: quotes` block, a work with no quotes is left out, and yellow (the default colour) is never written. The server
-  imports these files, so a library made on the phone can be moved to a server. Share goes through the share sheet; Save uses the
-  file picker (no storage permission).
+  imports these files, so a library made on the phone can be moved to a server. Share is the share screen (its Markdown format for several quotes
+  is this file); Save uses the file picker (no storage permission).
 - **Tests.** The screens are tested against `test/support/memory_library.dart`, a `LibraryStore` with no I/O, because a widget test's
   fake clock cannot drive real SQLite. The store itself is tested against real SQLite in `library_store_test.dart`.
 
@@ -130,10 +130,18 @@ the sync that reads the server back is [ADR-0016](ADR-0016-Conflicts-Are-Chosen-
 
 ## The Share screen
 
-`lib/screens/share_screen.dart` (`ShareScreen`), `lib/library/share_format.dart` (`ShareFormat`, `shareFieldsOf`, `shareDefaults`,
-`buildShareText`, `shareCredit`) and `QuoteCard.show`. It mirrors the web dialog (`web/frontend/src/share.jsx` in the Tippani repository): the
-same five formats, the same parts, the same parts off by default. Keep the two in step when one changes. The picture is the card with only the
-switched-on parts drawn; the text formats are the same parts as text, regenerated on every change.
+`lib/screens/share_screen.dart` (`ShareScreen`, opened with `openShare`), `lib/share/share_subject.dart` (`ShareSubject`: `QuoteShare`,
+`QuotesShare`, `AnthologyShare`), `lib/share/sharer.dart` (`Sharer`, `ShareScope`), `lib/library/share_format.dart` (`ShareFormat`,
+`shareFieldsOf`, `shareDefaults`, `buildShareText`, `buildQuotesText`, `shareCredit`) and `QuoteCard.show`. **Every share in the app is this one
+screen** ([ADR-0030](ADR-0030-Every-Share-Is-One-Screen-With-A-Subject.md)); no other screen calls Android's share sheet. The subject says what the
+formats are, what the parts are and how each format is written; the screen is the same for all. It mirrors the web dialog
+(`web/frontend/src/share.jsx` in the Tippani repository) for one quote: the same five formats, the same parts, the same parts off by default.
+Keep the two in step when one changes. The picture is the card with only the switched-on parts drawn; the text formats are the same parts as
+text, regenerated on every change.
+
+- **One sender.** `Sharer` has `text`, `image` and `file`; `SheetSharer` is the only code that calls `SharePlus`, and a test puts
+  `FakeSharer` (`test/support/fake_sharer.dart`) in a `ShareScope` above the screen. No screen takes a `share:` function.
+- **The logs are not a share of a quote, a work or an anthology** and keep their own sheet call (`harness/log_screen.dart`).
 
 ## Reading aloud
 

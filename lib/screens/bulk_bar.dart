@@ -7,7 +7,10 @@ import '../library/library_store.dart';
 import '../library/models.dart';
 import '../sync/fingerprint.dart' show realmOfQuote;
 import 'anthologies_screen.dart' show askAnthologyText;
+import '../harness/harness.dart' show BackupPicker, SystemBackupPicker;
+import '../share/share_subject.dart';
 import 'quote_form_screen.dart' show quoteColour, quoteColourName;
+import 'share_screen.dart' show openShare;
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
 
@@ -62,10 +65,14 @@ class QuoteBulkActions {
     required this.anthologies,
     required this.quotes,
     required this.done,
+    this.picker = const SystemBackupPicker(),
   });
 
   final LibraryStore store;
   final AnthologyService? anthologies;
+
+  /// Where a share's Save puts its file.
+  final BackupPicker picker;
 
   /// The selected quotes, as they are now.
   final List<Quote> quotes;
@@ -111,6 +118,8 @@ class QuoteBulkActions {
         tooltip: context.tr('settings.appearance.contrast.more.label'),
         onSelected: (v) {
           switch (v) {
+            case 'share':
+              share(context);
             case 'untag':
               tag(context, add: false);
             case 'field':
@@ -124,6 +133,10 @@ class QuoteBulkActions {
           }
         },
         itemBuilder: (context) => [
+          PopupMenuItem(
+            value: 'share',
+            child: Text(context.tr('common.action.share.label')),
+          ),
           PopupMenuItem(
             value: 'untag',
             child: Text(context.tr('app.bulk_bar.take_a_tag_off')),
@@ -148,6 +161,26 @@ class QuoteBulkActions {
         ],
       ),
     ];
+  }
+
+  /// Opens the share screen for the selection: one quote is shared as a quote (with its picture), several as a set.
+  Future<void> share(BuildContext context) async {
+    final works = <Work>[];
+    for (final id in {
+      for (final q in quotes)
+        if (q.workId != null) q.workId!,
+    }) {
+      final w = await store.work(id);
+      if (w != null) works.add(w);
+    }
+    if (!context.mounted) return;
+    final subject = quotes.length == 1
+        ? QuoteShare(
+            quotes.single,
+            works.where((w) => w.id == quotes.single.workId).firstOrNull,
+          )
+        : QuotesShare(quotes, works);
+    await openShare(context, subject, picker: picker);
   }
 
   Future<void> recolour(BuildContext context) async {

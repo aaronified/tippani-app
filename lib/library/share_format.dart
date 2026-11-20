@@ -1,18 +1,22 @@
 import 'models.dart';
 import '../l10n/l10n.dart';
 
-/// The ways a quote can be sent. Same five as the web app's share dialog.
+/// The ways something can be sent. The first five are the web app's share dialog; [epub] is an anthology's book.
+/// Which of them a share offers depends on what is shared (a picture only for one quote, an EPUB only for an
+/// anthology).
 enum ShareFormat {
   picture('quotes.board.form.picture.label'),
   plain('app.share_format.plain_text'),
   markdown('share.format.markdown.name'),
   whatsapp('WhatsApp'),
-  reddit('share.format.reddit.name');
+  reddit('share.format.reddit.name'),
+  epub('app.anthology_tools.epub_book');
 
   const ShareFormat(this.label);
   final String label;
 
-  bool get isText => this != picture;
+  /// Words that can be read, edited, copied and sent as text (the others are a picture or a file).
+  bool get isText => this != picture && this != epub;
 }
 
 /// One part of a quote that can be switched on or off for a share.
@@ -132,4 +136,57 @@ String buildShareText(Quote q, Work? w, Set<String> on, ShareFormat format) {
     out.add(tx('app.share_format.note_x', {'x': fields['note']}));
   }
   return out.join('\n\n');
+}
+
+/// The parts in the order they read.
+const _partOrder = [
+  'quote',
+  'translation',
+  'speaker',
+  'author',
+  'work',
+  'year',
+  'chapter',
+  'location',
+  'noted',
+  'tags',
+  'note',
+];
+
+/// The parts that any of [quotes] has, in reading order, for one set of switches that covers all of them.
+List<ShareField> shareFieldsOfMany(
+  List<Quote> quotes,
+  Work? Function(Quote) workOf,
+) {
+  final first = <String, ShareField>{};
+  for (final q in quotes) {
+    for (final f in shareFieldsOf(q, workOf(q))) {
+      first.putIfAbsent(f.id, () => f);
+    }
+  }
+  return [
+    for (final id in _partOrder)
+      if (first[id] != null) first[id]!,
+  ];
+}
+
+/// Several quotes as text in [format]: each one as [buildShareText] writes it, with the same switches for all,
+/// one after another (a rule between them on Reddit, where a run of block quotes would run together). An
+/// optional [heading] goes first, in bold where the format has it.
+String buildQuotesText(
+  List<Quote> quotes,
+  Work? Function(Quote) workOf,
+  Set<String> on,
+  ShareFormat format, {
+  String heading = '',
+}) {
+  final blocks = [
+    for (final q in quotes) buildShareText(q, workOf(q), on, format),
+  ].where((b) => b.trim().isNotEmpty).toList();
+  final body = blocks.join(
+    format == ShareFormat.reddit ? '\n\n---\n\n' : '\n\n',
+  );
+  return heading.trim().isEmpty
+      ? body
+      : '${_bold(heading.trim(), format)}\n\n$body';
 }

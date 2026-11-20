@@ -79,7 +79,6 @@ Widget _tile(Quote q, List<String> shared) => MaterialApp(
           work: _work,
           picker: _NoPicker(),
           onChanged: () {},
-          share: (t, s) async => shared.add(t),
         ),
       ),
     ),

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:tippani/anthologies/anthologies.dart';
@@ -515,7 +516,9 @@ class FakeAnthologies implements AnthologyService {
     calls.add('export $id ${epub ? 'epub' : 'md'}');
     return ExportedFile(
       '${_rows[id]!['title']}.${epub ? 'epub' : 'md'}',
-      Uint8List.fromList([1, 2, 3]),
+      epub
+          ? Uint8List.fromList([1, 2, 3])
+          : Uint8List.fromList(utf8.encode('# ${_rows[id]!['title']}\n')),
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/share_screen.dart';
+import 'package:tippani/share/share_subject.dart';
 import 'package:tippani/share/share_people.dart';
 
 /// A 1x1 PNG, so a face has real bytes.
@@ -78,10 +79,7 @@ Future<void> _open(WidgetTester tester, SharePeopleSource? source) async {
       home: PeopleScope(
         source: source,
         child: ShareScreen(
-          quote: _quote(),
-          work: _walden(),
-          share: (t, s) async {},
-          shareImage: (png, name, text) async {},
+          subject: QuoteShare(_quote(), _walden()),
           picker: _Picker(),
           copy: (t) async {},
         ),

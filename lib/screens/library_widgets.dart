@@ -2,15 +2,10 @@ import '../library/quote_chips.dart';
 import '../people/face_stack.dart';
 import 'quote_chips_row.dart';
 
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText;
 import '../library/library_store.dart';
-import '../library/markdown_export.dart';
 import '../library/models.dart';
 import '../speech/quote_speech.dart';
 import '../widgets/edge_fade_row.dart';
@@ -18,6 +13,9 @@ import '../library/cover_cache.dart' show WorkCover;
 import '../theme/app_theme.dart';
 import 'quote_form_screen.dart';
 import 'quote_menu.dart';
+import 'share_screen.dart' show openShare;
+import '../share/share_subject.dart';
+import '../library/work_order.dart' show readingOrder;
 import 'shelf_card.dart' show shelfStatusLabel;
 import 'work_form_screen.dart' show workKindLabel;
 import '../l10n/l10n.dart';
@@ -603,67 +601,32 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-/// The Markdown for the whole library, or for one work.
-Future<String> markdownFor(LibraryStore store, {Work? work}) async {
-  final works = work == null ? await store.works() : [work];
-  final quotes = await store.quotes(workId: work?.id, limit: 1 << 30);
-  return libraryMarkdown(works, quotes);
-}
-
-/// What an export of [work] (or of everything) is called as a file.
-String exportFileName(Work? work) {
-  if (work == null) return 'tippani-library.md';
-  final safe = work.title
-      .replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1f]'), '-')
-      .trim();
-  return 'tippani-${safe.isEmpty ? 'work' : safe}.md';
-}
-
-enum ExportKind { share, save }
-
-/// The export menu shared by the library and a work's page. It says so when there is nothing to export, so
-/// an empty file is never handed over.
-Future<void> runExport(
+/// Opens the share screen for the whole library, or for [work] alone (its quotes in reading order). It says so when
+/// there is nothing to send, so an empty file is never handed over.
+Future<void> shareLibrary(
   BuildContext context, {
   required LibraryStore store,
-  required ShareText share,
   required BackupPicker picker,
-  required ExportKind kind,
   Work? work,
 }) async {
-  final tr = context.tr;
-  final md = await markdownFor(store, work: work);
+  final works = work == null ? await store.works() : [work];
+  final quotes = await store.quotes(workId: work?.id, limit: 1 << 30);
   if (!context.mounted) return;
-  final messenger = ScaffoldMessenger.of(context);
-  if (md.trim().isEmpty) {
-    messenger.showSnackBar(
-      SnackBar(content: Text(tr('app.library.there_are_no_quotes_to_export'))),
+  if (quotes.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(context.tr('app.library.there_are_no_quotes_to_export')),
+      ),
     );
     return;
   }
-  try {
-    if (kind == ExportKind.share) {
-      await share(md, context.tr('app.library.tippani_quotes'));
-    } else {
-      final saved = await picker.save(
-        exportFileName(work),
-        Uint8List.fromList(utf8.encode(md)),
-      );
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            saved
-                ? tr('account.notify.saved')
-                : tr('app.library.nothing_was_saved'),
-          ),
-        ),
-      );
-    }
-  } on Object {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(tr('app.library.the_export_could_not_be_written')),
-      ),
-    );
-  }
+  await openShare(
+    context,
+    QuotesShare(
+      work == null ? quotes : readingOrder(quotes),
+      works,
+      work: work,
+    ),
+    picker: picker,
+  );
 }

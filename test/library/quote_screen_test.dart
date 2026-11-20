@@ -6,6 +6,7 @@ import 'package:tippani/library/models.dart';
 import 'package:tippani/library/quote_text.dart';
 import 'package:tippani/screens/quote_screen.dart';
 
+import '../support/fake_sharer.dart';
 import '../support/memory_library.dart';
 
 class _Picker implements BackupPicker {
@@ -22,19 +23,6 @@ class _Picker implements BackupPicker {
 
   @override
   Future<PickedFile?> pick() async => null;
-}
-
-class _Out {
-  final texts = <String>[];
-  final images = <({Uint8List png, String name, String text})>[];
-  bool failImage = false;
-
-  Future<void> text(String t, String subject) async => texts.add(t);
-
-  Future<void> image(Uint8List png, String name, String text) async {
-    if (failImage) throw Exception('no share sheet');
-    images.add((png: png, name: name, text: text));
-  }
 }
 
 bool isPng(Uint8List b) =>
@@ -120,7 +108,7 @@ void main() {
   group('the screen', () {
     late MemoryLibrary lib;
     late _Picker picker;
-    late _Out out;
+    late FakeSharer out;
     late Work work;
     late Quote quote;
 
@@ -130,7 +118,7 @@ void main() {
       addTearDown(tester.view.reset);
       lib = MemoryLibrary();
       picker = _Picker();
-      out = _Out();
+      out = FakeSharer();
       work = await lib.addWork(
         const WorkDraft(title: 'Walden', creator: 'Thoreau', year: 1854),
       );
@@ -148,13 +136,9 @@ void main() {
         ),
       );
       await tester.pumpWidget(
-        MaterialApp(
-          home: QuoteScreen(
-            store: lib,
-            quoteId: quote.id,
-            picker: picker,
-            share: out.text,
-            shareImage: out.image,
+        out.around(
+          MaterialApp(
+            home: QuoteScreen(store: lib, quoteId: quote.id, picker: picker),
           ),
         ),
       );
@@ -260,8 +244,6 @@ void main() {
                       store: lib,
                       quoteId: quote.id,
                       picker: picker,
-                      share: out.text,
-                      shareImage: out.image,
                     ),
                   ),
                 ),

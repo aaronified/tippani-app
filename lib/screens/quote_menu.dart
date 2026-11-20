@@ -3,7 +3,6 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import '../anthologies/anthologies.dart';
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../l10n/l10n.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
@@ -16,7 +15,7 @@ import 'anthologies_screen.dart' show addToAnthologyDialog;
 import 'bulk_bar.dart' show QuoteBulkActions;
 import 'quote_form_screen.dart';
 import 'quote_context_section.dart';
-import 'quote_screen.dart' show ShareImage, shareImageThroughSheet;
+import '../share/share_subject.dart';
 import 'share_screen.dart';
 import 'work_screen.dart';
 
@@ -64,8 +63,6 @@ class QuoteMenu {
     this.chipWork,
     this.anthologies,
     this.onFilter,
-    this.share = shareThroughSheet,
-    this.shareImage = shareImageThroughSheet,
   });
 
   final LibraryStore store;
@@ -87,9 +84,6 @@ class QuoteMenu {
   /// What a name chosen in the context viewer does (the library filters on it).
   final ValueChanged<ChipFilter>? onFilter;
 
-  final ShareText share;
-  final ShareImage shareImage;
-
   Work? get source => chipWork ?? work;
 
   bool get _canAnthology =>
@@ -102,6 +96,7 @@ class QuoteMenu {
     store: store,
     anthologies: anthologies,
     quotes: [quote],
+    picker: picker,
     done: onChanged,
   );
 
@@ -220,8 +215,6 @@ class QuoteMenu {
               store: store,
               workId: w.id,
               picker: picker,
-              share: share,
-              shareImage: shareImage,
               anthologies: anthologies,
             ),
           ),
@@ -274,17 +267,7 @@ class QuoteMenu {
   }
 
   void _share(BuildContext context) {
-    Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => ShareScreen(
-          quote: quote,
-          work: source,
-          share: share,
-          shareImage: shareImage,
-          picker: picker,
-        ),
-      ),
-    );
+    openShare(context, QuoteShare(quote, source), picker: picker);
   }
 }
 

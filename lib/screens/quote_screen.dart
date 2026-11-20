@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../anthologies/anthologies.dart';
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../library/models.dart';
 import '../library/share_format.dart';
@@ -16,32 +14,12 @@ import 'quote_chips_row.dart';
 import 'quote_context_section.dart';
 import 'quote_form_screen.dart';
 import 'quote_menu.dart' show deleteQuoteWithUndo;
+import '../share/share_subject.dart';
 import 'share_screen.dart';
 import 'work_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
-
-/// Shares a picture through Android's share sheet. A function so a test can stand in for it.
-typedef ShareImage = Future<void> Function(
-  Uint8List png,
-  String fileName,
-  String text,
-);
-
-Future<void> shareImageThroughSheet(
-  Uint8List png,
-  String fileName,
-  String text,
-) async {
-  await SharePlus.instance.share(
-    ShareParams(
-      text: text,
-      files: [XFile.fromData(png, mimeType: 'image/png', name: fileName)],
-      fileNameOverrides: [fileName],
-    ),
-  );
-}
 
 /// One quote, read in full: drawn as a card, with its note, tags and place, and what can be done with it:
 /// favourite, edit, delete, share it as text or as a picture, or save the picture to a file. It reads only the
@@ -52,8 +30,6 @@ class QuoteScreen extends StatefulWidget {
     required this.store,
     required this.quoteId,
     required this.picker,
-    this.share = shareThroughSheet,
-    this.shareImage = shareImageThroughSheet,
     this.speaker,
     this.anthologies,
   });
@@ -61,8 +37,6 @@ class QuoteScreen extends StatefulWidget {
   final LibraryStore store;
   final int quoteId;
   final BackupPicker picker;
-  final ShareText share;
-  final ShareImage shareImage;
   final Speaker? speaker;
 
   /// The server's anthologies; null (or not available) hides Add to anthology.
@@ -163,7 +137,6 @@ class _QuoteScreenState extends State<QuoteScreen> {
           store: widget.store,
           workId: w.id,
           picker: widget.picker,
-          share: widget.share,
         ),
       ),
     );
@@ -197,17 +170,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
   void _share() {
     final q = _quote;
     if (q == null) return;
-    Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => ShareScreen(
-          quote: q,
-          work: _work,
-          share: widget.share,
-          shareImage: widget.shareImage,
-          picker: widget.picker,
-        ),
-      ),
-    );
+    openShare(context, QuoteShare(q, _work), picker: widget.picker);
   }
 
   @override

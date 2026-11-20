@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../anthologies/anthologies.dart';
 import '../library/models.dart';
@@ -54,8 +53,6 @@ class LibraryScreen extends StatefulWidget {
     super.key,
     required this.store,
     required this.picker,
-    this.share = shareThroughSheet,
-    this.shareImage = shareImageThroughSheet,
     this.anthologies,
     this.lookup,
     this.auto,
@@ -72,8 +69,6 @@ class LibraryScreen extends StatefulWidget {
 
   final LibraryStore store;
   final BackupPicker picker;
-  final ShareText share;
-  final ShareImage shareImage;
   final AnthologyService? anthologies;
   final WorkLookup? lookup;
 
@@ -289,8 +284,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
           store: widget.store,
           quoteId: q.id,
           picker: widget.picker,
-          share: widget.share,
-          shareImage: widget.shareImage,
           anthologies: widget.anthologies,
         ),
       ),
@@ -306,8 +299,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
           store: widget.store,
           workId: w.id,
           picker: widget.picker,
-          share: widget.share,
-          shareImage: widget.shareImage,
           anthologies: widget.anthologies,
           lookup: widget.lookup,
         ),
@@ -431,13 +422,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     await _load();
   }
 
-  void _export(ExportKind kind) => runExport(
-    context,
-    store: widget.store,
-    share: widget.share,
-    picker: widget.picker,
-    kind: kind,
-  );
+  void _share() =>
+      shareLibrary(context, store: widget.store, picker: widget.picker);
 
   @override
   Widget build(BuildContext context) {
@@ -468,6 +454,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 store: widget.store,
                 anthologies: widget.anthologies,
                 quotes: chosenQuotes,
+                picker: widget.picker,
                 done: _bulkDone,
               ).bar(context)
             : WorkBulkActions(
@@ -504,8 +491,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
             context,
             store: widget.store,
             picker: widget.picker,
-            share: widget.share,
-            shareImage: widget.shareImage,
             anthologies: widget.anthologies,
             lookup: widget.lookup,
             initial: _search.text,
@@ -551,26 +536,16 @@ class _LibraryScreenState extends State<LibraryScreen> {
               return const SizedBox.shrink();
             },
           ),
-        _exportMenu(context),
+        _shareButton(context),
       ],
     );
   }
 
-  /// Share or save the library (or what the search shows) as Markdown.
-  Widget _exportMenu(BuildContext context) => PopupMenuButton<ExportKind>(
-    tooltip: context.tr('common.action.export.label'),
+  /// Share the library: the one share screen, with every quote.
+  Widget _shareButton(BuildContext context) => IconButton(
+    tooltip: context.tr('common.action.share.label'),
     icon: const Icon(Ti.share2),
-    onSelected: _export,
-    itemBuilder: (_) => [
-      PopupMenuItem(
-        value: ExportKind.share,
-        child: Text(context.tr('app.library.share_as_markdown')),
-      ),
-      PopupMenuItem(
-        value: ExportKind.save,
-        child: Text(context.tr('app.library.save_as_markdown_file')),
-      ),
-    ],
+    onPressed: _share,
   );
 
   Widget _scaffold(BuildContext context, PreferredSizeWidget? bar, counts) {
@@ -619,14 +594,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       context,
                       store: widget.store,
                       picker: widget.picker,
-                      share: widget.share,
-                      shareImage: widget.shareImage,
                       anthologies: widget.anthologies,
                       lookup: widget.lookup,
                       initial: _search.text,
                     ),
                   ),
-                  if (widget.embedded) _exportMenu(context),
+                  if (widget.embedded) _shareButton(context),
                 ],
               ),
             ),
@@ -754,8 +727,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
       work: _byId[q.workId],
       picker: widget.picker,
       anthologies: widget.anthologies,
-      share: widget.share,
-      shareImage: widget.shareImage,
       onChanged: _load,
       onFilter: (f) {
         _applyChip(f);

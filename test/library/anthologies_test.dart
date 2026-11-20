@@ -6,10 +6,12 @@ import 'package:tippani/anthologies/anthologies.dart';
 import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/anthologies_screen.dart';
+import 'package:tippani/share/share_subject.dart';
 import 'package:tippani/screens/quote_screen.dart';
 import 'package:tippani/sync/fingerprint.dart';
 
 import '../support/fake_anthologies.dart';
+import '../support/fake_sharer.dart';
 import '../support/memory_library.dart';
 
 class _Picker implements BackupPicker {
@@ -71,20 +73,15 @@ void main() {
 
   group('the screens', () {
     late FakeAnthologies service;
-    final shared = <String>[];
+    late FakeSharer sharer;
 
     Future<void> openList(WidgetTester tester) async {
       tester.view.physicalSize = const Size(800, 2000);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      shared.clear();
+      sharer = FakeSharer();
       await tester.pumpWidget(
-        MaterialApp(
-          home: AnthologiesScreen(
-            service: service,
-            share: (t, s) async => shared.add(t),
-          ),
-        ),
+        sharer.around(MaterialApp(home: AnthologiesScreen(service: service))),
       );
       await tester.pumpAndSettle();
     }
@@ -171,7 +168,10 @@ void main() {
       expect(find.text('the best'), findsOneWidget);
       await tester.tap(find.byTooltip('Share'));
       await tester.pumpAndSettle();
-      expect(shared.single, startsWith('Openings\n\nFirst lines.'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Share'));
+      await tester.pumpAndSettle();
+      expect(sharer.texts.single, startsWith('Openings\n\nFirst lines.'));
+      expect(sharer.subjects.single, 'Openings');
     });
 
     testWidgets('a passage can be removed, and the list shows it gone', (
