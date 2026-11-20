@@ -512,6 +512,27 @@ class OfflineAnthologies implements AnthologyService {
 
   // ── reads ──────────────────────────────────────────────────────────────────────────────────────────
 
+  /// What the phone already holds of the list, with no request and no waiting (queued changes included, because
+  /// they are written into it); null when nothing was ever kept. A screen draws this at once and lets [list]
+  /// bring the server's word in behind it.
+  List<Anthology>? keptList() {
+    final kept = _read('/anthologies');
+    if (kept == null) return null;
+    return [for (final r in _rows(kept, 'anthologies')) Anthology.fromJson(r)];
+  }
+
+  /// [keptList] for one anthology; null when it was never opened or made on this phone.
+  AnthologyDetail? keptDetail(int id) {
+    id = _id(id);
+    final kept = _read('/anthologies/$id');
+    if (kept == null) return null;
+    return AnthologyDetail(
+      Anthology.fromJson(Map<String, Object?>.from(kept['anthology'] as Map)),
+      [for (final e in _rows(kept, 'entries')) AnthologyEntry.fromJson(e)],
+      [for (final s in _rows(kept, 'sections')) AnthologySection.fromJson(s)],
+    );
+  }
+
   @override
   Future<List<Anthology>> list() async {
     await flush();
@@ -519,11 +540,7 @@ class OfflineAnthologies implements AnthologyService {
       return await _inner.list();
     } on AnthologyException catch (e) {
       if (!e.unreachable) rethrow;
-      final kept = _read('/anthologies');
-      if (kept == null) return const [];
-      return [
-        for (final r in _rows(kept, 'anthologies')) Anthology.fromJson(r),
-      ];
+      return keptList() ?? const [];
     }
   }
 
@@ -538,18 +555,14 @@ class OfflineAnthologies implements AnthologyService {
         if (!e.unreachable) rethrow;
       }
     }
-    final kept = _read('/anthologies/$id');
+    final kept = keptDetail(id);
     if (kept == null) {
       throw AnthologyException(
         tx('app.anthologies.not_on_the_phone_yet'),
         unreachable: true,
       );
     }
-    return AnthologyDetail(
-      Anthology.fromJson(Map<String, Object?>.from(kept['anthology'] as Map)),
-      [for (final e in _rows(kept, 'entries')) AnthologyEntry.fromJson(e)],
-      [for (final s in _rows(kept, 'sections')) AnthologySection.fromJson(s)],
-    );
+    return kept;
   }
 
   @override

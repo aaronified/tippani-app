@@ -682,6 +682,15 @@ class FakeServer {
   /// What the bin holds: `GET /trash`, and `POST /trash/{id}/restore` takes one out.
   final trash = <Map<String, Object?>>[];
 
+  /// The server's anthologies, as `GET /anthologies` lists them, and what `GET /anthologies/{id}` says of each
+  /// (`entries`, `sections`).
+  final anthologies = <Map<String, Object?>>[];
+  final anthologyEntries = <int, List<Map<String, Object?>>>{};
+
+  /// When set, an anthology read waits for it before the server answers: a slow server (a Completer never
+  /// completed is one that never answers, and the client's own timeout is what ends the wait).
+  Future<void>? anthologiesWait;
+
   Future<http.Response> handle(http.Request r) async {
     requests.add(r);
     if (unreachable) throw const SocketException('the network went away');
@@ -715,6 +724,18 @@ class FakeServer {
       return _json({'token': claimedToken, 'username': username}, 201);
     }
     if (!_authed(r)) return _json({'error': 'not logged in'}, 401);
+    if (r.method == 'GET' && path.startsWith('/anthologies')) {
+      await anthologiesWait;
+      if (path == '/anthologies') return _json({'anthologies': anthologies});
+      final id = int.tryParse(path.substring('/anthologies/'.length));
+      final row = anthologies.where((a) => a['id'] == id).firstOrNull;
+      if (row == null) return _json({'error': 'not found'}, 404);
+      return _json({
+        'anthology': row,
+        'entries': anthologyEntries[id] ?? <Object?>[],
+        'sections': <Object?>[],
+      });
+    }
     final ctx = RegExp(
       r'^/quotes/(annotation|dialogue|utterance)/(\d+)/context$',
     ).firstMatch(path);
