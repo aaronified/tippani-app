@@ -4,6 +4,7 @@ import '../anthologies/anthologies.dart';
 import '../harness/harness.dart' show BackupPicker;
 import '../library/library_store.dart';
 import '../library/models.dart';
+import 'quote_menu.dart';
 import 'library_widgets.dart';
 import 'quote_screen.dart';
 import '../l10n/l10n.dart';
@@ -92,6 +93,14 @@ class _FilteredQuotesScreenState extends State<FilteredQuotesScreen> {
                       await widget.store.setFavorite(q.id, !q.favorite);
                       await _load();
                     },
+                    menu: QuoteMenu(
+                      store: widget.store,
+                      quote: q,
+                      work: _works[q.workId],
+                      picker: widget.picker,
+                      anthologies: widget.anthologies,
+                      onChanged: _load,
+                    ),
                     onTap: () async {
                       await Navigator.of(context).push<Object?>(
                         MaterialPageRoute(

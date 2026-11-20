@@ -5,9 +5,8 @@ import '../boards/board_service.dart';
 import '../harness/harness.dart' show BackupPicker, SystemBackupPicker;
 import '../library/library_store.dart';
 import '../library/models.dart';
-import '../sync/fingerprint.dart' show realmOfQuote;
-import 'anthologies_screen.dart' show addToAnthologyDialog;
 import 'boards_screen.dart' show BoardPicture;
+import 'quote_menu.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import 'quote_screen.dart';
@@ -158,15 +157,14 @@ class _BoardScreenState extends State<BoardScreen> {
       await widget.store.setFavorite(q.id, !q.favorite);
       await _load();
     },
-    onAddToAnthology:
-        widget.anthologies?.available == true && q.serverId != null
-        ? () => addToAnthologyDialog(
-            context,
-            widget.anthologies!,
-            kind: entryKindOf(realmOfQuote(_works[q.workId])),
-            itemId: q.serverId!,
-          )
-        : null,
+    menu: QuoteMenu(
+      store: widget.store,
+      quote: q,
+      work: _works[q.workId],
+      picker: widget.picker ?? const SystemBackupPicker(),
+      anthologies: widget.anthologies,
+      onChanged: _load,
+    ),
   );
 
   String _headingOf(String key) {

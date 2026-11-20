@@ -4,8 +4,9 @@ import '../anthologies/anthologies.dart';
 import '../anthologies/offline_anthologies.dart';
 import '../app_controller.dart';
 import '../capture/photo_source.dart';
-import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
+import '../harness/harness.dart' show BackupPicker, SystemBackupPicker;
+import '../share/share_subject.dart';
+import 'share_screen.dart' show openShare;
 import '../quiz/quiz.dart' show QuizService;
 import 'anthology_tools.dart';
 import 'quiz_screen.dart';
@@ -14,21 +15,6 @@ import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import 'offline_note.dart';
 import '../theme/material_surface.dart';
-
-/// An anthology as plain text to send: its title and introduction, then each passage with where it is from and the
-/// reader's commentary on it.
-String anthologyShareText(AnthologyDetail d) {
-  final out = StringBuffer(d.anthology.title);
-  if (d.anthology.intro.trim().isNotEmpty) {
-    out.write('\n\n${d.anthology.intro.trim()}');
-  }
-  for (final e in d.entries) {
-    out.write('\n\n“${e.quote.trim()}”');
-    if (e.from.isNotEmpty) out.write('\n— ${e.from}');
-    if (e.note.trim().isNotEmpty) out.write('\n${e.note.trim()}');
-  }
-  return out.toString();
-}
 
 /// Asks for a title and an introduction. Null if the reader backs out.
 Future<({String title, String intro})?> askAnthologyText(
@@ -92,9 +78,7 @@ class AnthologiesScreen extends StatefulWidget {
   const AnthologiesScreen({
     super.key,
     required this.service,
-    this.share = shareThroughSheet,
     this.picker,
-    this.shareFile = shareFileThroughSheet,
     this.photos,
     this.quiz,
     this.controller,
@@ -109,9 +93,7 @@ class AnthologiesScreen extends StatefulWidget {
   final AppController? controller;
 
   final AnthologyService service;
-  final ShareText share;
   final BackupPicker? picker;
-  final ShareFile shareFile;
   final PhotoSource? photos;
 
   /// Where Practise comes from. Null: the anthology has no Practise.
@@ -203,9 +185,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
         builder: (_) => AnthologyScreen(
           service: widget.service,
           id: a.id,
-          share: widget.share,
           picker: widget.picker,
-          shareFile: widget.shareFile,
           photos: widget.photos,
           quiz: widget.quiz,
         ),
@@ -369,21 +349,17 @@ class AnthologyScreen extends StatefulWidget {
     super.key,
     required this.service,
     required this.id,
-    this.share = shareThroughSheet,
     this.picker,
-    this.shareFile = shareFileThroughSheet,
     this.photos,
     this.quiz,
   });
 
   final AnthologyService service;
   final int id;
-  final ShareText share;
   final QuizService? quiz;
 
-  /// Where an exported file is saved. Null: only sending is offered.
+  /// Where a shared file is saved. Null: the system's own.
   final BackupPicker? picker;
-  final ShareFile shareFile;
   final PhotoSource? photos;
 
   @override
@@ -398,7 +374,6 @@ enum _Menu {
   front,
   fill,
   removed,
-  export,
   edit,
   delete,
 }
@@ -643,22 +618,6 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           ),
         );
         if (back == true) await _load();
-      case _Menu.export:
-        final choice = await askExport(context);
-        if (choice == null) return;
-        try {
-          final f = await widget.service.export(widget.id, epub: choice.epub);
-          if (choice.action == ExportAction.send || widget.picker == null) {
-            await widget.shareFile(f.bytes, f.name);
-          } else {
-            final saved = await widget.picker!.save(f.name, f.bytes);
-            if (saved && mounted) {
-              _say(context.tr('app.admin_backup.saved_name', {'name': f.name}));
-            }
-          }
-        } on AnthologyException catch (e) {
-          if (mounted) _say(e.message);
-        }
     }
   }
 
@@ -987,8 +946,11 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
             IconButton(
               tooltip: context.tr('common.action.share.label'),
               icon: const Icon(Ti.share2),
-              onPressed: () =>
-                  widget.share(anthologyShareText(d), d.anthology.title),
+              onPressed: () => openShare(
+                context,
+                AnthologyShare(d, widget.service),
+                picker: widget.picker ?? const SystemBackupPicker(),
+              ),
             ),
             PopupMenuButton<_Menu>(
               tooltip: context.tr('settings.appearance.contrast.more.label'),
@@ -1022,10 +984,6 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                 PopupMenuItem(
                   value: _Menu.removed,
                   child: Text(context.tr('app.anthologies.taken_out')),
-                ),
-                PopupMenuItem(
-                  value: _Menu.export,
-                  child: Text(context.tr('app.anthologies.export')),
                 ),
                 // Edit and Delete live here and not as two more icons in the bar: four icons left the title
                 // eight letters ("Stoic mo..."), where the reader is there to read it.

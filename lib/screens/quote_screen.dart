@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../anthologies/anthologies.dart';
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
 import '../library/models.dart';
 import '../library/share_format.dart';
@@ -15,32 +13,13 @@ import 'quote_card.dart';
 import 'quote_chips_row.dart';
 import 'quote_context_section.dart';
 import 'quote_form_screen.dart';
+import 'quote_menu.dart' show deleteQuoteWithUndo;
+import '../share/share_subject.dart';
 import 'share_screen.dart';
 import 'work_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
-
-/// Shares a picture through Android's share sheet. A function so a test can stand in for it.
-typedef ShareImage = Future<void> Function(
-  Uint8List png,
-  String fileName,
-  String text,
-);
-
-Future<void> shareImageThroughSheet(
-  Uint8List png,
-  String fileName,
-  String text,
-) async {
-  await SharePlus.instance.share(
-    ShareParams(
-      text: text,
-      files: [XFile.fromData(png, mimeType: 'image/png', name: fileName)],
-      fileNameOverrides: [fileName],
-    ),
-  );
-}
 
 /// One quote, read in full: drawn as a card, with its note, tags and place, and what can be done with it:
 /// favourite, edit, delete, share it as text or as a picture, or save the picture to a file. It reads only the
@@ -51,8 +30,6 @@ class QuoteScreen extends StatefulWidget {
     required this.store,
     required this.quoteId,
     required this.picker,
-    this.share = shareThroughSheet,
-    this.shareImage = shareImageThroughSheet,
     this.speaker,
     this.anthologies,
   });
@@ -60,8 +37,6 @@ class QuoteScreen extends StatefulWidget {
   final LibraryStore store;
   final int quoteId;
   final BackupPicker picker;
-  final ShareText share;
-  final ShareImage shareImage;
   final Speaker? speaker;
 
   /// The server's anthologies; null (or not available) hides Add to anthology.
@@ -162,7 +137,6 @@ class _QuoteScreenState extends State<QuoteScreen> {
           store: widget.store,
           workId: w.id,
           picker: widget.picker,
-          share: widget.share,
         ),
       ),
     );
@@ -171,62 +145,10 @@ class _QuoteScreenState extends State<QuoteScreen> {
 
   Future<void> _delete() async {
     final gone = _quote;
-    final deleted = context.tr('app.quote.quote_deleted');
-    final undo = context.tr('common.action.undo.label');
-    // the messenger belongs to the app, so the Undo outlives this screen
-    final messenger = ScaffoldMessenger.of(context);
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('quotes.delete.confirm')),
-        content: Text(
-          context.tr('app.quote_form.it_is_removed_from_this_phone'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('app.anthologies.keep_it')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('common.action.delete.label')),
-          ),
-        ],
-      ),
-    );
-    if (sure != true) return;
-    final store = widget.store;
-    await store.deleteQuote(widget.quoteId);
-    if (mounted) Navigator.of(context).pop(true);
     if (gone == null) return;
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(deleted),
-          action: SnackBarAction(
-            label: undo,
-            onPressed: () => store.addQuote(
-              QuoteDraft(
-                text: gone.text,
-                workId: gone.workId,
-                translation: gone.translation,
-                language: gone.language,
-                speaker: gone.speaker,
-                chapter: gone.chapter,
-                location: gone.location,
-                note: gone.note,
-                color: gone.color,
-                favorite: gone.favorite,
-                notedAt: gone.notedAt,
-                source: gone.source,
-                tags: gone.tags,
-                boardId: gone.boardId,
-              ),
-            ),
-          ),
-        ),
-      );
+    if (await deleteQuoteWithUndo(context, widget.store, gone) && mounted) {
+      Navigator.of(context).pop(true);
+    }
   }
 
   /// Puts the quote on the clipboard the way the web's copy button does: its words with the credit line.
@@ -248,17 +170,7 @@ class _QuoteScreenState extends State<QuoteScreen> {
   void _share() {
     final q = _quote;
     if (q == null) return;
-    Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (_) => ShareScreen(
-          quote: q,
-          work: _work,
-          share: widget.share,
-          shareImage: widget.shareImage,
-          picker: widget.picker,
-        ),
-      ),
-    );
+    openShare(context, QuoteShare(q, _work), picker: widget.picker);
   }
 
   @override

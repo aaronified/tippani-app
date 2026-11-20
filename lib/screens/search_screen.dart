@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../anthologies/anthologies.dart';
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../l10n/l10n.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
@@ -16,6 +15,7 @@ import '../search/search_models.dart';
 import '../search/search_service.dart';
 import '../tools/work_lookup.dart';
 import 'library_widgets.dart';
+import 'quote_menu.dart';
 import 'person_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import 'quote_screen.dart';
@@ -29,8 +29,6 @@ Future<void> openSearch(
   BuildContext context, {
   required LibraryStore store,
   required BackupPicker picker,
-  ShareText share = shareThroughSheet,
-  ShareImage shareImage = shareImageThroughSheet,
   AnthologyService? anthologies,
   WorkLookup? lookup,
   String initial = '',
@@ -39,8 +37,6 @@ Future<void> openSearch(
     builder: (_) => SearchScreen(
       store: store,
       picker: picker,
-      share: share,
-      shareImage: shareImage,
       anthologies: anthologies,
       lookup: lookup,
       initial: initial,
@@ -97,8 +93,6 @@ class SearchScreen extends StatefulWidget {
     super.key,
     required this.store,
     required this.picker,
-    this.share = shareThroughSheet,
-    this.shareImage = shareImageThroughSheet,
     this.anthologies,
     this.lookup,
     this.server,
@@ -108,8 +102,6 @@ class SearchScreen extends StatefulWidget {
 
   final LibraryStore store;
   final BackupPicker picker;
-  final ShareText share;
-  final ShareImage shareImage;
   final AnthologyService? anthologies;
   final WorkLookup? lookup;
 
@@ -308,8 +300,6 @@ class _SearchScreenState extends State<SearchScreen> {
           store: widget.store,
           workId: w.id,
           picker: widget.picker,
-          share: widget.share,
-          shareImage: widget.shareImage,
           anthologies: widget.anthologies,
           lookup: widget.lookup,
         ),
@@ -360,8 +350,6 @@ class _SearchScreenState extends State<SearchScreen> {
           store: widget.store,
           quoteId: q.id,
           picker: widget.picker,
-          share: widget.share,
-          shareImage: widget.shareImage,
           anthologies: widget.anthologies,
         ),
       ),
@@ -868,6 +856,7 @@ class _SearchScreenState extends State<SearchScreen> {
       if (q.workTitle.isNotEmpty) q.workTitle,
       if (q.place.isNotEmpty) q.place,
     ].join(' · ');
+    final phone = _quoteFor(q);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: SurfaceCard(
@@ -951,6 +940,26 @@ class _SearchScreenState extends State<SearchScreen> {
                   ringColor:
                       theme.cardTheme.color ?? scheme.surfaceContainerLow,
                 ),
+                // a hit that is on the phone has the same menu as its card does, with every action in it (this
+                // row draws no buttons); one that is on the server only has nothing to act on
+                if (phone != null)
+                  QuoteMenuButton(
+                    menu: QuoteMenu(
+                      store: widget.store,
+                      quote: phone,
+                      work: _works
+                          .where((w) => w.id == phone.workId)
+                          .firstOrNull,
+                      picker: widget.picker,
+                      anthologies: widget.anthologies,
+                      onChanged: _readPhone,
+                      onFilter: (f) {
+                        setState(() => _text.text = f.name);
+                        _run();
+                      },
+                    ),
+                    onOpen: () => _openQuote(q),
+                  ),
               ],
             ),
           ),

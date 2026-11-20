@@ -2,23 +2,20 @@ import '../library/quote_chips.dart';
 import '../people/face_stack.dart';
 import 'quote_chips_row.dart';
 
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import '../harness/harness.dart' show BackupPicker;
-import '../harness/log_screen.dart' show ShareText, shareThroughSheet;
 import '../library/library_store.dart';
-import '../library/markdown_export.dart';
 import '../library/models.dart';
-import '../library/share_format.dart';
 import '../speech/quote_speech.dart';
 import '../widgets/edge_fade_row.dart';
 import '../library/cover_cache.dart' show WorkCover;
 import '../theme/app_theme.dart';
 import 'quote_form_screen.dart';
+import 'quote_menu.dart';
+import 'share_screen.dart' show openShare;
+import '../share/share_subject.dart';
+import '../library/work_order.dart' show readingOrder;
 import 'shelf_card.dart' show shelfStatusLabel;
 import 'work_form_screen.dart' show workKindLabel;
 import '../l10n/l10n.dart';
@@ -35,13 +32,12 @@ class QuoteTile extends StatelessWidget {
     required this.work,
     required this.onTap,
     required this.onFavourite,
+    required this.menu,
     this.onChip,
     this.chipWork,
     this.omitAuthor = false,
-    this.onAddToAnthology,
     this.onLongPress,
     this.selected = false,
-    this.share = shareThroughSheet,
   });
 
   final Quote quote;
@@ -57,9 +53,9 @@ class QuoteTile extends StatelessWidget {
   final Work? chipWork;
   final bool omitAuthor;
 
-  /// Puts the quote in an anthology. Null where there is no anthology to add to (no server, or the quote is
-  /// not on it yet): it is not in the menu then, and a long press does nothing.
-  final VoidCallback? onAddToAnthology;
+  /// The card's menu, and what its Copy, Read aloud and Share buttons do: built once for every screen that draws
+  /// a card, so they all offer the same.
+  final QuoteMenu menu;
 
   /// Starts selecting this quote. When null a long press adds it to an anthology (where that can be done).
   final VoidCallback? onLongPress;
@@ -67,49 +63,7 @@ class QuoteTile extends StatelessWidget {
   /// Whether the quote is one of those selected.
   final bool selected;
 
-  /// Hands text to the share sheet. A parameter so a test can stand in for it.
-  final ShareText share;
-
   Work? get _source => chipWork ?? work;
-
-  Future<void> _copy(BuildContext context) async {
-    final on = shareDefaults(shareFieldsOf(quote, _source));
-    final text = buildShareText(quote, _source, on, ShareFormat.plain);
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(content: Text(context.tr('account.widget.copied'))),
-      );
-  }
-
-  Future<void> _share() {
-    final on = shareDefaults(shareFieldsOf(quote, _source));
-    return share(buildShareText(quote, _source, on, ShareFormat.plain), '');
-  }
-
-  Future<void> _speak(BuildContext context) async {
-    final language = quote.language.isNotEmpty
-        ? quote.language
-        : (_source?.language ?? '');
-    final ok = await QuoteSpeech.instance.toggle(
-      quote.id,
-      quote.text,
-      language,
-    );
-    if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              context.tr('app.quote_card.no_voice', {'language': language}),
-            ),
-          ),
-        );
-    }
-  }
 
   static String _day(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -181,7 +135,11 @@ class QuoteTile extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
-          onLongPress: onLongPress ?? onAddToAnthology,
+          onLongPress:
+              onLongPress ??
+              (menu.canAddToAnthology
+                  ? () => menu.run(context, QuoteAction.anthology)
+                  : null),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 6, 2),
             child: Column(
@@ -306,13 +264,9 @@ class QuoteTile extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     _CardActions(
-                      onCopy: () => _copy(context),
-                      onSpeak: () => _speak(context),
-                      quoteId: quote.id,
-                      onShare: _share,
+                      menu: menu,
                       onOpen: onTap,
                       onSelect: onLongPress,
-                      onAddToAnthology: onAddToAnthology,
                     ),
                   ],
                 ),
@@ -325,71 +279,55 @@ class QuoteTile extends StatelessWidget {
   }
 }
 
-/// The card's footer buttons: Copy, Speak (Stop while it reads), Share, and a menu with the rest.
+/// The card's footer buttons: Copy, Speak (Stop while it reads), Share, and a menu with every other action.
 class _CardActions extends StatelessWidget {
-  const _CardActions({
-    required this.onCopy,
-    required this.onSpeak,
-    required this.quoteId,
-    required this.onShare,
-    required this.onOpen,
-    this.onSelect,
-    this.onAddToAnthology,
-  });
+  const _CardActions({required this.menu, required this.onOpen, this.onSelect});
 
-  final VoidCallback onCopy, onSpeak, onShare, onOpen;
-  final int quoteId;
-  final VoidCallback? onSelect, onAddToAnthology;
+  final QuoteMenu menu;
+  final VoidCallback onOpen;
+  final VoidCallback? onSelect;
 
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    Widget button(String tip, IconData icon, VoidCallback onPressed) =>
-        IconButton(
-          tooltip: tip,
-          visualDensity: VisualDensity.compact,
-          icon: Icon(icon, size: 20, color: muted),
-          onPressed: onPressed,
-        );
+    Widget button(String tip, IconData icon, QuoteAction action) => IconButton(
+      tooltip: tip,
+      visualDensity: VisualDensity.compact,
+      icon: Icon(icon, size: 20, color: muted),
+      onPressed: () => menu.run(context, action),
+    );
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        button(context.tr('common.action.copy.label'), Ti.copy, onCopy),
+        button(
+          context.tr('common.action.copy.label'),
+          Ti.copy,
+          QuoteAction.copy,
+        ),
         ListenableBuilder(
           listenable: QuoteSpeech.instance,
           builder: (context, _) {
-            final on = QuoteSpeech.instance.speaking == quoteId;
+            final on = QuoteSpeech.instance.speaking == menu.quote.id;
             return button(
               on
                   ? context.tr('settings.jobs.current.stop.label')
                   : context.tr('speech.play.aria'),
               on ? Ti.playerStopFilled : Ti.volume,
-              onSpeak,
+              QuoteAction.speak,
             );
           },
         ),
-        button(context.tr('common.action.share.label'), Ti.share2, onShare),
-        PopupMenuButton<VoidCallback>(
-          tooltip: context.tr('app.quote_card.more'),
-          padding: EdgeInsets.zero,
-          icon: Icon(Ti.dotsVertical, size: 20, color: muted),
-          onSelected: (run) => run(),
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: onOpen,
-              child: Text(context.tr('app.quote_card.open')),
-            ),
-            if (onSelect != null)
-              PopupMenuItem(
-                value: onSelect!,
-                child: Text(context.tr('common.selection.menu.select.label')),
-              ),
-            if (onAddToAnthology != null)
-              PopupMenuItem(
-                value: onAddToAnthology!,
-                child: Text(context.tr('common.action.anthology.label')),
-              ),
-          ],
+        button(
+          context.tr('common.action.share.label'),
+          Ti.share2,
+          QuoteAction.share,
+        ),
+        // the star is the card's own button too, so the menu leaves Favourite out
+        QuoteMenuButton(
+          menu: menu,
+          onCard: quoteCardButtons,
+          onOpen: onOpen,
+          onSelect: onSelect,
         ),
       ],
     );
@@ -663,67 +601,32 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-/// The Markdown for the whole library, or for one work.
-Future<String> markdownFor(LibraryStore store, {Work? work}) async {
-  final works = work == null ? await store.works() : [work];
-  final quotes = await store.quotes(workId: work?.id, limit: 1 << 30);
-  return libraryMarkdown(works, quotes);
-}
-
-/// What an export of [work] (or of everything) is called as a file.
-String exportFileName(Work? work) {
-  if (work == null) return 'tippani-library.md';
-  final safe = work.title
-      .replaceAll(RegExp(r'[\\/:*?"<>|\x00-\x1f]'), '-')
-      .trim();
-  return 'tippani-${safe.isEmpty ? 'work' : safe}.md';
-}
-
-enum ExportKind { share, save }
-
-/// The export menu shared by the library and a work's page. It says so when there is nothing to export, so
-/// an empty file is never handed over.
-Future<void> runExport(
+/// Opens the share screen for the whole library, or for [work] alone (its quotes in reading order). It says so when
+/// there is nothing to send, so an empty file is never handed over.
+Future<void> shareLibrary(
   BuildContext context, {
   required LibraryStore store,
-  required ShareText share,
   required BackupPicker picker,
-  required ExportKind kind,
   Work? work,
 }) async {
-  final tr = context.tr;
-  final md = await markdownFor(store, work: work);
+  final works = work == null ? await store.works() : [work];
+  final quotes = await store.quotes(workId: work?.id, limit: 1 << 30);
   if (!context.mounted) return;
-  final messenger = ScaffoldMessenger.of(context);
-  if (md.trim().isEmpty) {
-    messenger.showSnackBar(
-      SnackBar(content: Text(tr('app.library.there_are_no_quotes_to_export'))),
+  if (quotes.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(context.tr('app.library.there_are_no_quotes_to_export')),
+      ),
     );
     return;
   }
-  try {
-    if (kind == ExportKind.share) {
-      await share(md, context.tr('app.library.tippani_quotes'));
-    } else {
-      final saved = await picker.save(
-        exportFileName(work),
-        Uint8List.fromList(utf8.encode(md)),
-      );
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            saved
-                ? tr('account.notify.saved')
-                : tr('app.library.nothing_was_saved'),
-          ),
-        ),
-      );
-    }
-  } on Object {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(tr('app.library.the_export_could_not_be_written')),
-      ),
-    );
-  }
+  await openShare(
+    context,
+    QuotesShare(
+      work == null ? quotes : readingOrder(quotes),
+      works,
+      work: work,
+    ),
+    picker: picker,
+  );
 }
