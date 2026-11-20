@@ -20,7 +20,7 @@ flutter build apk --debug
 | --- | --- |
 | `lib/main.dart`, `lib/app.dart` | Opens the stored settings and starts the app; the theme and the four-tab shell (Home, Boards, Server, Settings). |
 | `lib/app_controller.dart` | The state more than one screen needs: which server, whether it answered and is compatible, who the phone is paired as. |
-| `lib/api/` | The one way the app speaks to a server (`api_client.dart`), the version handshake (`capabilities.dart`), and what the server last said for the screens that only read (`offline_cache.dart`, [ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md)). |
+| `lib/api/` | The one way the app speaks to a server (`api_client.dart`), the version handshake (`capabilities.dart`), and what the server last said for the screens that only read (`offline_cache.dart`, [ADR-0022](ADR-0022-Everything-Reads-Offline-And-Changes-Wait-For-The-Server.md)), and the helper every server-backed screen loads through (`cached_read.dart`: the phone's copy first, the server behind it, [ADR-0032](ADR-0032-Every-Server-Screen-Draws-The-Phones-Copy-First.md)). |
 | `lib/settings/` | The server address and the device token (`settings_store.dart`), the address a reader types (`server_url.dart`), the settings' backup. |
 | `lib/library/` | The phone's own library: models, the SQLite store, the cover cache, bulk operations, Markdown export, the backup contributor. See [The local library](#the-local-library). |
 | `lib/sync/` | Push, pull, boards, the fingerprint of what both sides agreed, and the automatic runs. See [Sending the library to the server](#sending-the-library-to-the-server). |

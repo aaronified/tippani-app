@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../api/cached_read.dart';
 import '../api/server_call.dart';
+import 'offline_note.dart';
 import '../l10n/l10n.dart';
 
 /// Reads something from the server and draws it: a bar while it loads, the server's own words and a Try again
@@ -24,6 +26,7 @@ class _LoaderState<T> extends State<Loader<T>> {
   T? _data;
   bool _have = false;
   String? _problem;
+  final _reads = CachedRead();
 
   @override
   void initState() {
@@ -31,30 +34,37 @@ class _LoaderState<T> extends State<Loader<T>> {
     _read();
   }
 
-  Future<void> _read() async {
-    try {
-      final d = await widget.load();
-      if (mounted) {
-        setState(() {
-          _data = d;
-          _have = true;
-          _problem = null;
-        });
-      }
-    } on ServerException catch (e) {
-      if (mounted) setState(() => _problem = e.message);
-    } on Object {
-      if (mounted) {
-        setState(
-          () => _problem = context.tr('app.admin.that_could_not_be_read'),
-        );
-      }
-    }
-  }
+  /// The phone's copy at once, the server's answer in place of it when it lands (ADR-0032). [live] is the read the
+  /// screen asks for after a change it made, which never answers from the phone.
+  Future<void> _read({bool live = false}) => _reads.run<T>(
+    load: widget.load,
+    alive: () => mounted,
+    haveCopy: _have,
+    live: live,
+    draw: (d) => setState(() {
+      _data = d;
+      _have = true;
+      _problem = null;
+    }),
+    fail: (e) => setState(
+      () => _problem = e is ServerException
+          ? e.message
+          : context.tr('app.admin.that_could_not_be_read'),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    if (_have) return widget.builder(context, _data as T, _read);
+    if (_have) {
+      return Column(
+        children: [
+          const OfflineNote(),
+          Expanded(
+            child: widget.builder(context, _data as T, () => _read(live: true)),
+          ),
+        ],
+      );
+    }
     if (_problem != null) {
       return Center(
         child: Padding(
