@@ -491,6 +491,8 @@ void main() {
       );
       await openShare(tester);
       expect(find.text('Tippani quotes · 2 quotes'), findsOneWidget);
+      // it opens on the importable Markdown, which keeps everything and has no parts to switch
+      await tapText(tester, 'Plain text');
       String shown() =>
           tester.widget<TextField>(find.byType(TextField)).controller!.text;
       expect(shown(), contains('“One.”'));

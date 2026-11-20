@@ -10,12 +10,13 @@ version. Write each entry for the person using the app, in plain words. **Start 
 ### Fixed
 
 - Smoother scrolling: textures and materials are now drawn once and kept, instead of being painted layer by layer every time a card comes on screen, so a list of cards costs about what a plain one does. Colours and materials synced from your account also no longer rebuild the whole app, or every card, when an unrelated setting is saved or a sync brings nothing new. The look is unchanged.
+- Share will not send nothing: on an anthology's Markdown or EPUB, Share, Copy and Save stay off while the server is still making the file or has refused it, and say why, instead of sending or saving an empty file. Choosing EPUB while Markdown is still arriving fetches the EPUB, and a refusal no longer stays above the plain text.
+- Undo after deleting a quote brings its tags back, and the same quote when the server has not yet been told of the delete; when it has, Undo says that the quote returns as a new one without its anthologies.
+
 ### Changed
 
 - Anthologies open at once: the list, an opened anthology and the add-to-anthology choice now show what this phone already holds straight away and ask the server behind it, instead of waiting for the server to answer or give up before showing anything. When the server cannot be reached the same note as the other screens says so, and what is on screen stays.
-### Changed
-
-- One Share screen for everything: Share on a quote card, a quote's menu, a selection, a whole work, the library and an anthology now all open the same screen, with the same formats (plain text, Markdown, WhatsApp, Reddit, and a picture for one quote), the text you are about to send, and Share, Copy and Save. An anthology's Markdown file and EPUB book are on it too, in place of its Export menu. Several quotes have no picture.
+- One Share screen for everything: Share on a quote card, a quote's menu, a selection, a whole work, the library and an anthology now all open the same screen, with the formats that suit what you are sending (a quote has plain text, Markdown, WhatsApp, Reddit and a picture; several quotes the same without the picture; an anthology plain text, Markdown and EPUB), the text you are about to send, and Share, Copy and Save. An anthology's Markdown file and EPUB book are on it too, in place of its Export menu. Several quotes open on the Markdown file you can import again, and a whole work's plain text keeps its chapters, each named once.
 - A quote's menu has all of it: the three-dot menu on a quote card now also has Edit, Colour, Add a tag, Take a tag off, Move to a board, Open the work, Show where it comes from and Delete, next to Open, Select and Add to anthology. It is the same menu on Home, in the library, on a work, on a board and in a list of quotes, and a search result that is on your phone has it too. Actions that need the server appear only when there is one.
 
 ## [0.10.2] - 2026-11-15

@@ -13,6 +13,9 @@ sealed class ShareSubject {
   /// The formats this offers, in the order they are drawn; the first is chosen when the screen opens.
   List<ShareFormat> get formats;
 
+  /// The format the screen opens on.
+  ShareFormat get firstFormat => formats.first;
+
   /// What the sheet is told the share is about, and how the file is named (before its extension).
   String get title;
   String get fileStem;
@@ -93,6 +96,12 @@ final class QuotesShare extends ShareSubject {
     ShareFormat.whatsapp,
     ShareFormat.reddit,
   ];
+
+  /// Opens on the Tippani Markdown, the importable file the old Export menu led with. Where the opener carries the
+  /// plain-text switches over ([on], the reading page's), it opens on the plain text those switches shape.
+  @override
+  ShareFormat get firstFormat =>
+      on == null ? ShareFormat.markdown : ShareFormat.plain;
 
   @override
   String get title => work?.title ?? tx('app.library.tippani_quotes');

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tippani/anthologies/anthologies.dart';
 import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/anthologies_screen.dart';
@@ -198,7 +200,65 @@ void main() {
       expectTheShareScreen();
       expect(find.text('Picture'), findsNothing);
       expect(find.text('Walden · 2 quotes'), findsOneWidget);
+      // it opens on the importable Tippani Markdown, as the old Export menu did
+      expect(shown(tester), contains('Time is but the stream.'));
+      await tester.tap(find.text('Plain text'));
+      await tester.pumpAndSettle();
       expect(shown(tester), startsWith('Walden — Thoreau'));
+    });
+
+    testWidgets('a work\'s plain text names each chapter once', (tester) async {
+      await lib.addQuote(
+        QuoteDraft(
+          text: 'Time is but the stream.',
+          workId: walden.id,
+          chapter: 'Where I Lived',
+          tags: const ['life'],
+        ),
+      );
+      await lib.addQuote(
+        QuoteDraft(
+          text: 'I went to the woods.',
+          workId: walden.id,
+          chapter: 'Where I Lived',
+        ),
+      );
+      await show(
+        tester,
+        WorkScreen(store: lib, workId: walden.id, picker: picker),
+      );
+      await tester.tap(find.byType(PopupMenuButton<String>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Share').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Plain text'));
+      await tester.pumpAndSettle();
+      expect(
+        'Where I Lived'.allMatches(shown(tester)).length,
+        1,
+        reason: shown(tester),
+      );
+      // and the parts it does not honour are not offered
+      expect(find.widgetWithText(FilterChip, 'Chapter'), findsOneWidget);
+      expect(find.widgetWithText(FilterChip, 'Tags'), findsNothing);
+    });
+
+    testWidgets('the library opens on the importable Markdown', (tester) async {
+      await second();
+      await show(tester, LibraryScreen(store: lib, picker: picker));
+      await tester.longPress(find.text('Simplify, simplify.'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Time is but the stream.'));
+      await tester.pumpAndSettle();
+      await tapTip(tester, 'More');
+      await tester.tap(find.text('Share').last);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'This file keeps everything each quote has, so it can be imported again.',
+        ),
+        findsOneWidget,
+      );
     });
   });
 
@@ -214,6 +274,76 @@ void main() {
       expect(find.text('EPUB book'), findsOneWidget);
       expect(find.text('Picture'), findsNothing);
       expect(shown(tester), startsWith('Openings\n\nFirst lines.'));
+    });
+
+    Future<FakeAnthologies> openShareOf(WidgetTester tester) async {
+      final service = FakeAnthologies();
+      final a = service.seed('Openings', intro: 'First lines.');
+      await show(tester, AnthologyScreen(service: service, id: a.id));
+      await tapTip(tester, 'Share');
+      return service;
+    }
+
+    bool enabled(WidgetTester tester, String label) =>
+        tester
+            .widget<ButtonStyleButton>(
+              find.ancestor(
+                of: find.text(label),
+                matching: find.bySubtype<ButtonStyleButton>(),
+              ),
+            )
+            .onPressed !=
+        null;
+
+    testWidgets('a file the server will not make is not sent or saved empty', (
+      tester,
+    ) async {
+      final service = await openShareOf(tester);
+      service.fail = const AnthologyException('The server said no.');
+      await tester.tap(find.text('Markdown'));
+      await tester.pumpAndSettle();
+      expect(find.text('The server said no.'), findsOneWidget);
+      for (final b in ['Share', 'Copy', 'Save']) {
+        expect(enabled(tester, b), isFalse, reason: '$b has nothing to send');
+      }
+      expect(sharer.texts, isEmpty);
+      expect(picker.saved, isEmpty);
+      // the plain text still works, and the refusal is not left above it
+      await tester.tap(find.text('Plain text'));
+      await tester.pumpAndSettle();
+      expect(find.text('The server said no.'), findsNothing);
+      for (final b in ['Share', 'Copy', 'Save']) {
+        expect(enabled(tester, b), isTrue, reason: b);
+      }
+    });
+
+    testWidgets('while the file is on its way nothing can be sent', (
+      tester,
+    ) async {
+      final service = await openShareOf(tester);
+      service.holdMarkdown = Completer<void>();
+      await tester.tap(find.text('Markdown'));
+      await tester.pump();
+      expect(enabled(tester, 'Share'), isFalse);
+      expect(enabled(tester, 'Save'), isFalse);
+      service.holdMarkdown!.complete();
+      await tester.pumpAndSettle();
+      expect(enabled(tester, 'Share'), isTrue);
+      expect(shown(tester), '# Openings\n');
+    });
+
+    testWidgets('the last format chosen is the one fetched', (tester) async {
+      final service = await openShareOf(tester);
+      service.holdMarkdown = Completer<void>();
+      await tester.tap(find.text('Markdown'));
+      await tester.pump();
+      await tester.tap(find.text('EPUB book'));
+      await tester.pumpAndSettle();
+      expect(service.calls, contains('export 1 epub'));
+      expect(enabled(tester, 'Share'), isTrue, reason: 'the book has arrived');
+      expect(enabled(tester, 'Save'), isTrue);
+      service.holdMarkdown!.complete();
+      await tester.pumpAndSettle();
     });
   });
 }

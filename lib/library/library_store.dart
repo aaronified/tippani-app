@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 
 import '../sync/fingerprint.dart';
+import 'bulk_ops.dart' show QuoteAsDraft;
 import 'models.dart';
 
 /// The app's own library of works and quotes, kept on the phone. It is what lets the app work with no
@@ -24,6 +25,12 @@ abstract interface class LibraryStore {
   Future<Quote?> quote(int id);
   Future<Quote> updateQuote(int id, QuoteDraft draft);
   Future<void> deleteQuote(int id);
+
+  /// Takes back a [deleteQuote] (the Undo of a delete). When the server has not been told of the delete yet, the
+  /// quote returns as itself, with the server's row it was linked to; true. When it has been told, the server's
+  /// bin holds the original and what comes back here is a new quote, with no anthology and no link; false. A quote
+  /// that was never on the server has nothing to lose and is always true.
+  Future<bool> undeleteQuote(Quote gone);
   Future<void> setFavorite(int id, bool favorite);
 
   /// Quotes, newest met first. [query] matches the words, the translation, the note, who said it, the
@@ -668,6 +675,45 @@ class SqliteLibraryStore implements LibraryStore {
     });
     await _dropUnusedTags();
     _changes.add(null);
+  }
+
+  @override
+  Future<bool> undeleteQuote(Quote gone) async {
+    final sid = gone.serverId;
+    if (sid == null) {
+      await addQuote(gone.toDraft());
+      return true;
+    }
+    final w = gone.workId == null ? null : await work(gone.workId!);
+    final route = quoteRoute(w == null ? Realm.loose : realmOfKind(w.kind));
+    final pending = await _db.query(
+      'deletions',
+      where: 'route = ? AND server_id = ?',
+      whereArgs: [route, sid],
+    );
+    if (pending.isEmpty) {
+      await addQuote(gone.toDraft());
+      return false;
+    }
+    await _db.transaction((tx) async {
+      await _checkWork(tx, gone.workId);
+      await tx.delete(
+        'deletions',
+        where: 'route = ? AND server_id = ?',
+        whereArgs: [route, sid],
+      );
+      await tx.insert('quotes', {
+        ..._quoteRow(gone.toDraft()),
+        'id': gone.id,
+        'server_id': sid,
+        'synced_hash': gone.syncedHash,
+        'created_at': gone.createdAt.toUtc().toIso8601String(),
+        'updated_at': _now(),
+      });
+      await _writeTags(tx, gone.id, gone.tags);
+    });
+    _changes.add(null);
+    return true;
   }
 
   @override

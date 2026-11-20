@@ -305,7 +305,55 @@ void main() {
       expect(find.text('Simplify, simplify.'), findsNothing);
       await tester.tap(find.text('Undo'));
       await tester.pumpAndSettle();
-      expect((await lib.quotes()).single.text, 'Simplify, simplify.');
+      final back = (await lib.quotes()).single;
+      expect(back.text, 'Simplify, simplify.');
+      expect(back.tags, ['life'], reason: 'its tags come back with it');
+    });
+
+    testWidgets('Undo before the server was told puts back the same quote', (
+      tester,
+    ) async {
+      await lib.setQuoteServerId(quote.id, 41);
+      await library(tester);
+      await _openMenu(tester);
+      await _press(tester, 'Delete');
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      final back = (await lib.quotes()).single;
+      expect(back.serverId, 41, reason: 'still the server\'s own quote');
+      expect(back.tags, ['life']);
+      expect(
+        await lib.pendingDeletions(),
+        isEmpty,
+        reason: 'the server is not sent a delete for what is back',
+      );
+      expect(find.textContaining('new quote'), findsNothing);
+    });
+
+    testWidgets('Undo after the server was told says what it cannot bring', (
+      tester,
+    ) async {
+      await lib.setQuoteServerId(quote.id, 41);
+      await library(tester);
+      await _openMenu(tester);
+      await _press(tester, 'Delete');
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+      // the sync has sent the delete: the server's bin holds the original
+      for (final d in await lib.pendingDeletions()) {
+        await lib.clearDeletion(d.id);
+      }
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      final back = (await lib.quotes()).single;
+      expect(back.tags, ['life']);
+      expect(back.serverId, isNull);
+      expect(
+        find.textContaining('anthologies are not brought back'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('keeping it at the question leaves it there', (tester) async {

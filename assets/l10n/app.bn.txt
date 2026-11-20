@@ -943,6 +943,7 @@ app.quiz.x_of_total = {total}-এর মধ্যে {x}
 # --- quote ---
 app.quote.noted_x = লেখা হয়েছে {x}
 app.quote.quote_deleted = উক্তিটি মুছে ফেলা হয়েছে।
+app.quote.quote_restored_as_new = উক্তিটি নতুন উক্তি হিসেবে ফিরিয়ে আনা হয়েছে। এর সংকলনগুলো ফেরেনি; সার্ভারের বিনে আসলটি আছে।
 app.quote.the_quote_could_not_be_read = উক্তিটি জোরে পড়া যায়নি।
 app.quote.this_quote_is_not_here_any = এই উক্তিটি আর এখানে নেই।
 
@@ -1059,6 +1060,7 @@ app.settings.your_library = আপনার লাইব্রেরি
 app.share.adds_the_quote_s_colour_to = কথার পাশে একটি রেখা হিসেবে ছবিতে উক্তির রং যোগ করে।
 app.share.chip_a_small_round_photo_beside = চিপ: নামের পাশে ছোট গোল ছবি। পটভূমি: একই ছবি ধারের দিক থেকে ফিকে হয়ে ঢুকছে।
 app.share.copy_picture = ছবি কপি করুন
+app.share.copied = কপি হয়েছে।
 app.share.format = ধরন
 app.share.include = যা থাকবে
 app.share.look = চেহারা
@@ -1066,7 +1068,9 @@ app.share.material = উপাদান
 app.share.picture_copied = ছবি কপি হয়েছে।
 app.share.puts_the_credited_person_s_signature = ছবির নিচের ডান কোণে কৃতিত্বপ্রাপ্ত মানুষটির স্বাক্ষর বসায়।
 app.share.save_picture = ছবি রাখুন
+app.share.saved = রাখা হয়েছে।
 app.share.the_picture_could_not_be_copied = ছবিটি কপি করা যায়নি।
+app.share.the_picture_could_not_be_made = ছবিটি তৈরি করা যায়নি।
 app.share.the_picture_could_not_be_saved = ছবিটি সংরক্ষণ করা যায়নি।
 app.share.the_picture_could_not_be_shared = ছবিটি ভাগ করা যায়নি।
 app.share.the_file_could_not_be_made = ফাইলটি তৈরি করা যায়নি।

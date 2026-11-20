@@ -946,6 +946,7 @@ app.quiz.x_of_total = {x} of {total}
 # --- quote ---
 app.quote.noted_x = Noted {x}
 app.quote.quote_deleted = Quote deleted.
+app.quote.quote_restored_as_new = Quote put back as a new quote. Its anthologies are not brought back; the server's Bin still holds the original.
 app.quote.the_quote_could_not_be_read = The quote could not be read aloud.
 app.quote.this_quote_is_not_here_any = This quote is not here any more.
 
@@ -1062,6 +1063,7 @@ app.settings.your_library = Your library
 app.share.adds_the_quote_s_colour_to = Adds the quote's colour to the picture, as a stripe beside the words.
 app.share.chip_a_small_round_photo_beside = Chip: a small round photo beside the name. Backdrop: the same photo faded in from the edge.
 app.share.copy_picture = Copy picture
+app.share.copied = Copied.
 app.share.format = Format
 app.share.include = Include
 app.share.look = Look
@@ -1069,7 +1071,9 @@ app.share.material = Material
 app.share.picture_copied = Picture copied.
 app.share.puts_the_credited_person_s_signature = Puts the credited person's signature in the picture's bottom right corner.
 app.share.save_picture = Save picture
+app.share.saved = Saved.
 app.share.the_picture_could_not_be_copied = The picture could not be copied.
+app.share.the_picture_could_not_be_made = The picture could not be made.
 app.share.the_picture_could_not_be_saved = The picture could not be saved.
 app.share.the_picture_could_not_be_shared = The picture could not be shared.
 app.share.the_file_could_not_be_made = The file could not be made.
