@@ -145,21 +145,34 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
     if (c.loaded && (c.paired != _wasPaired || _all == null)) _load();
   }
 
+  /// Which read is the latest, so a slow one that lands after a newer one cannot put the older list back.
+  int _asked = 0;
+
+  /// Draws what the phone holds at once, then asks the server in the background and swaps its answer in. A read
+  /// that fails never takes the list off the screen (ADR-0030); only a first load with nothing kept says why.
   Future<void> _load() async {
     final c = widget.controller;
     // the spinner stays until the pairing is known
     if (c != null && !c.loaded) return;
     _wasPaired = c?.paired ?? false;
+    final service = widget.service;
+    if (_all == null && service is OfflineAnthologies) {
+      final kept = service.keptList();
+      if (kept != null) setState(() => _all = kept);
+    }
+    final turn = ++_asked;
     try {
-      final all = await widget.service.list();
-      if (mounted) {
+      final all = await service.list();
+      if (mounted && turn == _asked) {
         setState(() {
           _all = all;
           _problem = null;
         });
       }
     } on AnthologyException catch (e) {
-      if (mounted) setState(() => _problem = e.message);
+      if (mounted && turn == _asked && _all == null) {
+        setState(() => _problem = e.message);
+      }
     }
   }
 
@@ -173,7 +186,14 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
       await widget.service.create(text.title, text.intro);
       await _load();
     } on AnthologyException catch (e) {
-      if (mounted) setState(() => _problem = e.message);
+      if (!mounted) return;
+      if (_all == null) {
+        setState(() => _problem = e.message);
+      } else {
+        final m = ScaffoldMessenger.of(context);
+        m.clearSnackBars();
+        m.showSnackBar(SnackBar(content: Text(e.message)));
+      }
     }
   }
 
@@ -393,17 +413,29 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     _load();
   }
 
+  int _asked = 0;
+
+  /// The opened anthology draws from the phone's copy at once the first time; the server's answer replaces it when
+  /// it lands, in place, so the reader keeps their scroll. A failed read leaves what is shown alone (ADR-0030).
   Future<void> _load() async {
+    final service = widget.service;
+    if (_detail == null && service is OfflineAnthologies) {
+      final kept = service.keptDetail(widget.id);
+      if (kept != null) setState(() => _detail = kept);
+    }
+    final turn = ++_asked;
     try {
-      final d = await widget.service.get(widget.id);
-      if (mounted) {
+      final d = await service.get(widget.id);
+      if (mounted && turn == _asked) {
         setState(() {
           _detail = d;
           _problem = null;
         });
       }
     } on AnthologyException catch (e) {
-      if (mounted) setState(() => _problem = e.message);
+      if (mounted && turn == _asked && _detail == null) {
+        setState(() => _problem = e.message);
+      }
     }
   }
 
@@ -1046,6 +1078,74 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
   }
 }
 
+/// Asks which anthology: the phone's own list at once, the server's swapped in behind it. Returns the [Anthology],
+/// the string `'new'`, or null (dismissed, or nothing could be read and a message said so).
+Future<Object?> chooseAnthology(
+  BuildContext context,
+  AnthologyService service,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final kept = service is OfflineAnthologies ? service.keptList() : null;
+  final shown = ValueNotifier<List<Anthology>?>(kept);
+  BuildContext? open;
+  var closed = false;
+  service.list().then<void>(
+    (all) {
+      if (!closed) shown.value = all;
+    },
+    onError: (Object e) {
+      if (closed) return;
+      // a failed read leaves a list that is showing alone; with nothing shown it says why and gives the door back
+      if (shown.value != null) return;
+      final reason = e is AnthologyException ? e.message : '$e';
+      messenger.showSnackBar(SnackBar(content: Text(reason)));
+      final d = open;
+      if (d != null && d.mounted) Navigator.of(d).pop();
+    },
+  );
+  try {
+    return await showDialog<Object>(
+      context: context,
+      builder: (context) {
+        open = context;
+        return SimpleDialog(
+          title: Text(context.tr('common.action.anthology.label')),
+          children: [
+            ValueListenableBuilder<List<Anthology>?>(
+              valueListenable: shown,
+              builder: (context, all, _) => all == null
+                  ? const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final a in all)
+                          SimpleDialogOption(
+                            onPressed: () => Navigator.of(context).pop(a),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: Text(a.title),
+                            ),
+                          ),
+                      ],
+                    ),
+            ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop('new'),
+              child: Text(context.tr('app.anthologies.a_new_anthology')),
+            ),
+          ],
+        );
+      },
+    );
+  } finally {
+    closed = true;
+    shown.dispose();
+  }
+}
+
 /// Lets the reader choose an anthology and adds [kind]/[itemId] to it. Says what happened in a message.
 Future<void> addToAnthologyDialog(
   BuildContext context,
@@ -1055,31 +1155,7 @@ Future<void> addToAnthologyDialog(
 }) async {
   final messenger = ScaffoldMessenger.of(context);
   final tr = context.tr;
-  List<Anthology> all;
-  try {
-    all = await service.list();
-  } on AnthologyException catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(e.message)));
-    return;
-  }
-  if (!context.mounted) return;
-  final chosen = await showDialog<Object>(
-    context: context,
-    builder: (context) => SimpleDialog(
-      title: Text(context.tr('common.action.anthology.label')),
-      children: [
-        for (final a in all)
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(context).pop(a),
-            child: Text(a.title),
-          ),
-        SimpleDialogOption(
-          onPressed: () => Navigator.of(context).pop('new'),
-          child: Text(context.tr('app.anthologies.a_new_anthology')),
-        ),
-      ],
-    ),
-  );
+  final chosen = await chooseAnthology(context, service);
   if (chosen == null) return;
   try {
     Anthology target;

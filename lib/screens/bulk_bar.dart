@@ -6,7 +6,7 @@ import '../library/bulk_ops.dart';
 import '../library/library_store.dart';
 import '../library/models.dart';
 import '../sync/fingerprint.dart' show realmOfQuote;
-import 'anthologies_screen.dart' show askAnthologyText;
+import 'anthologies_screen.dart' show askAnthologyText, chooseAnthology;
 import 'quote_form_screen.dart' show quoteColour, quoteColourName;
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
@@ -273,31 +273,7 @@ class QuoteBulkActions {
     final service = anthologies;
     if (service == null) return;
     final messenger = ScaffoldMessenger.of(context);
-    List<Anthology> all;
-    try {
-      all = await service.list();
-    } on AnthologyException catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.message)));
-      return;
-    }
-    if (!context.mounted) return;
-    final chosen = await showDialog<Object>(
-      context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(context.tr('common.action.anthology.label')),
-        children: [
-          for (final a in all)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(a),
-              child: Text(a.title),
-            ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(context).pop('new'),
-            child: Text(context.tr('app.anthologies.a_new_anthology')),
-          ),
-        ],
-      ),
-    );
+    final chosen = await chooseAnthology(context, service);
     if (chosen == null) return;
     try {
       Anthology target;

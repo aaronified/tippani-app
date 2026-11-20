@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Changed
+
+- Anthologies open at once: the list, an opened anthology and the add-to-anthology choice now show what this phone already holds straight away and ask the server behind it, instead of waiting for the server to answer or give up before showing anything. When the server cannot be reached the same note as the other screens says so, and what is on screen stays.
+
 ## [0.10.2] - 2026-11-15
 
 ### Added
