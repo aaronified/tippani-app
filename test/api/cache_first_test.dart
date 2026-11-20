@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -9,8 +10,13 @@ import 'package:tippani/api/api_client.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/checks/checks_service.dart';
 import 'package:tippani/harness/harness.dart';
+import 'package:tippani/library/models.dart';
 import 'package:tippani/people/people_console.dart';
+import 'package:tippani/screens/admin_backup_screen.dart';
+import 'package:tippani/screens/admin_sources_screen.dart';
 import 'package:tippani/screens/admin_users_screen.dart';
+import 'package:tippani/screens/metadata_tools_screen.dart';
+import 'package:tippani/metadata/metadata_service.dart';
 import 'package:tippani/screens/checks_screen.dart';
 import 'package:tippani/screens/devices_screen.dart';
 import 'package:tippani/screens/offline_note.dart';
@@ -21,6 +27,7 @@ import 'package:tippani/settings/settings_store.dart';
 import 'package:tippani/tags/tag_service.dart';
 import 'package:tippani/tools/server_tools.dart';
 
+import '../support/fake_admin.dart' show FakeServerFiles;
 import '../support/fake_server.dart';
 import '../support/memory_library.dart';
 
@@ -30,6 +37,7 @@ import '../support/memory_library.dart';
 // real ones over the real services, so each test is what a reader sees.
 
 const _offline = 'The server cannot be reached';
+const _refused = 'The server did not accept the refresh';
 
 /// Any bar or ring that says something is loading.
 final _spinner = find.byWidgetPredicate((w) => w is ProgressIndicator);
@@ -43,6 +51,7 @@ class _Rig {
 Future<_Rig> _rig(
   WidgetTester tester, {
   required void Function(_Rig) serves,
+  FakeServer? elsewhere,
 }) async {
   SharedPreferences.setMockInitialValues({
     'server_url': 'https://q.example.org',
@@ -52,7 +61,14 @@ Future<_Rig> _rig(
     await SharedPreferences.getInstance(),
     MemoryTokenVault(),
   );
-  final controller = AppController(store, clientFactory: server.factory);
+  final controller = AppController(
+    store,
+    clientFactory: elsewhere == null
+        ? server.factory
+        : (base, token) => base.host == 'b.example.org'
+              ? elsewhere.factory(base, token)
+              : server.factory(base, token),
+  );
   final r = _Rig(server, controller);
   await tester.runAsync(() async {
     await controller.load();
@@ -241,6 +257,79 @@ final _cases = <_Case>[
     '/admin/touch',
   ),
   _Case(
+    'Backup',
+    (r, words) => r.server.extra = (req, path) async => path == '/admin/backup'
+        ? r.server.json({
+            'backup': {
+              'name': 'backup.tpbk',
+              'created': words,
+              'size': 10,
+              'key': 'none',
+              'account': 'alice',
+            },
+          })
+        : null,
+    (r) => AdminBackupScreen(
+      service: PairedAdminService(r.controller),
+      files: FakeServerFiles(),
+    ),
+    '2026-11-01 old',
+    '2026-11-09 new',
+    '/admin/touch',
+  ),
+  _Case(
+    'Metadata sources',
+    (r, words) => r.server.extra = (req, path) async {
+      if (path == '/metadata/status') {
+        return r.server.json({
+          'sources': [
+            {
+              'source': words,
+              'state': 'builtin',
+              'areas': ['books'],
+              'works': 1,
+              'people': 0,
+            },
+          ],
+        });
+      }
+      return path == '/admin/metadata-keys' ? r.server.json({}) : null;
+    },
+    (r) => AdminSourcesScreen(service: PairedAdminService(r.controller)),
+    'Oldsource',
+    'Newsource',
+    '/metadata/touch',
+  ),
+  _Case(
+    'Metadata console',
+    (r, words) => r.server.extra = (req, path) async {
+      if (path == '/metadata/library') {
+        return r.server.json({
+          'books': [
+            {
+              'id': 1,
+              'title': words,
+              'author': 'A',
+              'annotation_count': 1,
+              'has_cover': false,
+            },
+          ],
+          'movies': <Object?>[],
+        });
+      }
+      return path == '/metadata/duplicates'
+          ? r.server.json({'groups': <Object?>[]})
+          : null;
+    },
+    (r) => MetadataToolsScreen(
+      service: PairedMetadataService(r.controller),
+      admin: false,
+    ),
+    'Oldwork2',
+    'Newwork2',
+    '/metadata/touch',
+  ),
+  _Case(
     'the bin',
     (r, words) => r.server.trash
       ..clear()
@@ -276,8 +365,12 @@ Future<void> _lookAt(WidgetTester tester, _Case c) async {
 }
 
 /// A reader who has seen [c]'s screen with the server saying [Case.old]: the phone now holds it.
-Future<_Rig> _seen(WidgetTester tester, _Case c) async {
-  final r = await _rig(tester, serves: (_) {});
+Future<_Rig> _seen(
+  WidgetTester tester,
+  _Case c, {
+  FakeServer? elsewhere,
+}) async {
+  final r = await _rig(tester, serves: (_) {}, elsewhere: elsewhere);
   c.serve(r, c.old);
   await tester.pumpWidget(_framed(r, c.open(r)));
   await _lookAt(tester, c);
@@ -352,20 +445,25 @@ void main() {
         },
       );
 
-      testWidgets(
-        'a refresh the server refuses never blanks the copy, and says it is the phone\'s',
-        (tester) async {
-          final r = await _seen(tester, c);
-          c.serve(r, c.fresh);
-          r.server.refuseReadsWith = 500;
-          await tester.pumpWidget(_framed(r, c.open(r)));
-          await _lookAt(tester, c);
-          await _answered(tester);
-          expect(find.textContaining(c.old), findsWidgets);
-          expect(find.text('Try again'), findsNothing);
-          expect(find.textContaining(_offline), findsOneWidget);
-        },
-      );
+      for (final status in [500, 404, 403, 429]) {
+        testWidgets(
+          'a refresh the server refuses with $status never blanks the copy, and says the server answered and did not accept it',
+          (tester) async {
+            final r = await _seen(tester, c);
+            c.serve(r, c.fresh);
+            r.server.refuseReadsWith = status;
+            await tester.pumpWidget(_framed(r, c.open(r)));
+            await _lookAt(tester, c);
+            await _answered(tester);
+            expect(find.textContaining(c.old), findsWidgets);
+            expect(find.text('Try again'), findsNothing);
+            expect(find.textContaining(_refused), findsOneWidget);
+            expect(find.textContaining('broken'), findsOneWidget);
+            // the server was reached: the note must not say it was not
+            expect(find.textContaining(_offline), findsNothing);
+          },
+        );
+      }
 
       testWidgets(
         'after the reader changed what it shows elsewhere, the phone\'s older copy is not drawn first',
@@ -521,6 +619,175 @@ void main() {
           );
         });
         expect('$got', contains(c.old));
+      },
+    );
+  });
+
+  group('a screen after the reader\'s own change, with a server that will not answer reads', () {
+    testWidgets(
+      'Tags: a renamed tag does not come back under its old name from the phone\'s copy',
+      (tester) async {
+        final c = _cases[1];
+        final lib = MemoryLibrary();
+        await lib.addQuote(const QuoteDraft(text: 'One', tags: ['oldname']));
+        final r = await _seen(tester, c);
+        Widget tags() => _framed(
+          r,
+          TagsScreen(
+            store: lib,
+            picker: const _NoPicker(),
+            service: PairedTagService(r.controller),
+          ),
+        );
+        await tester.pumpWidget(tags());
+        await _answered(tester);
+        expect(find.textContaining('oldname'), findsWidgets);
+        // the server takes the change and then stops answering reads
+        r.server.readsWait = Completer<void>().future;
+        await tester.tap(find.byTooltip('Tag actions').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Rename'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(TextField),
+          ),
+          'newname',
+        );
+        await tester.tap(find.text('Save'));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 20));
+        await tester.pump(const Duration(seconds: 20));
+        await tester.pumpAndSettle();
+        expect(r.server.tags.single['name'], 'newname');
+        expect(find.textContaining('newname'), findsWidgets);
+        expect(find.textContaining('oldname'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'the bin: a restored entry does not come back from the phone\'s copy',
+      (tester) async {
+        final c = _cases.last;
+        final r = await _seen(tester, c);
+        r.server.trash.add({
+          'id': 2,
+          'kind': 'annotation',
+          'label': 'Second',
+          'deleted_at': '2026-11-06 12:00:00',
+        });
+        await tester.pumpWidget(_framed(r, c.open(r)));
+        await _answered(tester);
+        expect(find.textContaining('Second'), findsWidgets);
+        expect(find.textContaining(c.old), findsWidgets);
+        r.server.readsWait = Completer<void>().future;
+        await tester.tap(find.byTooltip('Restore').first);
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 20));
+        await tester.pumpAndSettle();
+        expect(r.server.trash.map((e) => e['id']), isNot(contains(1)));
+        expect(find.textContaining(c.old), findsNothing);
+      },
+    );
+  });
+
+  group('a copy this version cannot read', () {
+    testWidgets(
+      'is passed over, and the screen shows what the server says instead of staying on its spinner',
+      (tester) async {
+        final c = _cases.firstWhere((c) => c.name == 'Checks');
+        final r = await _seen(tester, c);
+        // the same answer, in the shape an older version kept: an id that is not a number
+        // (every read the first visit started has landed and been kept by now)
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 200)),
+        );
+        final prefs = await SharedPreferences.getInstance();
+        var damaged = 0;
+        for (final k in prefs.getKeys().where(
+          (k) => k.startsWith('offline./cleanup'),
+        )) {
+          final wrapper = jsonDecode(prefs.getString(k)!) as Map;
+          final body = jsonDecode(wrapper['b'] as String) as Map;
+          if (body['items'] is! List) continue;
+          for (final item in body['items'] as List) {
+            (item as Map)['id'] = 'not a number';
+            damaged++;
+          }
+          wrapper['b'] = jsonEncode(body);
+          await tester.runAsync(() => prefs.setString(k, jsonEncode(wrapper)));
+        }
+        expect(damaged, greaterThan(0), reason: 'a kept copy was damaged');
+        c.serve(r, c.fresh);
+        // the server is slow, so the copy is what the screen meets first
+        final wait = Completer<void>();
+        r.server.readsWait = wait.future;
+        await tester.pumpWidget(_framed(r, c.open(r)));
+        await _lookAt(tester, c);
+        await _release(tester, wait);
+        expect(find.textContaining(c.fresh), findsWidgets);
+        expect(_spinner, findsNothing);
+      },
+    );
+  });
+
+  group('what is kept belongs to one server', () {
+    testWidgets(
+      'connecting to another server while paired never draws the first one\'s copy',
+      (tester) async {
+        final c = _cases[1];
+        final other = FakeServer();
+        final r = await _seen(tester, c, elsewhere: other);
+        other.tags.add({
+          'id': 9,
+          'name': 'othername',
+          'color': 'yellow',
+          'style': 'sticker',
+          'annotations': 1,
+          'dialogues': 0,
+        });
+        await tester.runAsync(() async {
+          final check = await r.controller.probe('https://b.example.org');
+          await r.controller.connect('https://b.example.org', check);
+        });
+        other.readsWait = Completer<void>().future;
+        await tester.pumpWidget(
+          _framed(
+            r,
+            TagsScreen(
+              store: MemoryLibrary(),
+              picker: const _NoPicker(),
+              service: PairedTagService(r.controller),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        expect(find.textContaining(c.old), findsNothing);
+        await tester.pump(const Duration(seconds: 20));
+      },
+    );
+  });
+
+  group('what is kept belongs to one account', () {
+    testWidgets(
+      'pairing again as another account, without unpairing first, never draws the first one\'s copy',
+      (tester) async {
+        final c = _cases[1];
+        final r = await _seen(tester, c);
+        await tester.runAsync(() async {
+          r.server.username = 'bob';
+          r.server.code = 'ZZZZ2345';
+          await r.controller.pair('ZZZZ2345', 'My phone');
+        });
+        c.serve(r, c.fresh);
+        r.server.readsWait = Completer<void>().future;
+        await tester.pumpWidget(_framed(r, c.open(r)));
+        await tester.pump();
+        await tester.pump();
+        expect(find.textContaining(c.old), findsNothing);
+        await tester.pump(const Duration(seconds: 20));
       },
     );
   });

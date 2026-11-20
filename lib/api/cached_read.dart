@@ -12,7 +12,7 @@ import 'server_call.dart';
 /// - First load, nothing on screen: the loader runs once from the phone only ([readFromPhone], no request, no
 ///   waiting). If every read in it had a copy, that is drawn. Then the loader runs for real.
 /// - A copy on screen: only the real run, and a failure leaves the screen alone ([fail] is for a screen with
-///   nothing to show).
+///   nothing to show, or whose copy is from before a change the reader made).
 /// - [live]: the read that follows a change the reader made. It never answers from the phone, so the old value
 ///   cannot come back over the new one.
 class CachedRead {
@@ -38,8 +38,9 @@ class CachedRead {
           draw(kept);
           shown = true;
         }
-      } on Exception {
-        // no copy of all of it: the real read below is what the screen waits for
+      } on Object {
+        // no copy of all of it, or one saved in an older shape that this version cannot read (a TypeError, which is
+        // an Error and not an Exception): the real read below is what the screen waits for
       }
     }
     try {
@@ -50,8 +51,10 @@ class CachedRead {
           : load());
       if (mine == _turn && alive()) draw(fresh);
     } on Exception catch (e) {
-      // a read that fails leaves a screen that has something showing alone; the shared note says it is the phone's
-      if (mine == _turn && alive() && !shown) await fail(e);
+      // a read that fails leaves a screen that has something showing alone; the shared note says it is the phone's.
+      // After a change ([live]) it does not: what is showing is from before the change, and leaving it standing as
+      // if it were current is the old value coming back by another door, so the screen says it could not be read.
+      if (mine == _turn && alive() && (!shown || live)) await fail(e);
     }
   }
 }

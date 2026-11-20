@@ -1060,6 +1060,8 @@ const Map<String, String> englishTokens = {
   'app.metadata_tools.web_x': 'Web: {x}',
   'app.metadata_tools.what_the_web_says': 'What the web says',
   'app.offline.from_the_phone': 'Showing what this phone last saw ({date}). The server cannot be reached.',
+  'app.offline.refused': 'Showing what this phone last saw ({date}). The server did not accept the refresh.',
+  'app.offline.refused_with': 'Showing what this phone last saw ({date}). The server did not accept the refresh: {reason}',
   'app.page_selector.tap_a_word_to_take_it': 'Tap a word to take it or leave it out. Drag a box across words to take them.',
   'app.pair.a_pairing_code_is_pairing_code': 'A pairing code is {pairing_code_length} letters and numbers, like 7K2M9QXD.',
   'app.pair.could_not_reach_the_server_check': 'Could not reach the server. Check that your phone can see it, then try again.',

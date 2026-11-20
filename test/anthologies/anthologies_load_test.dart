@@ -70,6 +70,7 @@ Widget _scoped(
 );
 
 const _offline = 'The server cannot be reached';
+const _refused = 'The server did not accept the refresh';
 
 void main() {
   testWidgets('with a copy and a server that never answers, the list is there at once and says it is the phone\'s copy '
@@ -132,7 +133,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Evenings'), findsOneWidget);
     expect(find.text('Retry'), findsNothing);
-    expect(find.textContaining(_offline), findsOneWidget);
+    expect(find.textContaining(_refused), findsOneWidget);
+    expect(find.textContaining(_offline), findsNothing);
   });
 
   testWidgets(
@@ -166,7 +168,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('The cached passage'), findsOneWidget);
       expect(find.text('Retry'), findsNothing);
-      expect(find.textContaining(_offline), findsOneWidget);
+      expect(find.textContaining(_refused), findsOneWidget);
+      expect(find.textContaining(_offline), findsNothing);
     },
   );
 
@@ -182,7 +185,66 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pumpAndSettle();
       expect(find.textContaining('The cached passage'), findsOneWidget);
-      expect(find.textContaining(_offline), findsOneWidget);
+      expect(find.textContaining(_refused), findsOneWidget);
+    },
+  );
+
+  Future<void> changedOnline(WidgetTester tester, AppController c) =>
+      tester.runAsync(
+        () =>
+            c.withClient<Object?>((x) => x.postJson('/anthologies/touch', {})),
+      );
+
+  testWidgets(
+    'after a change that reached the server, the phone\'s older copy of the list is not drawn first',
+    (tester) async {
+      final r = await _rig(tester);
+      r.server.extra = (req, path) async =>
+          req.method == 'POST' ? r.server.json({}) : null;
+      await changedOnline(tester, r.controller);
+      final wait = Completer<void>();
+      r.server.anthologiesWait = wait.future;
+      await tester.pumpWidget(_list(r.controller, r.svc));
+      await tester.pump();
+      expect(find.text('Evenings'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      wait.complete();
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pumpAndSettle();
+      expect(find.text('Evenings'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'changes still waiting on the phone show at once even after one that reached the server',
+    (tester) async {
+      final r = await _rig(tester);
+      r.server.extra = (req, path) async =>
+          req.method == 'POST' ? r.server.json({}) : null;
+      await changedOnline(tester, r.controller);
+      r.server.anthologiesWait = Completer<void>().future;
+      r.server.readsWait = Completer<void>().future;
+      r.server.writesWait = Completer<void>().future;
+      // the copy is drawn from the phone's own list when the server is given up on
+      await tester.pumpWidget(
+        _scoped(r, AnthologiesScreen(service: r.svc, controller: r.controller)),
+      );
+      await tester.pump(const Duration(seconds: 20));
+      await tester.pump();
+      expect(find.text('Evenings'), findsOneWidget);
+      await tester.tap(find.text('Evenings'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('More'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 16));
+      await tester.pumpAndSettle();
+      expect(find.text('Evenings'), findsNothing);
+      expect(find.text('No anthologies yet.'), findsOneWidget);
+      await tester.pump(const Duration(minutes: 1));
     },
   );
 
@@ -366,7 +428,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(SimpleDialog), findsOneWidget);
       expect(find.text('Evenings'), findsOneWidget);
-      expect(find.textContaining(_offline), findsOneWidget);
+      expect(find.textContaining(_refused), findsOneWidget);
     },
   );
 

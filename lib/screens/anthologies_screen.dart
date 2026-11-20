@@ -146,7 +146,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
     final service = widget.service;
     if (service is OfflineAnthologies &&
         (_all == null || (changed && service.pending.value > 0))) {
-      final kept = service.keptList();
+      final kept = service.keptList(forDraw: true);
       if (kept != null) setState(() => _all = kept);
     }
     final turn = ++_asked;
@@ -408,7 +408,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
     final service = widget.service;
     if (service is OfflineAnthologies &&
         (_detail == null || (changed && service.pending.value > 0))) {
-      final kept = service.keptDetail(widget.id);
+      final kept = service.keptDetail(widget.id, forDraw: true);
       if (kept != null) setState(() => _detail = kept);
     }
     final turn = ++_asked;
@@ -1067,7 +1067,9 @@ Future<Object?> chooseAnthology(
 ) async {
   final messenger = ScaffoldMessenger.of(context);
   final navigator = Navigator.of(context);
-  final kept = service is OfflineAnthologies ? service.keptList() : null;
+  final kept = service is OfflineAnthologies
+      ? service.keptList(forDraw: true)
+      : null;
   final shown = ValueNotifier<List<Anthology>?>(kept);
   // The route is made here, not by showDialog, so the read's own failure can close exactly this route: it may land
   // before the dialog has been drawn (nothing to find through a context yet) or while the reader is dismissing it

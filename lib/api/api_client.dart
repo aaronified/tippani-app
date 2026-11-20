@@ -238,7 +238,7 @@ class ApiClient {
       } on Object {
         // a full or failing store must not break a read that worked
       }
-      cache.servedFrom.value = null;
+      cache.markFresh();
       return decoded;
     } on ApiException catch (e) {
       final unreachable =
@@ -246,17 +246,20 @@ class ApiClient {
       if (unreachable && !live) {
         final kept = cache.read(path);
         if (kept != null) {
-          cache.servedFrom.value = kept.at;
+          cache.markServed(kept.at);
           return jsonDecode(kept.body);
         }
       }
       if (Zone.current[_shownKey] == true &&
-          (unreachable ||
-              e.failure == ApiFailure.server ||
-              e.failure == ApiFailure.badResponse)) {
+          e.failure != ApiFailure.unauthorised) {
         // asked, and not answered while a copy is on the screen: the screen is out of date and says so, like any
-        // other copy
-        cache.servedFrom.value = cache.read(path)?.at ?? DateTime.now();
+        // other copy. A server that did answer, with a refusal, is not "cannot be reached": the note says so.
+        final at = cache.read(path)?.at ?? DateTime.now();
+        if (unreachable) {
+          cache.markServed(at);
+        } else {
+          cache.markRefused(at, e.detail);
+        }
       }
       rethrow;
     }

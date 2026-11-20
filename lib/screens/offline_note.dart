@@ -34,9 +34,11 @@ class OfflineNote extends StatelessWidget {
   Widget build(BuildContext context) {
     final cache = offline ?? OfflineScope.of(context);
     if (cache == null) return const SizedBox.shrink();
-    return ValueListenableBuilder<DateTime?>(
-      valueListenable: cache.servedFrom,
-      builder: (context, from, _) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([cache.servedFrom, cache.refusal]),
+      builder: (context, _) {
+        final from = cache.servedFrom.value;
+        final refused = cache.refusal.value;
         if (from == null) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
@@ -44,7 +46,16 @@ class OfflineNote extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Text(
-                context.tr('app.offline.from_the_phone', {'date': _date(from)}),
+                refused == null
+                    ? context.tr('app.offline.from_the_phone', {
+                        'date': _date(from),
+                      })
+                    : refused.isEmpty
+                    ? context.tr('app.offline.refused', {'date': _date(from)})
+                    : context.tr('app.offline.refused_with', {
+                        'date': _date(from),
+                        'reason': refused,
+                      }),
               ),
             ),
           ),
