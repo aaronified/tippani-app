@@ -32,6 +32,8 @@ String workShareText(
   List<Quote> quotes, {
   bool translations = true,
   bool notes = false,
+  bool chapters = true,
+  bool locations = true,
 }) {
   final head = w.creator.trim().isEmpty ? w.title : '${w.title} — ${w.creator}';
   final out = StringBuffer(head);
@@ -40,10 +42,12 @@ String workShareText(
     final c = q.chapter.trim();
     if (chapter != c) {
       chapter = c;
-      if (c.isNotEmpty) out.write('\n\n$c');
+      if (chapters && c.isNotEmpty) out.write('\n\n$c');
     }
     out.write('\n\n“${q.text.trim()}”');
-    if (q.location.trim().isNotEmpty) out.write(' (${q.location.trim()})');
+    if (locations && q.location.trim().isNotEmpty) {
+      out.write(' (${q.location.trim()})');
+    }
     if (translations && q.translation.trim().isNotEmpty) {
       out.write('\n${q.translation.trim()}');
     }

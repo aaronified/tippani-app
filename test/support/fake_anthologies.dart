@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -21,6 +22,9 @@ class FakeAnthologies implements AnthologyService {
 
   /// When set, every call throws it.
   AnthologyException? fail;
+
+  /// When set, the Markdown file is not made until this completes: a server that is slow to answer.
+  Completer<void>? holdMarkdown;
 
   int _next = 1;
   int _nextSection = 1;
@@ -514,6 +518,8 @@ class FakeAnthologies implements AnthologyService {
   Future<ExportedFile> export(int id, {bool epub = false}) async {
     _check();
     calls.add('export $id ${epub ? 'epub' : 'md'}');
+    final hold = holdMarkdown;
+    if (!epub && hold != null) await hold.future;
     return ExportedFile(
       '${_rows[id]!['title']}.${epub ? 'epub' : 'md'}',
       epub

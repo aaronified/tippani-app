@@ -8,6 +8,7 @@ import '../harness/files.dart' show ChannelAppFiles;
 import '../anthologies/anthologies.dart';
 import '../harness/harness.dart' show BackupPicker, SystemBackupPicker;
 import '../library/models.dart';
+import '../library/quote_text.dart' show workShareText;
 import '../library/share_format.dart';
 import '../share/share_people.dart';
 import '../share/share_picture.dart';
@@ -100,12 +101,15 @@ class _ShareScreenState extends State<ShareScreen> {
     final QuotesShare many => many.defaultOn(_fields),
     _ => shareDefaults(_fields),
   };
-  late ShareFormat _format = _subject.formats.first;
+  late ShareFormat _format = _subject.firstFormat;
 
   // an anthology's Markdown and EPUB are made by the server, once each
+  // Each format is fetched and fails on its own: choosing EPUB while Markdown is still on its way must fetch
+  // the EPUB too, and one format's refusal is not the plain text's to show.
   final _docs = <ShareFormat, ExportedFile>{};
-  bool _fetching = false;
-  String? _problem;
+  final _fetching = <ShareFormat>{};
+  final _problems = <ShareFormat, String>{};
+  String? get _problem => _problems[_format];
   Brightness? _look;
   ShareMaterial _material = ShareMaterial.manuscript;
   bool _tint = false;
@@ -183,6 +187,25 @@ class _ShareScreenState extends State<ShareScreen> {
     }
   }
 
+  /// The parts offered for the chosen format. A whole work's plain text is laid out by chapter and honours only
+  /// these four; a switch that changed nothing would be a lie.
+  List<ShareField> get _shownFields {
+    final s = _subject;
+    if (s is QuotesShare && s.work != null && _format == ShareFormat.plain) {
+      return [
+        for (final f in _fields)
+          if (const {
+            'translation',
+            'chapter',
+            'location',
+            'note',
+          }.contains(f.id))
+            f,
+      ];
+    }
+    return _fields;
+  }
+
   /// What the text box holds for the chosen format: what will be sent.
   String _build() {
     final f = _format == ShareFormat.picture ? ShareFormat.plain : _format;
@@ -196,6 +219,16 @@ class _ShareScreenState extends State<ShareScreen> {
       final QuotesShare many =>
         f == ShareFormat.markdown
             ? many.markdown
+            : many.work != null && f == ShareFormat.plain
+            // a whole work reads as the reading page lays it out: each chapter named once, then its quotes
+            ? workShareText(
+                many.work!,
+                many.quotes,
+                translations: _on.contains('translation'),
+                notes: _on.contains('note'),
+                chapters: _on.contains('chapter'),
+                locations: _on.contains('location'),
+              )
             : buildQuotesText(
                 many.quotes,
                 many.workOf,
@@ -229,10 +262,10 @@ class _ShareScreenState extends State<ShareScreen> {
 
   /// Asks the server for the anthology's file in [f]. The text box shows the Markdown; the EPUB is a file.
   Future<void> _fetch(AnthologyShare a, ShareFormat f) async {
-    if (_docs.containsKey(f) || _fetching) return;
+    if (_docs.containsKey(f) || _fetching.contains(f)) return;
     setState(() {
-      _fetching = true;
-      _problem = null;
+      _fetching.add(f);
+      _problems.remove(f);
     });
     try {
       final file = await a.service.export(
@@ -241,13 +274,13 @@ class _ShareScreenState extends State<ShareScreen> {
       );
       _docs[f] = file;
     } on AnthologyException catch (e) {
-      _problem = e.message;
+      _problems[f] = e.message;
     } on Object {
-      _problem = tx('app.share.the_file_could_not_be_made');
+      _problems[f] = tx('app.share.the_file_could_not_be_made');
     }
     if (!mounted) return;
     setState(() {
-      _fetching = false;
+      _fetching.remove(f);
       if (_format == f) _text.text = _build();
     });
   }
@@ -285,7 +318,7 @@ class _ShareScreenState extends State<ShareScreen> {
   Future<void> _copy() async {
     try {
       await widget.copy(_text.text);
-      if (mounted) _say('Copied.');
+      if (mounted) _say(context.tr('app.share.copied'));
     } on Object {
       if (mounted) _say(context.tr('app.share.the_quote_could_not_be_copied'));
     }
@@ -301,7 +334,11 @@ class _ShareScreenState extends State<ShareScreen> {
         Uint8List.fromList(utf8.encode(_text.text)),
       );
       if (mounted) {
-        _say(saved ? 'Saved.' : context.tr('app.library.nothing_was_saved'));
+        _say(
+          saved
+              ? context.tr('app.share.saved')
+              : context.tr('app.library.nothing_was_saved'),
+        );
       }
     } on Object {
       if (mounted) _say(context.tr('app.share.the_file_could_not_be_saved'));
@@ -340,7 +377,9 @@ class _ShareScreenState extends State<ShareScreen> {
 
   Future<Uint8List?> _picture() async {
     final png = await captureCard(_cardKey, width: shareWidth * shareScale);
-    if (png == null && mounted) _say('The picture could not be made.');
+    if (png == null && mounted) {
+      _say(context.tr('app.share.the_picture_could_not_be_made'));
+    }
     return png;
   }
 
@@ -398,7 +437,11 @@ class _ShareScreenState extends State<ShareScreen> {
       if (png == null) return;
       final saved = await widget.picker.save(_fileName, png);
       if (mounted) {
-        _say(saved ? 'Saved.' : context.tr('app.library.nothing_was_saved'));
+        _say(
+          saved
+              ? context.tr('app.share.saved')
+              : context.tr('app.library.nothing_was_saved'),
+        );
       }
     } on Object {
       if (mounted) _say(context.tr('app.share.the_picture_could_not_be_saved'));
@@ -442,6 +485,7 @@ class _ShareScreenState extends State<ShareScreen> {
     final look = _look ?? theme.brightness;
     // Markdown of several quotes is Tippani's import file: it keeps everything, so there is nothing to switch
     final keepsAll = _subject is QuotesShare && _format == ShareFormat.markdown;
+    final fetching = _fetching.contains(_format);
     return Scaffold(
       appBar: ShellAppBar(title: Text(context.tr('common.action.share.label'))),
       body: ListView(
@@ -475,7 +519,7 @@ class _ShareScreenState extends State<ShareScreen> {
           if (keepsAll) ...[
             Text(context.tr('app.share.the_file_keeps_everything')),
             const SizedBox(height: 16),
-          ] else if (_fields.isNotEmpty) ...[
+          ] else if (_shownFields.isNotEmpty) ...[
             Text(
               context.tr('app.share.include'),
               style: theme.textTheme.labelLarge,
@@ -485,7 +529,7 @@ class _ShareScreenState extends State<ShareScreen> {
               spacing: 8,
               runSpacing: 4,
               children: [
-                for (final f in _fields)
+                for (final f in _shownFields)
                   FilterChip(
                     label: Text(context.tr(f.label)),
                     selected: _on.contains(f.id),
@@ -684,7 +728,7 @@ class _ShareScreenState extends State<ShareScreen> {
               ],
             ),
           ] else if (book) ...[
-            if (_fetching)
+            if (fetching)
               const Center(child: CircularProgressIndicator())
             else if (_problem != null)
               Text(context.tr(_problem!))
@@ -717,7 +761,7 @@ class _ShareScreenState extends State<ShareScreen> {
               ],
             ),
           ] else ...[
-            if (_fetching)
+            if (fetching)
               const Padding(
                 padding: EdgeInsets.only(bottom: 12),
                 child: LinearProgressIndicator(),
@@ -741,26 +785,34 @@ class _ShareScreenState extends State<ShareScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                FilledButton.icon(
-                  onPressed: _shareText,
-                  icon: const Icon(Ti.share2),
-                  label: Text(context.tr('common.action.share.label')),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: _copy,
-                  icon: const Icon(Ti.copy),
-                  label: Text(context.tr('common.action.copy.label')),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: _saveText,
-                  icon: const Icon(Ti.deviceFloppy),
-                  label: Text(context.tr('common.action.save.label')),
-                ),
-              ],
+            // Nothing to send while the server's file is on its way, after it refused, or with the box emptied:
+            // an empty Share would send nothing and an empty Save would write an empty file and say it saved.
+            ListenableBuilder(
+              listenable: _text,
+              builder: (context, _) {
+                final ready = !fetching && _text.text.trim().isNotEmpty;
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: ready ? _shareText : null,
+                      icon: const Icon(Ti.share2),
+                      label: Text(context.tr('common.action.share.label')),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: ready ? _copy : null,
+                      icon: const Icon(Ti.copy),
+                      label: Text(context.tr('common.action.copy.label')),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: ready ? _saveText : null,
+                      icon: const Icon(Ti.deviceFloppy),
+                      label: Text(context.tr('common.action.save.label')),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ],

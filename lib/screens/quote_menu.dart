@@ -312,6 +312,7 @@ Future<bool> deleteQuoteWithUndo(
 ) async {
   final deleted = context.tr('app.quote.quote_deleted');
   final undo = context.tr('common.action.undo.label');
+  final restoredAsNew = context.tr('app.quote.quote_restored_as_new');
   // the messenger belongs to the app, so the Undo outlives this screen
   final messenger = ScaffoldMessenger.of(context);
   final sure = await showDialog<bool>(
@@ -340,24 +341,16 @@ Future<bool> deleteQuoteWithUndo(
         content: Text(deleted),
         action: SnackBarAction(
           label: undo,
-          onPressed: () => store.addQuote(
-            QuoteDraft(
-              text: gone.text,
-              workId: gone.workId,
-              translation: gone.translation,
-              language: gone.language,
-              speaker: gone.speaker,
-              chapter: gone.chapter,
-              location: gone.location,
-              note: gone.note,
-              color: gone.color,
-              favorite: gone.favorite,
-              notedAt: gone.notedAt,
-              source: gone.source,
-              tags: gone.tags,
-              boardId: gone.boardId,
-            ),
-          ),
+          onPressed: () async {
+            // The same quote comes back when the server has not been told of the delete; otherwise the original is in
+            // the server's bin and this is a new quote, which the note says plainly.
+            final same = await store.undeleteQuote(gone);
+            if (!same) {
+              messenger
+                ..clearSnackBars()
+                ..showSnackBar(SnackBar(content: Text(restoredAsNew)));
+            }
+          },
         ),
       ),
     );
