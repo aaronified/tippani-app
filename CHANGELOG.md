@@ -9,7 +9,7 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Fixed
 
-- Smoother scrolling: textures and materials are now drawn once and kept, instead of being painted layer by layer every time a card comes on screen, so a list of cards costs about what a plain one does. Colours and materials synced from your account also no longer rebuild the whole app, or every card, when an unrelated setting is saved or a sync brings nothing new. The look is unchanged.
+- Smoother scrolling: a card's texture is now built once, the first time it is drawn, and then reused, instead of being painted layer by layer on every frame, and a setting that does not change the look no longer redraws every card. Very large surfaces and ones that are changing size are still drawn the long way. Colours and materials synced from your account also no longer rebuild the whole app, or every card, when an unrelated setting is saved or a sync brings nothing new. The look is unchanged.
 ### Changed
 
 - Anthologies open at once: the list, an opened anthology and the add-to-anthology choice now show what this phone already holds straight away and ask the server behind it, instead of waiting for the server to answer or give up before showing anything. When the server cannot be reached the same note as the other screens says so, and what is on screen stays.

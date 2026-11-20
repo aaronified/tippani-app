@@ -76,7 +76,7 @@ const _drawOps = {
 };
 
 class _Recorded {
-  int draws = 0, layers = 0, shaders = 0;
+  int draws = 0, layers = 0, shaders = 0, images = 0;
 }
 
 /// What one paint of [name] puts on the canvas it is handed.
@@ -85,17 +85,25 @@ _Recorded _paintOnce(
   Size size, {
   Color color = Colors.grey,
   BorderRadius radius = const BorderRadius.all(Radius.circular(20)),
+  Color accent = Colors.red,
+  Phys? phys,
+  bool dark = false,
+  double pixelRatio = 1,
+  bool withTile = true,
+  SizeWatch? watch,
 }) {
   final t = textiles[name]!;
   final painter = MaterialPainter(
     color: color,
-    accent: Colors.red,
+    accent: accent,
     name: name,
     textile: t,
-    phys: factoryPhys[name]!,
-    dark: false,
-    tile: TileCache.peek(t.file),
+    phys: phys ?? factoryPhys[name]!,
+    dark: dark,
+    tile: withTile ? TileCache.peek(t.file) : null,
     radius: radius,
+    pixelRatio: pixelRatio,
+    watch: watch,
   );
   final canvas = TestRecordingCanvas();
   painter.paint(canvas, size);
@@ -103,6 +111,7 @@ _Recorded _paintOnce(
   for (final i in canvas.invocations) {
     final m = i.invocation.memberName.toString();
     if (m == 'Symbol("saveLayer")') r.layers++;
+    if (m == 'Symbol("drawImageRect")') r.images++;
     if (_drawOps.any((d) => m == 'Symbol("$d")')) r.draws++;
     for (final a in i.invocation.positionalArguments) {
       if (a is Paint && a.shader != null) r.shaders++;
@@ -153,7 +162,10 @@ Future<Rig> _rigWith(WidgetTester tester, Map<String, Object?> prefs) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(SurfaceImages.clear);
+  setUp(() {
+    SurfaceImages.composer = SurfaceImages.defaultComposer;
+    SurfaceImages.clear();
+  });
 
   group('a surface that has been drawn once', () {
     testWidgets(
@@ -214,6 +226,223 @@ void main() {
         expect(SurfaceImages.composed, composed);
       },
     );
+  });
+
+  group('what a composed surface is keyed on', () {
+    // Each input changed on its own must make another image, and the same input again must make none.
+    for (final c in <(String, _Recorded Function({bool other}))>[
+      (
+        'brightness',
+        ({other = false}) =>
+            _paintOnce('paper', const Size(360, 200), dark: other),
+      ),
+      (
+        'colour',
+        ({other = false}) => _paintOnce(
+          'paper',
+          const Size(360, 200),
+          color: other ? Colors.teal : Colors.grey,
+        ),
+      ),
+      (
+        'accent',
+        ({other = false}) => _paintOnce(
+          'metal',
+          const Size(360, 200),
+          accent: other ? Colors.green : Colors.red,
+        ),
+      ),
+      (
+        'tile',
+        ({other = false}) =>
+            _paintOnce('paper', const Size(360, 200), withTile: !other),
+      ),
+      (
+        'corner radius',
+        ({other = false}) => _paintOnce(
+          'paper',
+          const Size(360, 200),
+          radius: BorderRadius.circular(other ? 4 : 20),
+        ),
+      ),
+      (
+        'dials',
+        ({other = false}) => _paintOnce(
+          'paper',
+          const Size(360, 200),
+          phys: other ? const Phys(90, 10, 10, 10) : factoryPhys['paper'],
+        ),
+      ),
+      (
+        'pixel ratio, at the same pixel size',
+        ({other = false}) => other
+            ? _paintOnce('paper', const Size(180, 100), pixelRatio: 2)
+            : _paintOnce('paper', const Size(360, 200)),
+      ),
+    ]) {
+      testWidgets('${c.$1} is part of it', (tester) async {
+        await _loadTiles(tester);
+        c.$2();
+        c.$2();
+        expect(SurfaceImages.composed, 1, reason: 'the same input is a hit');
+        c.$2(other: true);
+        expect(SurfaceImages.composed, 2, reason: '${c.$1} made another one');
+        c.$2(other: true);
+        expect(SurfaceImages.composed, 2);
+      });
+    }
+
+    testWidgets('a surface moved to a sharper display asks to be drawn again', (
+      tester,
+    ) async {
+      await _loadTiles(tester);
+      MaterialPainter at(double ratio) => MaterialPainter(
+        color: Colors.grey,
+        accent: Colors.red,
+        name: 'paper',
+        textile: textiles['paper']!,
+        phys: factoryPhys['paper']!,
+        dark: false,
+        tile: TileCache.peek('paper.webp'),
+        pixelRatio: ratio,
+      );
+      expect(at(2).shouldRepaint(at(1)), isTrue);
+      expect(at(2).shouldRepaint(at(2)), isFalse);
+    });
+
+    testWidgets('high contrast composes nothing: the surface is a plain fill', (
+      tester,
+    ) async {
+      await _loadTiles(tester);
+      Widget app(bool high) => MediaQuery(
+        data: MediaQueryData(highContrast: high),
+        child: MaterialApp(
+          home: const MaterialSurface(
+            slot: 'card',
+            color: Colors.grey,
+            look: MaterialLook(set: 'quarry', overrides: {}, tweaks: {}),
+            child: SizedBox(width: 300, height: 100),
+          ),
+        ),
+      );
+      await tester.pumpWidget(app(true));
+      expect(SurfaceImages.composed, 0);
+      await tester.pumpWidget(app(false));
+      expect(SurfaceImages.composed, 1, reason: 'the same widget, drawn');
+    });
+  });
+
+  group('a surface that is the wrong size to compose, or cannot be', () {
+    testWidgets('a very tall card is drawn layer by layer, not as an image', (
+      tester,
+    ) async {
+      await _loadTiles(tester);
+      final r = _paintOnce('paper', const Size(360, 2800), pixelRatio: 3);
+      expect(SurfaceImages.composed, 0);
+      expect(r.images, 0);
+      expect(r.draws, greaterThan(3), reason: 'the layers are on the canvas');
+    });
+
+    testWidgets(
+      'a very wide strip, and a very large area, are drawn directly',
+      (tester) async {
+        await _loadTiles(tester);
+        // 4200 x 300 device pixels: one side too long, the area small
+        expect(
+          _paintOnce('paper', const Size(1400, 100), pixelRatio: 3).images,
+          0,
+        );
+        // 2500 x 2000: both sides allowed, the area is not
+        expect(_paintOnce('paper', const Size(2500, 2000)).images, 0);
+        expect(SurfaceImages.composed, 0);
+      },
+    );
+
+    testWidgets('an ordinary card is composed and kept', (tester) async {
+      await _loadTiles(tester);
+      expect(
+        _paintOnce('paper', const Size(360, 200), pixelRatio: 3).images,
+        1,
+      );
+      expect(SurfaceImages.held, 1);
+    });
+
+    testWidgets('an engine that throws leaves the layers drawn, not nothing', (
+      tester,
+    ) async {
+      await _loadTiles(tester);
+      SurfaceImages.composer = (p, w, h) => throw StateError('no texture');
+      final r = _paintOnce('paper', const Size(360, 200));
+      expect(r.images, 0);
+      expect(r.draws, greaterThan(3));
+      expect(SurfaceImages.held, 0);
+    });
+
+    testWidgets('an image of the wrong size is not drawn either', (
+      tester,
+    ) async {
+      await _loadTiles(tester);
+      SurfaceImages.composer = (p, w, h) => p.toImageSync(1, 1);
+      final r = _paintOnce('paper', const Size(360, 200));
+      expect(r.images, 0);
+      expect(r.draws, greaterThan(3));
+    });
+  });
+
+  group('a surface that changes size', () {
+    testWidgets(
+      'composes at most two images across a whole animation, and a still one exactly once',
+      (tester) async {
+        await _loadTiles(tester);
+        Widget at(double h) => MaterialApp(
+          home: Align(
+            alignment: Alignment.topLeft,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              width: 300,
+              height: h,
+              child: const MaterialSurface(
+                slot: 'card',
+                color: Colors.grey,
+                look: MaterialLook(set: 'quarry', overrides: {}, tweaks: {}),
+                child: SizedBox.expand(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpWidget(at(100));
+        await tester.pump(const Duration(seconds: 1));
+        expect(SurfaceImages.composed, 1, reason: 'a still surface, once');
+        await tester.pumpWidget(at(400));
+        for (var i = 0; i < 40; i++) {
+          await tester.pump(const Duration(milliseconds: 10));
+        }
+        await tester.pumpAndSettle();
+        expect(
+          SurfaceImages.composed,
+          lessThanOrEqualTo(2),
+          reason: 'the start and the end, none of the frames between',
+        );
+        expect(SurfaceImages.held, lessThanOrEqualTo(2));
+      },
+    );
+
+    testWidgets('a repaint at the size it already had composes it', (
+      tester,
+    ) async {
+      await _loadTiles(tester);
+      final watch = SizeWatch();
+      addTearDown(watch.dispose);
+      _paintOnce('paper', const Size(360, 200), watch: watch);
+      expect(SurfaceImages.composed, 1, reason: 'the first paint composes');
+      final r = _paintOnce('paper', const Size(360, 230), watch: watch);
+      expect(SurfaceImages.composed, 1, reason: 'a changed size does not');
+      expect(r.images, 0);
+      expect(r.draws, greaterThan(3));
+      await tester.pump();
+      _paintOnce('paper', const Size(360, 230), watch: watch);
+      expect(SurfaceImages.composed, 2, reason: 'the size held');
+    });
   });
 
   group('a screen of quote cards', () {

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../account/preferences.dart';
@@ -61,25 +62,60 @@ class SurfaceImages {
 
   static int _cost(ui.Image i) => i.width * i.height * 4;
 
-  /// The composed surface for [key], composing it with [compose] on a miss. Null when this engine cannot make an image
-  /// from a picture, in which case the caller draws the layers directly.
+  /// The largest image worth composing, in device pixels on a side and in all. Past either the GPU may refuse the
+  /// texture (and `toImageSync` usually does not say so: the surface would draw blank), and one tall card would crowd
+  /// the cache. Such a surface is drawn layer by layer, as before.
+  static const maxSide = 4096;
+  static const maxPixels = 4 * 1024 * 1024;
+
+  /// Turns a recorded picture into an image. A seam for tests, which make it throw or hand back a useless image to see the
+  /// layers drawn instead.
+  @visibleForTesting
+  static ui.Image Function(ui.Picture picture, int width, int height) composer =
+      defaultComposer;
+
+  static ui.Image defaultComposer(ui.Picture picture, int width, int height) =>
+      picture.toImageSync(width, height);
+
+  /// Whether a surface this size is composed at all.
+  static bool fits(int width, int height) =>
+      width > 0 &&
+      height > 0 &&
+      width <= maxSide &&
+      height <= maxSide &&
+      width * height <= maxPixels &&
+      width * height * 4 * 2 <= budgetBytes;
+
+  /// The composed surface for [key], composing it with [compose] on a miss unless [mayCompose] is false (the surface is
+  /// changing size and an image made now would be used once). Null when there is no image to draw (too big, not allowed,
+  /// or this engine cannot make one from the picture), in which case the caller draws the layers directly.
   static ui.Image? obtain(
     Object key,
     int width,
     int height,
-    void Function(Canvas canvas) compose,
-  ) {
+    void Function(Canvas canvas) compose, {
+    bool mayCompose = true,
+  }) {
     final have = _images.remove(key);
     if (have != null) {
       _images[key] = have; // most recently used goes last
       return have;
     }
+    if (!mayCompose || !fits(width, height)) return null;
     try {
       final recorder = ui.PictureRecorder();
       compose(Canvas(recorder));
       final picture = recorder.endRecording();
-      final image = picture.toImageSync(width, height);
-      picture.dispose();
+      final ui.Image image;
+      try {
+        image = composer(picture, width, height);
+      } finally {
+        picture.dispose();
+      }
+      if (image.width != width || image.height != height) {
+        image.dispose();
+        return null;
+      }
       composed++;
       _images[key] = image;
       _bytes += _cost(image);
@@ -143,6 +179,13 @@ class MaterialSurface extends StatefulWidget {
 class _MaterialSurfaceState extends State<MaterialSurface> {
   ui.Image? _tile;
   String _loaded = '';
+  final _watch = SizeWatch();
+
+  @override
+  void dispose() {
+    _watch.dispose();
+    super.dispose();
+  }
 
   void _ensure(Textile t) {
     if (_loaded == t.file) return;
@@ -187,6 +230,7 @@ class _MaterialSurfaceState extends State<MaterialSurface> {
         phys: look.physFor(name),
         dark: dark,
         tile: _tile,
+        watch: _watch,
         radius: widget.borderRadius,
         pixelRatio: (MediaQuery.maybeDevicePixelRatioOf(context) ?? 1).clamp(
           1.0,
@@ -195,6 +239,36 @@ class _MaterialSurfaceState extends State<MaterialSurface> {
       ),
       child: widget.child,
     );
+  }
+}
+
+/// Remembers the size a surface was last painted at, so that a surface whose size is changing (an expanding tile, a
+/// window being resized) is not composed on every frame of it: each of those images would be used once and would push
+/// the list's own cards out of the cache. A changed size is drawn layer by layer for that frame and a repaint is asked
+/// for after it; the surface is composed once it has painted at the same size twice running.
+class SizeWatch extends ChangeNotifier {
+  Size? last;
+  bool _pending = false;
+  bool _disposed = false;
+
+  /// Notes [size] and says whether it is the one before.
+  bool settle(Size size) {
+    final same = last == null || last == size;
+    last = size;
+    if (!same && !_pending) {
+      _pending = true;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        _pending = false;
+        if (!_disposed) notifyListeners();
+      });
+    }
+    return same;
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }
 
@@ -210,7 +284,11 @@ class MaterialPainter extends CustomPainter {
     required this.tile,
     this.radius = BorderRadius.zero,
     this.pixelRatio = 1,
-  });
+    this.watch,
+  }) : super(repaint: watch);
+
+  /// Told the size of every paint; null composes at once (a test, a specimen).
+  final SizeWatch? watch;
 
   final Color color;
   final Color accent;
@@ -254,6 +332,7 @@ class MaterialPainter extends CustomPainter {
         tile == null ? 0 : identityHashCode(tile),
         w,
         h,
+        pixelRatio,
         radius,
       ),
       w,
@@ -262,6 +341,7 @@ class MaterialPainter extends CustomPainter {
         c.scale(w / size.width, h / size.height);
         _layers(c, size);
       },
+      mayCompose: watch?.settle(size) ?? true,
     );
     if (image == null) {
       _layers(canvas, size);
@@ -485,6 +565,7 @@ class MaterialPainter extends CustomPainter {
       old.phys != phys ||
       old.dark != dark ||
       old.tile != tile ||
+      old.pixelRatio != pixelRatio ||
       old.radius != radius;
 }
 
