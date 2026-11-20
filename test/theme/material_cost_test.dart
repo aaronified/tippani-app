@@ -420,8 +420,10 @@ void main() {
         await tester.pumpAndSettle();
         expect(
           SurfaceImages.composed,
-          lessThanOrEqualTo(2),
-          reason: 'the start and the end, none of the frames between',
+          2,
+          reason:
+              'the start and the end, none of the frames between; the end '
+              'is composed by the repaint the size watch schedules once the size holds',
         );
         expect(SurfaceImages.held, lessThanOrEqualTo(2));
       },
@@ -613,4 +615,16 @@ void main() {
       },
     );
   });
+
+  test(
+    'a surface that would take more than half the cache budget is not composed',
+    () {
+      final was = SurfaceImages.budgetBytes;
+      addTearDown(() => SurfaceImages.budgetBytes = was);
+      SurfaceImages.budgetBytes = 360 * 200 * 4 * 2;
+      expect(SurfaceImages.fits(360, 200), isTrue, reason: 'exactly half');
+      SurfaceImages.budgetBytes = 360 * 200 * 4 * 2 - 1;
+      expect(SurfaceImages.fits(360, 200), isFalse, reason: 'just over half');
+    },
+  );
 }
