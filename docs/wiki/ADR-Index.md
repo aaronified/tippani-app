@@ -56,5 +56,6 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0025](ADR-0025-A-Passage-Shows-And-Says-Its-Own-Parts-In-Its-Anthology.md): A passage shows and says its own parts in its anthology
 - [ADR-0026](ADR-0026-The-App-Fetches-And-Edits-Metadata-Where-The-Web-Does.md): The app fetches and edits metadata where the web does
 - [ADR-0027](ADR-0027-The-App-Offers-Its-Own-Tour-And-Keeps-Whether-It-Was-Seen-On-The-Phone.md): The app offers its own tour, and keeps whether it was seen on the phone
+- [ADR-0028](ADR-0028-A-Material-Is-Composed-Once-And-Drawn-As-One-Image.md): A material is composed once and drawn as one image
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)

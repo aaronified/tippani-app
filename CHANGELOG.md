@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Fixed
+
+- Smoother scrolling: textures and materials are now drawn once and kept, instead of being painted layer by layer every time a card comes on screen, so a list of cards costs about what a plain one does. Colours and materials synced from your account also no longer rebuild the whole app, or every card, when an unrelated setting is saved or a sync brings nothing new. The look is unchanged.
+
 ## [0.10.2] - 2026-11-15
 
 ### Added

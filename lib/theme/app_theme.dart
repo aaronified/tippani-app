@@ -1,7 +1,10 @@
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
+import 'package:flutter/foundation.dart' show mapEquals, visibleForTesting;
+
 import 'tabler.dart';
+import 'theme_choice.dart';
 
 import '../account/preferences.dart';
 import 'material_surface.dart';
@@ -261,12 +264,12 @@ TextStyle quoteStyle(
   FontWeight weight = FontWeight.w400,
   String language = '',
 }) {
-  final prefs = PrefsScope.of(context);
-  final leading = prefs.quoteLeading;
-  final token = prefs.fontsByLanguage[language.trim().toLowerCase()];
+  final reading = readingOf(context);
+  final leading = reading.quoteLeading;
+  final token = reading.fontsByLanguage[language.trim().toLowerCase()];
   return TextStyle(
     fontFamily: quoteFaces[token] ?? quoteFont,
-    fontSize: size * prefs.sizeDisplay / 100,
+    fontSize: size * reading.sizeDisplay / 100,
     height: leading > 0 ? leading / 100 : height,
     fontWeight: weight,
     fontStyle: style,
@@ -275,9 +278,113 @@ TextStyle quoteStyle(
   );
 }
 
+/// The preferences that shape how a quote is read, and nothing else of the account's: equal when they would draw the same.
+class ReadingPrefs {
+  const ReadingPrefs(
+    this.quoteLeading,
+    this.quoteMeasure,
+    this.sizeDisplay,
+    this.fontsByLanguage,
+  );
+
+  factory ReadingPrefs.of(ServerPrefs p) => ReadingPrefs(
+    p.quoteLeading,
+    p.quoteMeasure,
+    p.sizeDisplay,
+    p.fontsByLanguage,
+  );
+
+  final int quoteLeading, quoteMeasure, sizeDisplay;
+  final Map<String, String> fontsByLanguage;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ReadingPrefs &&
+      other.quoteLeading == quoteLeading &&
+      other.quoteMeasure == quoteMeasure &&
+      other.sizeDisplay == sizeDisplay &&
+      mapEquals(other.fontsByLanguage, fontsByLanguage);
+
+  @override
+  int get hashCode => Object.hash(
+    quoteLeading,
+    quoteMeasure,
+    sizeDisplay,
+    Object.hashAll(fontsByLanguage.entries.map((e) => '${e.key}=${e.value}')),
+  );
+}
+
+/// [ReadingPrefs] handed down by value, so a card is rebuilt when how it reads changed and not when any preference did.
+class ReadingScope extends InheritedWidget {
+  const ReadingScope({super.key, required this.reading, required super.child});
+
+  final ReadingPrefs reading;
+
+  @override
+  bool updateShouldNotify(ReadingScope old) => reading != old.reading;
+}
+
+/// How quotes read for [context]: the [ReadingScope] the app provides, else the preferences themselves.
+ReadingPrefs readingOf(BuildContext context) =>
+    context.dependOnInheritedWidgetOfExactType<ReadingScope>()?.reading ??
+    ReadingPrefs.of(PrefsScope.of(context));
+
+/// Reads the account's preferences once and hands what surfaces and quotes draw with down by value, so a screen below is
+/// rebuilt when its own look changed and not when any preference did. Where the app puts it is the only place the two
+/// scopes are made; a screen shown without it reads the preferences itself.
+class DerivedPrefsScopes extends StatelessWidget {
+  const DerivedPrefsScopes({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final prefs = PrefsScope.of(context);
+    return LookScope(
+      look: MaterialLook.fromPrefs(prefs),
+      child: ReadingScope(reading: ReadingPrefs.of(prefs), child: child),
+    );
+  }
+}
+
+/// The app's two themes, built again only when something they are made of changed. Rebuilding is not free (a colour scheme
+/// is a few milliseconds of colour science, twice, plus the theme) and the app asks on every preference that arrives.
+class ThemeMemo {
+  Object? _key;
+  (ThemeData, ThemeData)? _themes;
+
+  /// How many times the themes were actually built, for the cost tests.
+  @visibleForTesting
+  int builds = 0;
+
+  (ThemeData, ThemeData) resolve(
+    ThemeChoice choice,
+    ColorScheme? lightDynamic,
+    ColorScheme? darkDynamic,
+    MaterialLook look,
+  ) {
+    final key = (
+      choice.source,
+      choice.seed?.toARGB32(),
+      lightDynamic,
+      darkDynamic,
+      look,
+    );
+    final have = _themes;
+    if (have != null && _key == key) return have;
+    final (light, dark) = choice.schemes(lightDynamic, darkDynamic);
+    builds++;
+    _key = key;
+    return _themes = (
+      buildTheme(light, look: look),
+      buildTheme(dark, look: look),
+    );
+  }
+}
+
 /// Keeps a quote's lines to the length the reader chose (45 to 80 characters), or the full width.
 Widget quoteMeasure(BuildContext context, double size, Widget child) {
-  final m = PrefsScope.of(context).quoteMeasure;
+  final m = readingOf(context).quoteMeasure;
   if (m <= 0) return child;
   return Align(
     alignment: Alignment.centerLeft,

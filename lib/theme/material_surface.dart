@@ -42,6 +42,73 @@ class TileCache {
   }
 }
 
+/// The surfaces already composed, each once. A surface is a veil, two grain passes (one of them an `overlay` blend), up
+/// to three light gradients and, for a pane, a layer of its own; drawing all that on every paint was the app's stutter
+/// (ADR-0028). It is composed once into a picture the size of the surface, and every paint after that is one image
+/// draw. Held within a byte budget, least recently used out first.
+class SurfaceImages {
+  SurfaceImages._();
+
+  /// What the images may take between them. A phone-wide card at 2x is a megabyte or so; a screen holds a handful.
+  static int budgetBytes = 48 * 1024 * 1024;
+
+  static final _images = <Object, ui.Image>{};
+  static int _bytes = 0;
+
+  /// How many surfaces were composed since the app started (or [clear]), for the cost tests.
+  @visibleForTesting
+  static int composed = 0;
+
+  static int _cost(ui.Image i) => i.width * i.height * 4;
+
+  /// The composed surface for [key], composing it with [compose] on a miss. Null when this engine cannot make an image
+  /// from a picture, in which case the caller draws the layers directly.
+  static ui.Image? obtain(
+    Object key,
+    int width,
+    int height,
+    void Function(Canvas canvas) compose,
+  ) {
+    final have = _images.remove(key);
+    if (have != null) {
+      _images[key] = have; // most recently used goes last
+      return have;
+    }
+    try {
+      final recorder = ui.PictureRecorder();
+      compose(Canvas(recorder));
+      final picture = recorder.endRecording();
+      final image = picture.toImageSync(width, height);
+      picture.dispose();
+      composed++;
+      _images[key] = image;
+      _bytes += _cost(image);
+      while (_bytes > budgetBytes && _images.length > 1) {
+        final oldest = _images.keys.first;
+        final gone = _images.remove(oldest)!;
+        _bytes -= _cost(gone);
+        gone.dispose();
+      }
+      return image;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Forgets everything, for tests.
+  static void clear() {
+    for (final i in _images.values) {
+      i.dispose();
+    }
+    _images.clear();
+    _bytes = 0;
+    composed = 0;
+  }
+
+  @visibleForTesting
+  static int get held => _images.length;
+}
+
 /// One slot's surface: a colour with the material's grain laid over it, then what the material does with the light.
 ///
 /// Drawn the way the web draws it: `(1 - s) * colour + s * overlay(fine, coarse)`, a veil of the colour at `1 - s` over a
@@ -91,15 +158,16 @@ class _MaterialSurfaceState extends State<MaterialSurface> {
 
   @override
   Widget build(BuildContext context) {
-    final look = widget.look ?? MaterialLook.fromPrefs(PrefsScope.of(context));
+    final look = widget.look ?? materialLookOf(context);
     final name = look.tileFor(widget.slot);
     final textile = textiles[name]!;
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
     // The reader asked their phone for more contrast or less transparency: every decorative layer drops to zero, as
-    // the web does.
-    final media = MediaQuery.maybeOf(context);
-    final plain = (media?.highContrast ?? false) || look.reduced;
+    // the web does. Asked of the one setting and not of the whole MediaQuery, which changes every frame the keyboard
+    // moves and would rebuild every surface on the screen with it.
+    final plain =
+        (MediaQuery.maybeHighContrastOf(context) ?? false) || look.reduced;
     if (textile.isFlat || plain) {
       return DecoratedBox(
         decoration: BoxDecoration(
@@ -120,6 +188,10 @@ class _MaterialSurfaceState extends State<MaterialSurface> {
         dark: dark,
         tile: _tile,
         radius: widget.borderRadius,
+        pixelRatio: (MediaQuery.maybeDevicePixelRatioOf(context) ?? 1).clamp(
+          1.0,
+          3.0,
+        ),
       ),
       child: widget.child,
     );
@@ -137,6 +209,7 @@ class MaterialPainter extends CustomPainter {
     required this.dark,
     required this.tile,
     this.radius = BorderRadius.zero,
+    this.pixelRatio = 1,
   });
 
   final Color color;
@@ -148,6 +221,9 @@ class MaterialPainter extends CustomPainter {
   final ui.Image? tile;
   final BorderRadius radius;
 
+  /// Device pixels per logical one, as far as the composed image is sharp (clamped to 1..3 to bound its size).
+  final double pixelRatio;
+
   // The window is up and to the left, and it is the only one in the app; the wall it faces is the opposite corner.
   static const _light = Offset(0.22, 0.06);
   static const _lightBack = Offset(0.78, 0.96);
@@ -155,9 +231,52 @@ class MaterialPainter extends CustomPainter {
   bool get _glassy => name == 'glass' || name == 'glass-soft';
   bool get _metallic => name == 'metal' || name == 'brushed';
 
+  /// How many times a material was painted, for the cost tests.
+  @visibleForTesting
+  static int debugPaints = 0;
+
+  // One paint for every surface: an image draw allocates nothing, so nothing is left to make per frame.
+  static final _imagePaint = Paint()..filterQuality = FilterQuality.low;
+
   @override
   void paint(Canvas canvas, Size size) {
+    debugPaints++;
     if (size.isEmpty) return;
+    final w = (size.width * pixelRatio).ceil();
+    final h = (size.height * pixelRatio).ceil();
+    final image = SurfaceImages.obtain(
+      (
+        name,
+        color.toARGB32(),
+        accent.toARGB32(),
+        phys,
+        dark,
+        tile == null ? 0 : identityHashCode(tile),
+        w,
+        h,
+        radius,
+      ),
+      w,
+      h,
+      (c) {
+        c.scale(w / size.width, h / size.height);
+        _layers(c, size);
+      },
+    );
+    if (image == null) {
+      _layers(canvas, size);
+      return;
+    }
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, w.toDouble(), h.toDouble()),
+      Offset.zero & size,
+      _imagePaint,
+    );
+  }
+
+  /// The surface drawn layer by layer: what the image is composed from.
+  void _layers(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final shape = radius.toRRect(rect);
     // A pane is translucent, so it is composited in its own layer and a blend mode sees the pane and not the page
@@ -369,8 +488,22 @@ class MaterialPainter extends CustomPainter {
       old.radius != radius;
 }
 
-/// What the account's surfaces are made of, reading the preferences so the widget rebuilds when they change.
+/// The account's [MaterialLook], built once where the preferences arrive and handed down by value: a surface that reads it
+/// is told only when the look is not equal to the last, so a preference that has nothing to do with surfaces (a daily
+/// review count, a type size) rebuilds none of them.
+class LookScope extends InheritedWidget {
+  const LookScope({super.key, required this.look, required super.child});
+
+  final MaterialLook look;
+
+  @override
+  bool updateShouldNotify(LookScope old) => look != old.look;
+}
+
+/// What the account's surfaces are made of. Reads the [LookScope] the app puts above its screens; where there is none (a
+/// test, a screen shown on its own) it reads the preferences itself, as it did before.
 MaterialLook materialLookOf(BuildContext context) =>
+    context.dependOnInheritedWidgetOfExactType<LookScope>()?.look ??
     MaterialLook.fromPrefs(PrefsScope.of(context));
 
 /// The top bar: the app's own [AppBar] drawn on the "shell" material. Takes the few arguments the app's bars use.
