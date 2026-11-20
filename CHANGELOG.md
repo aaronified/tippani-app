@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Changed
+
+- A quote's menu has all of it: the three-dot menu on a quote card now also has Edit, Colour, Add a tag, Take a tag off, Move to a board, Open the work, Show where it comes from and Delete, next to Open, Select and Add to anthology. It is the same menu on Home, in the library, on a work, on a board and in a list of quotes, and a search result that is on your phone has it too. Actions that need the server appear only when there is one.
+
 ## [0.10.2] - 2026-11-15
 
 ### Added

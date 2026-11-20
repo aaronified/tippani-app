@@ -16,6 +16,7 @@ import '../search/search_models.dart';
 import '../search/search_service.dart';
 import '../tools/work_lookup.dart';
 import 'library_widgets.dart';
+import 'quote_menu.dart';
 import 'person_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import 'quote_screen.dart';
@@ -868,6 +869,7 @@ class _SearchScreenState extends State<SearchScreen> {
       if (q.workTitle.isNotEmpty) q.workTitle,
       if (q.place.isNotEmpty) q.place,
     ].join(' · ');
+    final phone = _quoteFor(q);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: SurfaceCard(
@@ -951,6 +953,28 @@ class _SearchScreenState extends State<SearchScreen> {
                   ringColor:
                       theme.cardTheme.color ?? scheme.surfaceContainerLow,
                 ),
+                // a hit that is on the phone has the same menu as its card does, with every action in it (this
+                // row draws no buttons); one that is on the server only has nothing to act on
+                if (phone != null)
+                  QuoteMenuButton(
+                    menu: QuoteMenu(
+                      store: widget.store,
+                      quote: phone,
+                      work: _works
+                          .where((w) => w.id == phone.workId)
+                          .firstOrNull,
+                      picker: widget.picker,
+                      anthologies: widget.anthologies,
+                      share: widget.share,
+                      shareImage: widget.shareImage,
+                      onChanged: _readPhone,
+                      onFilter: (f) {
+                        setState(() => _text.text = f.name);
+                        _run();
+                      },
+                    ),
+                    onOpen: () => _openQuote(q),
+                  ),
               ],
             ),
           ),

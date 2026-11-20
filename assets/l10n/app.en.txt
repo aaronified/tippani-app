@@ -1360,6 +1360,7 @@ app.quote_card.no_tags = No tags
 app.quote_card.open = Open
 app.quote_card.no_voice = This phone has no voice for "{language}".
 app.quote_card.more = More for this quote
+app.quote_card.open_work = Open the work
 app.quote_form.occasion = Occasion
 app.quote_form.chapter = Chapter
 app.quote_form.place = Place

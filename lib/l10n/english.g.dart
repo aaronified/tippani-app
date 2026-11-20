@@ -1270,6 +1270,7 @@ const Map<String, String> englishTokens = {
   'app.quote_card.note': 'Note',
   'app.quote_card.noted_on': 'Noted {date}',
   'app.quote_card.open': 'Open',
+  'app.quote_card.open_work': 'Open the work',
   'app.quote_chips.what_name': '{what} {name}',
   'app.quote_chips.what_name_actor': '{what} {name}, played by {actor}',
   'app.quote_context.context': 'Context',

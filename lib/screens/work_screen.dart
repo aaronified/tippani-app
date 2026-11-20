@@ -29,6 +29,7 @@ import '../tools/work_lookup.dart';
 import '../library/work_order.dart';
 import 'bulk_bar.dart';
 import 'library_widgets.dart';
+import 'quote_menu.dart';
 import 'quote_chips_row.dart';
 import 'quote_form_screen.dart';
 import 'prefs_screens.dart' show showWorkContextRule;
@@ -436,6 +437,19 @@ class _WorkScreenState extends State<WorkScreen> {
       await widget.store.setFavorite(q.id, !q.favorite);
       await _load();
     },
+    menu: QuoteMenu(
+      store: widget.store,
+      quote: q,
+      work: null,
+      chipWork: _work,
+      picker: widget.picker,
+      anthologies: widget.anthologies,
+      share: widget.share,
+      shareImage: widget.shareImage,
+      onChanged: _load,
+      // the library opens on this name
+      onFilter: (f) => Navigator.of(context).pop(f),
+    ),
   );
 
   Future<void> _delete() async {

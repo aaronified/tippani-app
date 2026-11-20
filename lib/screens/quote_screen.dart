@@ -15,6 +15,7 @@ import 'quote_card.dart';
 import 'quote_chips_row.dart';
 import 'quote_context_section.dart';
 import 'quote_form_screen.dart';
+import 'quote_menu.dart' show deleteQuoteWithUndo;
 import 'share_screen.dart';
 import 'work_screen.dart';
 import '../l10n/l10n.dart';
@@ -171,62 +172,10 @@ class _QuoteScreenState extends State<QuoteScreen> {
 
   Future<void> _delete() async {
     final gone = _quote;
-    final deleted = context.tr('app.quote.quote_deleted');
-    final undo = context.tr('common.action.undo.label');
-    // the messenger belongs to the app, so the Undo outlives this screen
-    final messenger = ScaffoldMessenger.of(context);
-    final sure = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('quotes.delete.confirm')),
-        content: Text(
-          context.tr('app.quote_form.it_is_removed_from_this_phone'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(context.tr('app.anthologies.keep_it')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(context.tr('common.action.delete.label')),
-          ),
-        ],
-      ),
-    );
-    if (sure != true) return;
-    final store = widget.store;
-    await store.deleteQuote(widget.quoteId);
-    if (mounted) Navigator.of(context).pop(true);
     if (gone == null) return;
-    messenger
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(deleted),
-          action: SnackBarAction(
-            label: undo,
-            onPressed: () => store.addQuote(
-              QuoteDraft(
-                text: gone.text,
-                workId: gone.workId,
-                translation: gone.translation,
-                language: gone.language,
-                speaker: gone.speaker,
-                chapter: gone.chapter,
-                location: gone.location,
-                note: gone.note,
-                color: gone.color,
-                favorite: gone.favorite,
-                notedAt: gone.notedAt,
-                source: gone.source,
-                tags: gone.tags,
-                boardId: gone.boardId,
-              ),
-            ),
-          ),
-        ),
-      );
+    if (await deleteQuoteWithUndo(context, widget.store, gone) && mounted) {
+      Navigator.of(context).pop(true);
+    }
   }
 
   /// Puts the quote on the clipboard the way the web's copy button does: its words with the credit line.

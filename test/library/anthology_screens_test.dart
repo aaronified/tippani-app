@@ -6,11 +6,13 @@ import 'package:tippani/anthologies/anthologies.dart';
 import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/library_widgets.dart';
+import 'package:tippani/screens/quote_menu.dart';
 import 'package:tippani/screens/anthologies_screen.dart';
 import 'package:tippani/screens/anthology_tools.dart';
 import 'package:tippani/theme/app_theme.dart';
 
 import '../support/fake_anthologies.dart';
+import '../support/memory_library.dart';
 import '../support/fake_quiz.dart';
 
 AnthologyEntry entry(
@@ -302,6 +304,7 @@ void main() {
   ) async {
     final q = Quote(
       id: 1,
+      serverId: 5,
       workId: null,
       text: 'Simplify.',
       translation: '',
@@ -318,27 +321,48 @@ void main() {
       updatedAt: DateTime.utc(2026),
       tags: const [],
     );
-    var added = 0;
-    Widget tile({VoidCallback? add}) => MaterialApp(
-      home: Scaffold(
-        body: QuoteTile(
-          quote: q,
-          work: null,
-          onTap: () {},
-          onFavourite: () {},
-          onAddToAnthology: add,
+    Widget tile({required bool available}) {
+      final lib = MemoryLibrary();
+      return MaterialApp(
+        home: Scaffold(
+          body: QuoteTile(
+            quote: q,
+            work: null,
+            onTap: () {},
+            onFavourite: () {},
+            menu: QuoteMenu(
+              store: lib,
+              quote: q,
+              picker: picker,
+              anthologies: FakeAnthologies(available: available),
+              onChanged: () {},
+            ),
+          ),
         ),
-      ),
-    );
-    await tester.pumpWidget(tile());
-    expect(find.byTooltip('Add to anthology'), findsNothing);
-    await tester.pumpWidget(tile(add: () => added++));
+      );
+    }
+
+    await tester.pumpWidget(tile(available: false));
+    await tester.tap(find.byTooltip('More for this quote'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add to anthology'), findsNothing);
+    await tester.tapAt(const Offset(1, 1));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(tile(available: true));
     await tester.tap(find.byTooltip('More for this quote'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add to anthology'));
     await tester.pumpAndSettle();
+    expect(find.text('A new anthology…'), findsOneWidget);
+    await tester.tapAt(const Offset(1, 1));
+    await tester.pumpAndSettle();
     await tester.longPress(find.text('Simplify.'));
-    expect(added, 2, reason: 'the menu and a long press both do it');
+    await tester.pumpAndSettle();
+    expect(
+      find.text('A new anthology…'),
+      findsOneWidget,
+      reason: 'the menu and a long press both open the chooser',
+    );
   });
 
   testWidgets('Practise runs the quiz on this anthology only', (tester) async {

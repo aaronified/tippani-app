@@ -1,10 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
+import 'package:tippani/screens/quote_menu.dart';
 import 'package:tippani/screens/library_widgets.dart';
 import 'package:tippani/speech/quote_speech.dart';
 import 'package:tippani/speech/speaker.dart';
 import 'package:tippani/widgets/edge_fade_row.dart';
+
+import '../support/memory_library.dart';
 
 class _Voice implements Speaker {
   final said = <String>[];
@@ -51,6 +57,13 @@ final _work = Work(
   updatedAt: DateTime.utc(2026),
 );
 
+class _NoPicker implements BackupPicker {
+  @override
+  Future<bool> save(String fileName, Uint8List bytes) async => true;
+  @override
+  Future<PickedFile?> pick() async => null;
+}
+
 Widget _tile(Quote q, List<String> shared) => MaterialApp(
   home: Scaffold(
     body: SizedBox(
@@ -60,7 +73,14 @@ Widget _tile(Quote q, List<String> shared) => MaterialApp(
         work: _work,
         onTap: () {},
         onFavourite: () {},
-        share: (t, s) async => shared.add(t),
+        menu: QuoteMenu(
+          store: MemoryLibrary(),
+          quote: q,
+          work: _work,
+          picker: _NoPicker(),
+          onChanged: () {},
+          share: (t, s) async => shared.add(t),
+        ),
       ),
     ),
   ),
@@ -96,13 +116,21 @@ void main() {
     expect(voice.said, ['You\'re gonna need a bigger boat.']);
   });
 
-  testWidgets('Share hands over the quote with its credit', (tester) async {
-    final shared = <String>[];
-    await tester.pumpWidget(_tile(_quote(), shared));
+  testWidgets('Share opens the share screen with the quote and its credit', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_tile(_quote(), []));
     await tester.tap(find.byTooltip('Share'));
-    await tester.pump();
-    expect(shared.single, contains('bigger boat'));
-    expect(shared.single, contains('Jaws'));
+    await tester.pumpAndSettle();
+    expect(find.text('Format'), findsOneWidget);
+    await tester.tap(find.text('Plain text'));
+    await tester.pumpAndSettle();
+    final text = tester
+        .widget<TextField>(find.byType(TextField))
+        .controller!
+        .text;
+    expect(text, contains('bigger boat'));
+    expect(text, contains('Jaws'));
   });
 
   testWidgets('a long run of tags scrolls and fades at the edge it runs past', (

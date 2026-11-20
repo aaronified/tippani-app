@@ -42,17 +42,12 @@ class QuoteContextSection extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
-              onPressed: () async {
-                final picked = await Navigator.of(context).push<ChipFilter>(
-                  MaterialPageRoute(
-                    builder: (_) => ContextScope(
-                      source: source,
-                      child: QuoteContextScreen(quote: quote, work: work),
-                    ),
-                  ),
-                );
-                if (picked != null) onFilter?.call(picked);
-              },
+              onPressed: () => openQuoteContext(
+                context,
+                quote: quote,
+                work: work,
+                onFilter: onFilter,
+              ),
               icon: const Icon(Ti.article),
               label: Text(
                 context.tr('app.quote_context.show_where_it_comes_from'),
@@ -64,3 +59,28 @@ class QuoteContextSection extends StatelessWidget {
     );
   }
 }
+
+/// Opens the context viewer for [quote]. One function for the quote page's button and the card's menu, so the two
+/// do the same thing. Does nothing where there is no server to ask. A name chosen in the viewer goes to [onFilter].
+Future<void> openQuoteContext(
+  BuildContext context, {
+  required Quote quote,
+  required Work? work,
+  ValueChanged<ChipFilter>? onFilter,
+}) async {
+  final source = ContextScope.of(context);
+  if (source == null || quote.serverId == null) return;
+  final picked = await Navigator.of(context).push<ChipFilter>(
+    MaterialPageRoute(
+      builder: (_) => ContextScope(
+        source: source,
+        child: QuoteContextScreen(quote: quote, work: work),
+      ),
+    ),
+  );
+  if (picked != null) onFilter?.call(picked);
+}
+
+/// Whether [quote] has a context to show: it is on the server and there is a server to ask.
+bool quoteHasContext(BuildContext context, Quote quote) =>
+    ContextScope.of(context) != null && quote.serverId != null;

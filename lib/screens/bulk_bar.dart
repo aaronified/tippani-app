@@ -100,23 +100,23 @@ class QuoteBulkActions {
       IconButton(
         tooltip: context.tr('common.field.colour.label'),
         icon: const Icon(Ti.palette),
-        onPressed: () => _recolour(context),
+        onPressed: () => recolour(context),
       ),
       IconButton(
         tooltip: context.tr('common.field.tag.label'),
         icon: const Icon(Ti.tag),
-        onPressed: () => _tag(context, add: true),
+        onPressed: () => tag(context, add: true),
       ),
       PopupMenuButton<String>(
         tooltip: context.tr('settings.appearance.contrast.more.label'),
         onSelected: (v) {
           switch (v) {
             case 'untag':
-              _tag(context, add: false);
+              tag(context, add: false);
             case 'field':
               _field(context);
             case 'board':
-              _board(context);
+              board(context);
             case 'anthology':
               _anthology(context);
             case 'delete':
@@ -150,7 +150,7 @@ class QuoteBulkActions {
     ];
   }
 
-  Future<void> _recolour(BuildContext context) async {
+  Future<void> recolour(BuildContext context) async {
     final picked = await showModalBottomSheet<String>(
       context: context,
       builder: (context) => SafeArea(
@@ -176,7 +176,7 @@ class QuoteBulkActions {
     done();
   }
 
-  Future<void> _tag(BuildContext context, {required bool add}) async {
+  Future<void> tag(BuildContext context, {required bool add}) async {
     final known = await store.tags();
     if (!context.mounted) return;
     // taking a tag off offers the tags these quotes wear; adding offers every tag there is
@@ -237,7 +237,7 @@ class QuoteBulkActions {
     done();
   }
 
-  Future<void> _board(BuildContext context) async {
+  Future<void> board(BuildContext context) async {
     final boards = await store.boards();
     if (!context.mounted) return;
     const none = -1;
