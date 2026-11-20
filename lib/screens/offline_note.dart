@@ -4,20 +4,38 @@ import '../api/offline_cache.dart';
 import '../l10n/l10n.dart';
 import '../theme/material_surface.dart';
 
+/// Hands the phone's kept answers to every screen below it, so a screen that shows what the server holds can say
+/// when it is showing the phone's copy without being given the controller (ADR-0032).
+class OfflineScope extends InheritedWidget {
+  const OfflineScope({super.key, required this.offline, required super.child});
+
+  final OfflineCache offline;
+
+  static OfflineCache? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<OfflineScope>()?.offline;
+
+  @override
+  bool updateShouldNotify(OfflineScope old) => offline != old.offline;
+}
+
 /// Says when what a screen shows is the phone's copy of what the server last said, because the server could not
 /// be reached (ADR-0022). Draws nothing while the server is answering.
 class OfflineNote extends StatelessWidget {
-  const OfflineNote({super.key, required this.offline});
+  const OfflineNote({super.key, this.offline});
 
-  final OfflineCache offline;
+  /// Where the answers are kept; null reads it from the [OfflineScope] above (every screen but the two that were
+  /// given the controller before the scope existed).
+  final OfflineCache? offline;
 
   static String _date(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
+    final cache = offline ?? OfflineScope.of(context);
+    if (cache == null) return const SizedBox.shrink();
     return ValueListenableBuilder<DateTime?>(
-      valueListenable: offline.servedFrom,
+      valueListenable: cache.servedFrom,
       builder: (context, from, _) {
         if (from == null) return const SizedBox.shrink();
         return Padding(
