@@ -24,6 +24,6 @@
 
 **The same menu everywhere the card is drawn:** the library, a work's page, a board, a filtered list (a tag or a name) and Home. A search result is a different widget that draws no buttons, so it gets a "More for this quote" button of its own, for a hit that is on the phone, and its menu holds all of the above including the four the card has as buttons (the menu is given the set of buttons its card draws, `quoteCardButtons`, and leaves those out; a row with none leaves out nothing). A hit that is on the server only has nothing to act on and no menu.
 
-**Left as it is.** A long press still selects where a screen can select, and adds to an anthology where it cannot. "Set one field" and "Take a tag off many" are bulk-only: Edit is the one-quote form for the fields. The picture options live on the share screen (ADR-0030), reached by Share, so "Save picture" is not a menu item of its own.
+**Left as it is.** A long press still selects where a screen can select, and adds to an anthology where it cannot. "Set one field" and "Take a tag off many" are bulk-only: Edit is the one-quote form for the fields. The picture options live on the share screen (ADR-0031), reached by Share, so "Save picture" is not a menu item of its own.
 
 **Rejected.** A second menu builder per screen (that is how the library's menu and the board's already differed); icons in the menu (the bulk bar's menu is text, and two menus that look alike must be alike); a long-press menu in place of selection (selection is what the library and a work are for, and a long press was already taken).

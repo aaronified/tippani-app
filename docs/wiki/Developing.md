@@ -133,7 +133,7 @@ the sync that reads the server back is [ADR-0016](ADR-0016-Conflicts-Are-Chosen-
 `lib/screens/share_screen.dart` (`ShareScreen`, opened with `openShare`), `lib/share/share_subject.dart` (`ShareSubject`: `QuoteShare`,
 `QuotesShare`, `AnthologyShare`), `lib/share/sharer.dart` (`Sharer`, `ShareScope`), `lib/library/share_format.dart` (`ShareFormat`,
 `shareFieldsOf`, `shareDefaults`, `buildShareText`, `buildQuotesText`, `shareCredit`) and `QuoteCard.show`. **Every share in the app is this one
-screen** ([ADR-0030](ADR-0030-Every-Share-Is-One-Screen-With-A-Subject.md)); no other screen calls Android's share sheet. The subject says what the
+screen** ([ADR-0031](ADR-0031-Every-Share-Is-One-Screen-With-A-Subject.md)); no other screen calls Android's share sheet. The subject says what the
 formats are, what the parts are and how each format is written; the screen is the same for all. It mirrors the web dialog
 (`web/frontend/src/share.jsx` in the Tippani repository) for one quote: the same five formats, the same parts, the same parts off by default.
 Keep the two in step when one changes. The picture is the card with only the switched-on parts drawn; the text formats are the same parts as

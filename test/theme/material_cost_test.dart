@@ -13,14 +13,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tippani/account/preferences.dart';
+import 'package:tippani/harness/harness.dart' show SystemBackupPicker;
 import 'package:tippani/library/models.dart';
 import 'package:tippani/screens/library_widgets.dart';
+import 'package:tippani/screens/quote_menu.dart';
 import 'package:tippani/theme/app_theme.dart';
 import 'package:tippani/theme/material_surface.dart';
 import 'package:tippani/theme/materials.dart';
 import 'package:tippani/theme/theme_choice.dart';
 
 import '../account/account_test.dart' show Rig, rig;
+import '../support/memory_library.dart';
 
 class _FileBundle extends CachingAssetBundle {
   @override
@@ -126,6 +129,13 @@ Widget _list(Rig r, {int count = 60}) => PrefsScope(
             work: _work,
             onTap: () {},
             onFavourite: () {},
+            menu: QuoteMenu(
+              store: MemoryLibrary(),
+              quote: _quote(i),
+              picker: const SystemBackupPicker(),
+              onChanged: () {},
+              work: _work,
+            ),
           ),
         ),
       ),

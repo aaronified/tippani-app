@@ -1,4 +1,4 @@
-# ADR-0030: Every share is one screen, with a subject
+# ADR-0031: Every share is one screen, with a subject
 
 - **Status:** Accepted and built. The owner: "Share acts differently in different places. The share should be one unified screen (the one in the app right now)", and on the scope: every share in the app opens that one screen, anthologies included.
 
