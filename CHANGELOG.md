@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.10.3] - 2026-11-20
+
 ### Fixed
 
 - Smoother scrolling: a card's texture is now built once, the first time it is drawn, and then reused, instead of being painted layer by layer on every frame, and a setting that does not change the look no longer redraws every card. Very large surfaces and ones that are changing size are still drawn the long way. Colours and materials synced from your account also no longer rebuild the whole app, or every card, when an unrelated setting is saved or a sync brings nothing new. The look is unchanged.
