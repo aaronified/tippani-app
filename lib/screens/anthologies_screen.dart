@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../anthologies/anthologies.dart';
 import '../anthologies/offline_anthologies.dart';
+import '../api/api_client.dart' show readWithCopyShown;
 import '../app_controller.dart';
 import '../capture/photo_source.dart';
 import '../harness/harness.dart' show BackupPicker, SystemBackupPicker;
@@ -132,19 +133,28 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
 
   /// Draws what the phone holds at once, then asks the server in the background and swaps its answer in. A read
   /// that fails never takes the list off the screen (ADR-0030); only a first load with nothing kept says why.
-  Future<void> _load() async {
+  ///
+  /// [changed] is a read after a change the reader made: the kept copy then already says the change when one waits
+  /// for the server (a change is written into it as it is queued), so it is drawn at once instead of waiting for
+  /// a server that may not answer, and what was deleted is off the list the moment it was deleted. With nothing
+  /// waiting the change went to the server and the kept copy is the older one, so it is not drawn.
+  Future<void> _load({bool changed = false}) async {
     final c = widget.controller;
     // the spinner stays until the pairing is known
     if (c != null && !c.loaded) return;
     _wasPaired = c?.paired ?? false;
     final service = widget.service;
-    if (_all == null && service is OfflineAnthologies) {
+    if (service is OfflineAnthologies &&
+        (_all == null || (changed && service.pending.value > 0))) {
       final kept = service.keptList();
       if (kept != null) setState(() => _all = kept);
     }
     final turn = ++_asked;
     try {
-      final all = await service.list();
+      final copyShown = _all != null;
+      final all = await (copyShown
+          ? readWithCopyShown(service.list)
+          : service.list());
       if (mounted && turn == _asked) {
         setState(() {
           _all = all;
@@ -166,7 +176,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
     if (text == null) return;
     try {
       await widget.service.create(text.title, text.intro);
-      await _load();
+      await _load(changed: true);
     } on AnthologyException catch (e) {
       if (!mounted) return;
       if (_all == null) {
@@ -191,7 +201,8 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
         ),
       ),
     );
-    await _load();
+    // the opened anthology may have been changed or deleted there
+    await _load(changed: true);
   }
 
   @override
@@ -209,8 +220,7 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
       ),
       body: Column(
         children: [
-          if (widget.controller != null)
-            OfflineNote(offline: widget.controller!.offline),
+          const OfflineNote(),
           _WaitingNote(widget.service),
           Expanded(child: _list(context, all)),
         ],
@@ -392,15 +402,21 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
 
   /// The opened anthology draws from the phone's copy at once the first time; the server's answer replaces it when
   /// it lands, in place, so the reader keeps their scroll. A failed read leaves what is shown alone (ADR-0030).
-  Future<void> _load() async {
+  /// [changed] is as for the list: a change waiting for the server is already in the kept copy, which is drawn at
+  /// once so the reader sees what they just did.
+  Future<void> _load({bool changed = false}) async {
     final service = widget.service;
-    if (_detail == null && service is OfflineAnthologies) {
+    if (service is OfflineAnthologies &&
+        (_detail == null || (changed && service.pending.value > 0))) {
       final kept = service.keptDetail(widget.id);
       if (kept != null) setState(() => _detail = kept);
     }
     final turn = ++_asked;
     try {
-      final d = await service.get(widget.id);
+      final copyShown = _detail != null;
+      final d = await (copyShown
+          ? readWithCopyShown(() => service.get(widget.id))
+          : service.get(widget.id));
       if (mounted && turn == _asked) {
         setState(() {
           _detail = d;
@@ -424,7 +440,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
   Future<void> _do(Future<void> Function() run) async {
     try {
       await run();
-      await _load();
+      await _load(changed: true);
     } on AnthologyException catch (e) {
       if (mounted) _say(e.message);
     }
@@ -585,7 +601,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           a,
           photos: widget.photos,
         );
-        if (changed) await _load();
+        if (changed) await _load(changed: true);
       case _Menu.fill:
         final nothingNew = context.tr('app.anthologies.nothing_new_to_add');
         final addedText = context.tr;
@@ -595,7 +611,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           ),
         );
         if (r != null) {
-          await _load();
+          await _load(changed: true);
           _say(
             r.added == 0
                 ? nothingNew
@@ -617,7 +633,7 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
                 RemovedScreen(service: widget.service, id: widget.id),
           ),
         );
-        if (back == true) await _load();
+        if (back == true) await _load(changed: true);
     }
   }
 
@@ -1006,32 +1022,39 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
           ],
         ],
       ),
-      body: _problem != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_problem!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _load,
-                      child: Text(context.tr('common.source.retry')),
+      body: Column(
+        children: [
+          const OfflineNote(),
+          Expanded(
+            child: _problem != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_problem!, textAlign: TextAlign.center),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _load,
+                            child: Text(context.tr('common.source.retry')),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            )
-          : d == null
-          ? const Center(child: CircularProgressIndicator())
-          : ReorderableListView.builder(
-              header: _front(context, d),
-              padding: const EdgeInsets.only(bottom: 32),
-              itemCount: slots.length,
-              onReorderItem: (from, to) => _moveTo(slots, from, to),
-              itemBuilder: (context, i) => _passage(context, d, slots, i),
-            ),
+                  )
+                : d == null
+                ? const Center(child: CircularProgressIndicator())
+                : ReorderableListView.builder(
+                    header: _front(context, d),
+                    padding: const EdgeInsets.only(bottom: 32),
+                    itemCount: slots.length,
+                    onReorderItem: (from, to) => _moveTo(slots, from, to),
+                    itemBuilder: (context, i) => _passage(context, d, slots, i),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1043,11 +1066,48 @@ Future<Object?> chooseAnthology(
   AnthologyService service,
 ) async {
   final messenger = ScaffoldMessenger.of(context);
+  final navigator = Navigator.of(context);
   final kept = service is OfflineAnthologies ? service.keptList() : null;
   final shown = ValueNotifier<List<Anthology>?>(kept);
-  BuildContext? open;
+  // The route is made here, not by showDialog, so the read's own failure can close exactly this route: it may land
+  // before the dialog has been drawn (nothing to find through a context yet) or while the reader is dismissing it
+  // (a pop then would close the screen beneath).
+  final route = DialogRoute<Object>(
+    context: context,
+    builder: (context) => SimpleDialog(
+      title: Text(context.tr('common.action.anthology.label')),
+      children: [
+        const OfflineNote(),
+        ValueListenableBuilder<List<Anthology>?>(
+          valueListenable: shown,
+          builder: (context, all, _) => all == null
+              ? const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final a in all)
+                      SimpleDialogOption(
+                        onPressed: () => Navigator.of(context).pop(a),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Text(a.title),
+                        ),
+                      ),
+                  ],
+                ),
+        ),
+        SimpleDialogOption(
+          onPressed: () => Navigator.of(context).pop('new'),
+          child: Text(context.tr('app.anthologies.a_new_anthology')),
+        ),
+      ],
+    ),
+  );
   var closed = false;
-  service.list().then<void>(
+  (kept != null ? readWithCopyShown(service.list) : service.list()).then<void>(
     (all) {
       if (!closed) shown.value = all;
     },
@@ -1057,47 +1117,11 @@ Future<Object?> chooseAnthology(
       if (shown.value != null) return;
       final reason = e is AnthologyException ? e.message : '$e';
       messenger.showSnackBar(SnackBar(content: Text(reason)));
-      final d = open;
-      if (d != null && d.mounted) Navigator.of(d).pop();
+      if (route.isCurrent) navigator.pop();
     },
   );
   try {
-    return await showDialog<Object>(
-      context: context,
-      builder: (context) {
-        open = context;
-        return SimpleDialog(
-          title: Text(context.tr('common.action.anthology.label')),
-          children: [
-            ValueListenableBuilder<List<Anthology>?>(
-              valueListenable: shown,
-              builder: (context, all, _) => all == null
-                  ? const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (final a in all)
-                          SimpleDialogOption(
-                            onPressed: () => Navigator.of(context).pop(a),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: Text(a.title),
-                            ),
-                          ),
-                      ],
-                    ),
-            ),
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop('new'),
-              child: Text(context.tr('app.anthologies.a_new_anthology')),
-            ),
-          ],
-        );
-      },
-    );
+    return await navigator.push<Object>(route);
   } finally {
     closed = true;
     shown.dispose();

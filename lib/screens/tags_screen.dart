@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../anthologies/anthologies.dart';
+import '../api/cached_read.dart';
 import '../api/server_call.dart';
 import '../harness/harness.dart' show BackupPicker;
 import '../library/library_store.dart';
@@ -9,6 +10,7 @@ import '../tags/tag_ops.dart';
 import '../tags/tag_service.dart';
 import 'filtered_quotes_screen.dart';
 import 'library_widgets.dart';
+import 'offline_note.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
@@ -68,18 +70,37 @@ class _TagsScreenState extends State<TagsScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    final local = await localTagCounts(widget.store);
-    List<ServerTag> server = const [];
-    String? note;
-    final svc = _svc;
-    if (svc != null) {
-      try {
-        server = await svc.list();
-      } on ServerException catch (e) {
-        note = '${e.message} Colours and styles are on the server.';
-      }
-    }
+  final _read = CachedRead();
+
+  /// The phone's copy of the server's tags at once, the server's answer in place of it when it lands (ADR-0032).
+  /// [live] is the read after a change made here, which never answers from the phone, so the old name cannot come
+  /// back over the new one.
+  Future<void> _load({bool live = false}) =>
+      _read.run<({Map<String, int> local, List<ServerTag> server})>(
+        load: () async {
+          final local = await localTagCounts(widget.store);
+          final svc = _svc;
+          final server = svc == null ? const <ServerTag>[] : await svc.list();
+          return (local: local, server: server);
+        },
+        alive: () => mounted,
+        haveCopy: _rows != null,
+        live: live,
+        draw: (v) => _draw(v.local, v.server, null),
+        // nothing of the server's to show: the phone's own tags still are, and the screen says the server was not
+        fail: (e) async {
+          final local = await localTagCounts(widget.store);
+          if (mounted) {
+            _draw(
+              local,
+              const [],
+              '${problemText(e)} Colours and styles are on the server.',
+            );
+          }
+        },
+      );
+
+  void _draw(Map<String, int> local, List<ServerTag> server, String? note) {
     final byFold = <String, _Row>{};
     final serverBy = {for (final t in server) foldTag(t.name): t};
     for (final e in local.entries) {
@@ -88,7 +109,6 @@ class _TagsScreenState extends State<TagsScreen> {
     for (final t in server) {
       byFold.putIfAbsent(foldTag(t.name), () => _Row(t.name, 0, t));
     }
-    if (!mounted) return;
     setState(() {
       _rows = byFold.values.toList();
       _note = note;
@@ -134,7 +154,7 @@ class _TagsScreenState extends State<TagsScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-    await _load();
+    await _load(live: true);
     return failed;
   }
 
@@ -291,7 +311,7 @@ class _TagsScreenState extends State<TagsScreen> {
     } on ServerException catch (e) {
       _say(e.message);
     }
-    await _load();
+    await _load(live: true);
   }
 
   Future<void> _delete(List<_Row> rows) async {
@@ -409,7 +429,7 @@ class _TagsScreenState extends State<TagsScreen> {
     } on ServerException catch (e) {
       _say(e.message);
     }
-    await _load();
+    await _load(live: true);
   }
 
   String _count(int n) => n == 1 ? '1 quote' : '$n quotes';
@@ -501,6 +521,7 @@ class _TagsScreenState extends State<TagsScreen> {
             )
           : Column(
               children: [
+                const OfflineNote(),
                 if (_busy) const LinearProgressIndicator(),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),

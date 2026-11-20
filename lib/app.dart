@@ -14,6 +14,7 @@ import 'harness/update_ui.dart';
 import 'screens/add_quote_sheet.dart';
 import 'screens/boards_tab.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/offline_note.dart' show OfflineScope;
 import 'screens/home_screen.dart';
 import 'screens/checks_screen.dart';
 import 'screens/library_screen.dart';
@@ -86,54 +87,58 @@ class _TippaniAppState extends State<TippaniApp> {
             title: 'Tippani',
             theme: light,
             darkTheme: dark,
-            builder: (context, child) => PrefsScope(
-              source: harness.prefs,
-              child: L10nScope(
-                l10n: harness.l10n,
-                child: Builder(
-                  builder: (context) {
-                    // the reader's text size scales every word the app draws
-                    final media = MediaQuery.of(context);
-                    final factor = PrefsScope.of(context).sizeUi / 100;
-                    // the surfaces and the quotes are told by value (ADR-0028): only a change to what they draw with
-                    return DerivedPrefsScopes(
-                      child: MediaQuery(
-                        data: media.copyWith(
-                          textScaler: TextScaler.linear(
-                            media.textScaler.scale(1) * factor,
+            builder: (context, child) => OfflineScope(
+              offline: controller.offline,
+              child: PrefsScope(
+                source: harness.prefs,
+                child: L10nScope(
+                  l10n: harness.l10n,
+                  child: Builder(
+                    builder: (context) {
+                      // the reader's text size scales every word the app draws
+                      final media = MediaQuery.of(context);
+                      final factor = PrefsScope.of(context).sizeUi / 100;
+                      // the surfaces and the quotes are told by value (ADR-0028): only a change to what they draw with
+                      return DerivedPrefsScopes(
+                        child: MediaQuery(
+                          data: media.copyWith(
+                            textScaler: TextScaler.linear(
+                              media.textScaler.scale(1) * factor,
+                            ),
                           ),
-                        ),
-                        child: ContextRulesScope(
-                          rules: harness.contextRules,
-                          child: CoverScope(
-                            source: harness.covers,
-                            child: DetailsScope(
-                              source: harness.details,
-                              child: ContextScope(
-                                source: harness.contexts,
-                                child: PeopleScope(
-                                  source: harness.people,
-                                  child: PeopleDirectoryScope(
-                                    directory: harness.directory,
-                                    child: BoardScope(
-                                      service: harness.boards,
-                                      child: PeopleServiceScope(
-                                        service: harness.peopleService,
-                                        child: TagServiceScope(
-                                          service: harness.tags,
-                                          child: PeopleConsoleScope(
-                                            console: harness.peopleConsole,
-                                            child: ServerSearchScope(
-                                              service: harness.search,
-                                              child: CoverSearchScope(
-                                                search: harness.coverSearch,
-                                                child: MetadataScope(
-                                                  service: harness.metadata,
-                                                  child: AutoSyncScope(
-                                                    auto: harness.auto,
-                                                    child: WorkEditScope(
-                                                      service: harness.workEdit,
-                                                      child: child!,
+                          child: ContextRulesScope(
+                            rules: harness.contextRules,
+                            child: CoverScope(
+                              source: harness.covers,
+                              child: DetailsScope(
+                                source: harness.details,
+                                child: ContextScope(
+                                  source: harness.contexts,
+                                  child: PeopleScope(
+                                    source: harness.people,
+                                    child: PeopleDirectoryScope(
+                                      directory: harness.directory,
+                                      child: BoardScope(
+                                        service: harness.boards,
+                                        child: PeopleServiceScope(
+                                          service: harness.peopleService,
+                                          child: TagServiceScope(
+                                            service: harness.tags,
+                                            child: PeopleConsoleScope(
+                                              console: harness.peopleConsole,
+                                              child: ServerSearchScope(
+                                                service: harness.search,
+                                                child: CoverSearchScope(
+                                                  search: harness.coverSearch,
+                                                  child: MetadataScope(
+                                                    service: harness.metadata,
+                                                    child: AutoSyncScope(
+                                                      auto: harness.auto,
+                                                      child: WorkEditScope(
+                                                        service:
+                                                            harness.workEdit,
+                                                        child: child!,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -149,9 +154,9 @@ class _TippaniAppState extends State<TippaniApp> {
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),

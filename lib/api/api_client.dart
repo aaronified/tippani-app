@@ -48,6 +48,39 @@ class ApiException implements Exception {
       'ApiException($failure${status == null ? '' : ' $status'}: $detail)';
 }
 
+/// How a read made inside [readFromPhone] or [readLive] behaves (ADR-0032). Carried by the zone, so a service that
+/// calls [ApiClient.getJson] three levels down needs no change to be asked "from the phone only".
+enum ReadMode {
+  /// Never touches the network: [ApiClient.getJson] answers from the phone's kept copy or says there is none, and
+  /// anything else the call tries (a write, a live read, a picture) is refused as if the network were down.
+  keptOnly,
+
+  /// Never answers from the phone: the read that follows a write, where an old answer would look like the write
+  /// was undone. The answer is still kept, so the phone's copy is the new one.
+  live,
+}
+
+final Object _modeKey = Object();
+final Object _shownKey = Object();
+
+/// Runs [read] with every [ApiClient.getJson] inside it answered from the phone only (see [ReadMode.keptOnly]).
+Future<T> readFromPhone<T>(Future<T> Function() read) =>
+    runZoned(read, zoneValues: {_modeKey: ReadMode.keptOnly});
+
+/// Runs [read] with every [ApiClient.getJson] inside it asking the server and never answering from the phone (see
+/// [ReadMode.live]). [copyShown] says the screen is already drawing a copy: a refusal then marks the screen as
+/// showing the phone's copy, because that is what it is.
+Future<T> readLive<T>(Future<T> Function() read, {bool copyShown = false}) =>
+    runZoned(
+      read,
+      zoneValues: {_modeKey: ReadMode.live, if (copyShown) _shownKey: true},
+    );
+
+/// Runs [read] normally (the server first, the phone's copy when it cannot be reached) and, when the server
+/// refuses it while the screen is drawing a copy, marks the screen as showing the phone's copy.
+Future<T> readWithCopyShown<T>(Future<T> Function() read) =>
+    runZoned(read, zoneValues: {_shownKey: true});
+
 /// How long a request may take before the app gives up. A NAS asleep for the night is slow to wake.
 const Duration requestTimeout = Duration(seconds: 15);
 
@@ -111,7 +144,8 @@ class ApiClient {
     String path,
     Map<String, Object?> body, {
     String? idempotencyKey,
-  }) => _send(
+  }) => _write(
+    path,
     () => _client.post(
       _uri(path),
       headers: {
@@ -124,7 +158,8 @@ class ApiClient {
   );
 
   /// PUT [body] as JSON to [path] and decode the JSON answer (null for an empty one).
-  Future<Object?> putJson(String path, Map<String, Object?> body) => _send(
+  Future<Object?> putJson(String path, Map<String, Object?> body) => _write(
+    path,
     () => _client.put(
       _uri(path),
       headers: {..._headers, 'Content-Type': 'application/json'},
@@ -133,7 +168,8 @@ class ApiClient {
   );
 
   /// PATCH [body] as JSON to [path] and decode the JSON answer (null for an empty one).
-  Future<Object?> patchJson(String path, Map<String, Object?> body) => _send(
+  Future<Object?> patchJson(String path, Map<String, Object?> body) => _write(
+    path,
     () => _client.patch(
       _uri(path),
       headers: {..._headers, 'Content-Type': 'application/json'},
@@ -143,7 +179,8 @@ class ApiClient {
 
   /// DELETE [path], with [body] as JSON when there is one. A 204 is an empty answer, so this returns null on
   /// success.
-  Future<Object?> delete(String path, {Map<String, Object?>? body}) => _send(
+  Future<Object?> delete(String path, {Map<String, Object?>? body}) => _write(
+    path,
     () => body == null
         ? _client.delete(_uri(path), headers: _headers)
         : _client.delete(
@@ -174,6 +211,15 @@ class ApiClient {
 
   Future<Object?> _getThrough(String path, bool keep) async {
     final cache = offline;
+    final mode = Zone.current[_modeKey];
+    if (mode == ReadMode.keptOnly) {
+      final kept = cache == null || !keep ? null : cache.readForDraw(path);
+      if (kept == null) {
+        throw const ApiException(ApiFailure.network, 'nothing kept for this');
+      }
+      return jsonDecode(kept.body);
+    }
+    final live = mode == ReadMode.live;
     Future<http.Response> ask() => _client.get(_uri(path), headers: _headers);
     if (cache == null || !keep) {
       return _send(ask);
@@ -195,12 +241,22 @@ class ApiClient {
       cache.servedFrom.value = null;
       return decoded;
     } on ApiException catch (e) {
-      if (e.failure == ApiFailure.network || e.failure == ApiFailure.timeout) {
+      final unreachable =
+          e.failure == ApiFailure.network || e.failure == ApiFailure.timeout;
+      if (unreachable && !live) {
         final kept = cache.read(path);
         if (kept != null) {
           cache.servedFrom.value = kept.at;
           return jsonDecode(kept.body);
         }
+      }
+      if (Zone.current[_shownKey] == true &&
+          (unreachable ||
+              e.failure == ApiFailure.server ||
+              e.failure == ApiFailure.badResponse)) {
+        // asked, and not answered while a copy is on the screen: the screen is out of date and says so, like any
+        // other copy
+        cache.servedFrom.value = cache.read(path)?.at ?? DateTime.now();
       }
       rethrow;
     }
@@ -229,7 +285,7 @@ class ApiClient {
     Uint8List bytes,
     String fileName, {
     Map<String, String> fields = const {},
-  }) => _send(() async {
+  }) => _write(path, () async {
     final req = http.MultipartRequest(method, _uri(path))
       ..headers.addAll(_headers)
       ..fields.addAll(fields)
@@ -241,6 +297,17 @@ class ApiClient {
 
   Future<Object?> _send(Future<http.Response> Function() request) async =>
       _decode(await _checked(request));
+
+  /// A change: when the server took it, what the phone kept of the screens it changes is no longer the latest word,
+  /// so no screen draws it first (ADR-0032). It is still there to fall back on when the server cannot be reached.
+  Future<Object?> _write(
+    String path,
+    Future<http.Response> Function() request,
+  ) async {
+    final answer = await _send(request);
+    offline?.noteWrite(path);
+    return answer;
+  }
 
   Object? _decode(http.Response response) {
     if (response.body.isEmpty) return null;
@@ -259,6 +326,9 @@ class ApiClient {
   Future<http.Response> _checked(
     Future<http.Response> Function() request,
   ) async {
+    if (Zone.current[_modeKey] == ReadMode.keptOnly) {
+      throw const ApiException(ApiFailure.network, 'asked from the phone only');
+    }
     final http.Response response;
     try {
       response = await request().timeout(timeout);

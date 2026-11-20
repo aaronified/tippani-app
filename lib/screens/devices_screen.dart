@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../api/api_client.dart';
+import '../api/cached_read.dart';
 import '../app_controller.dart';
 import '../pairing/devices.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
+import 'offline_note.dart';
 
 /// The devices paired with this account, so a lost phone can be unpaired from another. This phone is
 /// marked and cannot be revoked from here (that is Unpair, in Settings), so a stray tap cannot cut off
@@ -29,20 +31,25 @@ class _DevicesScreenState extends State<DevicesScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() => _problem = null);
-    try {
-      final list = await widget.controller.devices();
-      if (mounted) setState(() => _devices = list ?? const []);
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _problem = e.failure == ApiFailure.unauthorised
-            ? context.tr('app.board_service.the_server_no_longer_accepts_this')
-            : context.tr('app.devices.could_not_load_the_devices_check');
-      });
-    }
-  }
+  final _read = CachedRead();
+
+  /// The phone's copy at once, the server's answer in place of it when it lands (ADR-0032). [live] is the read
+  /// after unpairing one, so the device just removed does not come back.
+  Future<void> _load({bool live = false}) => _read.run<List<DeviceInfo>>(
+    load: () async => await widget.controller.devices() ?? const [],
+    alive: () => mounted,
+    haveCopy: _devices != null,
+    live: live,
+    draw: (list) => setState(() {
+      _devices = list;
+      _problem = null;
+    }),
+    fail: (e) => setState(() {
+      _problem = e is ApiException && e.failure == ApiFailure.unauthorised
+          ? context.tr('app.board_service.the_server_no_longer_accepts_this')
+          : context.tr('app.devices.could_not_load_the_devices_check');
+    }),
+  );
 
   Future<void> _revoke(DeviceInfo d) async {
     final yes = await showDialog<bool>(
@@ -77,7 +84,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
         return;
       }
     }
-    await _load();
+    await _load(live: true);
   }
 
   Future<void> _revokeAll() async {
@@ -129,6 +136,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            const OfflineNote(),
             if (_problem != null)
               Text(_problem!, style: TextStyle(color: scheme.error)),
             if (devices == null && _problem == null)

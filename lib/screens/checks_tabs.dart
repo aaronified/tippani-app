@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../api/cached_read.dart';
 import '../api/server_call.dart';
+import 'offline_note.dart';
 import '../checks/checks_service.dart';
 import 'library_widgets.dart';
 import '../l10n/l10n.dart';
@@ -33,6 +35,7 @@ class _LoaderState<T> extends State<_Loader<T>> {
   T? _data;
   String? _problem;
   bool _loading = true;
+  final _reads = CachedRead();
 
   @override
   void initState() {
@@ -40,29 +43,41 @@ class _LoaderState<T> extends State<_Loader<T>> {
     _reload();
   }
 
-  Future<void> _reload() async {
-    try {
-      final d = await widget.load();
-      if (mounted) {
-        setState(() {
-          _data = d;
-          _problem = null;
-          _loading = false;
-        });
-      }
-    } on ServerException catch (e) {
-      if (mounted) {
-        setState(() {
-          _problem = e.message;
-          _loading = false;
-        });
-      }
-    }
-  }
+  /// The phone's copy at once, the server's answer in place of it when it lands (ADR-0032). [live] is the read a
+  /// tab asks for after an accept, an ignore or a fix, which never answers from the phone: a finding the reader
+  /// just dealt with must not come back.
+  Future<void> _reload({bool live = false}) => _reads.run<T>(
+    load: widget.load,
+    alive: () => mounted,
+    haveCopy: _data != null,
+    live: live,
+    draw: (d) => setState(() {
+      _data = d;
+      _problem = null;
+      _loading = false;
+    }),
+    fail: (e) => setState(() {
+      _problem = problemText(e);
+      _loading = false;
+    }),
+  );
 
   @override
   Widget build(BuildContext context) {
-    if (_data != null) return widget.builder(context, _data as T, _reload);
+    if (_data != null) {
+      return Column(
+        children: [
+          const OfflineNote(),
+          Expanded(
+            child: widget.builder(
+              context,
+              _data as T,
+              () => _reload(live: true),
+            ),
+          ),
+        ],
+      );
+    }
     if (_loading) return const Center(child: CircularProgressIndicator());
     return Center(
       child: Padding(

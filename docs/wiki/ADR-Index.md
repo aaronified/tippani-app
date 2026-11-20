@@ -60,5 +60,6 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0030](ADR-0030-Anthologies-Draw-From-The-Phone-First-And-Ask-The-Server-Behind-It.md): Anthologies draw from the phone first and ask the server behind it
 - [ADR-0029](ADR-0029-A-Quotes-Menu-Holds-Every-Action-Its-Card-Does-Not-Show.md): A quote's menu holds every action its card does not show, and one function builds it
 - [ADR-0031](ADR-0031-Every-Share-Is-One-Screen-With-A-Subject.md): Every share is one screen, with a subject
+- [ADR-0032](ADR-0032-Every-Server-Screen-Draws-The-Phones-Copy-First.md): Every screen that shows what the server holds draws the phone's copy first
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)

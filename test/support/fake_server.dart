@@ -84,6 +84,10 @@ class FakeServer {
   /// Every list read answers with this status instead (500...), when set.
   int? failReadsWith;
 
+  /// When set, every change (POST, PUT, PATCH, DELETE) waits for it first: a server that takes the connection and
+  /// never answers a write, so the app's own timeout is what ends it and the change is queued.
+  Future<void>? writesWait;
+
   /// Every PUT answers with this status instead (400, 404...), when set.
   int? failUpdatesWith;
 
@@ -691,10 +695,27 @@ class FakeServer {
   /// completed is one that never answers, and the client's own timeout is what ends the wait).
   Future<void>? anthologiesWait;
 
+  /// When set, every read except the pairing's own (`/capabilities`, `/auth/me`) waits for it first: a slow server
+  /// (a Completer never completed is one that never answers, and the client's own timeout ends the wait).
+  Future<void>? readsWait;
+
+  /// When set, every read except the pairing's own is refused with this status (after [readsWait]): a server that
+  /// answers, and answers an error.
+  int? refuseReadsWith;
+
   Future<http.Response> handle(http.Request r) async {
     requests.add(r);
     if (unreachable) throw const SocketException('the network went away');
     final path = r.url.path.replaceFirst(RegExp(r'^.*?/api'), '');
+    // slow, silent or refusing, whatever answers: before a test's own routes, so they are slow too
+    if (_authed(r) && path != '/capabilities' && path != '/auth/me') {
+      if (r.method != 'GET') await writesWait;
+      if (r.method == 'GET') {
+        await readsWait;
+        final status = refuseReadsWith;
+        if (status != null) return _json({'error': 'broken'}, status);
+      }
+    }
     final hooked = await extra?.call(r, path);
     if (hooked != null) return hooked;
     if (r.method == 'GET' && path == '/capabilities') {

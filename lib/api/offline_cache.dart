@@ -124,6 +124,50 @@ class OfflineCache {
     return null;
   }
 
+  /// When the last change was made through the app to each part of the server (by the first segment of the path),
+  /// so a screen does not draw a copy older than a change the reader just made (ADR-0032). Kept in memory: it
+  /// matters for the session that made the change.
+  final Map<String, DateTime> _wrote = {};
+
+  /// The parts of the server a change to the key also changes the answers of.
+  static const _alsoChanges = {
+    '/quotes': ['/stats', '/tags', '/people', '/characters', '/search'],
+    '/books': ['/stats', '/people', '/characters', '/metadata', '/search'],
+    '/movies': ['/stats', '/people', '/characters', '/metadata', '/search'],
+    '/people': ['/stats', '/characters', '/search'],
+    '/characters': ['/stats', '/people', '/search'],
+    '/tags': ['/stats', '/search'],
+    '/metadata': ['/stats', '/people', '/characters'],
+    '/cleanup': ['/stats', '/corrections', '/locators'],
+    '/corrections': ['/stats', '/cleanup', '/locators'],
+    '/locators': ['/cleanup', '/corrections'],
+  };
+
+  static String _head(String path) {
+    final p = Uri.parse(path).path;
+    final i = p.indexOf('/', 1);
+    return i < 0 ? p : p.substring(0, i);
+  }
+
+  /// Records that the app changed something on the server at [path].
+  void noteWrite(String path, {DateTime? at}) {
+    final when = at ?? DateTime.now();
+    final head = _head(path);
+    for (final h in [head, ...?_alsoChanges[head]]) {
+      _wrote[h] = when;
+    }
+  }
+
+  /// [read] for a screen that draws the copy first: null when a change made through the app since the copy was
+  /// saved means it is no longer the latest word. [read] itself still serves it when the server cannot be reached.
+  ({String body, DateTime at})? readForDraw(String key) {
+    final kept = read(key);
+    if (kept == null) return null;
+    final w = _wrote[_head(key)];
+    if (w != null && kept.at.isBefore(w)) return null;
+    return kept;
+  }
+
   /// Keeps [body] as the answer for [key], and drops the oldest entries if the cache is over its bounds. An answer
   /// larger than the whole cache is not kept (it would push out everything else and then itself).
   Future<void> write(String key, String body, {DateTime? at}) async {
@@ -181,6 +225,7 @@ class OfflineCache {
       await _store.remove(k);
     }
     _index = [];
+    _wrote.clear();
     servedFrom.value = null;
     for (final forget in List.of(whenCleared)) {
       // one that fails must not leave the rest undone: the queues that must not outlive the pairing are among them

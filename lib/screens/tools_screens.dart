@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../api/cached_read.dart';
 import '../api/server_call.dart';
 import '../tools/server_tools.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
+import 'offline_note.dart';
 
 export 'stats_screen.dart';
 
@@ -37,19 +39,21 @@ class _BinScreenState extends State<BinScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    try {
-      final b = await widget.tools.bin();
-      if (mounted) {
-        setState(() {
-          _bin = b;
-          _problem = null;
-        });
-      }
-    } on ServerException catch (e) {
-      if (mounted) setState(() => _problem = e.message);
-    }
-  }
+  final _read = CachedRead();
+
+  /// The phone's copy at once, the server's answer in place of it when it lands (ADR-0032). [live] is the read
+  /// after a restore or a delete, so what was just taken out of the bin does not come back.
+  Future<void> _load({bool live = false}) => _read.run<Bin>(
+    load: widget.tools.bin,
+    alive: () => mounted,
+    haveCopy: _bin != null,
+    live: live,
+    draw: (b) => setState(() {
+      _bin = b;
+      _problem = null;
+    }),
+    fail: (e) => setState(() => _problem = problemText(e)),
+  );
 
   void _say(String message) {
     final m = ScaffoldMessenger.of(context);
@@ -81,7 +85,7 @@ class _BinScreenState extends State<BinScreen> {
   Future<void> _act(Future<void> Function() run) async {
     try {
       await run();
-      await _load();
+      await _load(live: true);
     } on ServerException catch (e) {
       if (mounted) _say(e.message);
     }
@@ -110,99 +114,117 @@ class _BinScreenState extends State<BinScreen> {
             ),
         ],
       ),
-      body: _problem != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(_problem!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _load,
-                      child: Text(context.tr('common.source.retry')),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : bin == null
-          ? const Center(child: CircularProgressIndicator())
-          : bin.entries.isEmpty
-          ? Center(child: Text(context.tr('app.tools.the_bin_is_empty')))
-          : ListView(
-              padding: const EdgeInsets.only(bottom: 24),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                  child: Text(
-                    context.tr('app.tools.things_you_delete_are_kept_here', {
-                      'kept_days': bin.keptDays,
-                    }),
-                  ),
-                ),
-                for (final e in bin.entries)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 5,
-                    ),
-                    child: SurfaceCard(
-                      child: ListTile(
-                        title: Text(
-                          e.label.isEmpty ? _kindWords(e.kind) : e.label,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          [
-                            _kindWords(e.kind),
-                            if (e.childCount > 0)
-                              context.tr('app.tools.with_quotes', {
-                                'quotes': countWords('quote', e.childCount),
-                              }),
-                            if (e.deletedAt.isNotEmpty)
-                              context.tr('app.tools.deleted_at', {
-                                'when': e.deletedAt,
-                              }),
-                          ].join(' · '),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: context.tr(
-                                'common.action.restore.label',
-                              ),
-                              icon: const Icon(Ti.history),
-                              onPressed: () =>
-                                  _act(() => widget.tools.restore(e.id)),
-                            ),
-                            IconButton(
-                              tooltip: context.tr('app.tools.delete_for_good'),
-                              icon: const Icon(Ti.trashX),
-                              onPressed: () async {
-                                if (await _confirm(
-                                  context.tr('app.tools.delete_for_good_2'),
-                                  context.tr(
-                                    'app.tools.it_cannot_be_brought_back_after',
-                                  ),
-                                  context.tr('common.action.delete.label'),
-                                )) {
-                                  await _act(
-                                    () => widget.tools.deleteForever(e.id),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
-                        ),
+      body: Column(
+        children: [
+          const OfflineNote(),
+          Expanded(
+            child: _problem != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(_problem!, textAlign: TextAlign.center),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _load,
+                            child: Text(context.tr('common.source.retry')),
+                          ),
+                        ],
                       ),
                     ),
+                  )
+                : bin == null
+                ? const Center(child: CircularProgressIndicator())
+                : bin.entries.isEmpty
+                ? Center(child: Text(context.tr('app.tools.the_bin_is_empty')))
+                : ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                        child: Text(
+                          context.tr(
+                            'app.tools.things_you_delete_are_kept_here',
+                            {'kept_days': bin.keptDays},
+                          ),
+                        ),
+                      ),
+                      for (final e in bin.entries)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 5,
+                          ),
+                          child: SurfaceCard(
+                            child: ListTile(
+                              title: Text(
+                                e.label.isEmpty ? _kindWords(e.kind) : e.label,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                [
+                                  _kindWords(e.kind),
+                                  if (e.childCount > 0)
+                                    context.tr('app.tools.with_quotes', {
+                                      'quotes': countWords(
+                                        'quote',
+                                        e.childCount,
+                                      ),
+                                    }),
+                                  if (e.deletedAt.isNotEmpty)
+                                    context.tr('app.tools.deleted_at', {
+                                      'when': e.deletedAt,
+                                    }),
+                                ].join(' · '),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: context.tr(
+                                      'common.action.restore.label',
+                                    ),
+                                    icon: const Icon(Ti.history),
+                                    onPressed: () =>
+                                        _act(() => widget.tools.restore(e.id)),
+                                  ),
+                                  IconButton(
+                                    tooltip: context.tr(
+                                      'app.tools.delete_for_good',
+                                    ),
+                                    icon: const Icon(Ti.trashX),
+                                    onPressed: () async {
+                                      if (await _confirm(
+                                        context.tr(
+                                          'app.tools.delete_for_good_2',
+                                        ),
+                                        context.tr(
+                                          'app.tools.it_cannot_be_brought_back_after',
+                                        ),
+                                        context.tr(
+                                          'common.action.delete.label',
+                                        ),
+                                      )) {
+                                        await _act(
+                                          () =>
+                                              widget.tools.deleteForever(e.id),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
+          ),
+        ],
+      ),
     );
   }
 }
