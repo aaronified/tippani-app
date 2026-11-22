@@ -19,7 +19,6 @@ import '../harness/harness.dart';
 import '../harness/log_screen.dart';
 import '../harness/server_log_screen.dart';
 import 'devices_screen.dart';
-import 'offline_note.dart';
 import 'prefs_entries.dart';
 import 'tags_screen.dart';
 import 'pair_screen.dart';
@@ -118,7 +117,6 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             if (part == SettingsPart.server) ...[
-              OfflineNote(offline: controller.offline),
               _Section(context.tr('settings.section.server.label')),
               _Group(
                 children: [

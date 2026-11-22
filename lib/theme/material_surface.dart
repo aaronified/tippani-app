@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../account/preferences.dart';
 import 'materials.dart';
+import '../screens/server_link.dart' show ServerLinkIcon;
 
 /// The decoded tiles, each once for the life of the app. A tile is 60 KB or so and the same few are laid on every screen.
 class TileCache {
@@ -615,7 +616,7 @@ class ShellAppBar extends StatelessWidget implements PreferredSizeWidget {
     final flat = !look.drawn('shell');
     return AppBar(
       title: title,
-      actions: actions,
+      actions: [const ServerLinkIcon(), ...?actions],
       bottom: bottom,
       leading: leading,
       titleSpacing: titleSpacing,

@@ -7,7 +7,6 @@ import '../people/people_console.dart';
 import '../people/people_directory.dart';
 import '../people/picture.dart';
 import 'people_console_actions.dart';
-import 'offline_note.dart';
 import 'person_screen.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
@@ -645,7 +644,6 @@ class _PeopleConsoleScreenState extends State<PeopleConsoleScreen>
           : null,
       body: Column(
         children: [
-          const OfflineNote(),
           Expanded(
             child: _problem != null && people == null
                 ? Center(

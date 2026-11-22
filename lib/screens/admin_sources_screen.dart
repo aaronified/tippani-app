@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../admin/admin_service.dart';
 import '../api/cached_read.dart';
 import 'admin_widgets.dart';
-import 'offline_note.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
@@ -157,7 +156,6 @@ class _AdminSourcesScreenState extends State<AdminSourcesScreen> {
       ),
       body: Column(
         children: [
-          const OfflineNote(),
           Expanded(
             child: _problem != null && sources == null
                 ? Center(

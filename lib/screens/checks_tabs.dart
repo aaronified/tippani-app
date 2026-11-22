@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../api/cached_read.dart';
 import '../api/server_call.dart';
-import 'offline_note.dart';
 import '../checks/checks_service.dart';
 import 'library_widgets.dart';
 import '../l10n/l10n.dart';
@@ -67,7 +66,6 @@ class _LoaderState<T> extends State<_Loader<T>> {
     if (_data != null) {
       return Column(
         children: [
-          const OfflineNote(),
           Expanded(
             child: widget.builder(
               context,

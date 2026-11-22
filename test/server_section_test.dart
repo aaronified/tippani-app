@@ -10,6 +10,7 @@ import 'package:tippani/harness/harness.dart';
 import 'package:tippani/screens/admin_jobs_screen.dart';
 import 'package:tippani/settings/settings_store.dart';
 
+import 'support/server_link.dart';
 import 'support/fake_server.dart';
 import 'support/memory_library.dart';
 
@@ -190,19 +191,90 @@ void main() {
         findsNothing,
         reason: 'there is no account to show',
       );
-      expect(
-        find.textContaining('Showing what this phone last saw'),
-        findsNothing,
-      );
+      expect(brokenLink, findsNothing);
 
       c.offline.servedFrom.value = DateTime.utc(2026, 11, 13);
       await tester.pump();
+      await tester.pump();
+      // no banner in the screen: the words are said once, by the toast, and the Server tab wears the mark
       expect(
-        find.text(
-          'Showing what this phone last saw (2026-11-13). The server cannot be reached.',
+        find.textContaining('Showing what this phone last saw'),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.textContaining('Showing what this phone last saw'),
         ),
         findsOneWidget,
       );
+      expect(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.bySemanticsLabel('Server not reachable'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'a screen opened over the tabs wears the broken-link mark too, and pressing it says what the phone is showing',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 3600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      SharedPreferences.setMockInitialValues({});
+      final server = FakeServer();
+      final store = SettingsStore(
+        await SharedPreferences.getInstance(),
+        MemoryTokenVault(),
+      );
+      final c = AppController(store, clientFactory: server.factory);
+      await c.load();
+      await tester.pumpWidget(
+        TippaniApp(
+          controller: c,
+          harness: Harness.fake(
+            store,
+            controller: c,
+            library: MemoryLibrary(),
+            prefs: PairedPreferences(c, store),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Server'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Colours'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppBar), findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(AppBar), matching: brokenLink),
+        findsNothing,
+        reason: 'the server answers',
+      );
+
+      c.offline.markRefused(DateTime.utc(2026, 11, 13), 'out of sorts');
+      await tester.pump();
+      await tester.pump();
+      ScaffoldMessenger.of(tester.element(find.byType(AppBar)))
+          .clearSnackBars();
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: find.byType(AppBar), matching: brokenLink),
+        findsOneWidget,
+      );
+      await linkSays(
+        tester,
+        'The server did not accept the refresh: out of sorts',
+        also: '2026-11-13',
+        not: 'cannot be reached',
+      );
+
+      c.offline.markFresh();
+      await tester.pumpAndSettle();
+      expect(brokenLink, findsNothing);
     },
   );
 

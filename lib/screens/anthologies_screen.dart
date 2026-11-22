@@ -14,7 +14,6 @@ import 'quiz_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
-import 'offline_note.dart';
 import '../theme/material_surface.dart';
 
 /// Asks for a title and an introduction. Null if the reader backs out.
@@ -220,7 +219,6 @@ class _AnthologiesScreenState extends State<AnthologiesScreen> {
       ),
       body: Column(
         children: [
-          const OfflineNote(),
           _WaitingNote(widget.service),
           Expanded(child: _list(context, all)),
         ],
@@ -1024,7 +1022,6 @@ class _AnthologyScreenState extends State<AnthologyScreen> {
       ),
       body: Column(
         children: [
-          const OfflineNote(),
           Expanded(
             child: _problem != null
                 ? Center(
@@ -1079,7 +1076,6 @@ Future<Object?> chooseAnthology(
     builder: (context) => SimpleDialog(
       title: Text(context.tr('common.action.anthology.label')),
       children: [
-        const OfflineNote(),
         ValueListenableBuilder<List<Anthology>?>(
           valueListenable: shown,
           builder: (context, all, _) => all == null

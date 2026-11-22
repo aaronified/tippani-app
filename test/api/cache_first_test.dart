@@ -19,7 +19,7 @@ import 'package:tippani/screens/metadata_tools_screen.dart';
 import 'package:tippani/metadata/metadata_service.dart';
 import 'package:tippani/screens/checks_screen.dart';
 import 'package:tippani/screens/devices_screen.dart';
-import 'package:tippani/screens/offline_note.dart';
+import 'package:tippani/screens/server_link.dart';
 import 'package:tippani/screens/people_console_screen.dart';
 import 'package:tippani/screens/tags_screen.dart';
 import 'package:tippani/screens/tools_screens.dart';
@@ -30,6 +30,7 @@ import 'package:tippani/tools/server_tools.dart';
 import '../support/fake_admin.dart' show FakeServerFiles;
 import '../support/fake_server.dart';
 import '../support/memory_library.dart';
+import '../support/server_link.dart';
 
 // One rule for every screen that shows what the server holds (ADR-0032): the phone's copy is drawn at once, the
 // server is asked behind it, the answer replaces the copy in place, and the shared note says when the screen is
@@ -80,7 +81,9 @@ Future<_Rig> _rig(
 
 Widget _framed(_Rig r, Widget home) => OfflineScope(
   offline: r.controller.offline,
-  child: MaterialApp(home: home),
+  child: MaterialApp(
+    home: KeyedSubtree(key: UniqueKey(), child: home),
+  ),
 );
 
 /// Lets the fake server's answers (microtasks and real timers) land, then draws.
@@ -380,7 +383,172 @@ Future<_Rig> _seen(
   return r;
 }
 
+// ── the toast: once for each time the app is awake (ADR-0033) ─────────────────────────────────────────────────
+
+Widget _toastFramed(
+  _Rig r,
+  GlobalKey<ScaffoldMessengerState> key,
+  Widget home,
+) => OfflineScope(
+  offline: r.controller.offline,
+  child: ServerLinkToast(
+    offline: r.controller.offline,
+    messenger: key,
+    child: MaterialApp(
+      scaffoldMessengerKey: key,
+      home: KeyedSubtree(key: UniqueKey(), child: home),
+    ),
+  ),
+);
+
+_Case _named(String name) => _cases.firstWhere((c) => c.name == name);
+
+/// The reader opens [c]'s screen, the server saying nothing, and waits until the phone gives up on it.
+Future<void> _openSilent(
+  WidgetTester tester,
+  _Rig r,
+  GlobalKey<ScaffoldMessengerState> key,
+  _Case c,
+) async {
+  c.serve(r, c.old);
+  r.server.readsWait = Completer<void>().future;
+  await tester.pumpWidget(_toastFramed(r, key, c.open(r)));
+  await _lookAt(tester, c);
+  await tester.pump();
+  await tester.pump(const Duration(seconds: 20));
+  await tester.pump();
+}
+
+/// The server answers this screen.
+Future<void> _openAnswering(
+  WidgetTester tester,
+  _Rig r,
+  GlobalKey<ScaffoldMessengerState> key,
+  _Case c,
+) async {
+  c.serve(r, c.old);
+  r.server.readsWait = null;
+  await tester.pumpWidget(_toastFramed(r, key, c.open(r)));
+  await _lookAt(tester, c);
+  await _answered(tester);
+}
+
+Future<_Rig> _rigWithCopies(
+  WidgetTester tester,
+  GlobalKey<ScaffoldMessengerState> key,
+  List<_Case> cases,
+) async {
+  final r = await _rig(tester, serves: (_) {});
+  for (final c in cases) {
+    await _openAnswering(tester, r, key, c);
+  }
+  return r;
+}
+
+void _toastTests() {
+  final screens = ['Statistics', 'Tags', 'People'].map(_named).toList();
+
+  testWidgets(
+    'the toast is said once for a whole run through screens that all fall back to the phone\'s copy',
+    (tester) async {
+      final key = GlobalKey<ScaffoldMessengerState>();
+      final r = await _rigWithCopies(tester, key, screens);
+      await _openSilent(tester, r, key, screens[0]);
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.textContaining(_offline), findsOneWidget);
+      key.currentState!.clearSnackBars();
+      await tester.pump();
+      await _openSilent(tester, r, key, screens[1]);
+      expect(find.byType(SnackBar), findsNothing);
+      await _openSilent(tester, r, key, screens[2]);
+      expect(find.byType(SnackBar), findsNothing);
+      // the mark is still there for whoever looks
+      expect(brokenLink, findsOneWidget);
+      await tester.pump(const Duration(minutes: 2));
+    },
+  );
+
+  testWidgets(
+    'going to the background and coming back says it once more while the server is still silent',
+    (tester) async {
+      final key = GlobalKey<ScaffoldMessengerState>();
+      final r = await _rigWithCopies(tester, key, screens);
+      await _openSilent(tester, r, key, screens[0]);
+      expect(find.byType(SnackBar), findsOneWidget);
+      key.currentState!.clearSnackBars();
+      await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.textContaining(_offline), findsOneWidget);
+      // a second return with no break in between is not a new awake period
+      key.currentState!.clearSnackBars();
+      await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(SnackBar), findsNothing);
+      await tester.pump(const Duration(minutes: 2));
+    },
+  );
+
+  testWidgets('coming back to a server that answers says nothing', (
+    tester,
+  ) async {
+    final key = GlobalKey<ScaffoldMessengerState>();
+    final r = await _rigWithCopies(tester, key, screens);
+    await _openSilent(tester, r, key, screens[0]);
+    key.currentState!.clearSnackBars();
+    await _openAnswering(tester, r, key, screens[0]);
+    expect(brokenLink, findsNothing);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(find.byType(SnackBar), findsNothing);
+    await tester.pump(const Duration(minutes: 2));
+  });
+
+  testWidgets(
+    'a server that recovers and then fails again without the app having been away gets no second toast, only the mark',
+    (tester) async {
+      final key = GlobalKey<ScaffoldMessengerState>();
+      final r = await _rigWithCopies(tester, key, screens);
+      await _openSilent(tester, r, key, screens[0]);
+      expect(find.byType(SnackBar), findsOneWidget);
+      key.currentState!.clearSnackBars();
+      await tester.pump();
+      await _openAnswering(tester, r, key, screens[1]);
+      expect(brokenLink, findsNothing);
+      await _openSilent(tester, r, key, screens[2]);
+      expect(find.byType(SnackBar), findsNothing);
+      expect(brokenLink, findsOneWidget);
+      await tester.pump(const Duration(minutes: 2));
+    },
+  );
+
+  testWidgets(
+    'a server that turns the refresh down is said once, in the refusal\'s words',
+    (tester) async {
+      final key = GlobalKey<ScaffoldMessengerState>();
+      final r = await _rigWithCopies(tester, key, screens);
+      final c = screens[0];
+      c.serve(r, c.fresh);
+      r.server.readsWait = null;
+      r.server.refuseReadsWith = 500;
+      await tester.pumpWidget(_toastFramed(r, key, c.open(r)));
+      await _answered(tester);
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.textContaining(_refused), findsOneWidget);
+      expect(find.textContaining(_offline), findsNothing);
+      await tester.pump(const Duration(minutes: 2));
+    },
+  );
+}
+
 void main() {
+  _toastTests();
   for (final c in _cases) {
     group(c.name, () {
       testWidgets(
@@ -396,11 +564,11 @@ void main() {
           await tester.pump();
           expect(find.textContaining(c.old), findsWidgets);
           expect(_spinner, findsNothing);
-          expect(find.textContaining(_offline), findsNothing);
+          expect(brokenLink, findsNothing);
           // each question the screen asks waits out its own timeout; the first is enough to say so
           await tester.pump(const Duration(seconds: 20));
           expect(find.textContaining(c.old), findsWidgets);
-          expect(find.textContaining(_offline), findsOneWidget);
+          await linkSays(tester, _offline);
           await tester.pump(const Duration(minutes: 2));
         },
       );
@@ -420,7 +588,7 @@ void main() {
           await _release(tester, wait);
           expect(find.textContaining(c.old), findsNothing);
           expect(find.textContaining(c.fresh), findsWidgets);
-          expect(find.textContaining(_offline), findsNothing);
+          expect(brokenLink, findsNothing);
         },
       );
 
@@ -457,10 +625,8 @@ void main() {
             await _answered(tester);
             expect(find.textContaining(c.old), findsWidgets);
             expect(find.text('Try again'), findsNothing);
-            expect(find.textContaining(_refused), findsOneWidget);
-            expect(find.textContaining('broken'), findsOneWidget);
-            // the server was reached: the note must not say it was not
-            expect(find.textContaining(_offline), findsNothing);
+            // the server was reached: the words must not say it was not
+            await linkSays(tester, _refused, also: 'broken', not: _offline);
           },
         );
       }

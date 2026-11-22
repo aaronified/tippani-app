@@ -7,10 +7,12 @@ import 'package:tippani/anthologies/anthologies.dart';
 import 'package:tippani/anthologies/offline_anthologies.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/screens/anthologies_screen.dart';
-import 'package:tippani/screens/offline_note.dart';
+import 'package:tippani/screens/server_link.dart';
+import 'package:tippani/theme/material_surface.dart';
 import 'package:tippani/settings/settings_store.dart';
 
 import '../support/fake_server.dart';
+import '../support/server_link.dart';
 
 // How the Anthologies screens load (ADR-0030): like every other screen, what the phone holds is drawn at once,
 // the server is asked behind it, and a server that is slow, silent or failing never holds the screen back or
@@ -81,10 +83,10 @@ void main() {
     await tester.pump();
     expect(find.text('Evenings'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.textContaining(_offline), findsNothing);
+    expect(brokenLink, findsNothing);
     await tester.pump(const Duration(seconds: 20));
     expect(find.text('Evenings'), findsOneWidget);
-    expect(find.textContaining(_offline), findsOneWidget);
+    await linkSays(tester, _offline);
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
@@ -103,7 +105,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Evenings'), findsNothing);
       expect(find.text('Evenings, renamed on the web'), findsOneWidget);
-      expect(find.textContaining(_offline), findsNothing);
+      expect(brokenLink, findsNothing);
     },
   );
 
@@ -133,8 +135,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Evenings'), findsOneWidget);
     expect(find.text('Retry'), findsNothing);
-    expect(find.textContaining(_refused), findsOneWidget);
-    expect(find.textContaining(_offline), findsNothing);
+    await linkSays(tester, _refused, not: _offline);
   });
 
   testWidgets(
@@ -148,10 +149,10 @@ void main() {
       await tester.pump();
       expect(find.textContaining('The cached passage'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
-      expect(find.textContaining(_offline), findsNothing);
+      expect(brokenLink, findsNothing);
       await tester.pump(const Duration(seconds: 20));
       expect(find.textContaining('The cached passage'), findsOneWidget);
-      expect(find.textContaining(_offline), findsOneWidget);
+      await linkSays(tester, _offline);
     },
   );
 
@@ -168,8 +169,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('The cached passage'), findsOneWidget);
       expect(find.text('Retry'), findsNothing);
-      expect(find.textContaining(_refused), findsOneWidget);
-      expect(find.textContaining(_offline), findsNothing);
+      await linkSays(tester, _refused, not: _offline);
     },
   );
 
@@ -185,7 +185,7 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pumpAndSettle();
       expect(find.textContaining('The cached passage'), findsOneWidget);
-      expect(find.textContaining(_refused), findsOneWidget);
+      await linkSays(tester, _refused);
     },
   );
 
@@ -371,6 +371,7 @@ void main() {
           onPressed: () => Navigator.of(context).push<void>(
             MaterialPageRoute(
               builder: (_) => Scaffold(
+                appBar: ShellAppBar(),
                 body: Builder(
                   builder: (context) => TextButton(
                     onPressed: () => addToAnthologyDialog(
@@ -428,7 +429,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(SimpleDialog), findsOneWidget);
       expect(find.text('Evenings'), findsOneWidget);
-      expect(find.textContaining(_refused), findsOneWidget);
+      // the page under the question wears the mark
+      expect(brokenLink, findsOneWidget);
     },
   );
 
