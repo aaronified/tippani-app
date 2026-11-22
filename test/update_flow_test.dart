@@ -211,6 +211,37 @@ void main() {
       },
     );
 
+    testWidgets(
+      'an update found while the link is down does not throw the link toast away',
+      (tester) async {
+        final (c, h) = await app(
+          check: FixedReleaseCheck(const UpdateAvailable(info)),
+          installer: FixedApkInstaller(const []),
+        );
+        c.offline.markServed(DateTime.utc(2026, 11, 13));
+        await tester.pumpWidget(TippaniApp(controller: c, harness: h));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        final seen = <String>[];
+        for (var i = 0; i < 3; i++) {
+          if (find.textContaining('cannot be reached').evaluate().isNotEmpty) {
+            seen.add('link');
+          }
+          if (find.text('Version 0.2.0 is available').evaluate().isNotEmpty) {
+            seen.add('update');
+          }
+          ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first))
+              .hideCurrentSnackBar();
+          await tester.pumpAndSettle(const Duration(milliseconds: 100));
+        }
+        expect(
+          seen,
+          containsAll(['link', 'update']),
+          reason: 'both are said, one after the other',
+        );
+      },
+    );
+
     testWidgets('no update, no toast', (tester) async {
       final (c, h) = await app(check: FixedReleaseCheck(const UpToDate()));
       await tester.pumpWidget(TippaniApp(controller: c, harness: h));

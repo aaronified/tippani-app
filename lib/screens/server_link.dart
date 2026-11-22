@@ -114,9 +114,19 @@ class ServerLinkBadge extends StatelessWidget {
 void showServerLinkNote(BuildContext context, OfflineCache cache) {
   final words = serverLinkWords(context, cache);
   if (words == null) return;
-  // queued behind whatever is already showing (an Undo, say), never over it
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(words)));
+  final messenger = ScaffoldMessenger.of(context);
+  // a second press while the note is up (or waiting its turn) says nothing more, so five presses are not twenty
+  // seconds of the same sentence; a message that is not ours (an Undo, say) is never touched: the note queues behind it
+  if (_noteUp[messenger] == true) return;
+  _noteUp[messenger] = true;
+  messenger
+      .showSnackBar(SnackBar(content: Text(words)))
+      .closed
+      .whenComplete(() => _noteUp[messenger] = false);
 }
+
+/// Whether a press of the mark has a note up (or queued) on this messenger.
+final _noteUp = Expando<bool>('server link note');
 
 /// Shows the toast once for each time the app is brought to the front: the first time the link is found broken
 /// while the app is awake, and not again until the phone has gone to the background and come back. It sits above
@@ -179,11 +189,28 @@ class _ServerLinkToastState extends State<ServerLinkToast>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final state = widget.messenger.currentState;
       if (state == null || !mounted) return;
-      // this widget's own context: the messenger's is above the language scope and would speak English
-      final words = serverLinkWords(context, widget.offline);
-      if (words == null) return;
-      // queued behind a message already showing (an Undo), never over it
-      state.showSnackBar(SnackBar(content: Text(words)));
+      // queued behind a message already showing (an Undo), never over it. Its words are worked out when it is drawn,
+      // from the bar's own context (below the language scope, so in the reader's language), so they are true of
+      // the link as it is then.
+      state.showSnackBar(
+        SnackBar(
+          content: Builder(
+            builder: (context) {
+              final words = serverLinkWords(context, widget.offline);
+              if (words == null) {
+                // The link was whole again by the time this came up (it waited behind an Undo, say, which stays until
+                // it is dismissed). The framework cannot withdraw a snack bar that is still queued, so it is taken
+                // off the moment it is drawn and says nothing.
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => widget.messenger.currentState?.removeCurrentSnackBar(),
+                );
+                return const SizedBox.shrink();
+              }
+              return Text(words);
+            },
+          ),
+        ),
+      );
     });
   }
 

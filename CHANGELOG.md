@@ -9,7 +9,7 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Changed
 
-- One broken-link mark, no banner: when the server cannot be reached, or turns a refresh down, and a screen shows what this phone last saw, the screen no longer carries a note across its top. A broken-link icon appears instead, on the Server tab at the bottom and in the top bar of any screen opened over the tabs. Pressing it says the same words as before, with the date of the copy. A single message says it once each time you open the app, and not again while it stays open.
+- One broken-link mark, no banner: when the server cannot be reached, or turns a refresh down, and a screen shows what this phone last saw, the screen no longer carries a note across its top. A broken-link icon appears instead, on the Server tab at the bottom and in the top bar of any screen opened over the tabs. Pressing the icon in a top bar says the same words as before, with the date of the copy. A single message says it once each time you open the app, and not again while it stays open.
 
 ## [0.10.3] - 2026-11-20
 

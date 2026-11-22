@@ -168,6 +168,63 @@ void main() {
       expect(find.textContaining('cannot be reached'), findsOneWidget);
     });
 
+    testWidgets(
+      'a toast waiting behind an Undo is withdrawn if the link recovers first',
+      (tester) async {
+        final (c, key) = await framed(tester);
+        key.currentState!.showSnackBar(
+          SnackBar(
+            content: const Text('Quote deleted'),
+            action: SnackBarAction(label: 'Undo', onPressed: () {}),
+          ),
+        );
+        await tester.pump();
+        c.offline.markServed(DateTime.utc(2026, 11, 13));
+        await tester.pump();
+        await tester.pump();
+        // the server answers again while the Undo is still up
+        c.offline.markFresh();
+        await tester.pump();
+        key.currentState!.hideCurrentSnackBar();
+        // the Undo has gone; the toast's turn comes, finds the link whole and takes itself off at once
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(
+          find.textContaining('cannot be reached'),
+          findsNothing,
+          reason: 'it would have said something that is no longer so',
+        );
+        expect(
+          find.byType(SnackBar),
+          findsNothing,
+          reason: 'and no empty bar is left standing in its place',
+        );
+      },
+    );
+
+    testWidgets('pressing the mark twice leaves one note, not two', (
+      tester,
+    ) async {
+      final c = await _controller();
+      c.offline.markServed(DateTime.utc(2026, 11, 13));
+      await tester.pumpWidget(
+        OfflineScope(
+          offline: c.offline,
+          child: MaterialApp(
+            home: Scaffold(appBar: AppBar(actions: const [ServerLinkIcon()])),
+          ),
+        ),
+      );
+      await tester.tap(brokenLink);
+      await tester.pump();
+      await tester.tap(brokenLink);
+      await tester.pumpAndSettle(const Duration(milliseconds: 100));
+      expect(find.textContaining('cannot be reached'), findsOneWidget);
+      // and it goes in its own time: nothing is left queued behind it
+      await tester.pumpAndSettle(const Duration(seconds: 10));
+      expect(find.textContaining('cannot be reached'), findsNothing);
+    });
+
     testWidgets('pressing the mark waits behind an Undo', (tester) async {
       final c = await _controller();
       c.offline.markServed(DateTime.utc(2026, 11, 13));

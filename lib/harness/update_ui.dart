@@ -85,23 +85,22 @@ class _UpdateHostState extends State<UpdateHost> {
     if (release == null) return;
     // THE TOAST: an update is available, and one press downloads it. It stays long enough to read and
     // never blocks what the reader came to do.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            context.tr('app.update_ui.version_version_is_available', {
-              'version': release.version,
-            }),
-          ),
-          duration: const Duration(seconds: 12),
-          action: SnackBarAction(
-            label: context.tr('common.action.download.label'),
-            onPressed: () =>
-                showUpdateDialog(context, _updates, startNow: true),
-          ),
+    // queued behind whatever is showing, so it never throws away a message the reader has not read (the broken-link
+    // toast, an Undo)
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.tr('app.update_ui.version_version_is_available', {
+            'version': release.version,
+          }),
         ),
-      );
+        duration: const Duration(seconds: 12),
+        action: SnackBarAction(
+          label: context.tr('common.action.download.label'),
+          onPressed: () => showUpdateDialog(context, _updates, startNow: true),
+        ),
+      ),
+    );
   }
 
   Future<void> _whatsNew() async {
