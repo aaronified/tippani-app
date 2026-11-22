@@ -10,7 +10,6 @@ import '../tags/tag_ops.dart';
 import '../tags/tag_service.dart';
 import 'filtered_quotes_screen.dart';
 import 'library_widgets.dart';
-import 'offline_note.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
@@ -521,7 +520,6 @@ class _TagsScreenState extends State<TagsScreen> {
             )
           : Column(
               children: [
-                const OfflineNote(),
                 if (_busy) const LinearProgressIndicator(),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),

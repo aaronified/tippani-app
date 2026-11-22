@@ -7,7 +7,6 @@ import '../people/picture.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
-import 'offline_note.dart';
 
 void _say(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
@@ -577,7 +576,6 @@ class _MetadataToolsScreenState extends State<MetadataToolsScreen>
       ),
       body: Column(
         children: [
-          const OfflineNote(),
           Expanded(
             child: _problem != null && works == null
                 ? Center(

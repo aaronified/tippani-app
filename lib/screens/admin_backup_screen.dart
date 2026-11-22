@@ -5,7 +5,6 @@ import '../admin/server_files.dart';
 import '../api/cached_read.dart';
 import '../api/server_call.dart';
 import 'admin_widgets.dart';
-import 'offline_note.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
@@ -365,7 +364,6 @@ class _AdminBackupScreenState extends State<AdminBackupScreen> {
       ),
       body: Column(
         children: [
-          const OfflineNote(),
           Expanded(
             child: _problem != null
                 ? Center(

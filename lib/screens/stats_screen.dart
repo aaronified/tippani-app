@@ -12,7 +12,6 @@ import 'filtered_quotes_screen.dart';
 import 'quote_form_screen.dart' show quoteColour;
 import '../l10n/l10n.dart';
 import '../theme/material_surface.dart';
-import 'offline_note.dart';
 
 const _green = Color(0xFF6BAA75);
 const _amber = Color(0xFFE59A4A);
@@ -125,7 +124,6 @@ class _StatsScreenState extends State<StatsScreen> {
       appBar: ShellAppBar(title: Text(context.tr('app.settings.statistics'))),
       body: Column(
         children: [
-          const OfflineNote(),
           Expanded(
             child: _problem != null
                 ? Center(

@@ -13,7 +13,7 @@
   the metadata console, source files, the staged imports, devices, administration's lists, the context rules and the quiz's deck. **Not** the routes sync
   reads (a stale answer there would look like a server that had lost everything) and not `/auth/me`, whose failure is how the app learns it was
   unpaired; the Account page reads its own three answers through `getJsonKept` instead. A read of what was just saved is live (`getJsonLive`), so an old
-  copy is never served in place of a timeout. A screen that shows a kept answer says so, with its date (`OfflineNote`).
+  copy is never served in place of a timeout. A screen that shows a kept answer says so, with its date: by one broken-link mark and one toast for the whole app ([ADR-0033](ADR-0033-The-Broken-Link-Is-One-Mark-And-One-Toast.md)), not a note on each screen.
   Small writes outside anthologies and settings wait the same way (`OfflineWrites`, `outbox.writes`): a tag's name, colour or style, a tag deleted, an
   item restored from the bin and a context rule. Each is applied at once to the kept copy of the screen it changes, goes up in order, and is dropped
   with a line in the app log when the server refuses it. A change made when the server is back goes after the ones that waited. What cannot be undone

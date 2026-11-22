@@ -6,7 +6,6 @@ import '../tools/server_tools.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
-import 'offline_note.dart';
 
 export 'stats_screen.dart';
 
@@ -116,7 +115,6 @@ class _BinScreenState extends State<BinScreen> {
       ),
       body: Column(
         children: [
-          const OfflineNote(),
           Expanded(
             child: _problem != null
                 ? Center(

@@ -7,7 +7,6 @@ import '../pairing/devices.dart';
 import '../l10n/l10n.dart';
 import '../theme/tabler.dart';
 import '../theme/material_surface.dart';
-import 'offline_note.dart';
 
 /// The devices paired with this account, so a lost phone can be unpaired from another. This phone is
 /// marked and cannot be revoked from here (that is Unpair, in Settings), so a stray tap cannot cut off
@@ -136,7 +135,6 @@ class _DevicesScreenState extends State<DevicesScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const OfflineNote(),
             if (_problem != null)
               Text(_problem!, style: TextStyle(color: scheme.error)),
             if (devices == null && _problem == null)

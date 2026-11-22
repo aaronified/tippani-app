@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../api/cached_read.dart';
 import '../api/server_call.dart';
-import 'offline_note.dart';
 import '../l10n/l10n.dart';
 
 /// Reads something from the server and draws it: a bar while it loads, the server's own words and a Try again
@@ -58,7 +57,6 @@ class _LoaderState<T> extends State<Loader<T>> {
     if (_have) {
       return Column(
         children: [
-          const OfflineNote(),
           Expanded(
             child: widget.builder(context, _data as T, () => _read(live: true)),
           ),
