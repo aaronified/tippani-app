@@ -129,7 +129,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     _started = true;
     try {
       final p = await SharedPreferences.getInstance();
-      _enabled = p.getBool(PreferenceScope.instance.key(_enabledKey)) ?? true;
+      _enabled = p.getBool(_controller.preferences.key(_enabledKey)) ?? true;
       _dirty = p.getBool(_dirtyKey) ?? false;
       final ms = p.getInt(_lastKey);
       if (ms != null) _lastSynced = DateTime.fromMillisecondsSinceEpoch(ms);
@@ -146,7 +146,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _wasPaired = _controller.paired;
     _controller.addListener(_pairingChanged);
-    PreferenceScope.instance.addListener(_rescoped);
+    _controller.preferences.addListener(_rescoped);
     notifyListeners();
     _opportunity();
   }
@@ -156,7 +156,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
     try {
       final p = await SharedPreferences.getInstance();
-      await p.setBool(PreferenceScope.instance.key(_enabledKey), on);
+      await p.setBool(_controller.preferences.key(_enabledKey), on);
     } on Object {
       // the choice holds for this run
     }
@@ -167,7 +167,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> _rescoped() async {
     try {
       final p = await SharedPreferences.getInstance();
-      _enabled = p.getBool(PreferenceScope.instance.key(_enabledKey)) ?? true;
+      _enabled = p.getBool(_controller.preferences.key(_enabledKey)) ?? true;
       notifyListeners();
     } on Object {
       // keep what this run holds
@@ -318,7 +318,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     if (_started) {
       WidgetsBinding.instance.removeObserver(this);
       _controller.removeListener(_pairingChanged);
-      PreferenceScope.instance.removeListener(_rescoped);
+      _controller.preferences.removeListener(_rescoped);
     }
     super.dispose();
   }

@@ -51,6 +51,8 @@ class AppController extends ChangeNotifier {
 
   /// Whose preferences the app is drawing (ADR-0034): the account this phone is paired as.
   final PreferenceScope _preferences;
+
+  PreferenceScope get preferences => _preferences;
   final AppLog? _log;
   late final PairingService _pairing = PairingService(
     _settings,
