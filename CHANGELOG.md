@@ -13,6 +13,7 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ### Fixed
 
+- Faces sit beside the name: in the library list, a work's creator faces now lead the creator and year line, to the left of the name, instead of sitting on the line below it beside the kind label.
 - Scanned pages are recorded as scanned: a quote made from a scanned page now reaches the server marked as scanned, not typed. Quotes already sent keep the mark they went with.
 - Your choices follow your account: the read-aloud voice, speed and pitch, the share picture's look, each shelf's sort, grouping and layout, automatic sync on or off, and whether you have had the tour are now kept for the account this phone is paired as. Pairing as someone else shows their choices, not the last person's, and pairing again brings yours back. The first account you pair starts from the choices you made before pairing.
 
