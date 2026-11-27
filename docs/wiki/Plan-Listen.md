@@ -13,6 +13,10 @@ Mockups: `docs/design/listen-mockups.html` in the repository (the wiki is publis
 6. ABS and Grimmory sign in through Authelia (OIDC); Jellyfin by Quick Connect or password. Everything is self-hosted, at the latest versions, reached over Twingate with the same HTTPS as Tippani, on Android 14 or newer.
 7. Every setting is per user (done in `5a18e09` and `90606c9`, [ADR-0034](ADR-0034-The-Apps-Own-Preferences-Belong-To-The-Account-It-Is-Paired-As.md)).
 8. One library, with up to three aspects per work: listen/watch, read, quotes only.
+9. The audiobook player copies the official Audiobookshelf app, including its play screens, plus a bookmark button and a chapter-wise seek bar in Android Auto (full screen and the quarter-screen card).
+10. Reading copies Readest and all of its reading and note-taking features.
+11. Quote text editable in the imports queue.
+12. **Order:** once this plan is final, the support work is built first (see Foundations).
 
 ## Rulings already made
 
@@ -31,6 +35,10 @@ Mockups: `docs/design/listen-mockups.html` in the repository (the wiki is publis
 | Jellyfin scope | Library and quotes; hand off to the Jellyfin app to watch |
 | Mirroring | All items of chosen libraries, synced to the Tippani server |
 | Bookmark triggers | Android Auto button, notification action, widget, in-app button; no physical button |
+| Audiobookshelf player | "Copy what Audiobookshelf already does, including the play screens. Just add the bookmark button and chapter wise seeking bar in the android auto screen (both full screen and the small 1/4th screen)" |
+| Book reading | "Copy readest and all of its reading / note taking features" |
+| Imports queue | Quote text must be editable there; "Then add that feature as well" |
+| Build order | "Once plan is finalised, build all the support stuff (like the import screen enhancement) first" |
 | Network and certificates | HTTPS over Twingate, "same as Tippani" |
 | Android | 14 or newer |
 
@@ -66,6 +74,13 @@ Mockups: `docs/design/listen-mockups.html` in the repository (the wiki is publis
 | Staging queue: `GET /import/staged`, `POST /import/staged/bulk` (metadata only: tags, location, chapter, character, `retarget`, and so on), `POST /import/staged/approve`, `DELETE /import/staged` (batch or selection). **Quote text, note and translation are not editable in the queue.** A whole batch can be approved or discarded | V | `import_staging.go:1336-1460,1849-1890,1963`, `import_staged_bulk.go:44-107` |
 | A staged book quote joins an existing work by ISBN, ASIN, or exact case-insensitive title and author; a movie or show by normalised title and media type, year preferred | V | `import_handlers.go:450-479`, `import_dupes.go` |
 | `POST /books` and `POST /movies` are single-create only, 64 KiB body, no rate limit or quota; `POST /books` answers 409 on an ISBN or ASIN clash; a plain create does no outbound work, but a `source`, `source_id` or `tmdb_id` on a movie create triggers a provider fetch; a write pool of 4 connections | V | `book_handlers.go:308-398`, `movie_handlers.go:379-454`, `server.go:1200` |
+| Audiobookshelf's own app (GPL-3.0): the full player layout, the Chapter Track and Total Track options, jump options 5 to 300 s (default 10), speed presets and 0.1 stepper from 0.5 to 10, sleep timer rules, auto-rewind steps, bookmark UI, 15 s sync (60 s on a metered network), media-button behaviour, settings and defaults; **it publishes whole-book duration with a per-file position to Android Auto, exposes no chapters there, and has no chapter tick marks or tap-to-seek** | V | `advplyr/audiobookshelf-app` `components/app/AudioPlayer.vue`, `modals/*`, `android/.../player/*.kt`, `strings/en-us.json` |
+| Media3 `SimpleBasePlayer` can present chapters as items with chapter-relative position and duration; the legacy bridge sends `getCurrentPosition`, `getBufferedPosition` and the duration to the car; seek reaches `Player.seekTo`; custom actions up to 6 (8 without Next and Previous) | V | `SimpleBasePlayer.java`, `MediaSessionLegacyStub.java`; developer.android.com cars pages |
+| What the Android Auto quarter-screen card draws, and whether the car sends one seek or many while dragging | U | not documented; S3 on the Desktop Head Unit and the owner's head unit |
+| Readest 0.12.26: AGPL-3.0 with no exception; features as listed in the reader section; no reading statistics; premium voice, AI and some translators need Readest's own login | V | `readest/readest` `LICENSE`, `README.md`, `apps/readest-app/src/**` |
+| foliate-js: MIT; EPUB, MOBI, KF8, FB2, CBZ, PDF (experimental); `open`, `goTo`, `addAnnotation` with `draw-annotation`, `relocate`, `search`, TTS SSML; the README says it is unstable and unreleased; `open(url)` loads the whole file into memory | V | `johnfactotum/foliate-js` `view.js`, `README.md` |
+| `flutter_inappwebview` 6.1.5 (Apache-2.0) offers request interception, asset loading, context menu and JS handlers; `webview_flutter` 4.14.1 does not show them in its changelog | V / I | pub.dev; plugin source |
+| Readium Kotlin toolkit 3.4.0 (BSD-3) has no MOBI or AZW3, and no PDF search or highlights | V | `readium/kotlin-toolkit` `README.md` |
 | Tippani Markdown (`as=md`) needs `type:`, `title`, optional `author`, `language`, `isbn` for a book, and `> text` with `- location:`, `- note:`, `- tags:`, `- date:`; there is no `source` or tmdb key | V | `importer/markdown.go:93-`, `movie_markdown.go:166-` |
 
 ## What already exists in the app
@@ -206,45 +221,99 @@ The app learns the methods from `GET /status` (`authMethods`, `serverVersion`). 
 
 | Need | Route (all with `Authorization: Bearer`) |
 |---|---|
-| Libraries, items, series, authors, search | Dart: `GET /api/libraries`, `/api/libraries/:id/items` (`limit`, `page`, `sort`, `minified=1`), `/api/items/:id?expanded=1&include=progress`, `/api/libraries/:id/series`, `/api/libraries/:id/search?q=`, `/api/libraries/:id/personalized` |
+| Libraries, items, series, authors, search | Dart: `GET /api/libraries`, `/api/libraries/:id/items` (`limit`, `page`, `sort`, `minified=1`), `/api/items/:id?expanded=1&include=progress`, `/api/libraries/:id/series`, `/api/libraries/:id/search?q=`, `/api/libraries/:id/personalized`, `GET /api/me/items-in-progress` |
 | Covers | `GET /api/items/:id/cover?width&format=webp&ts`; no token needed |
-| Start | Kotlin: `POST /api/items/:id/play` with `forceDirectPlay: true` and `supportedMimeTypes`; if the answer is a transcode (HLS), the app plays the `m3u8` as is |
+| Start | Kotlin: `POST /api/items/:id/play` with `forceDirectPlay: true` and `supportedMimeTypes`; a transcode answer plays the `m3u8` as is |
 | Stream a track | `GET {contentUrl}` (`/api/items/:id/file/:ino`) with the header; never `?token=` in a URL |
-| Session | `POST /api/session/:id/sync {currentTime,timeListened,duration}` about every 15 s **while audio plays**; `POST …/close` on stop |
+| Session | `POST /api/session/:id/sync {currentTime,timeListened,duration}`; `POST …/close` on stop |
 | Offline listening | A local session (UUID, `updatedAt` = last listened time) uploaded by `POST /api/session/local-all` when ABS is next reached |
-| Bookmark | `POST /api/me/item/:id/bookmark {time, title}`; no title limit; a short excerpt is kept as the title |
+| Bookmark | `POST /api/me/item/:id/bookmark {time, title}`; `PATCH` same body; `DELETE …/bookmark/:time` |
 | Download | `GET /api/items/:id/file/:ino` per audio file with `Range` from the `.part` length; the zip route is never used. **The Download button follows `user.permissions.download`** |
 
-Behaviours fixed in this revision:
+### The player copies the Audiobookshelf app (V, `advplyr/audiobookshelf-app`, GPL-3.0)
 
-- **Tracks and chapters.** A multi-file book is a playlist with `startOffset`; position = `startOffset` + track position and is what is sent as `currentTime`. Chapters come from ABS `chapters`; with none, none are invented.
-- **Podcast libraries are out of scope**; book libraries only.
-- **Series order** follows ABS series sequence.
-- **Audio focus** handled by Media3 (pause for a call, duck for navigation prompts); `setHandleAudioBecomingNoisy(true)` pauses on Bluetooth or headphone disconnect.
-- **Headset and steering-wheel media buttons** keep their play, pause, next and previous meaning through Media3's defaults. Only a bookmark from a physical button is not offered.
-- **Smart rewind:** after a pause longer than five minutes, resume 10 s earlier, growing to 30 s (settings).
-- **Positions are seconds in the whole book** everywhere; converted to a track and offset only at the player.
-- **Conflict rule, driver-safe.** ABS already applies the rule: an offline session's progress is applied only if its `updatedAt` is not older than stored progress. The app adds no blocking prompt. Android Auto and `onPlaybackResumption` resume the **local** position; on the phone, when ABS holds a newer position from another device, a banner offers "Jump to 55:00 from Pixel" ([ADR-0016](ADR-0016-Conflicts-Are-Chosen-Per-Item-Never-By-A-Rule.md): chosen per item; [ADR-0018](ADR-0018-Sync-Runs-By-Itself-And-Never-Stops-For-A-Conflict.md): never stops for a conflict; a banner is not a stop; the new ADR records this).
-- **The 15-second progress clock** exists only while audio plays; it is not an idle or retry timer, and the new ADR says so.
+The owner's ruling: "copy what Audiobookshelf already does, including the play screens", plus a bookmark button and a chapter-wise seek bar in Android Auto. The structure, labels and rules below are read from the official app's source. Styling follows this app's Material You and Tabler rules ([ADR-0005](ADR-0005-Material-You-Only.md)), so it is the same screens in this app's own look. Where the official app has no feature, none is invented.
+
+**Full-screen player, top to bottom** (`components/app/AudioPlayer.vue`):
+
+| Element | Behaviour |
+|---|---|
+| Collapse chevron (top left) | Closes to the mini player. A swipe down of more than 100 px does the same; a swipe up from the mini bar opens it |
+| Play-method label (top centre) | Small text: Direct, Local or Transcode |
+| Top right | A cast button only where casting is available (not in this plan), and a more menu |
+| Cover | Large, background tinted from the cover; a red error icon on the cover when progress sync has failed twice, which opens "Progress Sync Failed" |
+| Title and author | Title line shows the **current chapter title** (the book title when there are no chapters); author below; tapping opens the item |
+| Total bar | A thin bar above the main track with elapsed and remaining for the **whole book**, shown only when both Chapter Track and Total Track are on |
+| Main track | Elapsed on the left, "-remaining" on the right, a 6 px bar with buffered, ready and played segments and a draggable cursor; **no chapter tick marks and no tap-to-seek** in the official app. Seeks on release |
+| Controls | Previous chapter, jump back (labelled "10s"), play or pause (a spinner while loading or seeking), jump forward, next chapter. Chapter buttons only in full screen and unlocked |
+| Bottom bar | Bookmark (hidden for podcasts), speed ("1.2x"), sleep timer (a moon, or the remaining minutes in green once running), chapters list |
+| Mini player | Cover, "Title | Chapter", author, play or pause, jump back and forward, a thin track; tap opens the full player |
+| More menu | History, Total Track, Chapter Track, Scale Elapsed Time by Speed, Lock Player, Close player |
+
+**Rules copied exactly:**
+
+- **Chapter Track** (a player setting, off by default): when on, the main bar spans the current chapter and elapsed and remaining are chapter-relative; dragging is clamped to the chapter; the whole-book bar remains above it if Total Track is on. At least one of the two stays on. **Scale Elapsed Time by Speed** (on by default) divides elapsed and remaining by the playback rate.
+- **Previous chapter:** within 4 s of a chapter's start go to the previous chapter, otherwise restart the current one. **Next chapter** is the first chapter that starts after the current time. With no chapters the chapter buttons are dimmed and do nothing.
+- **Jump:** default 10 s back and 10 s forward; options 5, 10, 15, 30, 60, 120, 300 s. Labels read "30s" below two minutes and "5m" above.
+- **Speed:** presets 0.5, 1, 1.2, 1.5, 1.7, 2, 3, a minus and plus stepper in 0.1 steps, from 0.5 to 10. The title is "Playback Speed".
+- **Sleep timer:** options 5, 10, 15, 30, 45, 60, 90 minutes, "End of Chapter" (when chapters exist), and a custom time. While running there are minus and plus five minutes and Cancel Timer. The last 60 s fade the volume from 1.0 to 0.1 unless fading is disabled; an optional chime at 30 s; end of chapter uses the next chapter when under 10 s remain. **Shake to reset** works while the timer runs or within two minutes after it ends, resets it to the same length, vibrates, and plays; sensitivity Very Low to Very High, default Medium. **Auto sleep timer** defaults to 22:00 to 06:00 and 15 minutes, wraps midnight, can be cancelled for the rest of the window, and can rewind (default 5 minutes) when it starts or re-arms.
+- **Auto rewind on resume:** a pause under 10 s rewinds 0; 10 s to 1 min, 3 s; 1 to 5 min, 10 s; 5 to 30 min, 20 s; 30 min or more, 29.5 s. Never before the current chapter's start. Off by "Disable auto rewind".
+- **Bookmarks** (bottom bar): "Your Bookmarks" lists rows with a bookmark icon (filled when it is at the current time), title, timestamp (divided by speed), edit and delete. Tap a row to seek and close. "Create Bookmark" sits in a sticky footer with the current time and is hidden when a bookmark already exists at that exact time. New Bookmark has a "Note" field whose default is the date and time ("MMM dd, yyyy HH:mm"). Delete asks "Remove Bookmark". Stored as `{title, time: floor(currentTime)}`. Online only in the official app; **here a press while offline is kept in `listen.db` and sent later**.
+- **Chapters list:** a panel with "{n} Chapters", columns Chapters, Start and Duration (both divided by speed), the current chapter highlighted with a bar on its left edge, auto-scrolled to centre, tap to seek and close.
+- **Progress sync:** every 15 s while playing on an unmetered network, at most every 60 s on a metered one; also on pause, stop, finish and close. Two failed syncs in a row show the red error icon. When the server's progress is newer while a local item is open, the player moves to it (when paused) and updates local progress; there is **no conflict dialog and no Sync-now button** in the official app. Starting a downloaded item at a position asks "Start playback for "{title}" at {time}?". If under 5 s remain, start at 0.
+- **Media buttons:** a single press of a headset or steering-wheel button toggles play; double press jumps back and plays; three or more jump forward and play; Next and Previous keys jump forward and back; fast-forward and rewind keys jump.
+- **Notification and lock screen:** play or pause, rewind and fast-forward (compact), the jump amounts from settings; the seek bar only if "Allow position seeking on media notification controls" is on.
+- **Settings** (copied with their defaults): Lock orientation; Haptic feedback (off, light, medium, heavy; default light); Jump backwards and forwards time (10 s); Disable auto rewind (off); Enable mp3 index seeking (off); Allow position seeking on media notification controls (off); Disable shake to reset (off); Shake sensitivity (medium); Disable audio fade out (off); Disable vibrate on reset (off); Play a chime when almost finished (off); Auto sleep timer (off), start time, end time, length, auto rewind and rewind time; Download using cellular and Streaming using cellular (Ask confirmation, Always, Never; default Always); Android Auto "Alphabetical drawdown limit" (100) and "Series books order" (sequence ascending). All are per account ([ADR-0034](ADR-0034-The-Apps-Own-Preferences-Belong-To-The-Account-It-Is-Paired-As.md)).
+- **Downloads page:** "Downloads (N)", rows with a cover, title, track count and size, a total size footer; per item a download button with "Downloading... (N%)" and "Download complete. Processing...", a confirmation naming the track count and the folder, and "Delete local item". Downloads include every audio file and the cover (and the ebook file when there is one). A downloaded item plays locally with no server session. ABS stores to the app's internal storage by default; this app does the same (a folder choice is not planned).
+- **Labels** are taken from the official app's string file and kept in English and Bengali tokens.
+
+**Not in the official app, so not built:** chapter tick marks on the bar, tap-to-seek on the bar, a playback queue screen, a sync-now button, an "open in browser" button, a conflict dialog.
+
+**This app's two additions** are in Android Auto (below). Everything else is the official behaviour.
+
+### Where this app departs from the official app, deliberately
+
+| Point | Official app | This plan | Why |
+|---|---|---|---|
+| Android Auto position and duration | Whole-book duration with a per-file position, which can disagree on multi-file books | One consistent chapter-relative position and duration (below) | The owner asked for a chapter-wise bar |
+| Android Auto bookmark button | None | A Bookmark custom action | The owner asked for it |
+| Bookmark while offline | Online only | Kept and sent later | Driving with no signal |
+| Player library | Exoplayer 2 `MediaSessionConnector` | Media3 | Media3 is the current library; Android Auto still gets the same session |
+| Look | Its own dark theme | Material You, Tabler icons | [ADR-0005](ADR-0005-Material-You-Only.md) |
+
+Behaviours kept from the first draft: tracks and chapters (multi-file playlist with `startOffset`; position is seconds in the whole book everywhere), podcasts out of scope, series order, audio focus and becoming-noisy handling, and the driver-safe conflict rule (ABS applies its timestamp rule; the app resumes the local position and offers "Jump to 55:00 from Pixel" as a banner, which [ADR-0018](ADR-0018-Sync-Runs-By-Itself-And-Never-Stops-For-A-Conflict.md) allows because it never stops sync).
 
 ## Android Auto
 
 - Manifest: `automotive_app_desc` (`uses name="media"`), Media3 intent filters, `foregroundServiceType="mediaPlayback"`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, `POST_NOTIFICATIONS`.
 - **No autoplay on connect.** `onPlaybackResumption` restores the last item and position from `listen.db` using local data only.
-- **Browse tree** (4 root tabs, all browsable): **Continue**, **Downloaded**, **Library** (ABS libraries, series, authors, items; depth limits U, S3), **Bookmarks** (recent bookmarks; a tap seeks; a clip not yet transcribed says so). An item opens into its chapters. Search arrives through `onGetSearchResult` and `onPlayFromSearch`.
-- **Bookmark button.** `MediaSession.Builder.setMediaButtonPreferences([bookmark])`, session command `BOOKMARK`, added for the Android Auto controller (`isAutoCompanionController`). Media3 places custom buttons in `SLOT_OVERFLOW` by default; skip slots are reserved so the button is as visible as the head unit allows. Where it lands is S3's gate; if it is in an overflow menu the owner decides.
-- **Feedback with no toast.** A press swaps the icon to a tick for two seconds and plays a short tone. A failed press swaps to a cross and a different tone; the clip row exists before either.
-- Nothing on the car screen needs reading; transcription happens later.
+- **Browse tree: the official app's four tabs** (the root hint allows four): **Continue** (items in progress), **Recent**, **Libraries** (Authors, Series, Collections, Discovery; grouped by letter above the drawdown limit; series books in sequence order, "N. Title"), **Downloads**. There is **no Bookmarks tab**: the owner asked for the bookmark button, not a tab. Items show the author as subtitle, the cover, and a played-percentage. Search arrives through `onGetSearchResult` and `onPlayFromSearch` (the first title containing the query).
+- **Custom actions** (up to 6 are allowed, or 8 without Next and Previous): **Jump Backward**, **Jump Forward**, **Change Playback Speed** (cycles 0.5, 1, 1.2, 1.5, 2, 3), the official app's three, and **Bookmark** (this plan's addition, with a stateful icon). The first three use the jump seconds from settings. Next and Previous are chapter skips, with their slots reserved so custom actions do not displace them. Placement by the head unit: the actions go in the transport row "if space permits", otherwise the overflow menu (V from the documentation), and S3 records where each lands.
+
+### The chapter-wise seek bar (new; V in Media3 source, behaviour on a head unit U)
+
+Android Auto draws the seek bar from the session's position and duration. Whatever the player reports is what the car shows. The plan therefore reports **one chapter at a time**:
+
+- A `ChapterPlayer` built on Media3 `SimpleBasePlayer` wraps the real ExoPlayer, which plays the whole book. Its `getState()` presents the **current chapter** as the current item with `durationUs` = the chapter's length, a chapter-relative `contentPosition` that advances (`PositionSupplier.getExtrapolating`), and a buffered position that is chapter-relative.
+- The playlist it reports is the chapter list (unique UID per chapter), so the car's queue is the chapters and Next and Previous are chapter skips. `maxSeekToPreviousPositionMs` is 4000, which reproduces the official "within 4 s go to the previous chapter" rule.
+- `handleSeek` maps a chapter-relative seek to `chapterStart + position` on the real player. `COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM`, the seek-to-next and previous commands and `handleSetPlayWhenReady`, `handlePrepare`, `handleStop` and `handleRelease` are implemented; `invalidateState()` is called on real-player events and at each chapter boundary, and a media-item transition is emitted when playback crosses a boundary so the car re-reads the title and duration.
+- **The car may send one seek on release or many while dragging; the source and documentation do not say.** `handleSeek` is therefore cheap and idempotent.
+- The title shows the chapter; the subtitle shows the book and whole-book progress ("Dust of Dreams · 41% · 5 h 20 m left"), so the whole-book position is still readable.
+- **Books with no chapters** report the track, or the whole book, as one item. No chapters are invented.
+- **Alternative if the wrapper proves fragile (S3):** one `MediaItem` per chapter with a clipping configuration on the same files. It is simpler and every layer sees the right numbers, but gapless playback and seek cost across clipped items are unverified.
+- **Phone side:** the same `ChapterPlayer` feeds the in-app player, whose Chapter Track option then only chooses what the phone bar shows. The car always shows the chapter bar.
+
+**The quarter-screen card.** The documentation says Google and the car maker draw the playback view, the minimised control bar and the queue, and says nothing about the dashboard's small media card. The Media3 and legacy session mapping means the same position, duration and custom actions reach it, but **whether the card shows the seek bar or any custom action is not documented**, and the app cannot change how the card is drawn. The plan promises the data is right on both; spike S3 shows what each screen draws on the owner's head unit and on the Desktop Head Unit (setup steps are in the Android developer pages and are an owner-run item).
 
 ### Triggers
 
 | Trigger | Surface |
 |---|---|
-| Bookmark button | Android Auto now-playing |
+| Bookmark action | Android Auto now-playing |
 | Notification action | Phone lock screen and shade |
 | Widget | Home screen (bookmark, play/pause) |
-| In-app button | Player screen |
-| Physical buttons | Not a bookmark source; they keep their playback meaning |
+| In-app button | Player screen (the bookmark icon in the bottom bar) |
+| Physical buttons | Keep the official app's meaning (above); a bookmark from a physical button is not offered |
 
 ### Distribution
 
@@ -288,8 +357,8 @@ pending → clipped → transcribed → queued (imports) → titled (ABS)
   At 20 bookmarks a day with the default window the whole feature is about 1.4 to 5.6% of one battery spread over the charging that runs it. Storage is a clip of roughly 0.5 MB plus about 1 KB of text per minute.
 - **The imports queue, as the server defines it.** The app writes one Markdown file per bookmark and uploads it as a unique filename `bookmark-<uuid>.md`, so the **batch is named by that file** and shows in Pending imports as one batch. The file has `type: book`, the work's own `title`, `author`, `language` and, when the item has them, `isbn`, so the quote **joins the existing work** (the server matches by ISBN, ASIN, or exact case-insensitive title and author; the mirror engine stores the same strings, so the match is exact). The quote is `> transcript` with `- location: 3:42:10 · Chapter 14`, `- date: <press time>`, `- note: From an audiobook bookmark`, `- tags: bookmark`.
 - **Idempotency.** `/import/auto` has no Idempotency-Key. Before a re-upload the app asks `GET /import/staged` whether a batch with that filename exists; if it does, the row is marked queued and nothing is sent. After an approval the quote is in the library under the server's own dedupe (`(book_id, dedupe_hash)`), so a lost-response retry cannot create a second one.
-- **What the queue cannot do (V).** Its quote text, note and translation are not editable; tags, location, chapter, character and the target work are. To shorten a transcript the owner has two paths: approve it and edit the quote afterward in the library (the app's ordinary edit), or open the bookmark in the app's local Bookmarks list and trim it **before** it is queued (optional; with the default flow the row is queued as transcribed). Approving or discarding a whole batch is one press.
-- **`voice` provenance.** A queued quote gets source `md`, because staged imports cannot carry `voice`. The tag and the note keep the provenance. Direct creation (`POST /quotes` with `source: voice` and an Idempotency-Key) would keep it but would skip the queue the owner asked for. Open question D-P.
+- **Editing text in the queue (the support work, built first).** Today the server's queue edits tags, location, chapter, character and the target work but **not the quote text, note or translation** (V). The owner asked for that feature, so the first thing built is a server change that lets one staged quote's text and note be edited, and an app control on the Pending imports screen to trim it (see Foundations). A server that does not advertise the feature leaves the text read-only, and the owner then trims after approving, with the app's ordinary quote edit. Approving or discarding a whole batch is one press.
+- **`voice` provenance.** A queued quote gets source `md`, because staged imports cannot carry `voice`. The tag and the note keep the provenance. Direct creation (`POST /quotes` with `source: voice` and an Idempotency-Key) would keep it but would skip the queue the owner asked for. Not asked again; the owner chose the queue.
 - **Opening the Pending imports screen** shows a row "3 bookmarks waiting for transcription" at the top and, if the battery is 15% or more, transcribes them in the foreground; each finished one is uploaded and appears as its own batch. Below 15% it says "Battery below 15%: transcription paused" and does nothing else.
 - **Failure leaves the earlier steps intact.** A failed upload leaves "Not queued. Retry." on the bookmark; the clip and the ABS bookmark are never lost. Acceptance: kill the process after each step and assert exactly one ABS bookmark and one batch.
 - **Transcripts are text of a copyrighted book.** They sit in the owner's own library and sync to the owner's own server like any quote. Each bookmark has "Delete clip and transcript". Nothing is shared elsewhere.
@@ -339,6 +408,107 @@ A custom `AudioProcessor` is installed by overriding `DefaultRenderersFactory.bu
 - **Watch:** a **Watch** button on the work. The official Jellyfin app has no item deep link (V), so the plan offers both: **Open in browser** (`<server>/web/index.html#/details?id=<id>&serverId=<serverId>`, `serverId` from the sign-in result) and **Open Jellyfin app** (starts the app on its last server). Open question D-J picks the default.
 - **Not planned:** an in-app player, downloads, watch-progress sync, transcoding.
 - **Rate care:** never loop the password login; after three refused attempts stop and say so.
+
+## Reading books: Readest parity
+
+The owner's ruling: copy Readest and all of its reading and note-taking features. Readest is `readest/readest` (app 0.12.26), a Tauri and React app built on foliate-js. This section reproduces its features in this app. It does **not** copy its code (see the licence question below).
+
+### Licence first
+
+| Item | Finding (V) | Consequence |
+|---|---|---|
+| Readest | The unmodified GNU AGPL v3, "or any later version"; no exception text | Copying Readest **code** into this GPL-3.0 app attaches AGPL section 13 (network use) to the copied parts. That is a legal question for the owner or counsel, not decided here. The plan copies **features and behaviour**, written fresh |
+| Readest's foliate-js | A fork, `readest/foliate-js` (AGPL territory) | Not used |
+| foliate-js (stock) | MIT; vendored zip.js (BSD-3), fflate (MIT), PDF.js (Apache-2.0) | Used, pinned by commit |
+| Grimmory's web reader | Vendors a modified foliate-js; Grimmory is AGPL-3.0 | Used only through its REST API, never its code |
+
+### Engine decision
+
+| Criterion (1 poor to 5 best, equal weight, scores are the research agent's judgement) | A. foliate-js in `flutter_inappwebview` | B. Readium Kotlin toolkit in a platform view | C. `flutter_readium` package |
+|---|---|---|---|
+| Format coverage versus Readest | 5 | 2 | 2 |
+| CFI annotation fidelity | 5 | 2 | 2 |
+| Search | 3 | 4 | 4 |
+| TTS sentence highlight | 3 | 4 | 4 |
+| Selection UX | 3 | 4 | 4 |
+| Performance | 3 | 4 | 3 |
+| APK size | 5 | 3 | 3 |
+| Licence fit (GPL-3.0) | 5 | 5 | 5 |
+| Maintenance burden | 2 | 3 | 2 |
+| Testability | 3 | 2 | 2 |
+| **Total** | **37** | **33** | **31** |
+
+**Recommendation: A.** It is the only option that covers MOBI, AZW3, FB2 and CBZ as Readest does, and the only one that gives the standard CFI that Grimmory's reader also uses. Primary downside: foliate-js is explicitly unstable and unreleased (its README says expect API breaks), so the plan pins one commit, wraps it in a small adapter, and owns the whole bridge and the selection menu. Readium's EPUB navigator would win only if MOBI, AZW3 and FB2 were dropped; Readium has no PDF search or highlights and no MOBI, and `flutter_readium` demands a very new toolchain.
+
+**How it runs.**
+
+- `flutter_inappwebview` 6.1.5 (Apache-2.0; the stable line is old and a beta is active, maintained largely by one person, so it is pinned and wrapped). `webview_flutter` has no confirmed custom selection menu or request interception.
+- The book is **never sent as base64** and never opened by URL (foliate-js's `open(url)` pulls the whole file into memory). A Dart loopback server serves the file with HTTP Range, and a custom foliate loader (`{loadText, loadBlob, getSize}`) reads ranges. Whether the package's own localhost server supports Range is not confirmed, so the plan uses a small Dart server of its own.
+- The vendored JS is about 3.2 MB (PDF.js is 3 MB of it). foliate-js needs a recent System WebView (about version 89 or newer: `Intl.Segmenter`, private fields, top-level await). On Android 14 that is normally met; the app checks the WebView version on first open and says what to update. ES modules must load from `https://appassets.androidplatform.net` or a loopback origin, not `file://`.
+- **Bridge messages** (the research agent's design; foliate-js has none of its own). Host to JS: open, goTo (cfi, fraction, href), next, prev, setAttributes, setStyles, add and delete annotation, search and clear, tts next, previous and setMark. JS to host: ready, metadata and toc, relocate (with the DOM range stripped), load, selection `{cfi, text, rect}`, show-annotation `{value, rect}`, create-overlay, link, search-result, tts-ssml, error. Annotations are re-added on each `create-overlay`.
+- **Selection** is the main cost. The native Android selection handles work inside the iframes; the app suppresses the system menu and shows its own Flutter toolbar from the `selection` message.
+- A book's scripts are not run, and the page loads under a content security policy, as foliate-js requires.
+
+### Formats
+
+| Format | Engine | Note |
+|---|---|---|
+| EPUB 2 and 3 | foliate-js | Reflowable and fixed layout |
+| MOBI, AZW, AZW3 (KF8) | foliate-js | |
+| FB2, FBZ | foliate-js | |
+| CBZ | foliate-js | Fixed layout; wide-page spreads |
+| PDF | foliate-js with PDF.js | Marked experimental by its author; larger PDFs are slow in a WebView. Highlights are stored as page and normalised rectangles; `pdfrx` (PDFium) is the fallback if PDF.js is too slow |
+| TXT, Markdown, HTML | Converted to EPUB in Dart before opening | Readest does the same; TXT detects its encoding and chapter headings |
+| DOCX, RTF | Converted to EPUB | As Readest |
+| DRM | Not handled (Readest has none either) | |
+
+### What is copied (Readest feature to this app)
+
+| Area | Readest behaviour (V) | In this app |
+|---|---|---|
+| Reader chrome | Header bar, footer progress bar with optional page buttons, sidebar with tabs Contents, Annotations, Bookmarks and a search bar, a resizable notebook | Same, laid out for a phone: header and footer toggle on a centre tap; the sidebar and notebook are bottom sheets |
+| Navigation | The page splits in halves and the middle quarter toggles the chrome; swap sides; swipe; pull down to bookmark; volume keys to turn pages (off by default); image tap or long press opens a viewer; pinch to zoom | Same, each switchable |
+| Reading modes | Paginated or scrolled; scroll overlap and hidden scrollbar; auto-scroll (25 to 500 px/s); page-turn styles push, slide, curl; up to 2 columns; gap, margins (44 top and bottom, 16 sides), max width and height | Same |
+| Aids | Reading ruler (band or line), paragraph mode, RSVP speed reading, zoom 50 to 500%, e-ink mode, a dual-book "Parallel Read" | Same except Parallel Read and the multi-window features, which have no phone equivalent |
+| Header and footer info | Remaining time and pages, progress as fraction, percent or reference pages, clock, battery, stable page numbers (1500 characters per location) | Same |
+| Fonts | Serif, sans, mono and CJK defaults; size 8 to 120, default 16; weight; ignore publisher fonts; override book font; custom fonts | Same, with the font files the app already bundles plus custom imports |
+| Themes | default, gray, sepia, grass, cherry, sky, solarized, gruvbox, nord, contrast, sunset, each light and dark; three custom themes; background texture | Same palettes inside the reader; the app chrome stays Material You |
+| Typography | Paragraph spacing 0.6, line height 1.4, word and letter spacing, text indent, justify, hyphenate; writing mode auto, horizontal, vertical, RTL; override book layout and colour; replace quotation marks; custom CSS for content and for the reader UI; dialogue highlighting; image contrast and invert in dark mode | Same |
+| Settings scope | Global by default, per-book overrides | Same, per account ([ADR-0034](ADR-0034-The-Apps-Own-Preferences-Belong-To-The-Account-It-Is-Paired-As.md)) |
+| Annotations | Highlight, underline, squiggly; colours red, yellow, green, blue, violet and custom; notes; bookmarks; "global" (every occurrence in the section); soft delete; range editor | Same data model (below) |
+| Selection tools | 16 tools. Default: copy, highlight, annotate, search, dictionary, translate, speak, proofread; configurable | copy, copy link, highlight, annotate, search, dictionary, system dictionary, translate, speak, share, quote card. **Not copied:** AI context dictionary, X-Ray, vocabulary, proofread (all tied to Readest's AI or paid services) |
+| Notebook | Notes grouped by chapter with search; a note editor | Same |
+| Search | In book or in section; modes contains, whole words, regex, nearby words (10); match case and diacritics; history; results grouped by chapter with excerpts | Same. foliate-js search is slow on large books, so results stream in |
+| Dictionary | Wiktionary, Wikipedia, the system dictionary, imported StarDict, MDict, DICT, slob and BGL dictionaries, web templates (Google, Urban Dictionary, Merriam-Webster, Goodreads) | Wiktionary, Wikipedia, the Android system dictionary through `ACTION_PROCESS_TEXT`, imported StarDict and MDict, and web templates; BGL, slob and DICT follow only if the importer is small |
+| Translation | DeepL, Azure, Google (unofficial endpoint), Yandex (via Readest's proxy), custom translators and LLM prompts; whole-book bilingual translation; Word Lens | **DeepL and Azure with the owner's own key**, plus a custom OpenAI-compatible endpoint with the owner's key. The unofficial Google and Yandex routes and anything that needs a Readest login are not used. Whole-book bilingual translation is copied (translate on demand, cached) |
+| Text to speech | Web Speech, Edge TTS, the native engine, Readest Voice (paid), a custom OpenAI-compatible service, EPUB Media Overlays; sentence or word highlight; gaps; sleep timer; stop at chapter end; offline voice cache | The Android system engine (the app already uses `flutter_tts`) driven by foliate-js's SSML, with sentence and word highlight, a sleep timer and EPUB3 Media Overlays; a custom OpenAI-compatible voice with the owner's key. Edge TTS (an unofficial endpoint) and Readest Voice are not used |
+| Progress | Per-book progress (page of total) and CFI; KOReader sync (checksum by binary or filename) | Progress and CFI per book on the phone; KOReader sync is offered only if the owner asks (D-K). Grimmory progress sync is **not** built (the owner's decision) |
+| Export | Markdown, plain text and a re-importable JSON, with a configurable template (title, author, date, cover, chapters, quotes, context sentence, notes, page, link type, excluded colours and styles) | Same, plus the app's own Tippani Markdown, which is what the Tippani server imports |
+| Import | ReadEra annotations, `.mrexpt`, CrossPoint clippings | Same, plus Tippani Markdown and the Readest JSON |
+| Share | Text, QR, quote card image | The app's existing Share screen and picture, extended to a book quote |
+| Library | Import from file, folder, pasted text, web page, feed URL and OPDS catalogues; grid or list; group by series, author, tag, subject, status; sort by title, author, updated, created, series, size, format, published, progress, pages, time remaining; reading status unread, reading, finished, abandoned; metadata editing | The Tippani library already groups and sorts works and keeps status. Local files become works with a `file` edition whose source is the device. OPDS catalogues and the other import routes are added to the same Add flow |
+| Accessibility | Aria labels; keyboard navigation | TalkBack over the WebView (Android exposes WebView content to it) and labelled controls; hardware keys for page turns |
+
+**Not reproduced because Readest needs its own accounts, servers or paid plans:** Readest cloud sync of books, configs, notes and stats; Readest Voice; the AI Assistant, X-Ray and context dictionary; quota-gated translators; share links and "send to device" by email. **Readest has no reading statistics** (its own README lists them as planned), so there is nothing to copy. Its Readwise, Hardcover, Notion and Obsidian pushes are not built: this app's own export and the Tippani server are the destinations, unless the owner asks (D-K).
+
+### Notes become Tippani quotes
+
+The owner's product is quotes. A highlight is a quote on the work, with the book's text, the note, the chapter and the location.
+
+| Readest `BookNote` field | This app |
+|---|---|
+| `type`: bookmark, annotation, excerpt, notebook | Bookmark: a reading bookmark; annotation and excerpt: a quote; notebook: a note on the work |
+| `cfi` (and PDF `page`, normalised rectangles) | Kept in `library.db` on the quote's local row; sent to the server as the quote's `location` text (a readable chapter and page) because the server has no CFI field |
+| `text`, `note` | The quote text and note |
+| `style` (highlight, underline, squiggly), `color` | Kept locally; the quote's colour (the server has a quote colour) takes the nearest of its own colours |
+| `global` | Kept locally |
+| `createdAt`, `updatedAt`, `deletedAt` | The quote's dates; a deleted highlight goes to the bin like any quote |
+
+Quotes made while reading are created directly (`POST /annotations` with `source: manual` and the work's server id, with an Idempotency-Key), not through the imports queue. A highlight you make on the phone and a bookmark on Grimmory are linked by the Grimmory annotation endpoints below. **No CFI field was found among the quote fields the server exposes** (T0 reads the annotation schema to confirm). If there is none, a server change is proposed so a quote can carry one; until then a quote's CFI exists only on the phone that made it. A highlight made on another phone is placed by matching its text in the section (the same text-matching approach Readest's fallback uses).
+
+### Grimmory sync of highlights and bookmarks
+
+`/api/v1/bookmarks` (EPUB `cfi`, PDF `pageNumber`) and `/api/v1/annotations` (`cfi`, `text`, `color`, `style` highlight, underline, strikethrough or squiggly, `note`, `chapterTitle`) are read and written both ways for books mirrored from Grimmory (V from `develop`). Grimmory's reader vendors a modified foliate-js, so CFIs from stock foliate-js are expected to read there; this is verified by a test against a real Grimmory export before any sync is turned on. Conflicts are chosen per item as elsewhere, and a highlight deleted on either side is deleted on the other after a confirmation the first time. Progress sync stays off.
 
 ## Mirroring: every item becomes a work
 
@@ -424,10 +594,27 @@ Added to `PrefKeys`: skip back and forward seconds, default speed, sleep timer c
 - **Dependencies to licence-check (ADR-0002):** OkHttp, WorkManager, Media3, whisper.cpp, any PKCE hash helper.
 - **The cloud container** can run Dart analyze and tests and, with the Android SDK added, a debug build. It cannot run Android Auto, a head unit, Whisper on the owner's phone, or a sign-in through the owner's Authelia or Jellyfin. Those are owner-run items.
 
+## Foundations: built first
+
+The owner's order: once the plan is final, the support work comes first. These are the pieces that stand on their own, have a caller today, and are testable against the existing fakes. Each is one commit with its tests and docs, and none of them needs a new subsystem.
+
+| # | Foundation | Repository | What it is | Acceptance |
+|---|---|---|---|---|
+| F1 | **Edit a staged quote's text** | Tippani server | `POST /import/staged/bulk` accepts `text` and `note` (and `translation`) **only when the selection is exactly one staged quote**; anything else answers 400. The staged quote's `dedupe_hash` is recomputed from the new text; a clash with another staged quote of the same staged work answers 409 with the existing row. `/capabilities` lists a `staged-text-edit` feature so older apps and newer servers agree. Registered as a plan in the server's queue because the owner asked for it | Go tests through the HTTP API: edit then list returns the new text; two quotes edited to the same text give 409; a bulk selection with `text` gives 400; approval writes the edited text; the capability appears |
+| F2 | **Edit and trim a quote on Pending imports** | App | The existing quote edit sheet on `lib/screens/staging_screen.dart` gains Text and Note fields when the server lists `staged-text-edit`, and a **Trim** control: the text is shown as sentences and the owner keeps a contiguous run of them. Without the capability the fields are read-only and the sheet says why | A widget test drives the real screen against the fake server: open Pending, press edit, change the text, save, and see the new text listed; with an older server the fields are read-only; the fake server's `/import/staged/bulk` honours `text` |
+| F3 | **Dictated quotes send `voice`** | App | Quotes whose text came from dictation are created with `source: voice`, as the server accepts (`capabilities` lists `voice-source`); the stale comment in `lib/sync/push_sync.dart` is replaced. Older servers keep receiving `manual` | A sync test: a dictated quote reaches the fake server with `voice` when the capability is listed and `manual` when it is not; the other sources are unchanged |
+| F4 | **One-quote file for the imports queue** | App | A pure builder writes the Tippani Markdown for one quote on one work (the work's own `title`, `author`, `language`, `isbn`; the quote with `location`, `date`, `note`, `tags`); an `ImportService` method uploads it with a unique name `bookmark-<uuid>.md` and first asks `GET /import/staged` whether a batch with that name exists, so a retry never queues it twice | The builder's file round-trips through the app's own Markdown reader to the same work and quote; an upload sends one multipart file with that name; a second call with the batch already listed sends nothing |
+
+Deferred foundations, with the reason: the `work_editions` table (no caller until the mirror engine), the new Tabler glyphs (the icon fonts are a generated subset and the generator is not in this repository), the backup exclusion rules (they name directories that do not exist yet), the Kotlin and NDK steps in `ci.yml` (no native code yet), and fakes for Audiobookshelf, Grimmory and Jellyfin (written with the clients that call them, from the routes marked V above).
+
 ## Tasks
 
-The owner's primary ask, Android Auto, comes first among the spikes. Sizes: S under a day, M a few days, L about a week or more. A task is not done until its acceptance passes and its mutation check was run.
+The owner's order is Foundations first. The owner's primary ask, Android Auto, is first among the spikes. Sizes: S under a day, M a few days, L about a week or more. A task is not done until its acceptance passes and its mutation check was run.
 
+- [ ] **F1 · Server: edit a staged quote's text (S).** As in Foundations.
+- [ ] **F2 · App: edit and trim on Pending imports (S).**
+- [ ] **F3 · App: `voice` for dictated quotes (S).**
+- [ ] **F4 · App: the one-quote file and its upload (S).**
 - [ ] **T0 · Re-verify and read the rest (S).**
   ```bash
   git diff --stat 90606c9..HEAD -- lib/library/models.dart lib/library/library_store.dart lib/screens/library_widgets.dart lib/screens/staging_screen.dart lib/imports lib/sync/push_sync.dart lib/app_controller.dart lib/settings lib/capture/voice_listener.dart android/app/src/main android/app/build.gradle.kts
@@ -435,35 +622,45 @@ The owner's primary ask, Android Auto, comes first among the spikes. Sizes: S un
   git grep -n "schemaVersion = " HEAD -- lib/library/library_store.dart
   git grep -n "class Work\b" HEAD -- lib/library/models.dart
   ```
-  Then read: the owner's ABS `GET /status` against v2.38.0 (re-read changed routes); Jellyfin's real release against `master` (the header, Quick Connect and `/Items` calls); Grimmory's release tag, public settings and download ranges; the owner's Authelia `/.well-known/openid-configuration`; Hugging Face model digests; `lib/harness/backup.dart` size limits; Flutter's `minSdkVersion`; the release workflow's signing; open branches and pull requests on the cited paths. Confirm the test connection works for each source over the owner's Twingate HTTPS. Correct every U above.
-- [ ] **S3 · Android Auto spike (M, owner-run on a head unit or the Desktop Head Unit).** Media3 service, four-tab tree, `BOOKMARK` in `setMediaButtonPreferences`, resumption. Gate: no autoplay; the button is visible and its placement recorded; the tree answers with the phone locked and the app dead. Otherwise decide the `audio_service` fallback.
-- [ ] **S2 · PCM tap and clip spike (M).** Tap in ExoPlayer with the sink built float-off and offload-off; press-to-ring mapping; seek behaviour; ABS direct play of an m4b and an mp3; encode a clip to AAC in M4A with `MediaCodec`/`MediaMuxer`. Gate: a transcript from the tap equals one from the cached file for the same passage; the clip plays back.
+  Then read: the owner's ABS `GET /status` against v2.38.0 (re-read changed routes); Jellyfin's real release against `master`; Grimmory's release tag, public settings, download ranges and its annotation and bookmark schema; the owner's Authelia `/.well-known/openid-configuration`; Hugging Face model digests; `lib/harness/backup.dart` size limits; Flutter's `minSdkVersion`; the release workflow's signing; the Tippani server's annotation schema (is there a field a CFI could use); open branches and pull requests on the cited paths. Confirm the test connection works for each source over the owner's Twingate HTTPS. Correct every U above.
+- [ ] **S3 · Android Auto spike (M, owner-run on a head unit and the Desktop Head Unit).** Media3 service with the official four-tab tree; the `ChapterPlayer` on `SimpleBasePlayer`; the Jump, Speed and Bookmark custom actions; resumption. Gate: no autoplay; the seek bar spans the chapter on **both the full screen and the quarter-screen card**, or the card is recorded as not drawing one; each custom action's placement is recorded for both screens; a seek drag does not stutter; the tree answers with the phone locked and the app dead. If the wrapper is fragile, try one clipped `MediaItem` per chapter; failing both, decide the `audio_service` fallback.
+- [ ] **S2 · PCM tap and clip spike (M).** Tap in ExoPlayer with the sink built float-off and offload-off; press-to-ring mapping; seek behaviour; ABS direct play of an m4b and an mp3; encode a clip to AAC in M4A with `MediaCodec` and `MediaMuxer`. Gate: a transcript from the tap equals one from the cached file for the same passage; the clip plays back.
 - [ ] **S1 · Whisper spike (M, owner-run).** whisper.cpp JNI in `:whisper`, `base.en` q5_1 and q8_0, a 120 s clip on the owner's phone: time, peak memory, cancellation, thermal behaviour, the battery gate. Gate: a 120 s clip under 90 s on a charger with the player process unharmed; the measured real-time factor replaces the guesses in the cost table.
+- [ ] **S4 · Reader spike (M, owner-run).** `flutter_inappwebview` with pinned foliate-js and a Range-capable Dart loopback server: open an EPUB, a MOBI, a CBZ and a PDF; one 100 MB EPUB for memory and speed; selection to a Flutter toolbar; a highlight drawn and re-drawn on `create-overlay`; its CFI read back; a CFI from stock foliate-js located by a real Grimmory export. Gate: the 100 MB book opens without the app being killed; selection to toolbar under 200 ms; a Grimmory CFI resolves. Otherwise the plan falls back to Readium (dropping MOBI, AZW3 and FB2) or pdfrx for PDF.
 - [ ] **P1 · Sources and sign in (L).** Settings > Libraries, `TokenVault`, the ABS, Grimmory and Jellyfin flows, the intent filter with pending-flow and `state` checks, forward-auth detection, test connection, sign-out, "sign in again". Acceptance: fakes of the three servers sign in, survive a restart and a process killed mid-flow, expose nothing to another account; the mutex test passes; no token appears in `AppLog`.
-- [ ] **P2 · Native service, ABS browse and stream playback (L).** `ListenService`, player, chapters, speed, sleep timer, mini-player, Now Playing, the Android Auto tree and button from S3. Acceptance: a fake ABS item plays; position survives a restart; the JVM tree test; an owner head-unit checklist.
-- [ ] **P3 · Offline (L).** Downloads screen, user-initiated transfer jobs, resumable `.part` files, rolling buffer, eviction, ceiling, storage-full. Acceptance: airplane-mode playback of a downloaded book; the buffer follows the playing chapter; a killed download resumes.
-- [ ] **P4 · Progress (M).** Session sync while playing, local session upload by event, the banner for a newer position elsewhere. Acceptance: offline listening uploads once; an older local session leaves newer server progress alone.
-- [ ] **P5 · Bookmarks, clips and Whisper (L).** The state machine, the tap, clip encode, transcription gates (charging or queue opened, 15% battery), the one-quote Markdown upload and its filename check, the "waiting" row on Pending imports, the local Bookmarks list, the ABS bookmark, the Models screen, the Whisper dictation engine. Acceptance: kill the process after each step and get exactly one ABS bookmark and one batch; below 15% nothing transcribes; an approved bookmark joins its existing work.
+- [ ] **P2 · Native service, ABS browse and the Audiobookshelf player (L).** `ListenService`, the `ChapterPlayer`, the full player, mini player, chapters list, speed, sleep timer (fade, chime, shake, auto timer), auto rewind, jump actions, Chapter Track and Total Track, the playback settings, the media-button rules, the Android Auto tree and actions from S3. Acceptance: a fake ABS item plays; every rule in "The player copies the Audiobookshelf app" has a test or is listed as owner-run; position survives a restart; the JVM tree test; an owner head-unit checklist.
+- [ ] **P3 · Offline (L).** Downloads page, the cellular policies, user-initiated transfer jobs, resumable `.part` files, rolling buffer, eviction, ceiling, storage-full. Acceptance: airplane-mode playback of a downloaded book; the buffer follows the playing chapter; a killed download resumes.
+- [ ] **P4 · Progress (M).** Session sync while playing (15 s, 60 s metered), local session upload by event, the banner for a newer position elsewhere, the sync-failed icon. Acceptance: offline listening uploads once; an older local session leaves newer server progress alone.
+- [ ] **P5 · Bookmarks, clips and Whisper (L).** The ABS-style bookmark UI, the state machine, the tap, clip encode, transcription gates (charging or queue opened, 15% battery), the one-quote file through F4, the "waiting" row on Pending imports, the ABS bookmark, the Models screen, the Whisper dictation engine. Acceptance: kill the process after each step and get exactly one ABS bookmark and one batch; below 15% nothing transcribes; an approved bookmark joins its existing work.
 - [ ] **P6 · Mirror engine and unified library (L).** `work_editions`, `mirror_batches`, matching with Undo and Unlink, per-library choice, the preview, throttled push, undo of a run, chips, card glyphs, the Continue row, per-account everything. Built on ABS first. Acceptance: a book on two sources is one card; a re-run creates nothing new; undo removes only untouched works; a 2,000-item fake library mirrors without exceeding two concurrent creates.
 - [ ] **P7 · Grimmory (M).** Sign in, library, resumable download where ranges exist, bookmarks CRUD, contract tests pinned to the tag, its mirror. Acceptance: a fake Grimmory book downloads and its bookmarks round-trip.
 - [ ] **P8 · Jellyfin (M).** Library read, incremental sync, id-diff for removals, Watch buttons, mirror of movies and shows. Acceptance: a fake Jellyfin mirrors as `film` and `show` works with no provider ids sent on create; Watch opens the browser URL with the right ids.
-- [ ] **P9 · Hardening and release (M).** Battery prompt, notification denial, backup rules, TalkBack, Bengali strings, `UI-Glossary`, changelog, ADRs, `Developing` file map, `Troubleshooting` rows for each new code, the owner-run checklist, release notes. Behind a "Listening (preview)" switch until the owner-run items pass.
-- [ ] **App fix, not part of the build (S):** replace the stale comment in `lib/sync/push_sync.dart` ("accepts only `manual` and `ocr`") and make dictated quotes send `source: voice` (the server accepts it; the capabilities list `voice-source`), with a test.
-- [ ] **Not in this plan:** reading EPUBs, Play Store, iOS, podcasts, Jellyfin playback, downloads and watch progress, Grimmory progress sync, physical-button bookmarks, OPDS, KOReader and Kobo sync.
+- [ ] **R1 · Reader core (L).** The WebView adapter, the Range server, the bridge, TXT, Markdown, HTML and DOCX conversion, the reader chrome, contents, tap zones and gestures, reading modes and aids, progress. Acceptance: the JS bridge is tested in headless Chromium against pinned foliate-js; widget tests drive the chrome against a fake bridge.
+- [ ] **R2 · Reader settings (M).** Fonts, themes, custom themes, typography, writing modes, custom CSS, per-book overrides, PDF options. Acceptance: each setting changes the attribute or style the bridge is told about.
+- [ ] **R3 · Annotations and notes (L).** Highlight, underline, squiggly and colours; the selection toolbar; notes; the notebook; bookmarks; quotes through direct create with an Idempotency-Key; export and import; share and quote card. Acceptance: a highlight survives a restart, appears as a quote on the work, and exports to Markdown in the template's shape; deleting it moves the quote to the bin.
+- [ ] **R4 · Search and lookup (M).** In-book search modes, dictionaries (Wiktionary, Wikipedia, system, StarDict and MDict import), web templates, translation with the owner's keys, whole-book bilingual translation.
+- [ ] **R5 · Reading aloud (M).** foliate-js SSML to the system engine, sentence and word highlight, sleep timer, chapter-end stop, Media Overlays.
+- [ ] **R6 · Library import (M).** Local files and folders, pasted text, OPDS catalogues, covers, metadata editing, the `file` edition.
+- [ ] **R7 · Grimmory highlights and bookmarks (M).** Two-way sync through its annotation and bookmark endpoints, after the CFI check from S4; no progress sync.
+- [ ] **P9 · Hardening and release (M).** Battery prompt, notification denial, backup rules, TalkBack, Bengali strings, `UI-Glossary`, changelog, ADRs, `Developing` file map, `Troubleshooting` rows for each new code, the owner-run checklist, release notes. Behind a "Listening (preview)" and a "Reading (preview)" switch until the owner-run items pass.
+- [ ] **Not in this plan:** Play Store, iOS, podcasts, Jellyfin playback, downloads and watch progress, Grimmory progress sync, physical-button bookmarks, KOReader and Kobo sync (KOReader on request), Readest's cloud, voice, AI and paid features, reading statistics, a cast button.
 
 ## Decisions
 
-New ADRs at build time (numbers taken then, after the last in `ADR-Index.md`; 0035 onward at the pin): sources and their sign-in; native service owns playback, tokens and media state; the work holds editions and sources mirror into the library; progress, its playback clock and the banner-not-stop conflict rule; Whisper on the phone, its separate process and its gates; bookmarks reach the library through the imports queue by a uniquely named file; event-only retries.
+New ADRs at build time (numbers taken then, after the last in `ADR-Index.md`; 0035 onward at the pin): sources and their sign-in; native service owns playback, tokens and media state; the player copies the Audiobookshelf app and reports a chapter to the car; the work holds editions and sources mirror into the library; progress, its playback clock and the banner-not-stop conflict rule; Whisper on the phone, its separate process and its gates; bookmarks reach the library through the imports queue by a uniquely named file; the staged-quote text edit; the reader engine, its pinned foliate-js and the licence stance; quotes made while reading are direct creates; event-only retries.
 
 ## Open questions for the owner
 
 | # | Question | Recommended | Cost of the other |
 |---|---|---|---|
-| D-J | Which Watch button is the default for a Jellyfin title: open in the browser, or open the Jellyfin app | Browser (lands on the item) with the app as the second button | The app opens on its home screen, one search away |
-| D-E | Mirror only whole shows, or seasons and episodes too | Whole shows | Thousands more works; episode-level quotes need the show's own season and episode fields anyway |
-| D-C | Upload mirrored covers to the Tippani server | No; keep them on the phone | Server cover storage grows and every creation does an image POST |
-| D-I | Store Jellyfin's imdb, tmdb and tvdb ids on the server's movie rows after creation | Yes, as an optional second step | The server's duplicate detection by id and later source re-sync have nothing to match |
-| D-P | A queued bookmark quote gets source `md` (provenance only in a tag and note); direct creation would keep `voice` but skip the queue | Queue (as asked) | Provenance is less precise |
-| D-W | Is a 90 s + 30 s default window the context you meant | Yes | Too much text per bookmark, or too little |
+| L-1 | **Legal:** Readest is AGPL-3.0. The plan copies features and writes the code fresh. If you want Readest's actual code or its foliate-js fork, that needs a legal decision | Copy features only, use stock foliate-js | Reusing code attaches AGPL section 13 to those parts |
+| D-K | Readest's KOReader sync, Readwise, Hardcover, Notion and Obsidian pushes: build any? | None now; add on request | Each is a separate integration with its own keys |
+| D-R | Translation: DeepL and Azure with your own keys, plus a custom OpenAI-compatible endpoint; the unofficial Google and Yandex routes are not used | As written | The unofficial routes can stop working or breach terms |
+| D-V | Text to speech: system engine only, or also a custom OpenAI-compatible voice with your key | System engine, custom optional | Edge TTS (unofficial) is not used |
+| D-J | Which Watch button is the default for a Jellyfin title: browser or the Jellyfin app | Browser, with the app as the second button | The app opens on its home screen |
+| D-E | Mirror only whole shows, or seasons and episodes too | Whole shows | Thousands more works |
+| D-C | Upload mirrored covers to the Tippani server | No | Server cover storage grows |
+| D-I | Store Jellyfin's imdb, tmdb and tvdb ids on the server's movie rows after creation | Yes, as an optional second step | No id matching later |
+| D-W | Is a 90 s + 30 s default window the context you meant | Yes | Too much or too little text per bookmark |
 
 See also: [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md) · [ADR index](ADR-Index.md)

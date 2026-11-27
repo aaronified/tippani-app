@@ -83,6 +83,11 @@ h2{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu
   <symbol id="i-fwd" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H10a6 6 0 0 0 0 8"/></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10z"/></symbol>
   <symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h4M4 15h4M16 9h4M16 15h4"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M7 5v14M19 5L9 12l10 7z"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M17 5v14M5 5l10 7-10 7z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 18l5-12 5 12M7 14h6M17 8h3M18.5 8v10"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4z"/></symbol>
   <symbol id="i-board" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="16" rx="1"/><rect x="13" y="4" width="7" height="9" rx="1"/></symbol>
@@ -136,20 +141,19 @@ h2{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu
 </div></div>
 <p class="cap">Audiobook, book file and quotes sit on one page. A work with no edition looks as it does today.</p></div>
 
-<div class="cell"><h2>3 · Player</h2>
+<div class="cell"><h2>3 · Player, as in Audiobookshelf</h2>
 <div class="phone"><div class="screen">
-  <div class="top">Now playing <small>Ch. 14 of 38</small></div>
-  <div class="body" style="gap:10px">
-    <div class="big">Dust of Dreams</div>
-    <div><div class="t">Dust of Dreams</div><div class="s">Steven Erikson · read by Michael Page</div></div>
-    <div><div class="seek"><i style="width:41%"></i><b style="left:41%"></b></div><div class="row between s" style="margin-top:6px"><span>3:42:10</span><span>−5:20:31</span></div></div>
-    <div class="ctl"><svg class="ico lg"><use href="#i-back"/></svg><div class="play"><svg class="ico lg"><use href="#i-pause"/></svg></div><svg class="ico lg"><use href="#i-fwd"/></svg></div>
-    <div class="row between"><span class="chip">1.25×</span><span class="chip"><svg class="ico"><use href="#i-moon"/></svg> Sleep</span><span class="chip">Chapters</span></div>
-    <div class="bm"><svg class="ico lg"><use href="#i-mark"/></svg>Bookmark</div>
-    <div class="pill"><svg class="ico"><use href="#i-check"/></svg>Bookmarked 3:42:10 · clip saved</div>
+  <div class="top"><svg class="ico"><use href="#i-back"/></svg><span style="flex:1;text-align:center;font-size:.62rem;letter-spacing:.1em;color:var(--muted)">DIRECT</span><span class="s">⋮</span></div>
+  <div class="body" style="gap:8px">
+    <div class="big" style="max-height:120px">Dust of Dreams</div>
+    <div style="text-align:center"><div class="t">Chapter 14: The Bridge</div><div class="s">Steven Erikson</div></div>
+    <div><div class="row between s"><span>0:42:10</span><span>−5:20:31</span></div><div class="prog" style="height:3px"><i style="width:41%"></i></div><div class="s" style="text-align:center;margin-top:2px">whole book</div></div>
+    <div><div class="seek"><i style="width:62%"></i><b style="left:62%"></b></div><div class="row between s" style="margin-top:6px"><span>12:04</span><span>−7:21</span></div></div>
+    <div class="ctl"><svg class="ico lg"><use href="#i-prev"/></svg><div style="text-align:center"><svg class="ico lg"><use href="#i-back"/></svg><div class="s" style="font-size:.6rem">10s</div></div><div class="play"><svg class="ico lg"><use href="#i-pause"/></svg></div><div style="text-align:center"><svg class="ico lg"><use href="#i-fwd"/></svg><div class="s" style="font-size:.6rem">10s</div></div><svg class="ico lg"><use href="#i-next"/></svg></div>
+    <div class="nav" style="border:0;padding:4px 0 0"><div><svg class="ico"><use href="#i-mark"/></svg>Bookmark</div><div style="font-size:.8rem;color:var(--fg)">1.2x<br><span style="font-size:.66rem;color:var(--muted)">Speed</span></div><div><svg class="ico"><use href="#i-moon"/></svg>Sleep</div><div><svg class="ico"><use href="#i-list"/></svg>Chapters</div></div>
   </div>
 </div></div>
-<p class="cap">The press saves the clip at once. Transcription waits for a charger or for Pending imports to open, so playback never competes with Whisper.</p></div>
+<p class="cap">Layout and rules from the official app: chapter title on top, a whole-book bar above the chapter bar (Total Track and Chapter Track), jump labels, and a bottom bar of bookmark, speed, sleep timer and chapters. Styled in this app's Material You.</p></div>
 
 <div class="cell"><h2>4 · Pending imports, bookmarks</h2>
 <div class="phone"><div class="screen">
@@ -159,10 +163,10 @@ h2{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu
     <div class="card" style="display:block"><div class="row between"><span class="t">bookmark-3f9a.md</span><span class="tag ok">joins Dust of Dreams</span></div>
       <div class="tx" style="margin-top:6px;font-size:.78rem"><span class="dim">…and the road behind them was already forgotten.</span> The horses had stopped and Tavore said nothing at all for the length of a held breath. <span class="dim">Then Ruthan Gudd turned…</span></div>
       <div class="s" style="margin-top:4px">3:42:10 · Chapter 14 · tag bookmark</div>
-      <div class="row between" style="margin-top:6px"><span class="btn ghost" style="padding:4px 10px">Discard</span><span class="btn" style="padding:4px 10px">Approve</span></div></div>
+      <div class="row between" style="margin-top:6px"><span class="btn ghost" style="padding:4px 10px">Discard</span><span class="btn ghost" style="padding:4px 10px">Edit and trim</span><span class="btn" style="padding:4px 10px">Approve</span></div></div>
     <div class="card" style="display:block"><div class="row between"><span class="t">bookmark-b210.md</span><span class="tag">Homo Deus</span></div>
       <div class="s">Clip saved 2:10:44 · transcribes when charging</div></div>
-    <div class="s">Text is fixed in the queue. Shorten a quote after approving it, or in Bookmarks before it is queued.</div>
+    <div class="s">Edit and trim changes the quote text before you approve it (the first piece of work built).</div>
   </div>
 </div></div>
 <p class="cap">Each bookmark is its own batch, named by its file. Opening this screen transcribes waiting clips if the battery is at least 15%.</p></div>
@@ -239,25 +243,61 @@ h2{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu
 </div></div>
 <p class="cap">No player and no downloads in the app. The browser button lands on the title; the app button opens Jellyfin on its home screen.</p></div>
 
+<div class="cell"><h2>12 · Reader</h2>
+<div class="phone"><div class="screen">
+  <div class="top"><svg class="ico"><use href="#i-back"/></svg><span style="flex:1;font-size:.8rem;text-align:center">Chapter 3 · The Road</span><svg class="ico"><use href="#i-search"/></svg></div>
+  <div class="body" style="gap:10px;padding:6px 18px;font:15px/1.6 Georgia,serif">
+    <p style="margin:0">The horses had stopped, and <mark style="background:color-mix(in srgb,#e6c84b 55%,transparent);color:inherit">Tavore said nothing at all for the length of a held breath</mark>. Beyond the ridge the road ran on, pale and empty, toward a horizon nobody had yet named.</p>
+    <p style="margin:0">Ruthan Gudd turned in his saddle and looked back the way they had come<sup style="color:var(--accent)">1</sup>, and for a moment he seemed about to speak.</p>
+    <div class="tx" style="font-family:system-ui;font-size:.8rem;display:flex;gap:12px;justify-content:space-around;align-items:center"><span>Copy</span><span style="color:#e6c84b;font-weight:700">Highlight</span><span>Note</span><span>Search</span><span>Define</span><span>Speak</span></div>
+  </div>
+  <div class="row between s" style="padding:6px 16px"><span>62%</span><span>3 h left in book</span></div>
+  <div class="nav"><div><svg class="ico"><use href="#i-list"/></svg>Contents</div><div><svg class="ico"><use href="#i-quote"/></svg>Notes</div><div><svg class="ico"><use href="#i-mark"/></svg>Bookmarks</div><div><svg class="ico"><use href="#i-text"/></svg>Aa</div></div>
+</div></div>
+<p class="cap">Readest's reader on a phone: centre tap shows the bars, a selection opens a toolbar with highlight, note, search, dictionary and speak. Footnotes open as a popup.</p></div>
+
+<div class="cell"><h2>13 · Notes and settings</h2>
+<div class="phone"><div class="screen">
+  <div class="top">Notes <small>Chapter 3</small></div>
+  <div class="body" style="gap:8px">
+    <div class="tx" style="border-inline-start:4px solid #e6c84b"><span class="s">Highlight · 3:42</span><br>“Tavore said nothing at all for the length of a held breath.”<br><span class="dim">Note: she was waiting on the Adjunct's word.</span></div>
+    <div class="tx" style="border-inline-start:4px solid #6aa0e6"><span class="s">Underline</span><br>“a horizon nobody had yet named”</div>
+    <div class="row between"><span class="chip on">Export Markdown</span><span class="chip">Import</span><span class="chip">Share card</span></div>
+    <h2 style="margin:6px 0 0">Reading settings</h2>
+    <div class="opt"><div class="grow"><div class="t">Font</div><div class="s">Serif · 16 · weight 400</div></div></div>
+    <div class="opt"><div class="grow"><div class="t">Theme</div><div class="s">Sepia · custom 1</div></div></div>
+    <div class="opt"><div class="grow"><div class="t">Layout</div><div class="s">Paginated · 1 column · margins 44/16</div></div></div>
+  </div>
+</div></div>
+<p class="cap">Highlights are quotes on the work. The note tab groups them by chapter; export uses Readest's template options and the app's own Markdown.</p></div>
+
 <div class="wide">
 <div class="cell"><h2>9 · Android Auto, browse</h2>
 <div class="car"><div class="screen">
-  <div class="autotabs"><div class="on"><svg class="ico"><use href="#i-play"/></svg>Continue</div><div><svg class="ico"><use href="#i-down"/></svg>Downloaded</div><div><svg class="ico"><use href="#i-book"/></svg>Library</div><div><svg class="ico"><use href="#i-mark"/></svg>Bookmarks</div></div>
+  <div class="autotabs"><div class="on"><svg class="ico"><use href="#i-play"/></svg>Continue</div><div><svg class="ico"><use href="#i-list"/></svg>Recent</div><div><svg class="ico"><use href="#i-book"/></svg>Libraries</div><div><svg class="ico"><use href="#i-down"/></svg>Downloads</div></div>
   <div class="autolist">
-    <div class="card"><div class="cover" style="height:44px;width:32px">Dust</div><div class="grow"><div class="t">Dust of Dreams</div><div class="s">Ch. 14 · 5 h 20 m left</div></div></div>
-    <div class="card"><div class="cover b" style="height:44px;width:32px">Homo</div><div class="grow"><div class="t">Homo Deus</div><div class="s">Ch. 3 · 9 h 02 m left</div></div></div>
-    <div class="card"><div class="cover c" style="height:44px;width:32px">Early</div><div class="grow"><div class="t">Early Indians</div><div class="s">Ch. 7 · 3 h 41 m left</div></div></div>
+    <div class="card"><div class="cover" style="height:44px;width:32px">Dust</div><div class="grow"><div class="t">Dust of Dreams</div><div class="s">Steven Erikson · 41%</div></div></div>
+    <div class="card"><div class="cover b" style="height:44px;width:32px">Homo</div><div class="grow"><div class="t">Homo Deus</div><div class="s">Yuval Noah Harari · 12%</div></div></div>
+    <div class="card"><div class="cover c" style="height:44px;width:32px">Early</div><div class="grow"><div class="t">Early Indians</div><div class="s">Tony Joseph · 76%</div></div></div>
   </div>
 </div></div>
-<p class="cap">Four root tabs, the most a head unit shows. Nothing plays until you choose it.</p></div>
+<p class="cap">The official app's four tabs. There is no Bookmarks tab; the bookmark is a button on Now Playing.</p></div>
 
-<div class="cell"><h2>10 · Android Auto, now playing</h2>
-<div class="car"><div class="screen" style="flex-direction:column;padding:12px;gap:10px">
-  <div class="row"><div class="cover" style="width:64px;height:90px">Dust of Dreams</div><div class="grow"><div class="t" style="font-size:1.05rem">Dust of Dreams</div><div class="s">Chapter 14 · Steven Erikson</div>
-  <div class="seek" style="margin-top:12px"><i style="width:41%"></i><b style="left:41%"></b></div><div class="row between s" style="margin-top:6px"><span>3:42:10</span><span>−5:20:31</span></div></div></div>
-  <div class="ctl"><svg class="ico lg"><use href="#i-back"/></svg><div class="play"><svg class="ico lg"><use href="#i-pause"/></svg></div><svg class="ico lg"><use href="#i-fwd"/></svg><div class="bm" style="padding:8px 14px"><svg class="ico lg"><use href="#i-mark"/></svg>Bookmark</div></div>
+<div class="cell"><h2>10 · Android Auto, full screen</h2>
+<div class="car"><div class="screen" style="flex-direction:column;padding:12px;gap:8px">
+  <div class="row"><div class="cover" style="width:64px;height:90px">Dust of Dreams</div><div class="grow"><div class="t" style="font-size:1.05rem">Chapter 14: The Bridge</div><div class="s">Dust of Dreams · 41% · 5 h 20 m left</div>
+  <div class="seek" style="margin-top:12px"><i style="width:62%"></i><b style="left:62%"></b></div><div class="row between s" style="margin-top:6px"><span>12:04</span><span>−7:21</span></div></div></div>
+  <div class="ctl"><svg class="ico lg"><use href="#i-prev"/></svg><svg class="ico lg"><use href="#i-back"/></svg><div class="play"><svg class="ico lg"><use href="#i-pause"/></svg></div><svg class="ico lg"><use href="#i-fwd"/></svg><svg class="ico lg"><use href="#i-next"/></svg><div class="bm" style="padding:8px 12px"><svg class="ico lg"><use href="#i-mark"/></svg>Bookmark</div></div>
 </div></div>
-<p class="cap">The bookmark button turns into a tick for two seconds after a press. The transcript is made after the drive.</p></div>
+<p class="cap">The seek bar spans the chapter, so the whole book's position sits in the subtitle. Previous and Next are chapter skips. Jump, Speed and Bookmark are custom actions; the car decides which fit.</p></div>
+
+<div class="cell"><h2>10b · Android Auto, quarter card</h2>
+<div class="car" style="max-width:300px;aspect-ratio:16/9"><div class="screen" style="padding:10px;gap:10px;align-items:center">
+  <div class="cover" style="width:56px;height:56px">Dust</div>
+  <div class="grow"><div class="t">Chapter 14: The Bridge</div><div class="s">Dust of Dreams</div><div class="seek" style="margin-top:8px"><i style="width:62%"></i></div></div>
+  <div class="play" style="width:38px;height:38px"><svg class="ico"><use href="#i-pause"/></svg></div>
+</div></div>
+<p class="cap">What the card draws is the car's choice and is not documented. The plan sends the same chapter position and the same actions; the head-unit test records what appears here.</p></div>
 </div>
 
 </div>
