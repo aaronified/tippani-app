@@ -7,6 +7,10 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Fixed
+
+- Your choices follow your account: the read-aloud voice, speed and pitch, the share picture's look, each shelf's sort, grouping and layout, automatic sync on or off, and whether you have had the tour are now kept for the account this phone is paired as. Pairing as someone else shows their choices, not the last person's, and pairing again brings yours back. The first account you pair starts from the choices you made before pairing.
+
 ### Changed
 
 - One broken-link mark, no banner: when the server cannot be reached, or turns a refresh down, and a screen shows what this phone last saw, the screen no longer carries a note across its top. A broken-link icon appears instead, on the Server tab at the bottom and in the top bar of any screen opened over the tabs. Pressing the icon in a top bar says the same words as before, with the date of the copy. A single message says it once each time you open the app, and not again while it stays open.
