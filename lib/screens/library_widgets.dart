@@ -395,9 +395,18 @@ class WorkTile extends StatelessWidget {
                         style: theme.textTheme.titleMedium,
                       ),
                       const SizedBox(height: 2),
-                      // the faces sit on the creator's line: they are that creator's
+                      // the faces lead the creator's line: they are that creator's
                       Row(
                         children: [
+                          FaceStack(
+                            names: creditNames(work.creator),
+                            ringColor:
+                                theme.cardTheme.color ??
+                                scheme.surfaceContainerLow,
+                          ),
+                          if (work.creator.isNotEmpty &&
+                              creditNames(work.creator).isNotEmpty)
+                            const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               meta,
@@ -407,12 +416,6 @@ class WorkTile extends StatelessWidget {
                                 color: scheme.onSurfaceVariant,
                               ),
                             ),
-                          ),
-                          FaceStack(
-                            names: creditNames(work.creator),
-                            ringColor:
-                                theme.cardTheme.color ??
-                                scheme.surfaceContainerLow,
                           ),
                         ],
                       ),
