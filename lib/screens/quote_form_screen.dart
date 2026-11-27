@@ -280,7 +280,15 @@ class _QuoteFormScreenState extends State<QuoteFormScreen> {
           ? t.text
           : '${_text.text.trimRight()}\n\n${t.text}';
       // a quote being changed keeps the way it was first captured
-      if (widget.quote == null && t.source == 'ocr') _source = 'ocr';
+      // dictated text marks a new quote `voice` unless a page was scanned into it first (the camera wins: it is the
+      // harder thing to do again)
+      if (widget.quote == null) {
+        if (t.source == 'ocr') {
+          _source = 'ocr';
+        } else if (t.source == 'voice' && _source != 'ocr') {
+          _source = 'voice';
+        }
+      }
     });
   }
 

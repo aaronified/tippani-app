@@ -63,5 +63,6 @@ a decision that changes gets a new page that says which it refines, and the old 
 - [ADR-0032](ADR-0032-Every-Server-Screen-Draws-The-Phones-Copy-First.md): Every screen that shows what the server holds draws the phone's copy first
 - [ADR-0033](ADR-0033-The-Broken-Link-Is-One-Mark-And-One-Toast.md): The broken link is one mark and one toast, not a note on every screen
 - [ADR-0034](ADR-0034-The-Apps-Own-Preferences-Belong-To-The-Account-It-Is-Paired-As.md): The app's own preferences belong to the account the phone is paired as
+- [ADR-0035](ADR-0035-A-Waiting-Quotes-Words-Are-Edited-On-Its-Own-Door-And-A-Bookmark-Is-Queued-As-One-File.md): A waiting quote's words are edited on their own door, a bookmark is queued as one file, and dictated quotes say so
 
 See also: [Home](Home.md) · [Plan](Plan.md) · [Developing](Developing.md) · [Releasing](Releasing.md)

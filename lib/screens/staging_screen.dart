@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/server_call.dart';
 import '../imports/import_service.dart';
+import '../imports/trim_text.dart';
 import '../library/models.dart';
 import 'library_widgets.dart';
 import 'quote_form_screen.dart' show quoteColour;
@@ -262,13 +263,31 @@ class _StagingScreenState extends State<StagingScreen> {
   }
 
   Future<void> _editQuote(StagedQuote q) async {
-    final r = await showModalBottomSheet<StagedEdit>(
+    final r = await showModalBottomSheet<_QuoteResult>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) => _QuoteSheet(quote: q),
+      builder: (context) =>
+          _QuoteSheet(quote: q, canEditText: widget.service.canEditText),
     );
-    if (r != null) await _edit(StagedSelector.quotes([q.id]), r, 'Saved');
+    if (r == null) return;
+    final words = r.text;
+    // The words go first and alone: a clash (409) or a refusal leaves the row as it was, and the fields below are
+    // not sent for a save that was refused.
+    if (words != null && !words.isEmpty) {
+      var sent = false;
+      await _run(() async {
+        await widget.service.editText(q.id, words);
+        sent = true;
+      });
+      if (!sent) return;
+    }
+    if (words == null || r.edit.toJson().isNotEmpty) {
+      await _edit(StagedSelector.quotes([q.id]), r.edit, 'Saved');
+    } else {
+      if (mounted) _say('Saved');
+      await _load();
+    }
   }
 
   Future<void> _bulkFields(StagedSelector sel, int n) async {
@@ -909,11 +928,19 @@ Widget _sheet(BuildContext context, String title, List<Widget> children) =>
       ),
     );
 
-/// Edits one staged quote's colour, favourite mark and where it came from. The words are not editable here (a
-/// staged row records what the file said); fix wording after approving.
+/// What the quote sheet hands back: the fields of the bulk door, and the words when they were changed.
+class _QuoteResult {
+  const _QuoteResult(this.edit, this.text);
+  final StagedEdit edit;
+  final StagedTextEdit? text;
+}
+
+/// Edits one staged quote: its colour, favourite mark and where it came from, and, on a server that allows it, its
+/// words. Without that, the words are shown and the sheet says why they cannot be changed here.
 class _QuoteSheet extends StatefulWidget {
-  const _QuoteSheet({required this.quote});
+  const _QuoteSheet({required this.quote, required this.canEditText});
   final StagedQuote quote;
+  final bool canEditText;
 
   @override
   State<_QuoteSheet> createState() => _QuoteSheetState();
@@ -927,18 +954,83 @@ class _QuoteSheetState extends State<_QuoteSheet> {
   late final _character = TextEditingController(text: widget.quote.character);
   late final _actor = TextEditingController(text: widget.quote.actor);
   late final _timestamp = TextEditingController(text: widget.quote.timestamp);
+  late final _words = TextEditingController(text: widget.quote.text);
+  late final _note = TextEditingController(text: widget.quote.note);
+  late final _translation = TextEditingController(
+    text: widget.quote.translation,
+  );
+  String? _problem;
 
   @override
   void dispose() {
-    for (final c in [_chapter, _location, _character, _actor, _timestamp]) {
+    for (final c in [
+      _chapter,
+      _location,
+      _character,
+      _actor,
+      _timestamp,
+      _words,
+      _note,
+      _translation,
+    ]) {
       c.dispose();
     }
     super.dispose();
   }
 
+  Future<void> _trim() async {
+    final kept = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => _TrimSheet(sentences: sentencesOf(_words.text)),
+    );
+    if (kept != null) setState(() => _words.text = kept);
+  }
+
+  void _save() {
+    final q = widget.quote;
+    String? ch(String old, TextEditingController c) =>
+        c.text.trim() == old ? null : c.text.trim();
+    StagedTextEdit? text;
+    if (widget.canEditText) {
+      final changed = StagedTextEdit(
+        quote: ch(q.text, _words),
+        note: ch(q.note, _note),
+        translation: ch(q.translation, _translation),
+      );
+      if (!changed.isEmpty) {
+        final quote = changed.quote ?? q.text;
+        final note = changed.note ?? q.note;
+        if (quote.isEmpty && note.isEmpty) {
+          setState(
+            () => _problem = context.tr('app.staging.a_quote_needs_words'),
+          );
+          return;
+        }
+        text = changed;
+      }
+    }
+    Navigator.of(context).pop(
+      _QuoteResult(
+        StagedEdit(
+          color: _color == q.color ? null : _color,
+          favorite: _fav == q.favorite ? null : _fav,
+          chapter: ch(q.chapter, _chapter),
+          location: ch(q.location, _location),
+          character: ch(q.character, _character),
+          actor: ch(q.actor, _actor),
+          timestamp: ch(q.timestamp, _timestamp),
+        ),
+        text,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final q = widget.quote;
+    final theme = Theme.of(context);
     Widget field(String label, TextEditingController c, String hint) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
@@ -951,17 +1043,62 @@ class _QuoteSheetState extends State<_QuoteSheet> {
         ),
       ),
     );
+    Widget words(String label, TextEditingController c, {int min = 1}) =>
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: TextField(
+            controller: c,
+            minLines: min,
+            maxLines: 8,
+            textCapitalization: TextCapitalization.sentences,
+            onChanged: (_) => setState(() => _problem = null),
+            decoration: InputDecoration(
+              labelText: label,
+              border: const OutlineInputBorder(),
+            ),
+          ),
+        );
     return _sheet(context, context.tr('staging.form.title'), [
-      Text(
-        context.tr('staging.form.quoted', {'text': q.text}),
-        maxLines: 4,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.bodyMedium,
-      ),
+      if (widget.canEditText) ...[
+        words(context.tr('common.field.quote.label'), _words, min: 3),
+        if (sentencesOf(_words.text).length > 1)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: _trim,
+              icon: const Icon(Ti.textDecrease),
+              label: Text(context.tr('app.staging.trim_to_sentences')),
+            ),
+          ),
+        words(context.tr('common.field.note.label'), _note),
+        words(context.tr('common.field.translation.label'), _translation),
+        if (_problem != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              _problem!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+          ),
+      ] else ...[
+        Text(
+          context.tr('staging.form.quoted', {'text': q.text}),
+          maxLines: 4,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          context.tr('app.staging.words_need_a_newer_server'),
+          style: theme.textTheme.bodySmall,
+        ),
+      ],
       const SizedBox(height: 12),
       Text(
         context.tr('app.staging.a_staged_quote_keeps_both_kinds'),
-        style: Theme.of(context).textTheme.bodySmall,
+        style: theme.textTheme.bodySmall,
       ),
       const SizedBox(height: 12),
       Wrap(
@@ -999,22 +1136,73 @@ class _QuoteSheetState extends State<_QuoteSheet> {
       Align(
         alignment: Alignment.centerRight,
         child: FilledButton(
-          onPressed: () {
-            String? ch(String old, TextEditingController c) =>
-                c.text.trim() == old ? null : c.text.trim();
-            Navigator.of(context).pop(
-              StagedEdit(
-                color: _color == q.color ? null : _color,
-                favorite: _fav == q.favorite ? null : _fav,
-                chapter: ch(q.chapter, _chapter),
-                location: ch(q.location, _location),
-                character: ch(q.character, _character),
-                actor: ch(q.actor, _actor),
-                timestamp: ch(q.timestamp, _timestamp),
-              ),
-            );
-          },
+          onPressed: _save,
           child: Text(context.tr('common.action.save.label')),
+        ),
+      ),
+    ]);
+  }
+}
+
+/// Picks a run of sentences to keep. Tapping one starts a new run at it; tapping another extends the run to reach it;
+/// tapping inside the run starts again. Everything starts kept, so opening the sheet and pressing the button changes
+/// nothing.
+class _TrimSheet extends StatefulWidget {
+  const _TrimSheet({required this.sentences});
+  final List<String> sentences;
+
+  @override
+  State<_TrimSheet> createState() => _TrimSheetState();
+}
+
+class _TrimSheetState extends State<_TrimSheet> {
+  late int _from = 0;
+  late int _to = widget.sentences.length - 1;
+  bool _all = true;
+
+  void _tap(int i) => setState(() {
+    if (_all) {
+      _from = _to = i;
+      _all = false;
+    } else if (i < _from) {
+      _from = i;
+    } else if (i > _to) {
+      _to = i;
+    } else {
+      _from = _to = i;
+    }
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.sentences;
+    final scheme = Theme.of(context).colorScheme;
+    return _sheet(context, context.tr('app.staging.trim_title'), [
+      Text(
+        tx('app.staging.trim_from_to', {
+          'from': _from + 1,
+          'to': _to + 1,
+          'total': s.length,
+        }),
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      const SizedBox(height: 8),
+      for (var i = 0; i < s.length; i++)
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+          selected: i >= _from && i <= _to,
+          selectedTileColor: scheme.secondaryContainer,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          title: Text(s[i]),
+          onTap: () => _tap(i),
+        ),
+      const SizedBox(height: 12),
+      Align(
+        alignment: Alignment.centerRight,
+        child: FilledButton(
+          onPressed: () =>
+              Navigator.of(context).pop(keepSentences(s, _from, _to)),
+          child: Text(context.tr('app.staging.use_these_sentences')),
         ),
       ),
     ]);

@@ -60,6 +60,11 @@ class PushSync {
   final AppController _controller;
   final AppLog? _log;
 
+  /// Whether the server lists `voice-source`, so a dictated quote can arrive as one. False for an older server and
+  /// while the server has not been asked, and a dictated quote then goes up as `manual`, as it always did.
+  bool get _serverTakesVoice =>
+      _controller.check?.capabilities?.has('voice-source') ?? false;
+
   Future<PushResult>? _current;
   bool get running => _current != null;
 
@@ -130,7 +135,7 @@ class PushSync {
         final outcome = await _send(
           _controller,
           _quotePath(work),
-          _quoteBody(q, work, serverWork),
+          _quoteBody(q, work, serverWork, voice: _serverTakesVoice),
         );
         if (outcome.stopped != null) {
           stopped = outcome.stopped;
@@ -258,9 +263,18 @@ class PushSync {
           if (w.year != null) 'published_year': w.year,
         };
 
-  /// What a quote carries on every route, in the server's names. The server accepts only `manual` and `ocr`
-  /// as where a quote came from; the app's `capture` is the camera, which is `ocr`.
-  static Map<String, Object?> _common(Quote q) => {
+  /// What a quote carries on every route, in the server's names. The server takes `manual`, `ocr` and, from the
+  /// release that lists `voice-source`, `voice` as where a quote came from. The app's own word for the camera is
+  /// `capture`, and the quote form has always stored `ocr` for a scanned page: both are `ocr`. Dictated text is
+  /// `voice`, but only for a server that names the feature, because an older one answers 400 to a value it does not
+  /// know and the quote would never go up.
+  static String _sourceOf(Quote q, {required bool voice}) => switch (q.source) {
+    'capture' || 'ocr' => 'ocr',
+    'voice' => voice ? 'voice' : 'manual',
+    _ => 'manual',
+  };
+
+  static Map<String, Object?> _common(Quote q, {required bool voice}) => {
     'quote': q.text,
     'note': q.note,
     'translation': q.translation,
@@ -268,16 +282,21 @@ class PushSync {
     'color': q.color,
     'favorite': q.favorite,
     'tags': q.tags,
-    'source': q.source == 'capture' ? 'ocr' : 'manual',
+    'source': _sourceOf(q, voice: voice),
     'noted_at': q.notedAt.toUtc().toIso8601String(),
   };
 
-  static Map<String, Object?> _quoteBody(Quote q, Work? w, int? serverWork) {
+  static Map<String, Object?> _quoteBody(
+    Quote q,
+    Work? w,
+    int? serverWork, {
+    required bool voice,
+  }) {
     if (w == null) {
       // A quote with no work: the server's standalone quote. The occasion is what the app calls its chapter,
       // and the place its location, the same pairing the Markdown export uses.
       return {
-        ..._common(q),
+        ..._common(q, voice: voice),
         'speaker': q.speaker,
         'occasion': q.chapter,
         'place': q.location,
@@ -285,14 +304,14 @@ class PushSync {
     }
     if (_isScreen(w.kind)) {
       return {
-        ..._common(q),
+        ..._common(q, voice: voice),
         'movie_id': serverWork,
         'character': q.speaker,
         'timestamp': q.location,
       };
     }
     return {
-      ..._common(q),
+      ..._common(q, voice: voice),
       'book_id': serverWork,
       'character': q.speaker,
       'chapter': q.chapter,

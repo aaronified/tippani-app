@@ -82,7 +82,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
     }
     if (!mounted) return;
     // The server accepts only "manual" and "ocr" as a quote's source, so spoken words are kept as typed ones.
-    Navigator.of(context).pop(CapturedText(_text.text.trim(), 'manual'));
+    Navigator.of(context).pop(CapturedText(_text.text.trim(), 'voice'));
   }
 
   @override
