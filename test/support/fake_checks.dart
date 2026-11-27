@@ -37,6 +37,10 @@ class FakeImports implements ImportService {
   final approved = <StagedSelector>[];
   final discarded = <StagedSelector>[];
   final edits = <(StagedSelector, StagedEdit)>[];
+  final textEdits = <(int, StagedTextEdit)>[];
+  final queuedOnce = <(String, String)>[];
+  @override
+  bool canEditText = true;
   final moves = <(StagedSelector, WorkChoice?, int?)>[];
   ApprovalOutcome approval = const ApprovalOutcome(ok: true, added: 1);
   ServerException? fail;
@@ -100,6 +104,20 @@ class FakeImports implements ImportService {
     _check();
     edits.add((selection, change));
     return 1;
+  }
+
+  @override
+  Future<bool> queueOnce(String name, String markdown) async {
+    _check();
+    if (queuedOnce.any((q) => q.$1 == name)) return false;
+    queuedOnce.add((name, markdown));
+    return true;
+  }
+
+  @override
+  Future<void> editText(int id, StagedTextEdit change) async {
+    _check();
+    textEdits.add((id, change));
   }
 
   @override

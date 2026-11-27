@@ -146,7 +146,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(ear.stops, greaterThan(0));
         expect(result!.text, 'Simplify.');
-        expect(result!.source, 'manual');
+        expect(result!.source, 'voice');
       },
     );
 
@@ -200,7 +200,7 @@ void main() {
       await tester.pumpAndSettle();
       final saved = (await lib.quotes()).single;
       expect(saved.text, 'Simplify.');
-      expect(saved.source, 'manual');
+      expect(saved.source, 'voice');
     });
   });
 }

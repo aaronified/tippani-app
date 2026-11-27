@@ -11,6 +11,7 @@ import 'package:tippani/harness/harness.dart';
 import 'package:tippani/library/models.dart';
 import 'package:tippani/settings/settings_store.dart';
 import 'package:tippani/sync/auto_sync.dart';
+import 'package:tippani/settings/preference_scope.dart' show PrefKeys;
 import 'package:tippani/sync/pull_sync.dart';
 import 'package:tippani/sync/push_sync.dart';
 
@@ -488,8 +489,11 @@ void main() {
 
         await r.auto.syncNow();
         expect(r.server.created['/quotes'], hasLength(1));
+        // kept for the account this phone is paired as (ADR-0034)
         expect(
-          (await SharedPreferences.getInstance()).getBool('auto_sync'),
+          (await SharedPreferences.getInstance()).getBool(
+            r.controller.preferences.key(PrefKeys.autoSync),
+          ),
           isFalse,
         );
       },
@@ -499,7 +503,9 @@ void main() {
       tester,
       r,
     ) async {
-      SharedPreferences.setMockInitialValues({'auto_sync': false});
+      SharedPreferences.setMockInitialValues({
+        r.controller.preferences.key(PrefKeys.autoSync): false,
+      });
       await r.auto.start(null);
       expect(r.auto.enabled, isFalse);
     });

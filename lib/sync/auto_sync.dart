@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../app_controller.dart';
 import '../harness/app_log.dart';
+import '../settings/preference_scope.dart';
 import 'pull_sync.dart';
 import 'push_sync.dart';
 
@@ -83,7 +84,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
   /// answering. A failure in one is its own and does not stop the run.
   final List<Future<Object?> Function()> after;
 
-  static const _enabledKey = 'auto_sync';
+  static const _enabledKey = PrefKeys.autoSync;
   static const _lastKey = 'auto_sync_last';
   static const _dirtyKey = 'auto_sync_dirty';
 
@@ -128,7 +129,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     _started = true;
     try {
       final p = await SharedPreferences.getInstance();
-      _enabled = p.getBool(_enabledKey) ?? true;
+      _enabled = p.getBool(_controller.preferences.key(_enabledKey)) ?? true;
       _dirty = p.getBool(_dirtyKey) ?? false;
       final ms = p.getInt(_lastKey);
       if (ms != null) _lastSynced = DateTime.fromMillisecondsSinceEpoch(ms);
@@ -145,6 +146,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _wasPaired = _controller.paired;
     _controller.addListener(_pairingChanged);
+    _controller.preferences.addListener(_rescoped);
     notifyListeners();
     _opportunity();
   }
@@ -154,11 +156,22 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
     try {
       final p = await SharedPreferences.getInstance();
-      await p.setBool(_enabledKey, on);
+      await p.setBool(_controller.preferences.key(_enabledKey), on);
     } on Object {
       // the choice holds for this run
     }
     if (on) _opportunity();
+  }
+
+  /// Another account's choices are in use: whether this runs by itself is one of them.
+  Future<void> _rescoped() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      _enabled = p.getBool(_controller.preferences.key(_enabledKey)) ?? true;
+      notifyListeners();
+    } on Object {
+      // keep what this run holds
+    }
   }
 
   void _pairingChanged() {
@@ -305,6 +318,7 @@ class AutoSync extends ChangeNotifier with WidgetsBindingObserver {
     if (_started) {
       WidgetsBinding.instance.removeObserver(this);
       _controller.removeListener(_pairingChanged);
+      _controller.preferences.removeListener(_rescoped);
     }
     super.dispose();
   }

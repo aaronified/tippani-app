@@ -1165,6 +1165,7 @@ app.source_picker.choose_an_ebook_or_a_subtitle = একটি ই-বই বা
 app.source_picker.that_file_is_over_25_mb = ওই ফাইল ২৫ এমবির বেশি, উৎস হিসেবে যতটা হতে পারে তার চেয়ে বড়।
 
 # --- staging ---
+app.staging.a_quote_needs_words = উক্তিতে কিছু লিখতে হবে: উক্তি বা নোট রাখুন।
 app.staging.a_staged_quote_keeps_both_kinds = অপেক্ষমাণ উক্তি দুই ধরনের অবস্থানই রাখে। অনুমোদনের সময় গন্তব্যের যেটি লাগে সেটি ব্যবহার হয়।
 app.staging.all_files_pending = সব ফাইল ({pending})
 app.staging.an_import_lands_here_first_and = আমদানি প্রথমে এখানে আসে এবং আপনি “হ্যাঁ” না বলা পর্যন্ত থাকে।
@@ -1207,9 +1208,14 @@ app.staging.show_more_shown_of_total = আরও দেখান ({total}-এর
 app.staging.the_server_could_not_add_those = সার্ভার ওই উক্তিগুলো যোগ করতে পারেনি।
 app.staging.this_group = এই দল
 app.staging.to_upper_casex = {to_upper_case}{x}
+app.staging.trim_from_to = {total}টির মধ্যে {from} থেকে {to} নম্বর বাক্য
+app.staging.trim_title = এই বাক্যগুলো রাখুন
+app.staging.trim_to_sentences = বাক্য কেটে ছোট করুন
+app.staging.use_these_sentences = এগুলো ব্যবহার করুন
 app.staging.waiting_for_the_server = সার্ভারের অপেক্ষায়…
 app.staging.will_be_added_as_a_new = নতুন {x} হিসেবে যোগ হবে
 app.staging.will_be_saved_as_quotes_of = কোনো বই বা সিনেমা ছাড়া একক উক্তি হিসেবে সংরক্ষিত হবে
+app.staging.words_need_a_newer_server = এই সার্ভার অপেক্ষমাণ উক্তির কথা বদলাতে পারে না। অনুমোদন করুন, তারপর সংরক্ষিত উক্তিটি সম্পাদনা করুন।
 app.staging.you_chose_this_destination = আপনি এই গন্তব্য বেছেছেন
 app.staging.you_have_more_than_one_title = এই নামে আপনার একাধিক রচনা আছে। ঠিকটিতে যুক্ত হয়েছে কি না দেখে নিন।
 

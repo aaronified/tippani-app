@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tippani/api/api_client.dart';
+import 'package:tippani/api/capabilities.dart';
 import 'package:tippani/app_controller.dart';
 import 'package:tippani/harness/app_log.dart';
 import 'package:tippani/library/models.dart';
@@ -190,16 +191,60 @@ void main() {
     () async {
       final r = await rig();
       await r.lib.addQuote(const QuoteDraft(text: 'seen', source: 'capture'));
+      await r.lib.addQuote(const QuoteDraft(text: 'scanned', source: 'ocr'));
       await r.lib.addQuote(
         const QuoteDraft(text: 'brought in', source: 'import'),
       );
       await r.sync.push();
       expect(r.server.created['/quotes']!.map((q) => q['source']), [
         'ocr',
+        'ocr',
         'manual',
       ]);
     },
   );
+
+  Future<void> serverNames(Rig r, Set<String> features) {
+    r.server.features
+      ..clear()
+      ..addAll(features);
+    return r.controller.connect(
+      'https://q.example.org',
+      ServerCheck.answered(
+        Capabilities(
+          version: '3.9.1',
+          apiRevision: 13,
+          minClientRevision: 1,
+          features: features,
+        ),
+      ),
+    );
+  }
+
+  test('a dictated quote goes up as voice when the server names it', () async {
+    final r = await rig();
+    await serverNames(r, {'voice-source'});
+    await r.lib.addQuote(const QuoteDraft(text: 'said aloud', source: 'voice'));
+    await r.lib.addQuote(const QuoteDraft(text: 'typed', source: 'manual'));
+    await r.sync.push();
+    expect(r.server.created['/quotes']!.map((q) => q['source']), [
+      'voice',
+      'manual',
+    ]);
+  });
+
+  test('a dictated quote goes up as manual to a server that does not name voice, or has not been asked', () async {
+    final asked = await rig();
+    await serverNames(asked, {'trash-bin'});
+    await asked.lib.addQuote(const QuoteDraft(text: 'said', source: 'voice'));
+    await asked.sync.push();
+    expect(asked.server.created['/quotes']!.single['source'], 'manual');
+
+    final unasked = await rig();
+    await unasked.lib.addQuote(const QuoteDraft(text: 'said', source: 'voice'));
+    await unasked.sync.push();
+    expect(unasked.server.created['/quotes']!.single['source'], 'manual');
+  });
 
   test('pushing again sends nothing, and a new item goes up alone', () async {
     final r = await rig();

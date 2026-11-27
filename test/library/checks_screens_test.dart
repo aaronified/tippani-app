@@ -392,6 +392,170 @@ void main() {
       expect(imports.edits.single.$2.location, isNull);
     });
 
+    // A queue of one quote whose words are long enough to trim.
+    Staging oneQuote(String text, {String note = ''}) {
+      final base = _queue();
+      return Staging(
+        pending: 1,
+        total: 1,
+        batches: base.batches,
+        works: base.works,
+        quotes: [
+          StagedQuote(
+            id: 11,
+            workId: 4,
+            text: text,
+            note: note,
+            translation: '',
+            color: 'yellow',
+            favorite: false,
+            chapter: '',
+            location: '',
+            character: '',
+            actor: '',
+            timestamp: '',
+            tags: const [],
+          ),
+        ],
+      );
+    }
+
+    const words =
+        'The horses had stopped. Tavore said nothing. Then he turned.';
+
+    testWidgets(
+      'the words are changed on their own door, and the bulk door is not called',
+      (tester) async {
+        final imports = FakeImports()..staging = oneQuote(words);
+        await tester.pumpWidget(
+          MaterialApp(home: StagingScreen(service: imports)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(words));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Quote'),
+          'Tavore said nothing.',
+        );
+        await tester.ensureVisible(find.text('Save'));
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(imports.textEdits.single.$1, 11);
+        expect(imports.textEdits.single.$2.quote, 'Tavore said nothing.');
+        expect(imports.textEdits.single.$2.note, isNull);
+        expect(imports.edits, isEmpty, reason: 'nothing else changed');
+      },
+    );
+
+    testWidgets(
+      'a run of sentences is kept with Trim, and what is kept is what is saved',
+      (tester) async {
+        final imports = FakeImports()..staging = oneQuote(words);
+        await tester.pumpWidget(
+          MaterialApp(home: StagingScreen(service: imports)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(words));
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Trim to sentences'));
+        await tester.tap(find.text('Trim to sentences'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Tavore said nothing.'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Then he turned.'));
+        await tester.pumpAndSettle();
+        expect(find.text('Sentences 2 to 3 of 3'), findsOneWidget);
+        await tester.tap(find.text('Use these'));
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Save'));
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(
+          imports.textEdits.single.$2.quote,
+          'Tavore said nothing. Then he turned.',
+        );
+      },
+    );
+
+    testWidgets(
+      'a server that cannot change the words shows them and says why',
+      (tester) async {
+        final imports = FakeImports()
+          ..canEditText = false
+          ..staging = oneQuote(words);
+        await tester.pumpWidget(
+          MaterialApp(home: StagingScreen(service: imports)),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(words));
+        await tester.pumpAndSettle();
+        expect(find.widgetWithText(TextField, 'Quote'), findsNothing);
+        expect(find.textContaining('cannot change the words'), findsOneWidget);
+        await tester.enterText(
+          find.widgetWithText(TextField, 'Chapter'),
+          'Economy',
+        );
+        await tester.ensureVisible(find.text('Save'));
+        await tester.tap(find.text('Save'));
+        await tester.pumpAndSettle();
+        expect(imports.textEdits, isEmpty);
+        expect(imports.edits.single.$2.chapter, 'Economy');
+      },
+    );
+
+    testWidgets('a quote with no quote and no note is refused on the sheet', (
+      tester,
+    ) async {
+      final imports = FakeImports()..staging = oneQuote(words);
+      await tester.pumpWidget(
+        MaterialApp(home: StagingScreen(service: imports)),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(words));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Quote'), '');
+      await tester.ensureVisible(find.text('Save'));
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('A quote needs words: keep the quote or a note.'),
+        findsOneWidget,
+      );
+      expect(imports.textEdits, isEmpty);
+      expect(find.text('Edit staged quote'), findsOneWidget);
+    });
+
+    testWidgets('a refused change is said, and the other fields are not sent', (
+      tester,
+    ) async {
+      final imports = FakeImports()..staging = oneQuote(words);
+      await tester.pumpWidget(
+        MaterialApp(home: StagingScreen(service: imports)),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(words));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Quote'),
+        'Tavore said nothing.',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Chapter'),
+        'Economy',
+      );
+      imports.fail = const ServerException(
+        'another quote waiting in this work already has those words',
+      );
+      await tester.ensureVisible(find.text('Save'));
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('another quote waiting in this work already has those words'),
+        findsOneWidget,
+      );
+      expect(imports.edits, isEmpty);
+    });
+
     testWidgets('a group is moved onto a book in the library', (tester) async {
       final imports = FakeImports()
         ..staging = _queue()

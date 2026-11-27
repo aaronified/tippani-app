@@ -7,8 +7,19 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+### Added
+
+- Edit and trim a waiting quote: on Pending imports, a quote's edit sheet now shows its words, note and translation, and a Trim button keeps a run of sentences and drops the rest. It needs a server that offers it; an older server shows the words and says they cannot be changed there.
+
+### Fixed
+
+- Faces sit beside the name: in the library list, a work's creator faces now lead the creator and year line, to the left of the name, instead of sitting on the line below it beside the kind label.
+- Scanned pages are recorded as scanned: a quote made from a scanned page now reaches the server marked as scanned, not typed. Quotes already sent keep the mark they went with.
+- Your choices follow your account: the read-aloud voice, speed and pitch, the share picture's look, each shelf's sort, grouping and layout, automatic sync on or off, and whether you have had the tour are now kept for the account this phone is paired as. Pairing as someone else shows their choices, not the last person's, and pairing again brings yours back. The first account you pair starts from the choices you made before pairing.
+
 ### Changed
 
+- Spoken quotes are marked as spoken: a quote you dictate is now saved as spoken, and goes to a server that supports it marked that way. An older server still receives it as typed.
 - One broken-link mark, no banner: when the server cannot be reached, or turns a refresh down, and a screen shows what this phone last saw, the screen no longer carries a note across its top. A broken-link icon appears instead, on the Server tab at the bottom and in the top bar of any screen opened over the tabs. Pressing the icon in a top bar says the same words as before, with the date of the copy. A single message says it once each time you open the app, and not again while it stays open.
 
 ## [0.10.3] - 2026-11-20

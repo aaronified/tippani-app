@@ -14,6 +14,21 @@ class FakeServer {
   bool admin;
   int revision;
 
+  /// What `/capabilities` names, so a test can have a server that has a feature and one that has not.
+  final features = <String>[];
+
+  /// The words of the waiting quotes, by id: what `PATCH /import/staged/quotes/{id}` changes. The route answers as the
+  /// real server does (the Tippani server's ADR-0937): 404 for an unknown id, 400 for nothing to change or no words
+  /// left, 409 when the new words equal another waiting quote's.
+  /// Every file `POST /import/auto` accepted, in order: what it was called, the importer named, and its text. The
+  /// queue holds one batch per file, named by the file, as the real server does.
+  final importUploads = <({String name, String as, String text})>[];
+
+  final stagedWords = <int, Map<String, String>>{
+    7: {'quote': 'It was the best of times.', 'note': '', 'translation': ''},
+    8: {'quote': 'It was the worst of times.', 'note': '', 'translation': ''},
+  };
+
   /// The one pairing code the server will accept, once.
   String? code = 'ABCD2345';
   String claimedToken = 'tok-1234';
@@ -484,8 +499,16 @@ class FakeServer {
       }
     } else {
       if (!_colors.contains(body['color'])) bad = 'color must be one of them';
-      if (!const ['manual', 'ocr'].contains(body['source'])) {
-        bad = 'source must be manual or ocr';
+      // `voice` is accepted only by a server that names it (revision 10 on), as the real one does; an older one answers
+      // 400 to it, which is why the app sends it only when the feature is listed.
+      if (![
+        'manual',
+        'ocr',
+        if (features.contains('voice-source')) 'voice',
+      ].contains(body['source'])) {
+        bad = features.contains('voice-source')
+            ? 'source must be manual, ocr or voice'
+            : 'source must be manual or ocr';
       }
       if ((body['quote'] as String? ?? '').isEmpty) {
         bad = 'quote or note is required';
@@ -723,7 +746,7 @@ class FakeServer {
         'version': '3.6.2',
         'api_revision': revision,
         'min_client_revision': 1,
-        'features': <String>[],
+        'features': features,
       });
     }
     if (r.method == 'POST' && path == '/auth/devices/claim') {
@@ -745,6 +768,110 @@ class FakeServer {
       return _json({'token': claimedToken, 'username': username}, 201);
     }
     if (!_authed(r)) return _json({'error': 'not logged in'}, 401);
+    if (r.method == 'POST' && path == '/import/auto') {
+      final form = utf8.decode(r.bodyBytes, allowMalformed: true);
+      String? field(String name) => RegExp(
+        'name="$name"\\r?\\n\\r?\\n(.*?)\\r?\\n--',
+        dotAll: true,
+      ).firstMatch(form)?.group(1);
+      final name = RegExp('filename="([^"]*)"').firstMatch(form)?.group(1);
+      if (name == null) {
+        return _json({'error': 'multipart "file" field required'}, 400);
+      }
+      // the file's text: from the blank line after its headers to the next boundary (the first line of the body)
+      final boundary = form.split('\r\n').first;
+      final at = form.indexOf('name="file"');
+      final start = at < 0 ? -1 : form.indexOf('\r\n\r\n', at);
+      final end = start < 0 ? -1 : form.indexOf('\r\n$boundary', start + 4);
+      final text = start < 0
+          ? ''
+          : form.substring(start + 4, end < 0 ? form.length : end);
+      importUploads.add((name: name, as: field('as') ?? '', text: text));
+      return _json({
+        'job': {'id': importUploads.length},
+      }, 202);
+    }
+    final importJob = RegExp(r'^/jobs/(\d+)(/result)?$').firstMatch(path);
+    if (importJob != null && r.method == 'GET') {
+      final id = int.parse(importJob.group(1)!);
+      if (id < 1 || id > importUploads.length) {
+        return _json({'error': 'not found'}, 404);
+      }
+      if (importJob.group(2) == null) {
+        return _json({
+          'job': {'id': id, 'state': 'succeeded', 'done': 1, 'total': 1},
+        });
+      }
+      return _json({
+        'result': {
+          'status': 200,
+          'body': {
+            'source': 'md',
+            'batch_id': id,
+            'staged': 1,
+            'pending': importUploads.length,
+            'works': [<String, Object?>{}],
+          },
+        },
+      });
+    }
+    if (r.method == 'GET' && path == '/import/staged') {
+      return _json({
+        'pending': importUploads.length,
+        'total': importUploads.length,
+        'batches': [
+          for (var i = 0; i < importUploads.length; i++)
+            {
+              'id': i + 1,
+              'source': 'md',
+              'filename': importUploads[i].name,
+              'created_at': '2026-11-27 09:00:00',
+              'works': 1,
+              'quotes': 1,
+            },
+        ],
+        'works': <Object?>[],
+        'quotes': <Object?>[],
+      });
+    }
+    final stagedText = RegExp(r'^/import/staged/quotes/(\d+)$')
+        .firstMatch(path);
+    if (stagedText != null && r.method == 'PATCH') {
+      final row = stagedWords[int.parse(stagedText.group(1)!)];
+      if (row == null) {
+        return _json({'error': 'no matching staged quote'}, 404);
+      }
+      final body = jsonDecode(r.body);
+      const keys = ['quote', 'note', 'translation'];
+      if (body is! Map || !keys.any(body.containsKey)) {
+        return _json({
+          'error': 'nothing to change: send quote, note or translation',
+        }, 400);
+      }
+      final next = {...row};
+      for (final k in keys) {
+        if (!body.containsKey(k)) continue;
+        if (body[k] is! String) return _json({'error': '$k must be text'}, 400);
+        next[k] = (body[k] as String).trim();
+      }
+      if (next['quote']!.isEmpty && next['note']!.isEmpty) {
+        return _json({
+          'error': 'a quote needs words: keep the quote or a note',
+        }, 400);
+      }
+      final clash = stagedWords.entries.any(
+        (e) =>
+            e.value != row &&
+            e.value['quote']!.toLowerCase() == next['quote']!.toLowerCase(),
+      );
+      if (clash) {
+        return _json({
+          'error': 'another quote waiting in this work already has those words',
+        }, 409);
+      }
+      row.addAll(next);
+      return _json({'updated': 1});
+    }
     if (r.method == 'GET' && path.startsWith('/anthologies')) {
       await anthologiesWait;
       if (path == '/anthologies') return _json({'anthologies': anthologies});

@@ -394,36 +394,38 @@ class WorkTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleMedium,
                       ),
-                      if (meta.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          meta,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 2),
+                      // the faces lead the creator's line: they are that creator's
                       Row(
                         children: [
-                          Expanded(
-                            child: Text(
-                              workKindLabel(work.kind).toUpperCase(),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: scheme.primary,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
                           FaceStack(
                             names: creditNames(work.creator),
                             ringColor:
                                 theme.cardTheme.color ??
                                 scheme.surfaceContainerLow,
                           ),
+                          if (work.creator.isNotEmpty &&
+                              creditNames(work.creator).isNotEmpty)
+                            const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              meta,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        workKindLabel(work.kind).toUpperCase(),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.primary,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                       if (work.details.status.isNotEmpty) ...[
                         const SizedBox(height: 6),

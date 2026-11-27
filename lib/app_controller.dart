@@ -6,6 +6,7 @@ import 'api/offline_cache.dart';
 import 'harness/app_log.dart';
 import 'pairing/devices.dart';
 import 'pairing/pairing_service.dart';
+import 'settings/preference_scope.dart';
 import 'settings/server_url.dart';
 import 'settings/settings_store.dart';
 
@@ -38,10 +39,20 @@ class ServerCheck {
 /// The app's state that more than one screen needs: which server it is pointed at and whether that
 /// server is reachable and compatible. Screens listen to it; nothing else holds this state.
 class AppController extends ChangeNotifier {
-  AppController(this._settings, {ClientFactory? clientFactory, this._log})
-    : _clientFactory = clientFactory ?? _defaultClient;
+  AppController(
+    this._settings, {
+    ClientFactory? clientFactory,
+    this._log,
+    PreferenceScope? preferences,
+  }) : _clientFactory = clientFactory ?? _defaultClient,
+       _preferences = preferences ?? PreferenceScope.instance;
 
   final SettingsStore _settings;
+
+  /// Whose preferences the app is drawing (ADR-0034): the account this phone is paired as.
+  final PreferenceScope _preferences;
+
+  PreferenceScope get preferences => _preferences;
   final AppLog? _log;
   late final PairingService _pairing = PairingService(
     _settings,
@@ -94,6 +105,7 @@ class AppController extends ChangeNotifier {
   /// Reads the stored token once at start.
   Future<void> load() async {
     _token = await _settings.token();
+    await _useOwnPreferences();
     // the last answer, so a phone that starts with no server still shows the administration it is allowed
     _isAdmin = _settings.read(_adminKey) == 'yes';
     _loaded = true;
@@ -145,12 +157,24 @@ class AppController extends ChangeNotifier {
         await offline.clear();
         _token = null;
         _revoked = true;
+        await _useOwnPreferences();
         notifyListeners();
       }
       rethrow;
     } finally {
       client.close();
     }
+  }
+
+  /// Points the preferences at the account this phone is paired as, or at the phone's own set when it is not.
+  Future<void> _useOwnPreferences() {
+    final url = serverUrl;
+    final name = _settings.username;
+    return _preferences.use(
+      paired && url != null && name != null && name.isNotEmpty
+          ? '${_trimmed(url)}|$name'
+          : null,
+    );
   }
 
   /// Pairs this phone with the stored server using [code] from the web Settings.
@@ -163,6 +187,7 @@ class AppController extends ChangeNotifier {
       _revoked = false;
       // answers kept for another account, or on another server, are not this pairing's to show
       await offline.ownedBy('${_trimmed(url)}|${_settings.username ?? ''}');
+      await _useOwnPreferences();
       notifyListeners();
       await loadAccount();
     }
@@ -195,6 +220,7 @@ class AppController extends ChangeNotifier {
     await offline.clear();
     _token = null;
     _isAdmin = false;
+    await _useOwnPreferences();
     notifyListeners();
   }
 
@@ -277,6 +303,7 @@ class AppController extends ChangeNotifier {
     _token = null;
     _revoked = false;
     _check = null;
+    await _useOwnPreferences();
     notifyListeners();
   }
 }

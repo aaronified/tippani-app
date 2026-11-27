@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import '../api/server_call.dart';
@@ -418,6 +419,27 @@ class StagedEdit {
   };
 }
 
+/// A change to what one waiting quote SAYS: its words, its note, its translation. A field left null is not
+/// touched; one sent empty is cleared (the quote itself cannot be, if no note is left to stand in for it).
+///
+/// APART FROM [StagedEdit] ON PURPOSE. The server's bulk door corrects where a line came from and never what it
+/// says (ADR-0820); the words have a door of their own, one row at a time (the server's ADR-0937), which an older
+/// server does not have. Keeping the two requests two classes means a words edit can never ride along on a bulk
+/// request and be silently ignored.
+class StagedTextEdit {
+  const StagedTextEdit({this.quote, this.note, this.translation});
+
+  final String? quote, note, translation;
+
+  bool get isEmpty => quote == null && note == null && translation == null;
+
+  Map<String, Object?> toJson() => {
+    if (quote != null) 'quote': quote,
+    if (note != null) 'note': note,
+    if (translation != null) 'translation': translation,
+  };
+}
+
 /// What approving the queue did.
 class ApprovalOutcome {
   const ApprovalOutcome({
@@ -480,6 +502,21 @@ abstract class ImportService {
   Future<int> discard(StagedSelector selection);
 
   Future<int> edit(StagedSelector selection, StagedEdit change);
+
+  /// Whether this server can change a waiting quote's words (the feature `staged-text-edit`). False for an older
+  /// server and while the server has not been asked; the screen then shows the words and does not offer them.
+  bool get canEditText;
+
+  /// Changes the words of the waiting quote [id]. A `409` (the new words equal another waiting quote's) and a `400`
+  /// come back as a [ServerException] carrying the server's sentence.
+  Future<void> editText(int id, StagedTextEdit change);
+
+  /// Puts [markdown] in the queue as a file called [name], unless a batch with that name is already waiting there.
+  /// True when the file was sent, false when its name was already in the queue and nothing was. The server names a
+  /// batch after its file, so a caller that always uses the same name for the same thing can retry without fear of
+  /// queueing it twice. A batch that was approved or discarded is gone from the queue and the name is free again; a
+  /// quote sent a second time then meets the library's own duplicate rule at approval.
+  Future<bool> queueOnce(String name, String markdown);
 
   /// Moves the groups of [selection] onto a work in the library ([onto]), or into another group in the queue
   /// ([mergeInto], a staged work's id).
@@ -682,6 +719,29 @@ class PairedImportService implements ImportService {
           }),
         );
         return (r['updated'] as num?)?.toInt() ?? 0;
+      });
+
+  @override
+  Future<bool> queueOnce(String name, String markdown) async {
+    final waiting = await staged(limit: 1);
+    if (waiting.batches.any((b) => b.filename == name)) return false;
+    final outcome = await importFile(
+      name,
+      Uint8List.fromList(utf8.encode(markdown)),
+      as: 'markdown',
+    );
+    if (!outcome.ok) throw ServerException(outcome.message);
+    return true;
+  }
+
+  @override
+  bool get canEditText =>
+      _controller.check?.capabilities?.has('staged-text-edit') ?? false;
+
+  @override
+  Future<void> editText(int id, StagedTextEdit change) =>
+      serverCall(_controller, (c) async {
+        await c.patchJson('/import/staged/quotes/$id', change.toJson());
       });
 
   @override

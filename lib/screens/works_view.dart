@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../settings/preference_scope.dart';
+
 import '../l10n/l10n.dart';
 import '../library/cover_cache.dart';
 import '../library/models.dart';
@@ -208,7 +210,8 @@ class _WorksViewState extends State<WorksView> {
   int _columns = 3;
   SharedPreferences? _p;
 
-  String _k(String name) => 'library_${widget.sectionKey}_$name';
+  String _k(String name) =>
+      PreferenceScope.instance.key(PrefKeys.library(widget.sectionKey, name));
 
   @override
   void initState() {

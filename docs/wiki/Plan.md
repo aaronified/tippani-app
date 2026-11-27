@@ -366,4 +366,6 @@ changed from Settings, Materials.
 
 iOS; the Play Store; true glass and saved looks; server-side OCR.
 
+Next feature, planned and not built: [Plan: listen to Audiobookshelf, keep Grimmory books, bookmark by voice](Plan-Listen.md).
+
 See also: [Plans index](https://github.com/aaronified/tippani/blob/main/docs/wiki/Plans-Index.md) · [Roadmap](https://github.com/aaronified/tippani/blob/main/docs/wiki/Roadmap.md) · [Developing](https://github.com/aaronified/tippani/blob/main/docs/wiki/Developing.md) · [Home](https://github.com/aaronified/tippani/blob/main/docs/wiki/Home.md)

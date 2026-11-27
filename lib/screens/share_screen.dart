@@ -8,6 +8,7 @@ import '../harness/files.dart' show ChannelAppFiles;
 import '../anthologies/anthologies.dart';
 import '../harness/harness.dart' show BackupPicker, SystemBackupPicker;
 import '../library/models.dart';
+import '../settings/preference_scope.dart';
 import '../library/quote_text.dart' show workShareText;
 import '../library/share_format.dart';
 import '../share/share_people.dart';
@@ -123,13 +124,15 @@ class _ShareScreenState extends State<ShareScreen> {
   bool _busy = false;
 
   // What the reader picked last time for the picture, kept on the phone (the web keeps the same three).
-  static const _kTheme = 'share_image_theme';
-  static const _kMaterial = 'share_image_material';
-  static const _kTint = 'share_image_tint';
-  static const _kBackdrop = 'share_portrait';
-  static const _kSwap = 'share_swap_sides';
-  static const _kSignature = 'share_signature';
-  static const _kFace = 'share_face_kind';
+  String _pref(String bare) => PreferenceScope.instance.key(bare);
+
+  static const _kTheme = PrefKeys.shareTheme;
+  static const _kMaterial = PrefKeys.shareMaterial;
+  static const _kTint = PrefKeys.shareTint;
+  static const _kBackdrop = PrefKeys.shareBackdrop;
+  static const _kSwap = PrefKeys.shareSwap;
+  static const _kSignature = PrefKeys.shareSignature;
+  static const _kFace = PrefKeys.shareFace;
 
   @override
   void didChangeDependencies() {
@@ -154,17 +157,17 @@ class _ShareScreenState extends State<ShareScreen> {
   Future<void> _restore() async {
     try {
       final p = await SharedPreferences.getInstance();
-      final t = p.getString(_kTheme);
+      final t = p.getString(_pref(_kTheme));
       if (!mounted) return;
       setState(() {
         if (t == 'light') _look = Brightness.light;
         if (t == 'dark') _look = Brightness.dark;
-        _material = ShareMaterial.named(p.getString(_kMaterial));
-        _tint = p.getBool(_kTint) ?? false;
-        _backdrop = p.getBool(_kBackdrop) ?? false;
-        _swap = p.getBool(_kSwap) ?? false;
-        _signature = p.getBool(_kSignature) ?? false;
-        _characters = p.getString(_kFace) == 'character';
+        _material = ShareMaterial.named(p.getString(_pref(_kMaterial)));
+        _tint = p.getBool(_pref(_kTint)) ?? false;
+        _backdrop = p.getBool(_pref(_kBackdrop)) ?? false;
+        _swap = p.getBool(_pref(_kSwap)) ?? false;
+        _signature = p.getBool(_pref(_kSignature)) ?? false;
+        _characters = p.getString(_pref(_kFace)) == 'character';
       });
     } on Object {
       // nothing remembered: the defaults stand
@@ -175,13 +178,13 @@ class _ShareScreenState extends State<ShareScreen> {
     final dark = (_look ?? Theme.of(context).brightness) == Brightness.dark;
     try {
       final p = await SharedPreferences.getInstance();
-      await p.setString(_kTheme, dark ? 'dark' : 'light');
-      await p.setString(_kMaterial, _material.name);
-      await p.setBool(_kTint, _tint);
-      await p.setBool(_kBackdrop, _backdrop);
-      await p.setBool(_kSwap, _swap);
-      await p.setBool(_kSignature, _signature);
-      await p.setString(_kFace, _characters ? 'character' : 'actor');
+      await p.setString(_pref(_kTheme), dark ? 'dark' : 'light');
+      await p.setString(_pref(_kMaterial), _material.name);
+      await p.setBool(_pref(_kTint), _tint);
+      await p.setBool(_pref(_kBackdrop), _backdrop);
+      await p.setBool(_pref(_kSwap), _swap);
+      await p.setBool(_pref(_kSignature), _signature);
+      await p.setString(_pref(_kFace), _characters ? 'character' : 'actor');
     } on Object {
       // not remembered this time
     }
