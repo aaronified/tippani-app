@@ -1,0 +1,240 @@
+<title>Tippani Listen mockups</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a gallery of phone and car-screen frames, one per screen of docs/wiki/Plan-Listen.md. */
+:root{
+  --bg:#f4ece9; --panel:#fffaf8; --card:#fff; --fg:#2b1d19; --muted:#74615b; --line:#e4d5d0;
+  --accent:#b3452b; --accent-fg:#fff; --chip:#efe2dd; --ok:#6f6420; --bar:#e8d9d3; --warn:#a8321f; --frame:#1b1311;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1c1412; --panel:#251a17; --card:#30231f; --fg:#f2e5e0; --muted:#c1ada6; --line:#46362f;
+  --accent:#f0a38e; --accent-fg:#3a160b; --chip:#3d2d28; --ok:#d9c87a; --bar:#4a3932; --warn:#ff9d8a; --frame:#0c0807;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1c1412; --panel:#251a17; --card:#30231f; --fg:#f2e5e0; --muted:#c1ada6; --line:#46362f;
+  --accent:#f0a38e; --accent-fg:#3a160b; --chip:#3d2d28; --ok:#d9c87a; --bar:#4a3932; --warn:#ff9d8a; --frame:#0c0807;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,sans-serif;margin:0;
+  padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:1.2rem;margin:0 0 4px} p.lead{margin:0 0 20px;color:var(--muted);max-width:70ch}
+h2{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:28px 24px;max-width:1100px}
+.wide{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.cell{min-width:0}
+.cap{color:var(--muted);font-size:.82rem;margin-top:8px;max-width:44ch}
+.phone{width:100%;max-width:300px;aspect-ratio:9/18.5;background:var(--frame);border-radius:28px;padding:7px}
+.screen{height:100%;background:var(--panel);border-radius:22px;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.car{width:100%;max-width:520px;aspect-ratio:16/8.5;background:var(--frame);border-radius:14px;padding:6px}
+.car .screen{border-radius:10px;flex-direction:row}
+.top{padding:12px 14px 6px;font-weight:600;font-size:1.05rem;display:flex;align-items:center;gap:8px}
+.top small{color:var(--muted);font-weight:400}
+.body{flex:1;min-height:0;overflow:hidden;padding:0 12px;display:flex;flex-direction:column;gap:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:var(--chip);border-radius:999px;padding:4px 10px;font-size:.78rem}
+.chip.on{background:var(--accent);color:var(--accent-fg)}
+.card{background:var(--card);border-radius:14px;padding:8px;display:flex;gap:10px;align-items:center}
+.cover{flex:none;width:42px;height:60px;border-radius:6px;background:linear-gradient(160deg,#47546f,#1a2030);color:#e8d9b0;font:600 7px/1.1 Georgia,serif;display:grid;place-items:end center;padding-bottom:3px}
+.cover.b{background:linear-gradient(160deg,#7a3d2a,#2a130d)} .cover.c{background:linear-gradient(160deg,#4a6a4c,#16241a)}
+.grow{flex:1;min-width:0}
+.t{font-weight:600;font-size:.9rem} .s{color:var(--muted);font-size:.78rem}
+.line{display:flex;align-items:center;gap:6px}
+.face{flex:none;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 50% 38%,#e9c9b5 0 28%,#8d6b58 30%);box-shadow:0 0 0 2px var(--card)}
+.ed{display:flex;gap:6px;margin-top:3px;color:var(--accent)}
+.ico{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ico.lg{width:22px;height:22px}
+.mini{margin:0 8px 6px;background:var(--card);border-radius:14px;padding:6px 8px;display:flex;gap:8px;align-items:center}
+.mini .cover{width:30px;height:40px}
+.prog{height:3px;background:var(--bar);border-radius:2px;overflow:hidden;margin-top:4px}.prog i{display:block;height:100%;background:var(--accent)}
+.nav{display:flex;justify-content:space-around;padding:6px 6px 10px;border-top:1px solid var(--line);font-size:.68rem;color:var(--muted)}
+.nav div{display:grid;justify-items:center;gap:1px}.nav .on{color:var(--accent);font-weight:600}
+.btn{background:var(--accent);color:var(--accent-fg);border-radius:999px;padding:7px 14px;font-weight:600;font-size:.82rem;display:inline-flex;gap:6px;align-items:center;justify-content:center}
+.btn.ghost{background:var(--chip);color:var(--fg)}
+.row{display:flex;gap:8px;align-items:center}.between{justify-content:space-between}
+.tx{background:var(--card);border-radius:12px;padding:10px;font-size:.84rem;line-height:1.5}
+.tx mark{background:color-mix(in srgb,var(--accent) 35%,transparent);color:inherit;border-radius:3px;padding:0 1px}
+.tx .dim{color:var(--muted)}
+.big{width:100%;aspect-ratio:1;max-height:150px;border-radius:12px;margin:0 auto;display:grid;place-items:end center;color:#e8d9b0;font:600 12px Georgia,serif;padding-bottom:8px;background:linear-gradient(160deg,#47546f,#1a2030)}
+.seek{height:5px;background:var(--bar);border-radius:3px;position:relative}.seek i{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:3px}
+.seek b{position:absolute;top:-4px;width:13px;height:13px;border-radius:50%;background:var(--accent);transform:translateX(-50%)}
+.ctl{display:flex;justify-content:space-around;align-items:center}
+.play{width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center}
+.bm{background:var(--chip);border-radius:16px;padding:9px;display:flex;gap:8px;align-items:center;font-weight:600;justify-content:center}
+.opt{background:var(--card);border-radius:12px;padding:8px 10px;display:flex;gap:8px;align-items:center}
+.opt .rd{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);flex:none}.opt.on .rd{border-color:var(--accent);background:radial-gradient(var(--accent) 0 45%,transparent 50%)}
+.tag{font-size:.66rem;border-radius:6px;padding:1px 6px;background:var(--chip);color:var(--muted)}
+.tag.ok{color:var(--ok)} .tag.warn{color:var(--warn)}
+.autotabs{width:38%;background:var(--card);padding:10px 8px;display:flex;flex-direction:column;gap:4px;font-size:.8rem}
+.autotabs div{padding:7px 9px;border-radius:9px;display:flex;gap:7px;align-items:center}.autotabs .on{background:var(--accent);color:var(--accent-fg);font-weight:600}
+.autolist{flex:1;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.autolist .card{padding:6px}
+.pill{display:flex;align-items:center;gap:6px;background:var(--ok);color:#fff;border-radius:12px;padding:5px 10px;font-size:.72rem;max-width:100%}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-head" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1"/><rect x="17" y="14" width="4" height="6" rx="1"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 5.5v16"/></symbol>
+  <symbol id="i-quote" viewBox="0 0 24 24"><path d="M6 17c0-4 1-7 4-9M14 17c0-4 1-7 4-9"/><path d="M5 17h5v-4H5zM13 17h5v-4h-5z"/></symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h10a6 6 0 0 1 0 8"/></symbol>
+  <symbol id="i-fwd" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5M20 12H10a6 6 0 0 0 0 8"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9H4z"/></symbol>
+  <symbol id="i-board" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="16" rx="1"/><rect x="13" y="4" width="7" height="9" rx="1"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="6" rx="1"/><rect x="4" y="14" width="16" height="6" rx="1"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol>
+</svg>
+
+<h1>Listen, read and bookmark: screens</h1>
+<p class="lead">Mockups for <code>docs/wiki/Plan-Listen.md</code>. Placeholder covers and faces; copy and layout show what each screen holds, not final pixels. Glyphs are stand-ins for the app's Tabler icons.</p>
+
+<div class="gallery">
+
+<div class="cell"><h2>1 · Library, one list</h2>
+<div class="phone"><div class="screen">
+  <div class="top">Library <small>31 works</small></div>
+  <div class="body">
+    <div class="chips"><span class="chip on">All</span><span class="chip">Listening</span><span class="chip">Reading</span><span class="chip">Quotes only</span><span class="chip">Downloaded</span></div>
+    <div class="card"><div class="cover">Dust of Dreams</div><div class="grow"><div class="t">Dust of Dreams</div>
+      <div class="line"><i class="face"></i><span class="s">Steven Erikson · 2009</span></div>
+      <div class="ed"><svg class="ico"><use href="#i-head"/></svg><svg class="ico"><use href="#i-quote"/></svg><span class="s">41%</span></div></div></div>
+    <div class="card"><div class="cover b">Homo Deus</div><div class="grow"><div class="t">Homo Deus</div>
+      <div class="line"><i class="face"></i><span class="s">Yuval Noah Harari · 2016</span></div>
+      <div class="ed"><svg class="ico"><use href="#i-head"/></svg><svg class="ico"><use href="#i-book"/></svg><svg class="ico"><use href="#i-quote"/></svg></div></div></div>
+    <div class="card"><div class="cover c">Early Indians</div><div class="grow"><div class="t">Early Indians</div>
+      <div class="line"><i class="face"></i><span class="s">Tony Joseph · 2021</span></div>
+      <div class="ed"><svg class="ico"><use href="#i-quote"/></svg><span class="s">quotes only</span></div></div></div>
+  </div>
+  <div class="mini"><div class="cover">Dust</div><div class="grow"><div class="t" style="font-size:.8rem">Dust of Dreams</div><div class="s">Ch. 14 · 3:42:10</div><div class="prog"><i style="width:41%"></i></div></div><svg class="ico lg"><use href="#i-pause"/></svg></div>
+  <div class="nav"><div class="on"><svg class="ico"><use href="#i-home"/></svg>Home</div><div><svg class="ico"><use href="#i-board"/></svg>Boards</div><div><svg class="ico"><use href="#i-server"/></svg>Server</div><div><svg class="ico"><use href="#i-gear"/></svg>Settings</div></div>
+</div></div>
+<p class="cap">One list of works. Glyphs show which editions a work has; faces lead the creator line. The mini-player stays above the bottom bar on every screen.</p></div>
+
+<div class="cell"><h2>2 · A work and its editions</h2>
+<div class="phone"><div class="screen">
+  <div class="top">Dust of Dreams</div>
+  <div class="body">
+    <div class="row"><div class="cover" style="width:56px;height:80px">Dust of Dreams</div><div class="grow"><div class="s">Steven Erikson · 2009 · Book</div>
+      <div class="chips" style="margin-top:6px"><span class="chip on"><svg class="ico"><use href="#i-head"/></svg> Listen 41%</span><span class="chip"><svg class="ico"><use href="#i-book"/></svg> Read · Grimmory</span></div></div></div>
+    <div class="row between"><span class="btn"><svg class="ico"><use href="#i-play"/></svg>Continue 3:42:10</span><span class="btn ghost"><svg class="ico"><use href="#i-down"/></svg>Download 412 MB</span></div>
+    <h2 style="margin:6px 0 0">Bookmarks · 3</h2>
+    <div class="tx"><b>3:42:10</b> <span class="tag ok">transcribed</span><br><span class="dim">…the horses had stopped</span> and Tavore said nothing at all <span class="dim">for the length of…</span></div>
+    <div class="tx"><b>2:10:44</b> <span class="tag">waiting</span><br><span class="dim">Transcribes when playback is paused.</span></div>
+    <h2 style="margin:6px 0 0">Quotes · 14</h2>
+    <div class="tx">“Hood take me, the gods are not gentle.” <span class="s">· Ch. 9</span></div>
+  </div>
+  <div class="nav"><div class="on"><svg class="ico"><use href="#i-home"/></svg>Home</div><div><svg class="ico"><use href="#i-board"/></svg>Boards</div><div><svg class="ico"><use href="#i-server"/></svg>Server</div><div><svg class="ico"><use href="#i-gear"/></svg>Settings</div></div>
+</div></div>
+<p class="cap">Audiobook, book file and quotes sit on one page. A work with no edition looks as it does today.</p></div>
+
+<div class="cell"><h2>3 · Player</h2>
+<div class="phone"><div class="screen">
+  <div class="top">Now playing <small>Ch. 14 of 38</small></div>
+  <div class="body" style="gap:10px">
+    <div class="big">Dust of Dreams</div>
+    <div><div class="t">Dust of Dreams</div><div class="s">Steven Erikson · read by Michael Page</div></div>
+    <div><div class="seek"><i style="width:41%"></i><b style="left:41%"></b></div><div class="row between s" style="margin-top:6px"><span>3:42:10</span><span>−5:20:31</span></div></div>
+    <div class="ctl"><svg class="ico lg"><use href="#i-back"/></svg><div class="play"><svg class="ico lg"><use href="#i-pause"/></svg></div><svg class="ico lg"><use href="#i-fwd"/></svg></div>
+    <div class="row between"><span class="chip">1.25×</span><span class="chip"><svg class="ico"><use href="#i-moon"/></svg> Sleep</span><span class="chip">Chapters</span></div>
+    <div class="bm"><svg class="ico lg"><use href="#i-mark"/></svg>Bookmark</div>
+    <div class="pill"><svg class="ico"><use href="#i-check"/></svg>Bookmarked 3:42:10 · transcript when paused</div>
+  </div>
+</div></div>
+<p class="cap">The bookmark press is instant. The transcript arrives later, so playback never competes with Whisper.</p></div>
+
+<div class="cell"><h2>4 · Bookmark, trim to a quote</h2>
+<div class="phone"><div class="screen">
+  <div class="top">Bookmark <small>3:42:10 · Ch. 14</small></div>
+  <div class="body" style="gap:10px">
+    <div class="s">Transcript, 45 s before and 15 s after. Select what to keep as a quote.</div>
+    <div class="tx"><span class="dim">…and the road behind them was already forgotten.</span> <mark>The horses had stopped and Tavore said nothing at all for the length of a held breath.</mark> <span class="dim">Then Ruthan Gudd turned in his saddle…</span></div>
+    <div class="row"><span class="tag">Whisper · base.en</span><span class="tag">on this phone</span></div>
+    <div class="row between"><span class="btn ghost">Discard</span><span class="btn ghost">Keep all</span><span class="btn">Save as quote</span></div>
+    <div class="s">Saves to Dust of Dreams · 3:42:10 · Chapter 14, and updates the Audiobookshelf bookmark.</div>
+  </div>
+</div></div>
+<p class="cap">Recommended step for open question D-Q: keep the library free of raw 60-second transcripts. Skipping it saves one tap.</p></div>
+
+<div class="cell"><h2>5 · Downloads</h2>
+<div class="phone"><div class="screen">
+  <div class="top">Downloads</div>
+  <div class="body">
+    <div class="card" style="display:block"><div class="row between"><span class="t">3.1 GB of 5 GB</span><span class="s">Wi-Fi only</span></div><div class="prog" style="height:6px"><i style="width:62%"></i></div></div>
+    <h2 style="margin:4px 0 0">Kept</h2>
+    <div class="card"><div class="cover">Dust</div><div class="grow"><div class="t">Dust of Dreams</div><div class="s">412 MB · whole book</div></div><span class="tag ok">ready</span></div>
+    <div class="card"><div class="cover b">Homo</div><div class="grow"><div class="t">Homo Deus</div><div class="s">Downloading 63%</div><div class="prog"><i style="width:63%"></i></div></div><span class="tag">paused</span></div>
+    <h2 style="margin:4px 0 0">Buffer ahead · 3 h</h2>
+    <div class="card"><div class="cover c">Early</div><div class="grow"><div class="t">Early Indians</div><div class="s">Ch. 4 to 7 · cleared after listening</div></div><span class="tag">auto</span></div>
+  </div>
+</div></div>
+<p class="cap">Kept books stay until you remove them. The buffer follows the book that is playing and is the first thing cleared.</p></div>
+
+<div class="cell"><h2>6 · Settings, Libraries</h2>
+<div class="phone"><div class="screen">
+  <div class="top">Libraries</div>
+  <div class="body">
+    <div class="card" style="display:block"><div class="row between"><span class="t"><svg class="ico"><use href="#i-head"/></svg> Audiobookshelf</span><span class="tag ok">signed in</span></div><div class="s">books.example.net · via Authelia</div></div>
+    <div class="card" style="display:block"><div class="row between"><span class="t"><svg class="ico"><use href="#i-book"/></svg> Grimmory</span><span class="tag warn">sign in again</span></div><div class="s">Downloaded books still open.</div><div style="margin-top:6px"><span class="btn"><svg class="ico"><use href="#i-shield"/></svg>Sign in with Authelia</span></div></div>
+    <div class="tx"><b>Before the first sign in</b><br>Allow <code>tippani://oauth/…</code> in each server and in each Authelia client. The plan lists the three places.</div>
+    <div class="card"><div class="grow"><div class="t">Downloads</div><div class="s">Wi-Fi only · 5 GB · buffer 3 h</div></div></div>
+    <div class="card"><div class="grow"><div class="t">Whisper</div><div class="s">English base · idle</div></div></div>
+  </div>
+</div></div>
+<p class="cap">Settings belong to the signed-in Tippani account, like every other setting. Credentials stay on the phone.</p></div>
+
+<div class="cell"><h2>7 · Whisper</h2>
+<div class="phone"><div class="screen">
+  <div class="top">Whisper</div>
+  <div class="body">
+    <div class="opt on"><i class="rd"></i><div class="grow"><div class="t">English base</div><div class="s">60 MB · fast, good on clear narration</div></div><span class="tag ok">installed</span></div>
+    <div class="opt"><i class="rd"></i><div class="grow"><div class="t">English small</div><div class="s">190 MB · better with names</div></div><span class="btn ghost" style="padding:3px 9px">Get</span></div>
+    <div class="opt"><i class="rd"></i><div class="grow"><div class="t">Multilingual small</div><div class="s">190 MB · other languages</div></div><span class="btn ghost" style="padding:3px 9px">Get</span></div>
+    <h2 style="margin:6px 0 0">Bookmarks</h2>
+    <div class="opt"><div class="grow"><div class="t">Window</div><div class="s">45 s before · 15 s after</div></div></div>
+    <div class="opt"><div class="grow"><div class="t">Transcribe</div><div class="s">When playback is paused or charging</div></div></div>
+    <h2 style="margin:6px 0 0">Dictating a quote</h2>
+    <div class="opt"><div class="grow"><div class="t">Speech engine</div><div class="s">Whisper on this phone</div></div></div>
+  </div>
+</div></div>
+<p class="cap">Models download on demand and are never in a backup. Audio never leaves the phone.</p></div>
+
+<div class="cell"><h2>8 · Dictate a quote</h2>
+<div class="phone"><div class="screen">
+  <div class="top">Say a quote</div>
+  <div class="body" style="gap:12px;align-items:center;text-align:center">
+    <div class="s" style="margin-top:20px">Speak the passage. It is read when you stop.</div>
+    <div class="play" style="width:74px;height:74px"><svg class="ico lg"><use href="#i-mic"/></svg></div>
+    <div class="s">0:12 · recording on this phone</div>
+    <div class="tx" style="text-align:start;width:100%"><span class="dim">Transcribing with Whisper (base.en)…</span></div>
+    <div class="row"><span class="btn ghost">Cancel</span><span class="btn">Stop and read</span></div>
+  </div>
+</div></div>
+<p class="cap">Lands in the same correction screen as Scan a page and today's Speak.</p></div>
+
+<div class="wide">
+<div class="cell"><h2>9 · Android Auto, browse</h2>
+<div class="car"><div class="screen">
+  <div class="autotabs"><div class="on"><svg class="ico"><use href="#i-play"/></svg>Continue</div><div><svg class="ico"><use href="#i-down"/></svg>Downloaded</div><div><svg class="ico"><use href="#i-book"/></svg>Library</div><div><svg class="ico"><use href="#i-mark"/></svg>Bookmarks</div></div>
+  <div class="autolist">
+    <div class="card"><div class="cover" style="height:44px;width:32px">Dust</div><div class="grow"><div class="t">Dust of Dreams</div><div class="s">Ch. 14 · 5 h 20 m left</div></div></div>
+    <div class="card"><div class="cover b" style="height:44px;width:32px">Homo</div><div class="grow"><div class="t">Homo Deus</div><div class="s">Ch. 3 · 9 h 02 m left</div></div></div>
+    <div class="card"><div class="cover c" style="height:44px;width:32px">Early</div><div class="grow"><div class="t">Early Indians</div><div class="s">Ch. 7 · 3 h 41 m left</div></div></div>
+  </div>
+</div></div>
+<p class="cap">Four root tabs, the most a head unit shows. Nothing plays until you choose it.</p></div>
+
+<div class="cell"><h2>10 · Android Auto, now playing</h2>
+<div class="car"><div class="screen" style="flex-direction:column;padding:12px;gap:10px">
+  <div class="row"><div class="cover" style="width:64px;height:90px">Dust of Dreams</div><div class="grow"><div class="t" style="font-size:1.05rem">Dust of Dreams</div><div class="s">Chapter 14 · Steven Erikson</div>
+  <div class="seek" style="margin-top:12px"><i style="width:41%"></i><b style="left:41%"></b></div><div class="row between s" style="margin-top:6px"><span>3:42:10</span><span>−5:20:31</span></div></div></div>
+  <div class="ctl"><svg class="ico lg"><use href="#i-back"/></svg><div class="play"><svg class="ico lg"><use href="#i-pause"/></svg></div><svg class="ico lg"><use href="#i-fwd"/></svg><div class="bm" style="padding:8px 14px"><svg class="ico lg"><use href="#i-mark"/></svg>Bookmark</div></div>
+</div></div>
+<p class="cap">The bookmark button turns into a tick for two seconds after a press. The transcript is made after the drive.</p></div>
+</div>
+
+</div>
