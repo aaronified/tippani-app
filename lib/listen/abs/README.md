@@ -9,3 +9,9 @@ Talking to one Audiobookshelf server, as one signed-in user. Pure Dart, no Flutt
 Things the code relies on, measured on the owner's server: ABS answers many writes with a bare `OK` (not JSON); a bookmark is keyed by its whole second, so two in one second are one; a track streams with an `Authorization: Bearer` header and a `Range` header, with no token in the address; failed logins share one bucket for every client, so a login is never retried in a loop.
 
 Tests: `test/listen/`, using the in-memory server in `test/support/fake_abs.dart`.
+
+## Where the sign-in is kept
+
+- `abs_token_store.dart`: `AbsConnection` (server address plus tokens), the `AbsTokenStore` interface, `VaultAbsTokenStore` (the real one, over a method channel) and `MemoryAbsTokenStore` (tests). One entry per Tippani account id, so accounts on one phone never see each other's.
+- The other half is `android/app/src/main/kotlin/io/github/aaronified/tippani/AbsVault.kt`: an AES-GCM key in the Android Keystore encrypts each entry. It is native on purpose. ABS refresh tokens rotate, so only one side may refresh, and the player service has to do it with the app closed and no Dart engine (Android Auto). Dart reads the tokens from the vault and writes new ones back; it keeps no copy.
+- If the Keystore key is lost, the entry reads as empty and the person signs in again.
