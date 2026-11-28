@@ -7,6 +7,8 @@ version. Write each entry for the person using the app, in plain words. **Start 
 
 ## [Unreleased]
 
+## [0.10.4] - 2026-11-28
+
 ### Added
 
 - Edit and trim a waiting quote: on Pending imports, a quote's edit sheet now shows its words, note and translation, and a Trim button keeps a run of sentences and drops the rest. It needs a server that offers it; an older server shows the words and says they cannot be changed there.
