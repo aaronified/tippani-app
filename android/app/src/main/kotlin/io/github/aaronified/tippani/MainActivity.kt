@@ -28,6 +28,7 @@ import java.security.MessageDigest
 class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        AbsVault.register(flutterEngine.dartExecutor.binaryMessenger, applicationContext)
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             "io.github.aaronified.tippani/files",
