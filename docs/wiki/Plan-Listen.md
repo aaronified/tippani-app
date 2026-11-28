@@ -3,6 +3,8 @@
 **Status:** plan only, nothing built. First written 27 November 2026 at `9e986ca`; revised the same day after source-level checks of Audiobookshelf (ABS), Media3, Whisper, Authelia, Jellyfin and the Tippani server's import contract, an adversarial review, and the owner's answers. Code citations are verified at `90606c9`.
 Mockups: `docs/design/listen-mockups.html` in the repository (the wiki is published flat, so it is named here and not linked).
 
+**Build order (28 November).** Audiobookshelf only, in full: sign-in, the player, Android Auto, offline audio, bookmarks with transcription, home-screen widgets and the mirror into the library. Grimmory, reading and Jellyfin come later and keep their sections as written. The first slice, the Dart ABS client and its fake server, is built (PR 106).
+
 ## What the owner asked for
 
 1. Listen to ABS audiobooks with a working Android Auto player and audio cached offline.
@@ -89,8 +91,8 @@ Read-only calls from the owner's machine, as a normal ABS user named `test` for 
 
 | Server | Fact on the owner's install | Effect on the plan |
 |---|---|---|
-| ABS | **2.37.2**, not 2.38.0. `GET /status` lists `local` and `openid`. The refresh-token migration is applied; `POST /auth/refresh` answers 401 to a bad token | Re-read changed routes against 2.37.2 in T0 |
-| ABS | `authOpenIDMobileRedirectURIs` holds only `audiobookshelf://oauth`; Authelia's ABS client lists the two https callbacks plus `audiobookshelf://oauth` and requires PKCE S256, `two_factor`, a one-year pre-configured consent | The owner action stands: add `tippani://oauth/abs` to both |
+| ABS | **2.38.0** (updated from 2.37.2 on 28 November; every route below was re-run on 2.38.0 and answered the same). `GET /status` lists `local` and `openid`. The refresh-token migration is applied; `POST /auth/refresh` answers 401 to a bad token | Nothing to change |
+| ABS | `authOpenIDMobileRedirectURIs` holds only `audiobookshelf://oauth`; Authelia's ABS client lists the two https callbacks plus `audiobookshelf://oauth` and requires PKCE S256, `two_factor`, a one-year pre-configured consent | Add `tippani://oauth/abs` to **ABS only**. Authelia needs nothing: ABS sends Authelia its own https `mobile-redirect` address and hands the code to the app itself. Done and checked on 28 November: ABS answers the sign-in start with a 302 to Authelia |
 | ABS | OIDC auto-register is on and an existing user is matched **by username** | The Authelia username must equal the ABS username, or a second user is created |
 | ABS | Login limit is 10 per 600 s | Never loop a login |
 | ABS | As a non-root user: `POST /login` with `x-return-tokens`, `GET /api/libraries`, items, `POST /api/items/{id}/play`, `POST /api/session/{id}/sync` and `/close`, `POST /api/session/local`, bookmark create and delete all answer 200. A track streams with `Authorization: Bearer` and a `Range` header (206, `Accept-Ranges: bytes`), with no token in the URL | The player can stream and cache with a header only |
@@ -208,7 +210,7 @@ The app learns the methods from `GET /status` (`authMethods`, `serverVersion`). 
 
 **Owner actions.**
 1. ABS Settings > Authentication > "Allowed Mobile Redirect URIs": add `tippani://oauth/abs`. The scheme must be letters, digits or underscore only.
-2. Authelia, ABS's client: its redirect URIs include `https://{abs}/auth/openid/callback` and `https://{abs}/auth/openid/mobile-redirect`. No scheme of ours is registered in Authelia for ABS.
+2. Authelia needs no change for ABS: its client already lists `https://{abs}/auth/openid/callback` and `https://{abs}/auth/openid/mobile-redirect`, and no scheme of ours is registered there.
 3. The reverse proxy passes `Host` and `X-Forwarded-Proto: https` to ABS.
 
 ### Grimmory (V from `develop`; the owner runs v3.5.0, see "Checked against the owner's own servers")
@@ -397,6 +399,8 @@ A custom `AudioProcessor` is installed by overriding `DefaultRenderersFactory.bu
 - A pause within the after-window ends the clip early; right after a seek the ring holds only audio since the seek. For downloaded books the cached file is the fallback (design B).
 
 ## Whisper on the phone
+
+**Speech engine order (28 November).** The phone's own speech service comes first and Whisper is the fallback, as an optional download. On Android 13 and newer the system recogniser can be given audio from a file or stream (`EXTRA_AUDIO_SOURCE`), and `SpeechRecognizer.isOnDeviceRecognitionAvailable` says whether an on-device one exists. Many phones' speech services do not accept file audio, so the app asks the phone at run time: if it can transcribe a clip, use it and download nothing; if not, offer the Whisper model download and use that. Open until S1 runs on the owner's phone: whether it accepts file audio, its accuracy on a car-noise clip, and whether it sends audio to a server (the plan's privacy line holds only for on-device). The Whisper details below describe the fallback.
 
 | Setting | Default | Options |
 |---|---|---|
