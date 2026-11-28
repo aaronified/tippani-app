@@ -48,7 +48,7 @@ Mockups: `docs/design/listen-mockups.html` in the repository (the wiki is publis
 
 | Fact | Level | Evidence |
 |---|---|---|
-| ABS v2.38.0 is latest. Login `POST /login`; header `x-return-tokens: true` returns `user.accessToken` and `user.refreshToken` in the body | V | `advplyr/audiobookshelf` `package.json`, `server/Auth.js:325` |
+| ABS 2.38.0 was the latest upstream (the owner runs 2.37.2, see below). Login `POST /login`; header `x-return-tokens: true` returns `user.accessToken` and `user.refreshToken` in the body | V | `advplyr/audiobookshelf` `package.json`, `server/Auth.js:325` |
 | ABS `POST /auth/refresh` with header `x-refresh-token`; the refresh token **rotates** each call, the old one valid 10 minutes; access 1 h, refresh 30 d | V | `Auth.js:332-339`, `server/auth/TokenManager.js` |
 | ABS OIDC for apps: `GET /auth/openid?response_type=code&redirect_uri&code_challenge[&state]` (S256, PKCE required) answers 302 to the IdP; the IdP returns to `{abs}/auth/openid/mobile-redirect`, which 302s to the app; the app then calls `GET /auth/openid/callback?code&state&code_verifier` **with the session cookie from the first call** and gets tokens in the body | V | `Auth.js:363-460`, `server/auth/OidcAuthStrategy.js` |
 | ABS "Allowed Mobile Redirect URIs": exact match, or exactly `*`; each entry must match `^\w+://[\w\.-]+(/[\w\./-]*)*$` (no dots in the scheme); a bad update is silently ignored | V | `MiscController.js:683-692` |
@@ -82,6 +82,28 @@ Mockups: `docs/design/listen-mockups.html` in the repository (the wiki is publis
 | `flutter_inappwebview` 6.1.5 (Apache-2.0) offers request interception, asset loading, context menu and JS handlers; `webview_flutter` 4.14.1 does not show them in its changelog | V / I | pub.dev; plugin source |
 | Readium Kotlin toolkit 3.4.0 (BSD-3) has no MOBI or AZW3, and no PDF search or highlights | V | `readium/kotlin-toolkit` `README.md` |
 | Tippani Markdown (`as=md`) needs `type:`, `title`, optional `author`, `language`, `isbn` for a book, and `> text` with `- location:`, `- note:`, `- tags:`, `- date:`; there is no `source` or tmdb key | V | `importer/markdown.go:93-`, `movie_markdown.go:166-` |
+
+### Checked against the owner's own servers (28 November 2026)
+
+Read-only calls from the owner's machine, as a normal ABS user named `test` for anything that writes. Where this table and the source-based rows above disagree, this table wins for the owner's install. It closes part of T0.
+
+| Server | Fact on the owner's install | Effect on the plan |
+|---|---|---|
+| ABS | **2.37.2**, not 2.38.0. `GET /status` lists `local` and `openid`. The refresh-token migration is applied; `POST /auth/refresh` answers 401 to a bad token | Re-read changed routes against 2.37.2 in T0 |
+| ABS | `authOpenIDMobileRedirectURIs` holds only `audiobookshelf://oauth`; Authelia's ABS client lists the two https callbacks plus `audiobookshelf://oauth` and requires PKCE S256, `two_factor`, a one-year pre-configured consent | The owner action stands: add `tippani://oauth/abs` to both |
+| ABS | OIDC auto-register is on and an existing user is matched **by username** | The Authelia username must equal the ABS username, or a second user is created |
+| ABS | Login limit is 10 per 600 s | Never loop a login |
+| ABS | As a non-root user: `POST /login` with `x-return-tokens`, `GET /api/libraries`, items, `POST /api/items/{id}/play`, `POST /api/session/{id}/sync` and `/close`, `POST /api/session/local`, bookmark create and delete all answer 200. A track streams with `Authorization: Bearer` and a `Range` header (206, `Accept-Ranges: bytes`), with no token in the URL | The player can stream and cache with a header only |
+| ABS | Bookmarks are keyed by `time`: `DELETE /api/me/item/{id}/bookmark/{time}` | Two bookmarks in the same second collide; round or offset the time |
+| ABS | `librariesAccessible` is empty while `accessAllLibraries` is true | Do not read an empty list as "no access" |
+| ABS | One library, 143 books, each with ASIN and embedded chapters; ISBN can be null. One checked item has a single chapter | Match audiobooks by ASIN first; the seek bar needs a whole-track fallback for a one-chapter book |
+| Jellyfin | **12.4.0** (not 10.11.x). Quick Connect is enabled. `AuthenticateByName` with the `MediaBrowser` header and `POST /Sessions/Logout` work | Re-read the routes against 12.4.0 in T0 |
+| Jellyfin | Libraries: Movies (737), Shows (79), YouTube Shows (2), Playlists (6), plus empty box-set views. Items carry `Imdb`, `Tmdb`, `Tvdb` | Mirror Movies and Shows only; skip Playlists and empty views by default |
+| Grimmory | **v3.5.0** (v3.5.1 is out). Public settings: OIDC through Authelia, client id `grimmory`, local login still allowed. 522 books in 3 libraries | Pin contract tests to v3.5.0; the plan's "tag" is v3.5.0 |
+| Grimmory | `POST /api/v1/auth/login` returns `accessToken` and `refreshToken`; a bad refresh answers 401 | Local sign-in works as a fallback |
+| Grimmory | `GET /api/v1/books/{id}/download` ignores `Range`: it answers 200 with the whole file and no `Accept-Ranges` | Downloads cannot resume; the plan's "restarts from zero" case is the real one |
+| Grimmory | `GET /api/v1/bookmarks/book/{id}` and `/api/v1/book-notes/book/{id}` answer 200 (empty); `/api/v1/annotations/book/{id}` answers 200 (empty). `GET /api/v1/annotations` and `/book-notes?bookId=` answer 405. Covers load from `/api/v1/media/book/{id}/cover` with a bearer token | The list-by-book routes are the ones to use; the shapes of a populated bookmark and note are still unread |
+| Not tested | Sign-in through Authelia in the app, downloads, long books with many chapters, Grimmory annotation shapes with data | Stay in T0, S3 and P1 |
 
 ## What already exists in the app
 
@@ -189,7 +211,7 @@ The app learns the methods from `GET /status` (`authMethods`, `serverVersion`). 
 2. Authelia, ABS's client: its redirect URIs include `https://{abs}/auth/openid/callback` and `https://{abs}/auth/openid/mobile-redirect`. No scheme of ours is registered in Authelia for ABS.
 3. The reverse proxy passes `Host` and `X-Forwarded-Proto: https` to ABS.
 
-### Grimmory (V from `develop`; T0 pins the release tag)
+### Grimmory (V from `develop`; the owner runs v3.5.0, see "Checked against the owner's own servers")
 
 1. `GET /api/v1/auth/oidc/state`; persist the state, a PKCE verifier and a nonce.
 2. Open Authelia's authorize URL (issuer and client id from Grimmory's public settings, U) with `redirect_uri=tippani://oauth/grimmory`.
